@@ -237,7 +237,7 @@ function TeamPreview() {
           An interdisciplinary team of scholars bridging comparative mythology, religious studies, and computational analysis.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto">
           {teamMembers.map((member, i) => (
             <div key={i} className="text-center group" data-testid={`card-team-member-${i}`}>
               <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#350A8C] to-[#8F00FF]/30 border border-[#8F00FF]/20 flex items-center justify-center">
