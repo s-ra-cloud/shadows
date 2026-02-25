@@ -18,6 +18,10 @@ const TRADITION_COLORS: Record<string, string> = {
   "Shinto": "#FF4081",
   "Sumerian": "#03FF9B",
   "Aztec": "#00BCD4",
+  "Celtic": "#7FFF00",
+  "Roman": "#FF8A65",
+  "Mythological": "#B388FF",
+  "Fairy Tale": "#F8BBD0",
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -51,7 +55,7 @@ function getTraditionColor(tradition: string | null) {
 
 function tokenize(text: string | null): string[] {
   if (!text) return [];
-  return text.split(/[,;]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+  return text.split(/[,;]+/).map(s => s.trim().toLowerCase()).filter(s => s.length > 1 && s.length < 40);
 }
 
 interface GraphData {
@@ -84,7 +88,7 @@ interface GraphLink {
   category: string;
 }
 
-function buildGraph(figures: Node[]) {
+function buildGraph(figures: Node[], minShared = 3) {
   const traitFields: { key: keyof Node; category: string }[] = [
     { key: "gender", category: "gender" },
     { key: "domain", category: "domain" },
@@ -121,23 +125,40 @@ function buildGraph(figures: Node[]) {
 
   const sharedTraits = new Map<string, { label: string; category: string; count: number }>();
   for (const [id, data] of traitCounts) {
-    if (data.count >= 2) {
+    if (data.count >= minShared) {
       sharedTraits.set(id, data);
     }
   }
 
   const graphNodes: GraphNode[] = [];
   const graphLinks: GraphLink[] = [];
+  const connectedFigureIds = new Set<number>();
 
   for (const fig of figures) {
-    graphNodes.push({
-      id: `fig-${fig.id}`,
-      nodeId: fig.id,
-      label: fig.name,
-      tradition: fig.tradition,
-      isCharacter: true,
-      original: fig,
-    });
+    const traits = figureTraits.get(fig.id) || [];
+    for (const traitId of traits) {
+      if (sharedTraits.has(traitId)) {
+        connectedFigureIds.add(fig.id);
+        graphLinks.push({
+          source: `fig-${fig.id}`,
+          target: traitId,
+          category: sharedTraits.get(traitId)!.category,
+        });
+      }
+    }
+  }
+
+  for (const fig of figures) {
+    if (connectedFigureIds.has(fig.id)) {
+      graphNodes.push({
+        id: `fig-${fig.id}`,
+        nodeId: fig.id,
+        label: fig.name,
+        tradition: fig.tradition,
+        isCharacter: true,
+        original: fig,
+      });
+    }
   }
 
   for (const [traitId, data] of sharedTraits) {
@@ -148,19 +169,6 @@ function buildGraph(figures: Node[]) {
       count: data.count,
       isCharacter: false,
     });
-  }
-
-  for (const fig of figures) {
-    const traits = figureTraits.get(fig.id) || [];
-    for (const traitId of traits) {
-      if (sharedTraits.has(traitId)) {
-        graphLinks.push({
-          source: `fig-${fig.id}`,
-          target: traitId,
-          category: sharedTraits.get(traitId)!.category,
-        });
-      }
-    }
   }
 
   return { graphNodes, graphLinks };
@@ -237,12 +245,16 @@ function FilterSidebar({
   onToggleFilter,
   isOpen,
   onToggle,
+  nodeCount,
+  totalCount,
 }: {
   filters: { traditions: string[]; categories: string[] };
   activeFilters: Record<string, Set<string>>;
   onToggleFilter: (category: string, value: string) => void;
   isOpen: boolean;
   onToggle: () => void;
+  nodeCount: number;
+  totalCount: number;
 }) {
   const sections = [
     {
@@ -283,7 +295,10 @@ function FilterSidebar({
             </Button>
           </Link>
         </div>
-        <ScrollArea className="h-[calc(100%-52px)]">
+        <div className="px-4 py-2 border-b border-[#350A8C]/10">
+          <span className="text-[10px] text-shadows-text/30 font-mono">{nodeCount} figures shown / {totalCount} total</span>
+        </div>
+        <ScrollArea className="h-[calc(100%-90px)]">
           <div className="p-4 space-y-5">
             {sections.map((section) =>
               section.values.length > 0 ? (
@@ -324,20 +339,24 @@ export default function GraphPage() {
     queryKey: ["/api/graph"],
   });
 
-  const svgRef = useRef<SVGSVGElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, Set<string>>>({});
+  const [hoveredNode, setHoveredNode] = useState<any>(null);
   const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
+  const transformRef = useRef(d3.zoomIdentity);
+  const simNodesRef = useRef<any[]>([]);
+  const simLinksRef = useRef<any[]>([]);
 
   const { graphNodes, graphLinks } = useMemo(() => {
     if (!data?.nodes) return { graphNodes: [], graphLinks: [] };
-    return buildGraph(data.nodes);
+    return buildGraph(data.nodes, 3);
   }, [data?.nodes]);
 
   const filters = useMemo(() => {
-    const traditions = [...new Set(data?.nodes.map((n) => n.tradition).filter(Boolean) as string[])];
+    const traditions = [...new Set(data?.nodes.map((n) => n.tradition).filter(Boolean) as string[])].sort();
     const categories = [...new Set(graphNodes.filter(n => !n.isCharacter).map(n => (n as TraitNode).category))];
     return { traditions, categories };
   }, [data?.nodes, graphNodes]);
@@ -398,36 +417,29 @@ export default function GraphPage() {
     : [];
 
   useEffect(() => {
-    if (!svgRef.current || filteredGraphNodes.length === 0) return;
+    if (!canvasRef.current || filteredGraphNodes.length === 0) return;
 
-    const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove();
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-    const container = svgRef.current.parentElement;
+    const container = canvas.parentElement;
     if (!container) return;
+    const dpr = window.devicePixelRatio || 1;
     const width = container.clientWidth;
     const height = container.clientHeight;
 
-    svg.attr("width", width).attr("height", height);
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+    ctx.scale(dpr, dpr);
 
-    const defs = svg.append("defs");
-    const gradient = defs.append("linearGradient").attr("id", "bg-gradient").attr("x1", "0%").attr("y1", "0%").attr("x2", "100%").attr("y2", "100%");
-    gradient.append("stop").attr("offset", "0%").attr("stop-color", "#0B0626");
-    gradient.append("stop").attr("offset", "100%").attr("stop-color", "#0C0042");
-
-    svg.append("rect").attr("width", width).attr("height", height).attr("fill", "url(#bg-gradient)");
-
-    const g = svg.append("g");
-
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.2, 5])
-      .on("zoom", (event) => {
-        g.attr("transform", event.transform);
-      });
-
-    svg.call(zoom);
-
-    const simNodes = filteredGraphNodes.map((n) => ({ ...n, x: width / 2 + (Math.random() - 0.5) * 200, y: height / 2 + (Math.random() - 0.5) * 200 }));
+    const simNodes = filteredGraphNodes.map((n) => ({
+      ...n,
+      x: width / 2 + (Math.random() - 0.5) * Math.min(width, 800),
+      y: height / 2 + (Math.random() - 0.5) * Math.min(height, 600),
+    }));
     const simNodeMap = new Map<string, any>();
     simNodes.forEach((n) => simNodeMap.set(n.id, n));
 
@@ -439,136 +451,179 @@ export default function GraphPage() {
       }))
       .filter((l) => l.source && l.target);
 
+    simNodesRef.current = simNodes;
+    simLinksRef.current = simLinks;
+
+    const charCount = simNodes.filter(n => n.isCharacter).length;
+    const linkDist = charCount > 200 ? 60 : charCount > 100 ? 80 : 100;
+    const chargeStr = charCount > 200 ? -50 : charCount > 100 ? -100 : -200;
+
     const simulation = d3.forceSimulation(simNodes)
-      .force("link", d3.forceLink(simLinks).id((d: any) => d.id).distance(80).strength(0.4))
-      .force("charge", d3.forceManyBody().strength((d: any) => d.isCharacter ? -300 : -80))
+      .force("link", d3.forceLink(simLinks).id((d: any) => d.id).distance(linkDist).strength(0.3))
+      .force("charge", d3.forceManyBody().strength((d: any) => d.isCharacter ? chargeStr : chargeStr * 0.3))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius((d: any) => d.isCharacter ? 30 : 15));
+      .force("collision", d3.forceCollide().radius((d: any) => d.isCharacter ? 8 : 4))
+      .alphaDecay(0.03)
+      .velocityDecay(0.4);
 
     simulationRef.current = simulation;
 
-    const link = g
-      .append("g")
-      .selectAll("line")
-      .data(simLinks)
-      .join("line")
-      .attr("stroke", (d: any) => CATEGORY_COLORS[d.category] || "#350A8C")
-      .attr("stroke-width", 0.6)
-      .attr("stroke-opacity", 0.25);
+    let currentHovered: any = null;
 
-    const nodeGroup = g
-      .append("g")
-      .selectAll("g")
-      .data(simNodes)
-      .join("g")
-      .attr("cursor", "pointer")
-      .call(
-        d3.drag<any, any>()
-          .on("start", (event, d) => {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-          })
-          .on("drag", (event, d) => {
-            d.fx = event.x;
-            d.fy = event.y;
-          })
-          .on("end", (event, d) => {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-          })
-      );
+    function draw() {
+      ctx.save();
+      ctx.clearRect(0, 0, width, height);
 
-    nodeGroup
-      .append("circle")
-      .attr("r", (d: any) => d.isCharacter ? 10 : 4)
-      .attr("fill", (d: any) => {
-        if (d.isCharacter) return getTraditionColor(d.tradition);
-        return CATEGORY_COLORS[d.category] || "#350A8C";
-      })
-      .attr("stroke", (d: any) => {
-        if (d.isCharacter) return getTraditionColor(d.tradition);
-        return CATEGORY_COLORS[d.category] || "#350A8C";
-      })
-      .attr("stroke-width", (d: any) => d.isCharacter ? 2 : 1)
-      .attr("stroke-opacity", 0.3)
-      .attr("fill-opacity", (d: any) => d.isCharacter ? 0.9 : 0.6);
+      const grad = ctx.createLinearGradient(0, 0, width, height);
+      grad.addColorStop(0, "#0B0626");
+      grad.addColorStop(1, "#0C0042");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
 
-    nodeGroup
-      .append("text")
-      .text((d: any) => d.label)
-      .attr("dy", (d: any) => d.isCharacter ? -16 : -8)
-      .attr("text-anchor", "middle")
-      .attr("fill", (d: any) => d.isCharacter ? "#E0DCE6" : CATEGORY_COLORS[d.category] || "#E0DCE6")
-      .attr("font-size", (d: any) => d.isCharacter ? "10px" : "7px")
-      .attr("font-family", (d: any) => d.isCharacter ? "Playfair Display, serif" : "DM Sans, sans-serif")
-      .attr("opacity", (d: any) => d.isCharacter ? 0.85 : 0.5);
+      const t = transformRef.current;
+      ctx.translate(t.x, t.y);
+      ctx.scale(t.k, t.k);
 
-    nodeGroup
-      .on("mouseover", function (_event: any, d: any) {
-        d3.select(this).select("circle")
-          .attr("stroke-opacity", 0.9)
-          .attr("r", d.isCharacter ? 14 : 7);
-        d3.select(this).select("text")
-          .attr("opacity", 1)
-          .attr("font-size", d.isCharacter ? "12px" : "9px");
-
-        const connectedIds = new Set<string>();
-        simLinks.forEach((l: any) => {
-          if (l.source.id === d.id) connectedIds.add(l.target.id);
-          if (l.target.id === d.id) connectedIds.add(l.source.id);
-        });
-
-        link
-          .attr("stroke-opacity", (l: any) =>
-            l.source.id === d.id || l.target.id === d.id ? 0.8 : 0.05
-          )
-          .attr("stroke-width", (l: any) =>
-            l.source.id === d.id || l.target.id === d.id ? 1.5 : 0.3
-          );
-
-        nodeGroup.selectAll("circle").attr("fill-opacity", (n: any) =>
-          n.id === d.id || connectedIds.has(n.id) ? 1 : 0.1
-        );
-        nodeGroup.selectAll("text").attr("opacity", (n: any) =>
-          n.id === d.id || connectedIds.has(n.id) ? 1 : 0.05
-        );
-      })
-      .on("mouseout", function () {
-        nodeGroup.selectAll("circle").each(function(d: any) {
-          d3.select(this)
-            .attr("stroke-opacity", 0.3)
-            .attr("r", d.isCharacter ? 10 : 4)
-            .attr("fill-opacity", d.isCharacter ? 0.9 : 0.6);
-        });
-        nodeGroup.selectAll("text").each(function(d: any) {
-          d3.select(this)
-            .attr("opacity", d.isCharacter ? 0.85 : 0.5)
-            .attr("font-size", d.isCharacter ? "10px" : "7px");
-        });
-        link.attr("stroke-opacity", 0.25).attr("stroke-width", 0.6);
-      })
-      .on("click", (_event: any, d: any) => {
-        if (d.isCharacter && d.original) {
-          setSelectedNode(d.original);
+      const hoveredId = currentHovered?.id;
+      const connectedIds = new Set<string>();
+      if (hoveredId) {
+        for (const l of simLinks) {
+          if (l.source.id === hoveredId) connectedIds.add(l.target.id);
+          if (l.target.id === hoveredId) connectedIds.add(l.source.id);
         }
+      }
+
+      for (const l of simLinks) {
+        const isHighlighted = hoveredId && (l.source.id === hoveredId || l.target.id === hoveredId);
+        const color = CATEGORY_COLORS[l.category] || "#350A8C";
+        ctx.beginPath();
+        ctx.moveTo(l.source.x, l.source.y);
+        ctx.lineTo(l.target.x, l.target.y);
+        ctx.strokeStyle = color;
+        ctx.globalAlpha = isHighlighted ? 0.7 : hoveredId ? 0.03 : 0.15;
+        ctx.lineWidth = isHighlighted ? 1.5 : 0.5;
+        ctx.stroke();
+      }
+
+      ctx.globalAlpha = 1;
+
+      for (const n of simNodes) {
+        const isHovered = n.id === hoveredId;
+        const isConnected = connectedIds.has(n.id);
+        const dimmed = hoveredId && !isHovered && !isConnected;
+
+        if (n.isCharacter) {
+          const color = getTraditionColor(n.tradition);
+          const r = isHovered ? 10 : 6;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.globalAlpha = dimmed ? 0.08 : 0.85;
+          ctx.fill();
+          if (isHovered || isConnected) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+            ctx.globalAlpha = 0.6;
+            ctx.stroke();
+          }
+        } else {
+          const color = CATEGORY_COLORS[n.category] || "#350A8C";
+          const r = isHovered ? 5 : 3;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.globalAlpha = dimmed ? 0.05 : 0.5;
+          ctx.fill();
+        }
+      }
+
+      ctx.globalAlpha = 1;
+
+      const showLabels = t.k > 0.6;
+      if (showLabels) {
+        for (const n of simNodes) {
+          const isHovered = n.id === hoveredId;
+          const isConnected = connectedIds.has(n.id);
+          const dimmed = hoveredId && !isHovered && !isConnected;
+
+          if (n.isCharacter) {
+            if (dimmed && !isConnected) continue;
+            ctx.font = isHovered ? "bold 11px 'Playfair Display', serif" : "9px 'Playfair Display', serif";
+            ctx.fillStyle = "#E0DCE6";
+            ctx.globalAlpha = isHovered ? 1 : isConnected ? 0.9 : (t.k > 1.5 ? 0.7 : 0.4);
+            ctx.textAlign = "center";
+            ctx.fillText(n.label, n.x, n.y - (isHovered ? 14 : 10));
+          } else if (isHovered || isConnected) {
+            ctx.font = "8px 'DM Sans', sans-serif";
+            ctx.fillStyle = CATEGORY_COLORS[n.category] || "#E0DCE6";
+            ctx.globalAlpha = 0.8;
+            ctx.textAlign = "center";
+            ctx.fillText(n.label, n.x, n.y - 7);
+          }
+        }
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
+    simulation.on("tick", draw);
+
+    const zoomBehavior = d3.zoom<HTMLCanvasElement, unknown>()
+      .scaleExtent([0.1, 8])
+      .on("zoom", (event) => {
+        transformRef.current = event.transform;
+        draw();
       });
 
-    simulation.on("tick", () => {
-      link
-        .attr("x1", (d: any) => d.source.x)
-        .attr("y1", (d: any) => d.source.y)
-        .attr("x2", (d: any) => d.target.x)
-        .attr("y2", (d: any) => d.target.y);
+    d3.select(canvas).call(zoomBehavior);
 
-      nodeGroup.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
-    });
+    function getNodeAt(px: number, py: number) {
+      const t = transformRef.current;
+      const x = (px - t.x) / t.k;
+      const y = (py - t.y) / t.k;
+      for (let i = simNodes.length - 1; i >= 0; i--) {
+        const n = simNodes[i];
+        const r = n.isCharacter ? 8 : 5;
+        const dx = x - n.x;
+        const dy = y - n.y;
+        if (dx * dx + dy * dy < r * r * 4) return n;
+      }
+      return null;
+    }
+
+    canvas.onmousemove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const node = getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
+      currentHovered = node;
+      setHoveredNode(node);
+      canvas.style.cursor = node ? "pointer" : "default";
+      draw();
+    };
+
+    canvas.onclick = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const node = getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
+      if (node?.isCharacter && node.original) {
+        setSelectedNode(node.original);
+      }
+    };
+
+    canvas.onmouseleave = () => {
+      currentHovered = null;
+      setHoveredNode(null);
+      draw();
+    };
 
     return () => {
       simulation.stop();
+      canvas.onmousemove = null;
+      canvas.onclick = null;
+      canvas.onmouseleave = null;
     };
   }, [filteredGraphNodes, filteredLinks]);
+
+  const charNodeCount = useMemo(() => filteredGraphNodes.filter(n => n.isCharacter).length, [filteredGraphNodes]);
 
   if (isLoading) {
     return (
@@ -605,7 +660,7 @@ export default function GraphPage() {
         </div>
       </div>
 
-      <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15">
+      <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[80vh] overflow-y-auto">
         <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">Traditions</span>
         {Object.entries(TRADITION_COLORS).map(([tradition, color]) => (
           <div key={tradition} className="flex items-center gap-1.5">
@@ -622,16 +677,33 @@ export default function GraphPage() {
         ))}
       </div>
 
+      {hoveredNode && hoveredNode.isCharacter && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 bg-[#0B0626]/90 backdrop-blur-sm border border-[#350A8C]/30 rounded-lg px-4 py-2 pointer-events-none">
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: getTraditionColor(hoveredNode.tradition) }} />
+            <span className="text-sm text-shadows-text font-serif">{hoveredNode.label}</span>
+            {hoveredNode.original?.tradition && (
+              <span className="text-[10px] text-shadows-text/40 ml-1">({hoveredNode.original.tradition})</span>
+            )}
+          </div>
+          {hoveredNode.original?.domain && (
+            <p className="text-[10px] text-shadows-text/50 mt-0.5 ml-5">{hoveredNode.original.domain}</p>
+          )}
+        </div>
+      )}
+
       <FilterSidebar
         filters={filters}
         activeFilters={activeFilters}
         onToggleFilter={toggleFilter}
         isOpen={filtersOpen}
         onToggle={() => setFiltersOpen(!filtersOpen)}
+        nodeCount={charNodeCount}
+        totalCount={data.nodes.length}
       />
 
       <div className="absolute inset-0 lg:left-64">
-        <svg ref={svgRef} className="w-full h-full" />
+        <canvas ref={canvasRef} className="w-full h-full" />
       </div>
 
       {selectedNode && (

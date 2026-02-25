@@ -1,10 +1,10 @@
 # SHADOWS - Comparative Archetypal Atlas
 
 ## Overview
-SHADOWS is an academic research platform for comparative mythology. It visualizes mythological figures (deities, heroes, etc.) using interactive network graphs built with D3.js, positioning figures by attribute similarity across world traditions.
+SHADOWS is an academic research platform for comparative mythology. It visualizes mythological figures (deities, heroes, etc.) using interactive network graphs built with D3.js, using a bipartite layout where figures connect through shared characteristic nodes.
 
 ## Tech Stack
-- **Frontend**: React + TypeScript, Vite, TailwindCSS, D3.js
+- **Frontend**: React + TypeScript, Vite, TailwindCSS, D3.js (Canvas rendering)
 - **Backend**: Express.js API routes
 - **Database**: PostgreSQL with Drizzle ORM
 - **Routing**: Wouter (client-side), Express (server-side)
@@ -14,6 +14,7 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 - `client/src/pages/` - Page components (landing, team, partners, news, research, graph, admin)
 - `client/src/components/` - Shared components (Navbar, Footer, shadcn/ui)
 - `server/` - Express backend (routes.ts, storage.ts, seed.ts)
+- `server/scrape-wikipedia.ts` - Wikipedia scraper for populating figures from categories
 - `shared/schema.ts` - Drizzle schema + Zod validation types
 
 ## Database Schema
@@ -22,17 +23,30 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
   - name, tradition, gender, domain, object, animals
   - characterTrait, physicalCharacteristics
   - significantEvent, birthCircumstances, deathCircumstances
-- `edges` - Relationships between figures (parent of, married to, sibling of, adversary of, etc.)
+- `edges` - Relationships between figures (parent of, married to, sibling of, etc.)
 - `news` - News articles (title, content, date)
 - `publications` - Research publications (title, authors, venue, abstract, doi, pdf_url)
 - `users` - Admin users (username, password)
 
+## Data Source
+- 1,186 mythological figures scraped from Wikipedia categories:
+  - Characters in Greek mythology (+ subcategories)
+  - Norse, Egyptian, Hindu, Shinto, Sumerian, Aztec, Celtic, Roman deities
+  - General mythological characters
+- Infobox data parsed for structured fields (domain, symbols, animals, relationships)
+- Intro text parsed for gender, birth/death, physical descriptions, events
+- 294 relationship edges extracted from infobox family data
+- Run `npx tsx server/scrape-wikipedia.ts` to re-scrape
+
 ## Graph Visualization
-- Nodes colored by tradition (Greek=purple, Norse=blue, Egyptian=gold, Hindu=orange, Shinto=pink, Sumerian=green, Aztec=cyan)
-- Node positioning uses attribute similarity (gender, domain, objects, animals, traits, events, birth/death)
-- Edges drawn as lines showing explicit relationships
-- Tradition is NOT used for similarity calculation (only for coloring)
-- Filters: tradition, gender, domain
+- **Canvas-based** rendering for performance with 1000+ nodes
+- Bipartite layout: character nodes + shared trait nodes
+- Character nodes colored by tradition (Greek=#8F00FF, Norse=#4A7BFF, Egyptian=#FFB800, Hindu=#FF6B35, Shinto=#FF4081, Sumerian=#03FF9B, Aztec=#00BCD4, Celtic=#7FFF00, Roman=#FF8A65, Mythological=#B388FF)
+- Trait nodes colored by attribute category (gender, domain, object, animals, etc.)
+- Only traits shared by 3+ figures appear as nodes
+- Hover highlights connections, click opens detail panel
+- Zoom/pan with mouse, labels appear at zoom > 0.6x
+- Filters: tradition checkboxes, attribute category checkboxes, search
 
 ## Design System
 - Dark cosmic theme: backgrounds #0B0626, #0C0042
@@ -52,13 +66,14 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 - `/partners` - Collaborating institutions
 - `/news` - Academic blog/news articles
 - `/research` - Publications list
-- `/graph` - Interactive D3.js graph visualization (similarity-based layout)
+- `/graph` - Interactive D3.js canvas graph (bipartite layout)
 - `/admin` - Password-protected CRUD dashboard
 
 ## Admin
 - Login uses SESSION_SECRET env variable as password
 - CRUD for figures, relationships, projects, news, publications
-- Delete confirmation dialogs
+- Tabs renamed to "Figures" and "Relationships"
 
 ## Running
 - `npm run dev` starts both Express backend and Vite frontend
+- `npx tsx server/scrape-wikipedia.ts` to re-scrape Wikipedia data
