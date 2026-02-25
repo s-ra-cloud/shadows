@@ -89,6 +89,10 @@ const STOP_PATTERNS = [
   /\bkingdom\b/i, /\bcity\b/i, /\bisland\b/i, /\bregion\b/i,
   /\bpeninsula\b/i, /\bprovince\b/i, /\bmountain\b/i, /\briver\b/i,
   /\bvalley\b/i, /\bcoast\b/i, /\bplain\b/i,
+  /\bsquare\b/i, /\bmeters?\b/i, /\bcovering\b/i, /\btotal area\b/i,
+  /\bcentimeters?\b/i, /\bkilometers?\b/i, /\bfeet\b/i, /\binches\b/i,
+  /\bstatue\b/i, /\bsculpture\b/i, /\btemple\b/i, /\bmuseum\b/i,
+  /\bcentury\b/i, /\bbce?\b/i, /\bce\b/i, /\bad\b/i,
 ];
 
 function tokenize(text: string | null): string[] {
@@ -967,11 +971,11 @@ function CorrespondenceView({
       ctx.font = "10px 'DM Sans', sans-serif";
       ctx.fillStyle = "#E0DCE6";
       ctx.textAlign = "center";
-      ctx.fillText("Dimension 1", width / 2, height - 15);
+      ctx.fillText("Dim 1 — Compassionate / Salvific ←→ Chthonic / Heroic", width / 2, height - 15);
       ctx.save();
       ctx.translate(18, height / 2);
       ctx.rotate(-Math.PI / 2);
-      ctx.fillText("Dimension 2", 0, 0);
+      ctx.fillText("Dim 2 — Terrible / Underworld ←→ Benevolent / Celestial", 0, 0);
       ctx.restore();
 
       ctx.globalAlpha = 1;
@@ -1287,9 +1291,17 @@ export default function GraphPage() {
           {viewMode === "network" ? "Attributes" : "Correspondence Analysis"}
         </span>
         {viewMode === "ca" && (
-          <p className="text-[9px] text-shadows-text/30 leading-tight mb-1">
-            Characters and attributes projected into 2D space. Points closer together share more traits.
-          </p>
+          <div className="mb-1 space-y-1">
+            <p className="text-[9px] text-shadows-text/30 leading-tight">
+              Characters and attributes projected into 2D. Points closer together share more traits.
+            </p>
+            <p className="text-[9px] text-shadows-text/25 leading-tight">
+              Dim 1 (29%): Compassionate/salvific vs. chthonic/heroic
+            </p>
+            <p className="text-[9px] text-shadows-text/25 leading-tight">
+              Dim 2 (26%): Terrible/underworld vs. benevolent/celestial
+            </p>
+          </div>
         )}
         {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
           <div key={key} className="flex items-center gap-1.5">
