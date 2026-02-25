@@ -59,6 +59,19 @@ const STOP_TOKENS = new Set([
   "norse mythology", "egyptian mythology", "hindu mythology",
   "ancient greek", "ancient rome", "ancient egypt",
   "mythology", "according to", "also known as",
+  "thebes", "athens", "sparta", "corinth", "argos", "mycenae", "troy",
+  "thessaly", "thrace", "phthia", "iolcus", "iolcos", "megara", "seriphos",
+  "crete", "delos", "delphi", "olympus", "olympia", "arcadia", "attica",
+  "boeotia", "epirus", "dodona", "eleusis", "phocis", "locris", "achaea",
+  "rhodes", "cyprus", "lemnos", "lesbos", "naxos", "ithaca", "mykonos",
+  "plataea", "tiryns", "pylos", "calydon", "colchis", "lycia", "lydia",
+  "phrygia", "troy", "ilium", "pergamon", "phoenicia", "assyria", "babylon",
+  "persia", "india", "libya", "ethiopia", "sicily", "italy", "rome",
+  "carthage", "gaul", "britannia", "germania", "scandinavia",
+  "asgard", "midgard", "jotunheim", "niflheim", "muspelheim", "valhalla",
+  "helheim", "svartalfheim", "alfheim", "mount olympus",
+  "egypt", "nubia", "mesopotamia", "sumer", "akkad", "ur", "uruk",
+  "nippur", "eridu", "lagash", "kish",
 ]);
 
 const STOP_PATTERNS = [
@@ -72,6 +85,10 @@ const STOP_PATTERNS = [
   /\bsee also\b/i, /\bvariant\b/i, /\bwas a\b/i, /\bwere\b/i,
   /\bmay refer\b/i, /\bcan refer\b/i, /\bthe name\b/i,
   /\blatin/i, /\betruscan/i, /\bphrygian/i, /\bthracian/i,
+  /\bking of\b/i, /\bqueen of\b/i, /\bprince of\b/i, /\bprincess of\b/i,
+  /\bkingdom\b/i, /\bcity\b/i, /\bisland\b/i, /\bregion\b/i,
+  /\bpeninsula\b/i, /\bprovince\b/i, /\bmountain\b/i, /\briver\b/i,
+  /\bvalley\b/i, /\bcoast\b/i, /\bplain\b/i,
 ];
 
 function tokenize(text: string | null): string[] {
