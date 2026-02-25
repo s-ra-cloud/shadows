@@ -72,6 +72,7 @@ const STOP_TOKENS = new Set([
   "helheim", "svartalfheim", "alfheim", "mount olympus",
   "egypt", "nubia", "mesopotamia", "sumer", "akkad", "ur", "uruk",
   "nippur", "eridu", "lagash", "kish",
+  "same name", "the same name", "long", "supported by two human-like feet",
 ]);
 
 const STOP_PATTERNS = [
@@ -93,10 +94,140 @@ const STOP_PATTERNS = [
   /\bcentimeters?\b/i, /\bkilometers?\b/i, /\bfeet\b/i, /\binches\b/i,
   /\bstatue\b/i, /\bsculpture\b/i, /\btemple\b/i, /\bmuseum\b/i,
   /\bcentury\b/i, /\bbce?\b/i, /\bce\b/i, /\bad\b/i,
+  /\bdoor god\b/i, /\btaoist\b/i, /\bbuddhist\b/i,
 ];
+
+const SYNONYMS: Record<string, string> = {
+  "serpent": "snake",
+  "serpents": "snake",
+  "snakes": "snake",
+  "serpent/snake": "snake",
+  "serpent/dragon": "dragon",
+  "feathered serpent": "snake",
+  "cobra": "snake",
+  "serpentine": "snake",
+  "tortoise": "turtle",
+  "cock": "rooster",
+  "hen": "rooster",
+  "stag": "deer",
+  "hare": "rabbit",
+  "ox": "bull",
+  "cow": "bull",
+  "pig": "boar",
+  "pig/sow": "boar",
+  "sow": "boar",
+  "panther": "jaguar",
+  "raven": "crow",
+  "hawk": "falcon",
+  "arrows": "bow",
+  "arrow": "bow",
+  "a bow and arrows": "bow",
+  "bow and arrows": "bow",
+  "god of war": "war",
+  "goddess of war": "war",
+  "god of the sea": "sea",
+  "goddess of the sea": "sea",
+  "the sea": "sea",
+  "god of death": "death",
+  "goddess of death": "death",
+  "god of the underworld": "underworld",
+  "the underworld": "underworld",
+  "god of fire": "fire",
+  "goddess of fire": "fire",
+  "god of love": "love",
+  "goddess of love": "love",
+  "god of wisdom": "wisdom",
+  "goddess of wisdom": "wisdom",
+  "god of the sun": "sun",
+  "the sun": "sun",
+  "sun disk": "sun",
+  "god of the moon": "moon",
+  "the moon": "moon",
+  "crescent moon": "moon",
+  "god of the sky": "sky",
+  "the sky": "sky",
+  "god of thunder": "thunder",
+  "god of wine": "wine",
+  "goddess of beauty": "beauty",
+  "goddess of fertility": "fertility",
+  "goddess of love and beauty": "love",
+  "goddess of the hunt": "hunt",
+  "the hunt": "hunt",
+  "god of healing": "healing",
+  "goddess of healing": "healing",
+  "god of medicine": "medicine",
+  "goddess of childbirth": "childbirth",
+  "goddess of marriage": "marriage",
+  "goddess of nature": "nature",
+  "goddess of earth": "earth",
+  "mother goddess": "motherhood",
+  "earth mother": "earth",
+  "great goddess": "motherhood",
+  "good mother archetype": "motherhood",
+  "god of nation-building": "kingship",
+  "god of strength and heroesdivine protector of mankind and the patron of the gymnasium": "strength",
+  "death-rebirth": "death",
+  "death-dealing": "death",
+  "dying-and-rising": "death",
+  "terrible mother": "death",
+  "lion-headed": "lion",
+  "lion's head": "lion",
+  "lion body": "lion",
+  "lion (rides on lion)": "lion",
+  "lion (throne)": "lion",
+  "lions (throne)": "lion",
+  "beasts of the zodiac on robe and crown": "zodiac",
+  "bull (zeus in bull form)": "bull",
+  "bull (cause of death)": "bull",
+  "boar (cause of death)": "boar",
+  "ravens": "crow",
+  "wolves": "wolf",
+  "eight-legged horse": "horse",
+  "all wild animals": "wild animals",
+  "wild animals": "wild animals",
+  "dogs": "dog",
+  "cats": "cat",
+  "lions": "lion",
+  "torches": "torch",
+  "weapons": "weapon",
+  "lioness": "lion",
+  "grain": "agriculture",
+  "great mother": "motherhood",
+  "ostrich feather": "feather",
+};
+
+const STRIP_PREFIXES = [
+  /^goddess of /i,
+  /^god of /i,
+  /^the /i,
+  /^patron(?:ess)? of /i,
+  /^protector of /i,
+  /^guardian of /i,
+  /^personification of /i,
+  /^spirit of /i,
+  /^muse of /i,
+  /^deity of /i,
+];
+
+function normalizeToken(token: string): string {
+  let t = token.trim().toLowerCase();
+  if (SYNONYMS[t]) return SYNONYMS[t];
+  for (const p of STRIP_PREFIXES) {
+    if (p.test(t)) {
+      const stripped = t.replace(p, "").trim();
+      if (stripped.length >= 2) t = stripped;
+      break;
+    }
+  }
+  if (SYNONYMS[t]) return SYNONYMS[t];
+  t = t.replace(/s$/, "");
+  if (SYNONYMS[t]) return SYNONYMS[t];
+  return t.replace(/s$/, "");
+}
 
 function tokenize(text: string | null): string[] {
   if (!text) return [];
+  const seen = new Set<string>();
   return text
     .split(/[,;]+/)
     .map(s => s.trim().toLowerCase())
@@ -104,6 +235,13 @@ function tokenize(text: string | null): string[] {
       if (s.length <= 1 || s.length >= 60) return false;
       if (STOP_TOKENS.has(s)) return false;
       if (STOP_PATTERNS.some(p => p.test(s))) return false;
+      return true;
+    })
+    .map(s => normalizeToken(s))
+    .filter(s => {
+      if (s.length <= 1) return false;
+      if (seen.has(s)) return false;
+      seen.add(s);
       return true;
     });
 }
