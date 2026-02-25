@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Plus, LogOut, Lock } from "lucide-react";
+import { Trash2, Plus, LogOut, Lock, Download } from "lucide-react";
 import type { Project, Node, Edge, News, Publication } from "@shared/schema";
 
 function LoginForm({ onLogin }: { onLogin: (password: string) => void }) {
@@ -276,19 +276,33 @@ export default function AdminPage() {
           <h1 className="font-serif text-3xl text-shadows-text tracking-wide" data-testid="text-admin-title">
             Admin Dashboard
           </h1>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              try { await apiRequest("POST", "/api/admin/logout"); } catch {}
-              setAuthenticated(false);
-            }}
-            className="border-[#350A8C]/30 text-shadows-text/50 no-default-hover-elevate no-default-active-elevate"
-            data-testid="button-admin-logout"
-          >
-            <LogOut className="w-3.5 h-3.5 mr-1.5" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                window.location.href = "/api/export";
+              }}
+              className="border-[#350A8C]/30 text-shadows-text/50 no-default-hover-elevate no-default-active-elevate"
+              data-testid="button-download-db"
+            >
+              <Download className="w-3.5 h-3.5 mr-1.5" />
+              Download DB
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                try { await apiRequest("POST", "/api/admin/logout"); } catch {}
+                setAuthenticated(false);
+              }}
+              className="border-[#350A8C]/30 text-shadows-text/50 no-default-hover-elevate no-default-active-elevate"
+              data-testid="button-admin-logout"
+            >
+              <LogOut className="w-3.5 h-3.5 mr-1.5" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="figures">
