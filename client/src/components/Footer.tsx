@@ -15,7 +15,7 @@ export default function Footer() {
             <h4 className="text-shadows-text/70 text-sm font-medium mb-3 uppercase tracking-wider">Navigate</h4>
             <div className="flex flex-col gap-2">
               <Link href="/research"><span className="text-shadows-text/50 text-sm hover:text-shadows-green transition-colors" data-testid="link-footer-research">Research</span></Link>
-              <Link href="/projects"><span className="text-shadows-text/50 text-sm hover:text-shadows-green transition-colors" data-testid="link-footer-projects">Projects</span></Link>
+              <Link href="/graph"><span className="text-shadows-text/50 text-sm hover:text-shadows-green transition-colors" data-testid="link-footer-graph">Graph</span></Link>
               <Link href="/news"><span className="text-shadows-text/50 text-sm hover:text-shadows-green transition-colors" data-testid="link-footer-news">News</span></Link>
             </div>
           </div>

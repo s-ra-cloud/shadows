@@ -11,7 +11,6 @@ import TeamPage from "@/pages/team";
 import PartnersPage from "@/pages/partners";
 import NewsPage from "@/pages/news";
 import ResearchPage from "@/pages/research";
-import ProjectsPage from "@/pages/projects";
 import GraphPage from "@/pages/graph";
 import AdminPage from "@/pages/admin";
 
@@ -43,10 +42,7 @@ function Router() {
       <Route path="/research">
         <PublicLayout><ResearchPage /></PublicLayout>
       </Route>
-      <Route path="/projects">
-        <PublicLayout><ProjectsPage /></PublicLayout>
-      </Route>
-      <Route path="/projects/:slug">
+      <Route path="/graph">
         <GraphPage />
       </Route>
       <Route path="/admin">

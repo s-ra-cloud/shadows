@@ -46,6 +46,12 @@ export async function registerRoutes(
     res.json({ project, nodes: projectNodes, edges: projectEdges });
   });
 
+  app.get("/api/graph", async (_req, res) => {
+    const allNodes = await storage.getNodes();
+    const allEdges = await storage.getEdges();
+    res.json({ nodes: allNodes, edges: allEdges });
+  });
+
   app.get("/api/nodes", async (_req, res) => {
     const allNodes = await storage.getNodes();
     res.json(allNodes);

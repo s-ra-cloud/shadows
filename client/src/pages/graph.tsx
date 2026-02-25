@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useRoute } from "wouter";
 import * as d3 from "d3";
 import { X, Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -8,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Project, Node, Edge } from "@shared/schema";
+import type { Node, Edge } from "@shared/schema";
 
 const NODE_COLORS: Record<string, string> = {
   archetype: "#8F00FF",
@@ -22,7 +21,6 @@ function getNodeColor(type: string) {
 }
 
 interface GraphData {
-  project: Project;
   nodes: Node[];
   edges: Edge[];
 }
@@ -182,11 +180,8 @@ function FilterSidebar({
 }
 
 export default function GraphPage() {
-  const [, params] = useRoute("/projects/:slug");
-  const slug = params?.slug || "";
-
   const { data, isLoading } = useQuery<GraphData>({
-    queryKey: ["/api/projects", slug, "graph"],
+    queryKey: ["/api/graph"],
   });
 
   const svgRef = useRef<SVGSVGElement>(null);

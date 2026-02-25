@@ -1,9 +1,7 @@
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, BookOpen, Network } from "lucide-react";
+import { ArrowRight, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImage from "@assets/hero_1772030235687.jpeg";
-import type { Project } from "@shared/schema";
 
 function HeroSection() {
   return (
@@ -39,7 +37,7 @@ function HeroSection() {
           across world religions and cultures through interactive network visualizations.
         </p>
         <div className="animate-fade-in-up" style={{ animationDelay: "0.7s" }}>
-          <Link href="/projects">
+          <Link href="/graph">
             <Button
               variant="outline"
               size="lg"
@@ -150,70 +148,73 @@ function AboutSection() {
   );
 }
 
-function ResearchModulesSection() {
-  const { data: projects } = useQuery<Project[]>({
-    queryKey: ["/api/projects"],
-  });
-
+function GraphPreviewSection() {
   return (
-    <section className="py-24 bg-gradient-to-b from-[#0B0626] to-[#0C0042]" data-testid="section-modules">
-      <div className="max-w-7xl mx-auto px-6">
-        <h2 className="font-serif text-3xl md:text-4xl text-shadows-text tracking-wide text-center mb-4">
-          Research Modules
-        </h2>
-        <p className="text-shadows-text/50 text-center max-w-xl mx-auto mb-16">
-          Interactive graph explorations mapping recurring patterns across mythological traditions.
-        </p>
+    <section className="relative py-32 bg-gradient-to-b from-[#0B0626] to-[#0C0042] overflow-hidden" data-testid="section-graph-preview">
+      <div className="absolute inset-0 flex items-center justify-center opacity-[0.08] pointer-events-none">
+        <svg viewBox="0 0 800 500" className="w-full max-w-5xl">
+          <circle cx="120" cy="100" r="6" fill="#8F00FF" />
+          <circle cx="300" cy="60" r="5" fill="#350A8C" />
+          <circle cx="480" cy="110" r="7" fill="#03FF9B" />
+          <circle cx="650" cy="80" r="5" fill="#E0DCE6" />
+          <circle cx="200" cy="220" r="6" fill="#350A8C" />
+          <circle cx="400" cy="200" r="8" fill="#8F00FF" />
+          <circle cx="580" cy="230" r="5" fill="#03FF9B" />
+          <circle cx="100" cy="340" r="5" fill="#8F00FF" />
+          <circle cx="320" cy="360" r="6" fill="#E0DCE6" />
+          <circle cx="500" cy="380" r="5" fill="#350A8C" />
+          <circle cx="680" cy="350" r="6" fill="#8F00FF" />
+          <circle cx="250" cy="440" r="4" fill="#03FF9B" />
+          <circle cx="550" cy="420" r="5" fill="#350A8C" />
+          <circle cx="720" cy="200" r="4" fill="#E0DCE6" />
+          <circle cx="60" cy="220" r="4" fill="#03FF9B" />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {projects && projects.length > 0 ? (
-            projects.map((project) => (
-              <div
-                key={project.id}
-                className="group relative rounded-md border border-[#350A8C]/30 bg-[#0B0626]/50 p-8 transition-all duration-300 hover:border-[#8F00FF]/60"
-                data-testid={`card-project-${project.slug}`}
-              >
-                <div className="absolute inset-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                  style={{ boxShadow: "inset 0 0 30px rgba(143, 0, 255, 0.05)" }}
-                />
-                <div className="mb-6">
-                  <Network className="w-10 h-10 text-[#8F00FF]/60 group-hover:text-[#8F00FF] transition-colors" />
-                </div>
-                <h3 className="font-serif text-xl text-shadows-text mb-3">{project.title}</h3>
-                <p className="text-shadows-text/50 text-sm leading-relaxed mb-6">
-                  {project.description}
-                </p>
-                <Link href={`/projects/${project.slug}`}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-[#8F00FF]/40 text-shadows-text/80 hover:border-[#03FF9B] hover:text-[#03FF9B] no-default-hover-elevate no-default-active-elevate transition-all duration-300"
-                    data-testid={`button-open-graph-${project.slug}`}
-                  >
-                    Open Graph
-                    <ArrowRight className="ml-2 w-3 h-3" />
-                  </Button>
-                </Link>
-              </div>
-            ))
-          ) : (
-            [1, 2].map((i) => (
-              <div key={i} className="rounded-md border border-[#350A8C]/20 bg-[#0B0626]/50 p-8">
-                <div className="mb-6">
-                  {i === 1 ? (
-                    <Network className="w-10 h-10 text-[#8F00FF]/40" />
-                  ) : (
-                    <BookOpen className="w-10 h-10 text-[#8F00FF]/40" />
-                  )}
-                </div>
-                <div className="h-5 w-40 bg-[#350A8C]/20 rounded mb-3 animate-pulse" />
-                <div className="h-3 w-full bg-[#350A8C]/10 rounded mb-2 animate-pulse" />
-                <div className="h-3 w-3/4 bg-[#350A8C]/10 rounded mb-6 animate-pulse" />
-                <div className="h-8 w-28 bg-[#350A8C]/10 rounded animate-pulse" />
-              </div>
-            ))
-          )}
-        </div>
+          <line x1="120" y1="100" x2="300" y2="60" stroke="#8F00FF" strokeWidth="0.8" />
+          <line x1="300" y1="60" x2="480" y2="110" stroke="#350A8C" strokeWidth="0.8" />
+          <line x1="480" y1="110" x2="650" y2="80" stroke="#8F00FF" strokeWidth="0.5" />
+          <line x1="120" y1="100" x2="200" y2="220" stroke="#350A8C" strokeWidth="0.8" />
+          <line x1="300" y1="60" x2="400" y2="200" stroke="#8F00FF" strokeWidth="0.5" />
+          <line x1="200" y1="220" x2="400" y2="200" stroke="#03FF9B" strokeWidth="0.8" />
+          <line x1="400" y1="200" x2="580" y2="230" stroke="#350A8C" strokeWidth="0.8" />
+          <line x1="480" y1="110" x2="580" y2="230" stroke="#8F00FF" strokeWidth="0.5" />
+          <line x1="650" y1="80" x2="720" y2="200" stroke="#350A8C" strokeWidth="0.5" />
+          <line x1="580" y1="230" x2="680" y2="350" stroke="#8F00FF" strokeWidth="0.8" />
+          <line x1="200" y1="220" x2="100" y2="340" stroke="#8F00FF" strokeWidth="0.5" />
+          <line x1="100" y1="340" x2="320" y2="360" stroke="#350A8C" strokeWidth="0.8" />
+          <line x1="320" y1="360" x2="500" y2="380" stroke="#8F00FF" strokeWidth="0.5" />
+          <line x1="400" y1="200" x2="320" y2="360" stroke="#03FF9B" strokeWidth="0.5" />
+          <line x1="500" y1="380" x2="680" y2="350" stroke="#350A8C" strokeWidth="0.8" />
+          <line x1="100" y1="340" x2="250" y2="440" stroke="#03FF9B" strokeWidth="0.5" />
+          <line x1="320" y1="360" x2="250" y2="440" stroke="#8F00FF" strokeWidth="0.5" />
+          <line x1="500" y1="380" x2="550" y2="420" stroke="#8F00FF" strokeWidth="0.5" />
+          <line x1="680" y1="350" x2="550" y2="420" stroke="#350A8C" strokeWidth="0.5" />
+          <line x1="60" y1="220" x2="120" y2="100" stroke="#03FF9B" strokeWidth="0.5" />
+          <line x1="60" y1="220" x2="100" y2="340" stroke="#8F00FF" strokeWidth="0.5" />
+          <line x1="720" y1="200" x2="680" y2="350" stroke="#8F00FF" strokeWidth="0.5" />
+          <line x1="400" y1="200" x2="500" y2="380" stroke="#350A8C" strokeWidth="0.5" />
+        </svg>
+      </div>
+
+      <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">
+        <Network className="w-10 h-10 text-[#8F00FF]/50 mx-auto mb-6" />
+        <h2 className="font-serif text-3xl md:text-4xl text-shadows-text tracking-wide mb-4">
+          Explore the Atlas
+        </h2>
+        <p className="text-shadows-text/50 max-w-xl mx-auto mb-10 leading-relaxed">
+          Navigate an interactive network graph mapping deities, mythological figures, and symbolic motifs
+          across cultures and traditions. Zoom, filter, and discover hidden connections.
+        </p>
+        <Link href="/graph">
+          <Button
+            variant="outline"
+            size="lg"
+            className="border-[#8F00FF] text-shadows-text hover:border-[#03FF9B] hover:text-[#03FF9B] transition-all duration-300 px-8 tracking-wider no-default-hover-elevate no-default-active-elevate"
+            data-testid="button-explore-graph"
+          >
+            Open Graph
+            <ArrowRight className="ml-2 w-4 h-4" />
+          </Button>
+        </Link>
       </div>
     </section>
   );
@@ -310,7 +311,7 @@ export default function LandingPage() {
     <div className="bg-[#0B0626]">
       <HeroSection />
       <AboutSection />
-      <ResearchModulesSection />
+      <GraphPreviewSection />
       <TeamPreview />
       <PartnersPreview />
     </div>

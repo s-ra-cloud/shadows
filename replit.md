@@ -1,7 +1,7 @@
 # SHADOWS - Comparative Archetypal Atlas
 
 ## Overview
-SHADOWS is an academic research platform for comparative mythology inspired by Jungian psychology. It visualizes archetypes, deities, mythological figures, and symbolic motifs using interactive network graphs built with D3.js.
+SHADOWS is an academic research platform for comparative mythology. It visualizes archetypes, deities, mythological figures, and symbolic motifs using interactive network graphs built with D3.js.
 
 ## Tech Stack
 - **Frontend**: React + TypeScript, Vite, TailwindCSS, D3.js
@@ -11,7 +11,7 @@ SHADOWS is an academic research platform for comparative mythology inspired by J
 - **State**: TanStack React Query
 
 ## Architecture
-- `client/src/pages/` - Page components (landing, team, partners, news, research, projects, graph, admin)
+- `client/src/pages/` - Page components (landing, team, partners, news, research, graph, admin)
 - `client/src/components/` - Shared components (Navbar, Footer, shadcn/ui)
 - `server/` - Express backend (routes.ts, storage.ts, seed.ts)
 - `shared/schema.ts` - Drizzle schema + Zod validation types
@@ -32,14 +32,17 @@ SHADOWS is an academic research platform for comparative mythology inspired by J
 - Serif headings (Playfair Display), sans body (DM Sans)
 
 ## Pages
-- `/` - Landing page with hero (hero image), about, modules, team, partners sections
+- `/` - Landing page with hero, about, graph preview CTA, team, partners sections
 - `/team` - Research team profiles
 - `/partners` - Collaborating institutions
 - `/news` - Academic blog/news articles
 - `/research` - Publications list
-- `/projects` - Research module overview
-- `/projects/:slug` - Interactive D3.js graph visualization
+- `/graph` - Interactive D3.js graph visualization (all nodes/edges combined)
 - `/admin` - Password-protected CRUD dashboard
+
+## Key API Endpoints
+- `GET /api/graph` - Returns all nodes and edges for the unified graph view
+- `GET /api/projects/:slug/graph` - Project-specific graph data (legacy)
 
 ## Admin
 - Login uses SESSION_SECRET env variable as password
@@ -48,5 +51,3 @@ SHADOWS is an academic research platform for comparative mythology inspired by J
 
 ## Running
 - `npm run dev` starts both Express backend and Vite frontend
-- `npm run db:push` pushes schema to PostgreSQL
-- Database auto-seeds on first run
