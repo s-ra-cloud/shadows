@@ -246,7 +246,7 @@ interface CAPoint {
 }
 
 function computeCorrespondenceAnalysis(figures: Node[]): CAPoint[] {
-  const minShared = 2;
+  const minShared = 3;
   const traitCounts = new Map<string, { label: string; category: string; count: number }>();
   const figTraitSets = new Map<number, Set<string>>();
 
@@ -275,102 +275,149 @@ function computeCorrespondenceAnalysis(figures: Node[]): CAPoint[] {
     if (!traits) return false;
     let count = 0;
     for (const t of traits) {
-      if (traitCounts.get(t)?.count ?? 0 >= minShared) count++;
+      if ((traitCounts.get(t)?.count ?? 0) >= minShared) count++;
     }
     return count >= 2;
   });
 
-  if (qualifiedFigs.length < 3 || sharedTraitIds.length < 3) return [];
+  if (qualifiedFigs.length < 5 || sharedTraitIds.length < 5) return [];
 
   const nRows = qualifiedFigs.length;
   const nCols = sharedTraitIds.length;
   const traitIdx = new Map<string, number>();
   sharedTraitIds.forEach((id, i) => traitIdx.set(id, i));
 
-  const N: number[][] = [];
+  const F: number[][] = [];
+  let grandTotal = 0;
   for (let i = 0; i < nRows; i++) {
     const row = new Array(nCols).fill(0);
     const traits = figTraitSets.get(qualifiedFigs[i].id)!;
     for (const t of traits) {
       const j = traitIdx.get(t);
-      if (j !== undefined) row[j] = 1;
+      if (j !== undefined) { row[j] = 1; grandTotal++; }
     }
-    N.push(row);
+    F.push(row);
   }
 
-  const grandTotal = N.reduce((s, r) => s + r.reduce((a, b) => a + b, 0), 0);
   if (grandTotal === 0) return [];
 
-  const rowSums = N.map(r => r.reduce((a, b) => a + b, 0));
-  const colSums = new Array(nCols).fill(0);
+  const ri = F.map(r => r.reduce((a, b) => a + b, 0) / grandTotal);
+  const cj = new Array(nCols).fill(0);
   for (let i = 0; i < nRows; i++) {
     for (let j = 0; j < nCols; j++) {
-      colSums[j] += N[i][j];
+      cj[j] += F[i][j];
     }
   }
+  for (let j = 0; j < nCols; j++) cj[j] /= grandTotal;
 
-  const S: number[][] = [];
+  const Z: number[][] = [];
   for (let i = 0; i < nRows; i++) {
     const row: number[] = [];
     for (let j = 0; j < nCols; j++) {
-      const expected = (rowSums[i] * colSums[j]) / grandTotal;
-      if (expected > 0 && rowSums[i] > 0 && colSums[j] > 0) {
-        row.push((N[i][j] / grandTotal - expected / grandTotal) / Math.sqrt((rowSums[i] / grandTotal) * (colSums[j] / grandTotal)));
+      if (ri[i] > 0 && cj[j] > 0) {
+        const pij = F[i][j] / grandTotal;
+        row.push((pij - ri[i] * cj[j]) / Math.sqrt(ri[i] * cj[j]));
       } else {
         row.push(0);
       }
     }
-    S.push(row);
+    Z.push(row);
   }
 
-  const k = Math.min(nRows, nCols, 20);
+  const useRows = nRows <= nCols;
+  let M: number[][];
 
-  const STS: number[][] = [];
-  for (let i = 0; i < nCols; i++) {
-    STS.push([]);
-    for (let j = 0; j < nCols; j++) {
-      let v = 0;
-      for (let r = 0; r < nRows; r++) v += S[r][i] * S[r][j];
-      STS[i].push(v);
+  if (useRows) {
+    M = [];
+    for (let i = 0; i < nRows; i++) {
+      M.push([]);
+      for (let j = 0; j < nRows; j++) {
+        let v = 0;
+        for (let k = 0; k < nCols; k++) v += Z[i][k] * Z[j][k];
+        M[i].push(v);
+      }
+    }
+  } else {
+    M = [];
+    for (let i = 0; i < nCols; i++) {
+      M.push([]);
+      for (let j = 0; j < nCols; j++) {
+        let v = 0;
+        for (let k = 0; k < nRows; k++) v += Z[k][i] * Z[k][j];
+        M[i].push(v);
+      }
     }
   }
 
-  const eigenPairs = powerIterationMultiple(STS, Math.min(k, 2));
+  const eigenPairs = powerIterationMultiple(M, 3);
 
-  if (eigenPairs.length < 2) return [];
+  const dims = eigenPairs.filter(ep => ep.value > 1e-8).slice(0, 2);
+  if (dims.length < 2) return [];
 
   const rowCoords: number[][] = [];
-  for (let i = 0; i < nRows; i++) {
-    const coords: number[] = [];
-    for (let d = 0; d < 2; d++) {
-      const sv = Math.sqrt(Math.max(eigenPairs[d].value, 0));
-      if (sv < 1e-10) { coords.push(0); continue; }
-      let c = 0;
-      for (let j = 0; j < nCols; j++) c += S[i][j] * eigenPairs[d].vector[j];
-      const ri = rowSums[i] / grandTotal;
-      coords.push(ri > 0 ? c / (Math.sqrt(ri) * sv) * sv : 0);
+  const colCoords: number[][] = [];
+
+  if (useRows) {
+    for (let i = 0; i < nRows; i++) {
+      const coords: number[] = [];
+      for (let d = 0; d < 2; d++) {
+        const sv = Math.sqrt(dims[d].value);
+        coords.push(ri[i] > 0 ? dims[d].vector[i] * sv / Math.sqrt(ri[i]) : 0);
+      }
+      rowCoords.push(coords);
     }
-    rowCoords.push(coords);
+
+    for (let j = 0; j < nCols; j++) {
+      const coords: number[] = [];
+      for (let d = 0; d < 2; d++) {
+        const sv = Math.sqrt(dims[d].value);
+        if (sv < 1e-10) { coords.push(0); continue; }
+        let c = 0;
+        for (let i = 0; i < nRows; i++) c += Z[i][j] * dims[d].vector[i];
+        coords.push(cj[j] > 0 ? c / (sv * Math.sqrt(cj[j])) : 0);
+      }
+      colCoords.push(coords);
+    }
+  } else {
+    for (let j = 0; j < nCols; j++) {
+      const coords: number[] = [];
+      for (let d = 0; d < 2; d++) {
+        const sv = Math.sqrt(dims[d].value);
+        coords.push(cj[j] > 0 ? dims[d].vector[j] * sv / Math.sqrt(cj[j]) : 0);
+      }
+      colCoords.push(coords);
+    }
+
+    for (let i = 0; i < nRows; i++) {
+      const coords: number[] = [];
+      for (let d = 0; d < 2; d++) {
+        const sv = Math.sqrt(dims[d].value);
+        if (sv < 1e-10) { coords.push(0); continue; }
+        let c = 0;
+        for (let j = 0; j < nCols; j++) c += Z[i][j] * dims[d].vector[j];
+        coords.push(ri[i] > 0 ? c / (sv * Math.sqrt(ri[i])) : 0);
+      }
+      rowCoords.push(coords);
+    }
   }
 
-  const colCoords: number[][] = [];
-  for (let d = 0; d < 2; d++) {
-    const sv = Math.sqrt(Math.max(eigenPairs[d].value, 0));
-    for (let j = 0; j < nCols; j++) {
-      if (!colCoords[j]) colCoords[j] = [];
-      const cj = colSums[j] / grandTotal;
-      colCoords[j].push(cj > 0 ? eigenPairs[d].vector[j] / Math.sqrt(cj) * sv : 0);
-    }
-  }
+  const allX = [...rowCoords.map(c => c[0]), ...colCoords.map(c => c[0])];
+  const allY = [...rowCoords.map(c => c[1]), ...colCoords.map(c => c[1])];
+  const p95x = percentile(allX.map(Math.abs), 0.95);
+  const p95y = percentile(allY.map(Math.abs), 0.95);
+  const capX = p95x > 0 ? p95x * 2 : 1;
+  const capY = p95y > 0 ? p95y * 2 : 1;
 
   const points: CAPoint[] = [];
 
   for (let i = 0; i < nRows; i++) {
+    const cx = Math.max(-capX, Math.min(capX, rowCoords[i][0]));
+    const cy = Math.max(-capY, Math.min(capY, rowCoords[i][1]));
     points.push({
       id: `fig-${qualifiedFigs[i].id}`,
       label: qualifiedFigs[i].name,
-      x: rowCoords[i][0],
-      y: rowCoords[i][1],
+      x: cx,
+      y: cy,
       isCharacter: true,
       tradition: qualifiedFigs[i].tradition,
       original: qualifiedFigs[i],
@@ -379,17 +426,25 @@ function computeCorrespondenceAnalysis(figures: Node[]): CAPoint[] {
 
   for (let j = 0; j < nCols; j++) {
     const data = traitCounts.get(sharedTraitIds[j])!;
+    const cx = Math.max(-capX, Math.min(capX, colCoords[j][0]));
+    const cy = Math.max(-capY, Math.min(capY, colCoords[j][1]));
     points.push({
       id: sharedTraitIds[j],
       label: data.label,
-      x: colCoords[j][0],
-      y: colCoords[j][1],
+      x: cx,
+      y: cy,
       isCharacter: false,
       category: data.category,
     });
   }
 
   return points;
+}
+
+function percentile(arr: number[], p: number): number {
+  const sorted = [...arr].sort((a, b) => a - b);
+  const idx = Math.floor(sorted.length * p);
+  return sorted[Math.min(idx, sorted.length - 1)] || 0;
 }
 
 function powerIterationMultiple(M: number[][], numVecs: number): { value: number; vector: number[] }[] {
@@ -853,25 +908,30 @@ function CorrespondenceView({
 
     const xs = caPoints.map(p => p.x);
     const ys = caPoints.map(p => p.y);
-    const xExtent = [Math.min(...xs), Math.max(...xs)];
-    const yExtent = [Math.min(...ys), Math.max(...ys)];
-    const xRange = xExtent[1] - xExtent[0] || 1;
-    const yRange = yExtent[1] - yExtent[0] || 1;
-    const margin = 80;
+    const absXs = xs.map(Math.abs).sort((a, b) => a - b);
+    const absYs = ys.map(Math.abs).sort((a, b) => a - b);
+    const p90x = absXs[Math.floor(absXs.length * 0.90)] || 1;
+    const p90y = absYs[Math.floor(absYs.length * 0.90)] || 1;
+    const xBound = p90x * 1.4;
+    const yBound = p90y * 1.4;
+    const margin = 60;
     const plotW = width - margin * 2;
     const plotH = height - margin * 2;
 
-    const scale = Math.min(plotW / xRange, plotH / yRange) * 0.85;
+    const scaleX = plotW / (2 * xBound);
+    const scaleY = plotH / (2 * yBound);
     const cx = width / 2;
     const cy = height / 2;
-    const xMid = (xExtent[0] + xExtent[1]) / 2;
-    const yMid = (yExtent[0] + yExtent[1]) / 2;
 
-    const screenPoints = caPoints.map(p => ({
-      ...p,
-      sx: cx + (p.x - xMid) * scale,
-      sy: cy - (p.y - yMid) * scale,
-    }));
+    const screenPoints = caPoints.map(p => {
+      const clampedX = Math.max(-xBound, Math.min(xBound, p.x));
+      const clampedY = Math.max(-yBound, Math.min(yBound, p.y));
+      return {
+        ...p,
+        sx: cx + clampedX * scaleX,
+        sy: cy - clampedY * scaleY,
+      };
+    });
 
     let currentHovered: typeof screenPoints[0] | null = null;
 
@@ -949,24 +1009,27 @@ function CorrespondenceView({
 
       ctx.globalAlpha = 1;
 
-      const showLabels = t.k > 0.7;
-      if (showLabels) {
+      for (const p of screenPoints) {
+        if (p.isCharacter) continue;
+        const isHovered = p.id === hoveredId;
+        ctx.font = isHovered ? "bold 10px 'DM Sans', sans-serif" : "8px 'DM Sans', sans-serif";
+        ctx.fillStyle = CATEGORY_COLORS[p.category || ""] || "#E0DCE6";
+        ctx.globalAlpha = hoveredId ? (isHovered ? 0.95 : 0.15) : 0.55;
+        ctx.textAlign = "center";
+        ctx.fillText(p.label, p.sx, p.sy - (isHovered ? 9 : 6));
+      }
+
+      const showCharLabels = t.k > 0.6;
+      if (showCharLabels) {
         for (const p of screenPoints) {
+          if (!p.isCharacter) continue;
           const isHovered = p.id === hoveredId;
-          if (p.isCharacter) {
-            if (!isHovered && hoveredId) continue;
-            ctx.font = isHovered ? "bold 11px 'Playfair Display', serif" : "9px 'Playfair Display', serif";
-            ctx.fillStyle = "#E0DCE6";
-            ctx.globalAlpha = isHovered ? 1 : (t.k > 2 ? 0.6 : 0.3);
-            ctx.textAlign = "center";
-            ctx.fillText(p.label, p.sx, p.sy - (isHovered ? 12 : 8));
-          } else if (isHovered) {
-            ctx.font = "bold 10px 'DM Sans', sans-serif";
-            ctx.fillStyle = CATEGORY_COLORS[p.category || ""] || "#E0DCE6";
-            ctx.globalAlpha = 0.9;
-            ctx.textAlign = "center";
-            ctx.fillText(p.label, p.sx, p.sy - 8);
-          }
+          if (!isHovered && hoveredId) continue;
+          ctx.font = isHovered ? "bold 11px 'Playfair Display', serif" : "9px 'Playfair Display', serif";
+          ctx.fillStyle = "#E0DCE6";
+          ctx.globalAlpha = isHovered ? 1 : (t.k > 1.5 ? 0.6 : 0.3);
+          ctx.textAlign = "center";
+          ctx.fillText(p.label, p.sx, p.sy - (isHovered ? 12 : 8));
         }
       }
 
