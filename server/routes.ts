@@ -46,7 +46,7 @@ export async function registerRoutes(
     res.json({ project, nodes: projectNodes, edges: projectEdges });
   });
 
-  app.get("/api/export", requireAdmin, async (_req, res) => {
+  app.get("/api/export", async (_req, res) => {
     const projects = await storage.getProjects();
     const allNodes = await storage.getNodes();
     const allEdges = await storage.getEdges();

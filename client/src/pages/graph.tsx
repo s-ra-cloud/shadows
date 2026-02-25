@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as d3 from "d3";
-import { X, Search, Filter, ArrowLeft } from "lucide-react";
+import { X, Search, Filter, ArrowLeft, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -707,6 +707,15 @@ export default function GraphPage() {
             <span className="text-[10px] text-shadows-text/40">{label}</span>
           </div>
         ))}
+        <a
+          href="/api/export"
+          download="shadows-database.json"
+          className="mt-2 flex items-center gap-1.5 text-[10px] text-[#03FF9B]/60 hover:text-[#03FF9B] transition-colors cursor-pointer"
+          data-testid="button-download-data"
+        >
+          <Download className="w-3 h-3" />
+          Download open data
+        </a>
       </div>
 
       {hoveredNode && hoveredNode.isCharacter && (
