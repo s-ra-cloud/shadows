@@ -692,6 +692,113 @@ function NodePanel({ node, relatedNodes, edges, onClose }: { node: Node; related
   );
 }
 
+function TraitPanel({ trait, allNodes, graphLinks, onClose, onSelectCharacter }: {
+  trait: TraitNode;
+  allNodes: Node[];
+  graphLinks: GraphLink[];
+  onClose: () => void;
+  onSelectCharacter: (node: Node) => void;
+}) {
+  const connectedCharacters = useMemo(() => {
+    const charIds = new Set<string>();
+    for (const link of graphLinks) {
+      if (link.source === trait.id) charIds.add(link.target);
+      if (link.target === trait.id) charIds.add(link.source);
+    }
+    return allNodes.filter(n => charIds.has(`fig-${n.id}`));
+  }, [trait, allNodes, graphLinks]);
+
+  const aggregatedTraits = useMemo(() => {
+    const traitCounts = new Map<string, { count: number; category: string }>();
+    const fields: { key: keyof Node; category: string }[] = [
+      { key: "gender", category: "gender" },
+      { key: "domain", category: "domain" },
+      { key: "object", category: "object" },
+      { key: "animals", category: "animals" },
+      { key: "characterTrait", category: "characterTrait" },
+      { key: "physicalCharacteristics", category: "physicalCharacteristics" },
+    ];
+
+    for (const char of connectedCharacters) {
+      for (const { key, category } of fields) {
+        const tokens = tokenize(char[key] as string | null);
+        for (const t of tokens) {
+          if (t === trait.label) continue;
+          const existing = traitCounts.get(t);
+          if (existing) {
+            existing.count++;
+          } else {
+            traitCounts.set(t, { count: 1, category });
+          }
+        }
+      }
+    }
+
+    return [...traitCounts.entries()]
+      .filter(([, v]) => v.count >= 2)
+      .sort((a, b) => b[1].count - a[1].count);
+  }, [connectedCharacters, trait.label]);
+
+  return (
+    <div className="absolute top-0 right-0 h-full w-80 lg:w-96 bg-[#0B0626]/95 backdrop-blur-xl border-l border-[#350A8C]/30 z-20 overflow-hidden flex flex-col" data-testid="panel-trait-detail">
+      <div className="flex items-center justify-between p-4 border-b border-[#350A8C]/20">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: CATEGORY_COLORS[trait.category] }} />
+          <div className="min-w-0">
+            <h3 className="font-serif text-lg text-shadows-text truncate" data-testid="text-trait-name">{trait.label}</h3>
+            <span className="text-[10px] uppercase tracking-wider text-shadows-text/30">{CATEGORY_LABELS[trait.category] || trait.category}</span>
+          </div>
+        </div>
+        <button onClick={onClose} className="text-shadows-text/40 hover:text-shadows-text transition-colors flex-shrink-0" data-testid="button-close-trait-panel">
+          <X size={18} />
+        </button>
+      </div>
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-5">
+          <div>
+            <span className="text-xs uppercase tracking-wider text-shadows-text/40">
+              Figures ({connectedCharacters.length})
+            </span>
+            <div className="mt-2 space-y-1.5">
+              {connectedCharacters.map((char) => (
+                <button
+                  key={char.id}
+                  onClick={() => onSelectCharacter(char)}
+                  className="flex items-center gap-2 w-full text-left hover:bg-[#350A8C]/20 rounded px-2 py-1 transition-colors group"
+                  data-testid={`button-trait-char-${char.id}`}
+                >
+                  <div className="w-2 h-2 rounded-full flex-shrink-0 bg-[#E0DCE6]" />
+                  <span className="text-xs text-shadows-text/70 group-hover:text-shadows-text truncate">{char.name}</span>
+                  {char.tradition && (
+                    <span className="text-[9px] text-shadows-text/25 ml-auto flex-shrink-0">{char.tradition}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {aggregatedTraits.length > 0 && (
+            <div>
+              <span className="text-xs uppercase tracking-wider text-shadows-text/40">
+                Shared traits across these figures
+              </span>
+              <div className="mt-2 space-y-1">
+                {aggregatedTraits.map(([name, { count, category }]) => (
+                  <div key={name} className="flex items-center gap-2 px-2 py-0.5">
+                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: CATEGORY_COLORS[category] }} />
+                    <span className="text-xs text-shadows-text/60 truncate">{name}</span>
+                    <span className="text-[9px] text-shadows-text/25 ml-auto flex-shrink-0 font-mono">{count}/{connectedCharacters.length}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}
+
 function FilterSidebar({
   filters,
   activeFilters,
@@ -791,12 +898,14 @@ function NetworkView({
   filteredGraphNodes,
   filteredLinks,
   onSelectNode,
+  onSelectTrait,
   onHoverNode,
   hoveredNode,
 }: {
   filteredGraphNodes: GraphNode[];
   filteredLinks: GraphLink[];
   onSelectNode: (node: Node | null) => void;
+  onSelectTrait: (trait: TraitNode | null) => void;
   onHoverNode: (node: any) => void;
   hoveredNode: any;
 }) {
@@ -805,6 +914,10 @@ function NetworkView({
   const transformRef = useRef(d3.zoomIdentity);
   const simNodesRef = useRef<any[]>([]);
   const simLinksRef = useRef<any[]>([]);
+  const onSelectNodeRef = useRef(onSelectNode);
+  const onSelectTraitRef = useRef(onSelectTrait);
+  onSelectNodeRef.current = onSelectNode;
+  onSelectTraitRef.current = onSelectTrait;
 
   useEffect(() => {
     if (!canvasRef.current || filteredGraphNodes.length === 0) return;
@@ -994,7 +1107,9 @@ function NetworkView({
       const rect = canvas.getBoundingClientRect();
       const node = getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
       if (node?.isCharacter && node.original) {
-        onSelectNode(node.original);
+        onSelectNodeRef.current(node.original);
+      } else if (node && !node.isCharacter) {
+        onSelectTraitRef.current(node as unknown as TraitNode);
       }
     };
 
@@ -1301,11 +1416,22 @@ export default function GraphPage() {
   });
 
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [selectedTrait, setSelectedTrait] = useState<TraitNode | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, Set<string>>>({});
   const [hoveredNode, setHoveredNode] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"network" | "ca">("network");
+
+  const handleGraphNodeSelect = useCallback((node: Node | null, trait?: TraitNode | null) => {
+    if (trait) {
+      setSelectedTrait(trait);
+      setSelectedNode(null);
+    } else {
+      setSelectedNode(node);
+      setSelectedTrait(null);
+    }
+  }, []);
 
   const { graphNodes, graphLinks } = useMemo(() => {
     if (!data?.nodes) return { graphNodes: [], graphLinks: [] };
@@ -1499,14 +1625,15 @@ export default function GraphPage() {
           <NetworkView
             filteredGraphNodes={filteredGraphNodes}
             filteredLinks={filteredLinks}
-            onSelectNode={setSelectedNode}
+            onSelectNode={(n) => handleGraphNodeSelect(n)}
+            onSelectTrait={(t) => handleGraphNodeSelect(null, t)}
             onHoverNode={setHoveredNode}
             hoveredNode={hoveredNode}
           />
         ) : (
           <CorrespondenceView
             figures={data.nodes}
-            onSelectNode={setSelectedNode}
+            onSelectNode={(n) => handleGraphNodeSelect(n)}
             onHoverNode={setHoveredNode}
           />
         )}
@@ -1518,6 +1645,16 @@ export default function GraphPage() {
           relatedNodes={relatedNodes}
           edges={data.edges}
           onClose={() => setSelectedNode(null)}
+        />
+      )}
+
+      {selectedTrait && (
+        <TraitPanel
+          trait={selectedTrait}
+          allNodes={data.nodes}
+          graphLinks={graphLinks}
+          onClose={() => setSelectedTrait(null)}
+          onSelectCharacter={(char) => handleGraphNodeSelect(char)}
         />
       )}
     </div>
