@@ -222,10 +222,9 @@ function GraphPreviewSection() {
 
 function TeamPreview() {
   const teamMembers = [
-    { name: "Dr. Elena Vasquez", role: "Principal Investigator", institution: "University of Zurich" },
-    { name: "Prof. Akira Tanaka", role: "Computational Mythologist", institution: "Kyoto University" },
-    { name: "Dr. Amara Osei", role: "Comparative Religion Scholar", institution: "SOAS London" },
-    { name: "Dr. Marcus Chen", role: "Graph Theory & Data Visualization", institution: "MIT Media Lab" },
+    { name: "Laura Duparc", role: "Lead Researcher", institution: "University Mohammed VI Polytechnic" },
+    { name: "Camille Bertrand", role: "Researcher", institution: "EHESS" },
+    { name: "Ami Nagai", role: "Researcher", institution: "Aix-Marseille Université" },
   ];
 
   return (

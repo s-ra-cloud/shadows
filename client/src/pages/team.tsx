@@ -3,40 +3,22 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 
 const teamMembers = [
   {
-    name: "Dr. Elena Vasquez",
-    role: "Principal Investigator",
-    institution: "University of Zurich",
-    bio: "Elena Vasquez is a Jungian analyst and comparative mythologist specializing in the archetypal structures of Mediterranean and Mesoamerican religious traditions. Her work bridges analytical psychology and digital humanities, focusing on the computational modeling of mythological networks. She has published extensively on the Shadow archetype in colonial-era mythological syncretism.",
+    name: "Laura Duparc",
+    role: "Lead Researcher",
+    institution: "University Mohammed VI Polytechnic",
+    bio: "Laura Duparc leads the SHADOWS research initiative, bringing expertise in comparative mythology and digital humanities. Her work focuses on mapping structural parallels across mythological traditions using computational network analysis, with particular interest in how archetypal motifs migrate and transform across cultures and historical periods.",
   },
   {
-    name: "Prof. Akira Tanaka",
-    role: "Computational Mythologist",
-    institution: "Kyoto University",
-    bio: "Akira Tanaka combines expertise in East Asian religious studies with advanced computational graph theory. His research applies network analysis to Buddhist, Shinto, and Daoist mythological systems, revealing structural homologies with Western archetypal patterns. He leads the algorithmic development of the SHADOWS graph engine.",
+    name: "Camille Bertrand",
+    role: "Researcher",
+    institution: "EHESS",
+    bio: "Camille Bertrand is a researcher at the École des Hautes Études en Sciences Sociales specializing in the anthropology of religion and symbolic systems. Her contribution to SHADOWS centers on the classification and cross-referencing of mythological motifs across Indo-European, Semitic, and East Asian traditions.",
   },
   {
-    name: "Dr. Amara Osei",
-    role: "Comparative Religion Scholar",
-    institution: "SOAS University of London",
-    bio: "Amara Osei specializes in West African and diaspora religious traditions, with a focus on Yoruba and Vodun cosmologies. Her contribution to SHADOWS centers on mapping the diffusion of archetypal motifs across the Atlantic, tracking how deities transform through cultural transmission.",
-  },
-  {
-    name: "Dr. Marcus Chen",
-    role: "Graph Theory & Visualization",
-    institution: "MIT Media Lab",
-    bio: "Marcus Chen is a data visualization researcher who designs interactive systems for exploring complex relational datasets. His work on force-directed layouts and semantic clustering informs the core visualization engine of the SHADOWS platform.",
-  },
-  {
-    name: "Dr. Sofia Petrov",
-    role: "Depth Psychology Researcher",
-    institution: "Pacifica Graduate Institute",
-    bio: "Sofia Petrov is a depth psychologist whose research explores the relationship between individual dream symbolism and collective mythological motifs. She contributes the psychological classification framework used in the SHADOWS archetype taxonomy.",
-  },
-  {
-    name: "Dr. Rajan Mehta",
-    role: "Hindu & Vedic Studies",
-    institution: "Jawaharlal Nehru University",
-    bio: "Rajan Mehta is an authority on Hindu and Vedic mythological systems. His research on the Trimurti and avatar traditions provides foundational data for the Indo-European mythological module of the SHADOWS atlas.",
+    name: "Ami Nagai",
+    role: "Researcher",
+    institution: "Aix-Marseille Université",
+    bio: "Ami Nagai brings expertise in East Asian religious studies and comparative symbolism to the SHADOWS project. Her research explores the structural resonances between Japanese, Chinese, and South Asian mythological systems, contributing to the atlas's coverage of pan-Asian archetypal networks.",
   },
 ];
 
@@ -50,11 +32,11 @@ export default function TeamPage() {
           Research Team
         </h1>
         <p className="text-shadows-text/50 max-w-2xl mb-16 leading-relaxed">
-          An interdisciplinary collective of scholars advancing the frontiers of comparative mythology
-          through computational analysis and Jungian depth psychology.
+          An interdisciplinary team of scholars advancing the frontiers of comparative mythology
+          through computational analysis and network visualization.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {teamMembers.map((member, i) => (
             <div
               key={i}
