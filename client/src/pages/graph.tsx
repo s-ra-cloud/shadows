@@ -192,7 +192,7 @@ function NodePanel({ node, relatedNodes, edges, onClose }: { node: Node; related
     <div className="absolute top-0 right-0 h-full w-80 lg:w-96 bg-[#0B0626]/95 backdrop-blur-xl border-l border-[#350A8C]/30 z-20 overflow-hidden flex flex-col" data-testid="panel-node-detail">
       <div className="flex items-center justify-between p-4 border-b border-[#350A8C]/20">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: getTraditionColor(node.tradition) }} />
+          <div className="w-3 h-3 rounded-full flex-shrink-0 bg-[#E0DCE6]" />
           <h3 className="font-serif text-lg text-shadows-text truncate" data-testid="text-node-name">{node.name}</h3>
         </div>
         <button onClick={onClose} className="text-shadows-text/40 hover:text-shadows-text transition-colors flex-shrink-0" data-testid="button-close-panel">
@@ -223,7 +223,7 @@ function NodePanel({ node, relatedNodes, edges, onClose }: { node: Node; related
                   );
                   return (
                     <div key={rn.id} className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getTraditionColor(rn.tradition) }} />
+                      <div className="w-2 h-2 rounded-full flex-shrink-0 bg-[#E0DCE6]" />
                       <span className="text-xs text-shadows-text/70">
                         {edge?.relationType ? `${edge.relationType} — ` : ""}{rn.name}
                       </span>
@@ -352,14 +352,14 @@ export default function GraphPage() {
 
   const { graphNodes, graphLinks } = useMemo(() => {
     if (!data?.nodes) return { graphNodes: [], graphLinks: [] };
-    return buildGraph(data.nodes, 3);
+    return buildGraph(data.nodes, 2);
   }, [data?.nodes]);
 
   const filters = useMemo(() => {
-    const traditions = [...new Set(data?.nodes.map((n) => n.tradition).filter(Boolean) as string[])].sort();
+    const traditions: string[] = [];
     const categories = [...new Set(graphNodes.filter(n => !n.isCharacter).map(n => (n as TraitNode).category))];
     return { traditions, categories };
-  }, [data?.nodes, graphNodes]);
+  }, [graphNodes]);
 
   const toggleFilter = useCallback((category: string, value: string) => {
     setActiveFilters((prev) => {
@@ -376,10 +376,6 @@ export default function GraphPage() {
   const filteredGraphNodes = useMemo(() => {
     return graphNodes.filter((n) => {
       if (n.isCharacter) {
-        const tradFilter = activeFilters["traditions"];
-        if (tradFilter && tradFilter.size > 0) {
-          if (!tradFilter.has(n.tradition || "")) return false;
-        }
         if (searchQuery) {
           const q = searchQuery.toLowerCase();
           if (!n.label.toLowerCase().includes(q)) return false;
@@ -513,7 +509,7 @@ export default function GraphPage() {
         const dimmed = hoveredId && !isHovered && !isConnected;
 
         if (n.isCharacter) {
-          const color = getTraditionColor(n.tradition);
+          const color = "#E0DCE6";
           const r = isHovered ? 10 : 6;
           ctx.beginPath();
           ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
@@ -521,7 +517,7 @@ export default function GraphPage() {
           ctx.globalAlpha = dimmed ? 0.08 : 0.85;
           ctx.fill();
           if (isHovered || isConnected) {
-            ctx.strokeStyle = color;
+            ctx.strokeStyle = "#8F00FF";
             ctx.lineWidth = 1.5;
             ctx.globalAlpha = 0.6;
             ctx.stroke();
@@ -661,14 +657,7 @@ export default function GraphPage() {
       </div>
 
       <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[80vh] overflow-y-auto">
-        <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">Traditions</span>
-        {Object.entries(TRADITION_COLORS).map(([tradition, color]) => (
-          <div key={tradition} className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-[10px] text-shadows-text/50">{tradition}</span>
-          </div>
-        ))}
-        <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mt-1 mb-0.5">Attributes</span>
+        <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">Attributes</span>
         {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
           <div key={key} className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[key] }} />
@@ -680,11 +669,8 @@ export default function GraphPage() {
       {hoveredNode && hoveredNode.isCharacter && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 bg-[#0B0626]/90 backdrop-blur-sm border border-[#350A8C]/30 rounded-lg px-4 py-2 pointer-events-none">
           <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: getTraditionColor(hoveredNode.tradition) }} />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#E0DCE6]" />
             <span className="text-sm text-shadows-text font-serif">{hoveredNode.label}</span>
-            {hoveredNode.original?.tradition && (
-              <span className="text-[10px] text-shadows-text/40 ml-1">({hoveredNode.original.tradition})</span>
-            )}
           </div>
           {hoveredNode.original?.domain && (
             <p className="text-[10px] text-shadows-text/50 mt-0.5 ml-5">{hoveredNode.original.domain}</p>
