@@ -35,9 +35,8 @@ function HeroSection() {
           style={{ animationDelay: "0.5s" }}
           data-testid="text-hero-description"
         >
-          Exploring the universal patterns that connect deities, archetypes, and symbolic motifs
-          across world religions and popular culture through interactive network visualizations
-          grounded in Jungian analytical psychology.
+          Mapping the universal patterns that connect deities, mythological figures, and symbolic motifs
+          across world religions and cultures through interactive network visualizations.
         </p>
         <div className="animate-fade-in-up" style={{ animationDelay: "0.7s" }}>
           <Link href="/projects">
@@ -70,49 +69,79 @@ function AboutSection() {
             </h2>
             <div className="space-y-4 text-shadows-text/60 leading-relaxed">
               <p>
-                SHADOWS is a digital humanities initiative that maps the archetypal structures underlying
-                world mythologies. Drawing on Carl Jung's theory of the collective unconscious, this project
-                constructs interactive network graphs revealing the hidden connections between deities,
-                heroes, tricksters, and symbolic motifs across cultures and epochs.
+                SHADOWS is a digital humanities initiative that maps the structural patterns underlying
+                world mythologies. This project constructs interactive network graphs revealing the hidden
+                connections between deities, heroes, tricksters, and symbolic motifs across cultures
+                and epochs.
               </p>
               <p>
-                Our methodology integrates comparative mythology, depth psychology, and computational
-                graph analysis. Each node in our atlas represents a mythological figure, archetype, or
+                Our methodology integrates comparative mythology, religious studies, and computational
+                graph analysis. Each node in our atlas represents a mythological figure or
                 symbolic motif, while edges encode relationships of transformation, opposition,
                 complementarity, and cultural diffusion.
               </p>
               <p>
                 The result is an evolving, navigable map of humanity's mythological imagination — from
-                the ancient pantheons of Mesopotamia, Greece, and India to the archetypal figures that
-                re-emerge in contemporary popular culture.
+                the ancient pantheons of Mesopotamia, Greece, and India to the recurring figures
+                and symbols that persist across civilizations and into contemporary culture.
               </p>
             </div>
           </div>
 
           <div className="flex items-center justify-center">
             <svg viewBox="0 0 400 400" className="w-72 h-72 md:w-96 md:h-96 opacity-40">
-              <circle cx="200" cy="200" r="180" fill="none" stroke="#350A8C" strokeWidth="0.5" />
-              <circle cx="200" cy="200" r="140" fill="none" stroke="#8F00FF" strokeWidth="0.5" />
-              <circle cx="200" cy="200" r="100" fill="none" stroke="#350A8C" strokeWidth="0.5" />
-              <circle cx="200" cy="200" r="60" fill="none" stroke="#8F00FF" strokeWidth="0.5" />
-              <line x1="200" y1="20" x2="200" y2="380" stroke="#350A8C" strokeWidth="0.3" />
-              <line x1="20" y1="200" x2="380" y2="200" stroke="#350A8C" strokeWidth="0.3" />
-              <line x1="73" y1="73" x2="327" y2="327" stroke="#350A8C" strokeWidth="0.3" />
-              <line x1="327" y1="73" x2="73" y2="327" stroke="#350A8C" strokeWidth="0.3" />
-              <circle cx="200" cy="20" r="4" fill="#8F00FF" className="animate-pulse-glow" />
-              <circle cx="200" cy="380" r="4" fill="#03FF9B" className="animate-pulse-glow" />
-              <circle cx="20" cy="200" r="4" fill="#8F00FF" className="animate-pulse-glow" />
-              <circle cx="380" cy="200" r="4" fill="#03FF9B" className="animate-pulse-glow" />
-              <circle cx="73" cy="73" r="3" fill="#E0DCE6" className="animate-pulse-glow" />
-              <circle cx="327" cy="327" r="3" fill="#E0DCE6" className="animate-pulse-glow" />
-              <circle cx="327" cy="73" r="3" fill="#350A8C" />
-              <circle cx="73" cy="327" r="3" fill="#350A8C" />
-              <circle cx="200" cy="200" r="6" fill="#8F00FF" />
-              <text x="200" y="205" textAnchor="middle" fill="#E0DCE6" fontSize="8" fontFamily="serif">Self</text>
-              <text x="200" y="14" textAnchor="middle" fill="#E0DCE6" fontSize="7" fontFamily="serif">Animus</text>
-              <text x="200" y="396" textAnchor="middle" fill="#E0DCE6" fontSize="7" fontFamily="serif">Anima</text>
-              <text x="14" y="204" textAnchor="middle" fill="#E0DCE6" fontSize="7" fontFamily="serif" transform="rotate(-90 14 204)">Shadow</text>
-              <text x="386" y="204" textAnchor="middle" fill="#E0DCE6" fontSize="7" fontFamily="serif" transform="rotate(90 386 204)">Persona</text>
+              <circle cx="200" cy="200" r="180" fill="none" stroke="#350A8C" strokeWidth="0.5" strokeDasharray="4 4" />
+              <circle cx="200" cy="200" r="130" fill="none" stroke="#8F00FF" strokeWidth="0.5" strokeDasharray="2 6" />
+
+              <circle cx="200" cy="40" r="5" fill="#8F00FF" className="animate-pulse-glow" />
+              <circle cx="340" cy="120" r="4" fill="#350A8C" className="animate-pulse-glow" />
+              <circle cx="360" cy="240" r="4.5" fill="#03FF9B" className="animate-pulse-glow" />
+              <circle cx="280" cy="350" r="4" fill="#E0DCE6" className="animate-pulse-glow" />
+              <circle cx="120" cy="350" r="5" fill="#8F00FF" className="animate-pulse-glow" />
+              <circle cx="40" cy="240" r="4" fill="#350A8C" className="animate-pulse-glow" />
+              <circle cx="60" cy="120" r="4.5" fill="#03FF9B" className="animate-pulse-glow" />
+
+              <circle cx="200" cy="120" r="3.5" fill="#8F00FF" />
+              <circle cx="270" cy="180" r="3" fill="#350A8C" />
+              <circle cx="260" cy="260" r="3.5" fill="#E0DCE6" />
+              <circle cx="200" cy="300" r="3" fill="#03FF9B" />
+              <circle cx="140" cy="260" r="3" fill="#350A8C" />
+              <circle cx="130" cy="180" r="3.5" fill="#8F00FF" />
+
+              <line x1="200" y1="40" x2="340" y2="120" stroke="#350A8C" strokeWidth="0.4" strokeOpacity="0.5" />
+              <line x1="340" y1="120" x2="360" y2="240" stroke="#350A8C" strokeWidth="0.4" strokeOpacity="0.5" />
+              <line x1="360" y1="240" x2="280" y2="350" stroke="#350A8C" strokeWidth="0.4" strokeOpacity="0.5" />
+              <line x1="280" y1="350" x2="120" y2="350" stroke="#350A8C" strokeWidth="0.4" strokeOpacity="0.5" />
+              <line x1="120" y1="350" x2="40" y2="240" stroke="#350A8C" strokeWidth="0.4" strokeOpacity="0.5" />
+              <line x1="40" y1="240" x2="60" y2="120" stroke="#350A8C" strokeWidth="0.4" strokeOpacity="0.5" />
+              <line x1="60" y1="120" x2="200" y2="40" stroke="#350A8C" strokeWidth="0.4" strokeOpacity="0.5" />
+
+              <line x1="200" y1="40" x2="200" y2="120" stroke="#8F00FF" strokeWidth="0.3" strokeOpacity="0.4" />
+              <line x1="340" y1="120" x2="270" y2="180" stroke="#8F00FF" strokeWidth="0.3" strokeOpacity="0.4" />
+              <line x1="360" y1="240" x2="260" y2="260" stroke="#8F00FF" strokeWidth="0.3" strokeOpacity="0.4" />
+              <line x1="280" y1="350" x2="200" y2="300" stroke="#8F00FF" strokeWidth="0.3" strokeOpacity="0.4" />
+              <line x1="120" y1="350" x2="140" y2="260" stroke="#8F00FF" strokeWidth="0.3" strokeOpacity="0.4" />
+              <line x1="40" y1="240" x2="130" y2="180" stroke="#8F00FF" strokeWidth="0.3" strokeOpacity="0.4" />
+              <line x1="60" y1="120" x2="200" y2="120" stroke="#8F00FF" strokeWidth="0.3" strokeOpacity="0.4" />
+
+              <line x1="200" y1="120" x2="270" y2="180" stroke="#03FF9B" strokeWidth="0.3" strokeOpacity="0.3" />
+              <line x1="270" y1="180" x2="260" y2="260" stroke="#03FF9B" strokeWidth="0.3" strokeOpacity="0.3" />
+              <line x1="260" y1="260" x2="200" y2="300" stroke="#03FF9B" strokeWidth="0.3" strokeOpacity="0.3" />
+              <line x1="200" y1="300" x2="140" y2="260" stroke="#03FF9B" strokeWidth="0.3" strokeOpacity="0.3" />
+              <line x1="140" y1="260" x2="130" y2="180" stroke="#03FF9B" strokeWidth="0.3" strokeOpacity="0.3" />
+              <line x1="130" y1="180" x2="200" y2="120" stroke="#03FF9B" strokeWidth="0.3" strokeOpacity="0.3" />
+
+              <line x1="200" y1="120" x2="260" y2="260" stroke="#350A8C" strokeWidth="0.2" strokeOpacity="0.3" />
+              <line x1="270" y1="180" x2="140" y2="260" stroke="#350A8C" strokeWidth="0.2" strokeOpacity="0.3" />
+              <line x1="130" y1="180" x2="200" y2="300" stroke="#350A8C" strokeWidth="0.2" strokeOpacity="0.3" />
+
+              <text x="200" y="32" textAnchor="middle" fill="#E0DCE6" fontSize="7" fontFamily="serif">Zeus</text>
+              <text x="355" y="115" textAnchor="start" fill="#E0DCE6" fontSize="7" fontFamily="serif">Odin</text>
+              <text x="372" y="244" textAnchor="start" fill="#E0DCE6" fontSize="7" fontFamily="serif">Vishnu</text>
+              <text x="280" y="370" textAnchor="middle" fill="#E0DCE6" fontSize="7" fontFamily="serif">Isis</text>
+              <text x="120" y="370" textAnchor="middle" fill="#E0DCE6" fontSize="7" fontFamily="serif">Athena</text>
+              <text x="28" y="244" textAnchor="end" fill="#E0DCE6" fontSize="7" fontFamily="serif">Amaterasu</text>
+              <text x="48" y="115" textAnchor="end" fill="#E0DCE6" fontSize="7" fontFamily="serif">Quetzalcoatl</text>
             </svg>
           </div>
         </div>
@@ -133,7 +162,7 @@ function ResearchModulesSection() {
           Research Modules
         </h2>
         <p className="text-shadows-text/50 text-center max-w-xl mx-auto mb-16">
-          Interactive graph explorations mapping archetypal patterns across mythological traditions.
+          Interactive graph explorations mapping recurring patterns across mythological traditions.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -205,7 +234,7 @@ function TeamPreview() {
           Research Team
         </h2>
         <p className="text-shadows-text/50 text-center max-w-xl mx-auto mb-16">
-          An interdisciplinary team of scholars bridging mythology, psychology, and computational analysis.
+          An interdisciplinary team of scholars bridging comparative mythology, religious studies, and computational analysis.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
@@ -242,10 +271,10 @@ function TeamPreview() {
 
 function PartnersPreview() {
   const partners = [
-    { name: "Jung Institute Zurich", desc: "Jungian research foundation" },
-    { name: "Digital Humanities Lab", desc: "Stanford University" },
-    { name: "Mythology Archive", desc: "British Museum" },
-    { name: "Archetype Foundation", desc: "Vienna, Austria" },
+    { name: "Centre for Comparative Mythology" },
+    { name: "Digital Humanities Lab" },
+    { name: "Mythology Archive" },
+    { name: "Archetype Foundation" },
   ];
 
   return (
