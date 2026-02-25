@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as d3 from "d3";
 import { X, Search, Filter, ArrowLeft } from "lucide-react";
@@ -20,6 +20,30 @@ const TRADITION_COLORS: Record<string, string> = {
   "Aztec": "#00BCD4",
 };
 
+const CATEGORY_COLORS: Record<string, string> = {
+  gender: "#E0DCE6",
+  domain: "#03FF9B",
+  object: "#FFB800",
+  animals: "#FF6B35",
+  characterTrait: "#FF4081",
+  physicalCharacteristics: "#4A7BFF",
+  significantEvent: "#8F00FF",
+  birthCircumstances: "#00BCD4",
+  deathCircumstances: "#E53935",
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  gender: "Gender",
+  domain: "Domain",
+  object: "Object",
+  animals: "Animals",
+  characterTrait: "Trait",
+  physicalCharacteristics: "Physical",
+  significantEvent: "Event",
+  birthCircumstances: "Birth",
+  deathCircumstances: "Death",
+};
+
 function getTraditionColor(tradition: string | null) {
   if (!tradition) return "#8F00FF";
   return TRADITION_COLORS[tradition] || "#8F00FF";
@@ -27,56 +51,119 @@ function getTraditionColor(tradition: string | null) {
 
 function tokenize(text: string | null): string[] {
   if (!text) return [];
-  return text.toLowerCase().split(/[,;/]+/).map(s => s.trim()).filter(Boolean);
-}
-
-function computeSimilarity(a: Node, b: Node): number {
-  let score = 0;
-  let maxScore = 0;
-
-  const fields: { key: keyof Node; weight: number; exact?: boolean }[] = [
-    { key: "gender", weight: 2, exact: true },
-    { key: "domain", weight: 3 },
-    { key: "object", weight: 2 },
-    { key: "animals", weight: 2 },
-    { key: "characterTrait", weight: 2 },
-    { key: "physicalCharacteristics", weight: 1 },
-    { key: "significantEvent", weight: 2 },
-    { key: "birthCircumstances", weight: 1 },
-    { key: "deathCircumstances", weight: 1 },
-  ];
-
-  for (const field of fields) {
-    const valA = a[field.key] as string | null;
-    const valB = b[field.key] as string | null;
-    maxScore += field.weight;
-
-    if (!valA || !valB) continue;
-
-    if (field.exact) {
-      if (valA.toLowerCase().trim() === valB.toLowerCase().trim()) {
-        score += field.weight;
-      }
-    } else {
-      const tokensA = tokenize(valA);
-      const tokensB = tokenize(valB);
-      if (tokensA.length === 0 || tokensB.length === 0) continue;
-      const setA = new Set(tokensA);
-      const setB = new Set(tokensB);
-      const intersection = [...setA].filter(t => setB.has(t)).length;
-      const union = new Set([...setA, ...setB]).size;
-      if (union > 0) {
-        score += field.weight * (intersection / union);
-      }
-    }
-  }
-
-  return maxScore > 0 ? score / maxScore : 0;
+  return text.split(/[,;]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
 }
 
 interface GraphData {
   nodes: Node[];
   edges: Edge[];
+}
+
+interface TraitNode {
+  id: string;
+  label: string;
+  category: string;
+  count: number;
+  isCharacter: false;
+}
+
+interface CharNode {
+  id: string;
+  nodeId: number;
+  label: string;
+  tradition: string | null;
+  isCharacter: true;
+  original: Node;
+}
+
+type GraphNode = TraitNode | CharNode;
+
+interface GraphLink {
+  source: string;
+  target: string;
+  category: string;
+}
+
+function buildGraph(figures: Node[]) {
+  const traitFields: { key: keyof Node; category: string }[] = [
+    { key: "gender", category: "gender" },
+    { key: "domain", category: "domain" },
+    { key: "object", category: "object" },
+    { key: "animals", category: "animals" },
+    { key: "characterTrait", category: "characterTrait" },
+    { key: "physicalCharacteristics", category: "physicalCharacteristics" },
+    { key: "significantEvent", category: "significantEvent" },
+    { key: "birthCircumstances", category: "birthCircumstances" },
+    { key: "deathCircumstances", category: "deathCircumstances" },
+  ];
+
+  const traitCounts = new Map<string, { label: string; category: string; count: number }>();
+  const figureTraits = new Map<number, string[]>();
+
+  for (const fig of figures) {
+    const traits: string[] = [];
+    for (const field of traitFields) {
+      const val = fig[field.key] as string | null;
+      const tokens = tokenize(val);
+      for (const token of tokens) {
+        const traitId = `${field.category}::${token}`;
+        traits.push(traitId);
+        const existing = traitCounts.get(traitId);
+        if (existing) {
+          existing.count++;
+        } else {
+          traitCounts.set(traitId, { label: token, category: field.category, count: 1 });
+        }
+      }
+    }
+    figureTraits.set(fig.id, traits);
+  }
+
+  const sharedTraits = new Map<string, { label: string; category: string; count: number }>();
+  for (const [id, data] of traitCounts) {
+    if (data.count >= 2) {
+      sharedTraits.set(id, data);
+    }
+  }
+
+  const graphNodes: GraphNode[] = [];
+  const graphLinks: GraphLink[] = [];
+
+  for (const fig of figures) {
+    graphNodes.push({
+      id: `fig-${fig.id}`,
+      nodeId: fig.id,
+      label: fig.name,
+      tradition: fig.tradition,
+      isCharacter: true,
+      original: fig,
+    });
+  }
+
+  for (const [traitId, data] of sharedTraits) {
+    graphNodes.push({
+      id: traitId,
+      label: data.label,
+      category: data.category,
+      count: data.count,
+      isCharacter: false,
+    });
+  }
+
+  for (const fig of figures) {
+    const traits = figureTraits.get(fig.id) || [];
+    for (const traitId of traits) {
+      if (sharedTraits.has(traitId)) {
+        graphLinks.push({
+          source: `fig-${fig.id}`,
+          target: traitId,
+          category: sharedTraits.get(traitId)!.category,
+        });
+      }
+    }
+  }
+
+  return { graphNodes, graphLinks };
 }
 
 function NodePanel({ node, relatedNodes, edges, onClose }: { node: Node; relatedNodes: Node[]; edges: Edge[]; onClose: () => void }) {
@@ -151,16 +238,25 @@ function FilterSidebar({
   isOpen,
   onToggle,
 }: {
-  filters: { traditions: string[]; genders: string[]; domains: string[] };
+  filters: { traditions: string[]; categories: string[] };
   activeFilters: Record<string, Set<string>>;
   onToggleFilter: (category: string, value: string) => void;
   isOpen: boolean;
   onToggle: () => void;
 }) {
   const sections = [
-    { key: "traditions", label: "Tradition", values: filters.traditions },
-    { key: "genders", label: "Gender", values: filters.genders },
-    { key: "domains", label: "Domain", values: filters.domains },
+    {
+      key: "traditions",
+      label: "Tradition",
+      values: filters.traditions,
+      getColor: (val: string) => getTraditionColor(val),
+    },
+    {
+      key: "categories",
+      label: "Attribute Category",
+      values: filters.categories,
+      getColor: (val: string) => CATEGORY_COLORS[val] || "#8F00FF",
+    },
   ];
 
   return (
@@ -205,12 +301,10 @@ function FilterSidebar({
                         />
                         <Label
                           htmlFor={`${section.key}-${val}`}
-                          className="text-xs text-shadows-text/60 cursor-pointer"
+                          className="text-xs text-shadows-text/60 cursor-pointer flex items-center gap-1.5"
                         >
-                          {section.key === "traditions" && (
-                            <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: getTraditionColor(val) }} />
-                          )}
-                          {val}
+                          <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: section.getColor(val) }} />
+                          {section.key === "categories" ? CATEGORY_LABELS[val] || val : val}
                         </Label>
                       </div>
                     ))}
@@ -237,11 +331,16 @@ export default function GraphPage() {
   const [activeFilters, setActiveFilters] = useState<Record<string, Set<string>>>({});
   const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
 
-  const filters = {
-    traditions: [...new Set(data?.nodes.map((n) => n.tradition).filter(Boolean) as string[])],
-    genders: [...new Set(data?.nodes.map((n) => n.gender).filter(Boolean) as string[])],
-    domains: [...new Set(data?.nodes.flatMap((n) => tokenize(n.domain)).filter(Boolean))],
-  };
+  const { graphNodes, graphLinks } = useMemo(() => {
+    if (!data?.nodes) return { graphNodes: [], graphLinks: [] };
+    return buildGraph(data.nodes);
+  }, [data?.nodes]);
+
+  const filters = useMemo(() => {
+    const traditions = [...new Set(data?.nodes.map((n) => n.tradition).filter(Boolean) as string[])];
+    const categories = [...new Set(graphNodes.filter(n => !n.isCharacter).map(n => (n as TraitNode).category))];
+    return { traditions, categories };
+  }, [data?.nodes, graphNodes]);
 
   const toggleFilter = useCallback((category: string, value: string) => {
     setActiveFilters((prev) => {
@@ -255,30 +354,37 @@ export default function GraphPage() {
     });
   }, []);
 
-  const filteredNodes = data?.nodes.filter((n) => {
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      if (!n.name.toLowerCase().includes(q) && !(n.tradition || "").toLowerCase().includes(q)) return false;
-    }
-    for (const [key, values] of Object.entries(activeFilters)) {
-      if (values.size === 0) continue;
-      if (key === "traditions") {
-        if (!values.has(n.tradition || "")) return false;
-      } else if (key === "genders") {
-        if (!values.has(n.gender || "")) return false;
-      } else if (key === "domains") {
-        const nodeDomains = tokenize(n.domain);
-        if (!nodeDomains.some(d => values.has(d))) return false;
+  const filteredGraphNodes = useMemo(() => {
+    return graphNodes.filter((n) => {
+      if (n.isCharacter) {
+        const tradFilter = activeFilters["traditions"];
+        if (tradFilter && tradFilter.size > 0) {
+          if (!tradFilter.has(n.tradition || "")) return false;
+        }
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          if (!n.label.toLowerCase().includes(q)) return false;
+        }
+        return true;
+      } else {
+        const catFilter = activeFilters["categories"];
+        if (catFilter && catFilter.size > 0) {
+          if (!catFilter.has(n.category)) return false;
+        }
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          if (!n.label.toLowerCase().includes(q)) return false;
+        }
+        return true;
       }
-    }
-    return true;
-  });
+    });
+  }, [graphNodes, activeFilters, searchQuery]);
 
-  const filteredNodeIds = new Set(filteredNodes?.map((n) => n.id));
+  const filteredNodeIds = useMemo(() => new Set(filteredGraphNodes.map(n => n.id)), [filteredGraphNodes]);
 
-  const filteredEdges = data?.edges.filter(
-    (e) => filteredNodeIds.has(e.sourceNodeId) && filteredNodeIds.has(e.targetNodeId)
-  );
+  const filteredLinks = useMemo(() => {
+    return graphLinks.filter(l => filteredNodeIds.has(l.source) && filteredNodeIds.has(l.target));
+  }, [graphLinks, filteredNodeIds]);
 
   const relatedNodes = selectedNode
     ? data?.nodes.filter((n) => {
@@ -292,7 +398,7 @@ export default function GraphPage() {
     : [];
 
   useEffect(() => {
-    if (!svgRef.current || !filteredNodes || !filteredEdges) return;
+    if (!svgRef.current || filteredGraphNodes.length === 0) return;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
@@ -314,67 +420,41 @@ export default function GraphPage() {
     const g = svg.append("g");
 
     const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.3, 5])
+      .scaleExtent([0.2, 5])
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
       });
 
     svg.call(zoom);
 
-    const nodeMap = new Map<number, Node>();
-    filteredNodes.forEach((n) => nodeMap.set(n.id, n));
-
-    const simNodes = filteredNodes.map((n) => ({ ...n, x: width / 2, y: height / 2 }));
-    const simNodeMap = new Map<number, any>();
+    const simNodes = filteredGraphNodes.map((n) => ({ ...n, x: width / 2 + (Math.random() - 0.5) * 200, y: height / 2 + (Math.random() - 0.5) * 200 }));
+    const simNodeMap = new Map<string, any>();
     simNodes.forEach((n) => simNodeMap.set(n.id, n));
 
-    const simEdges = filteredEdges
-      .map((e) => ({
-        ...e,
-        source: simNodeMap.get(e.sourceNodeId),
-        target: simNodeMap.get(e.targetNodeId),
+    const simLinks = filteredLinks
+      .map((l) => ({
+        ...l,
+        source: simNodeMap.get(l.source),
+        target: simNodeMap.get(l.target),
       }))
-      .filter((e) => e.source && e.target);
-
-    const similarityLinks: { source: any; target: any; similarity: number }[] = [];
-    for (let i = 0; i < simNodes.length; i++) {
-      for (let j = i + 1; j < simNodes.length; j++) {
-        const sim = computeSimilarity(simNodes[i] as any, simNodes[j] as any);
-        if (sim > 0.1) {
-          similarityLinks.push({
-            source: simNodes[i],
-            target: simNodes[j],
-            similarity: sim,
-          });
-        }
-      }
-    }
+      .filter((l) => l.source && l.target);
 
     const simulation = d3.forceSimulation(simNodes)
-      .force("similarity", d3.forceLink(similarityLinks)
-        .id((d: any) => d.id)
-        .distance((d: any) => 300 * (1 - d.similarity))
-        .strength((d: any) => d.similarity * 0.5)
-      )
-      .force("edges", d3.forceLink(simEdges)
-        .id((d: any) => d.id)
-        .distance(150)
-        .strength(0.1)
-      )
-      .force("charge", d3.forceManyBody().strength(-250))
+      .force("link", d3.forceLink(simLinks).id((d: any) => d.id).distance(80).strength(0.4))
+      .force("charge", d3.forceManyBody().strength((d: any) => d.isCharacter ? -300 : -80))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius(35));
+      .force("collision", d3.forceCollide().radius((d: any) => d.isCharacter ? 30 : 15));
 
     simulationRef.current = simulation;
 
     const link = g
       .append("g")
       .selectAll("line")
-      .data(simEdges)
+      .data(simLinks)
       .join("line")
-      .attr("stroke", "#350A8C")
-      .attr("stroke-width", 0.8)
-      .attr("stroke-opacity", 0.4);
+      .attr("stroke", (d: any) => CATEGORY_COLORS[d.category] || "#350A8C")
+      .attr("stroke-width", 0.6)
+      .attr("stroke-opacity", 0.25);
 
     const nodeGroup = g
       .append("g")
@@ -402,60 +482,77 @@ export default function GraphPage() {
 
     nodeGroup
       .append("circle")
-      .attr("r", 8)
-      .attr("fill", (d: any) => getTraditionColor(d.tradition))
-      .attr("stroke", (d: any) => getTraditionColor(d.tradition))
-      .attr("stroke-width", 2)
+      .attr("r", (d: any) => d.isCharacter ? 10 : 4)
+      .attr("fill", (d: any) => {
+        if (d.isCharacter) return getTraditionColor(d.tradition);
+        return CATEGORY_COLORS[d.category] || "#350A8C";
+      })
+      .attr("stroke", (d: any) => {
+        if (d.isCharacter) return getTraditionColor(d.tradition);
+        return CATEGORY_COLORS[d.category] || "#350A8C";
+      })
+      .attr("stroke-width", (d: any) => d.isCharacter ? 2 : 1)
       .attr("stroke-opacity", 0.3)
-      .attr("fill-opacity", 0.8);
+      .attr("fill-opacity", (d: any) => d.isCharacter ? 0.9 : 0.6);
 
     nodeGroup
       .append("text")
-      .text((d: any) => d.name)
-      .attr("dy", -14)
+      .text((d: any) => d.label)
+      .attr("dy", (d: any) => d.isCharacter ? -16 : -8)
       .attr("text-anchor", "middle")
-      .attr("fill", "#E0DCE6")
-      .attr("font-size", "9px")
-      .attr("font-family", "Playfair Display, serif")
-      .attr("opacity", 0.7);
+      .attr("fill", (d: any) => d.isCharacter ? "#E0DCE6" : CATEGORY_COLORS[d.category] || "#E0DCE6")
+      .attr("font-size", (d: any) => d.isCharacter ? "10px" : "7px")
+      .attr("font-family", (d: any) => d.isCharacter ? "Playfair Display, serif" : "DM Sans, sans-serif")
+      .attr("opacity", (d: any) => d.isCharacter ? 0.85 : 0.5);
 
     nodeGroup
       .on("mouseover", function (_event: any, d: any) {
-        d3.select(this).select("circle").attr("stroke-opacity", 0.8).attr("r", 11);
-        d3.select(this).select("text").attr("opacity", 1).attr("font-size", "11px");
+        d3.select(this).select("circle")
+          .attr("stroke-opacity", 0.9)
+          .attr("r", d.isCharacter ? 14 : 7);
+        d3.select(this).select("text")
+          .attr("opacity", 1)
+          .attr("font-size", d.isCharacter ? "12px" : "9px");
 
-        const connectedIds = new Set<number>();
-        simEdges.forEach((e: any) => {
-          if (e.source.id === d.id) connectedIds.add(e.target.id);
-          if (e.target.id === d.id) connectedIds.add(e.source.id);
+        const connectedIds = new Set<string>();
+        simLinks.forEach((l: any) => {
+          if (l.source.id === d.id) connectedIds.add(l.target.id);
+          if (l.target.id === d.id) connectedIds.add(l.source.id);
         });
 
         link
           .attr("stroke-opacity", (l: any) =>
-            l.source.id === d.id || l.target.id === d.id ? 0.9 : 0.1
-          )
-          .attr("stroke", (l: any) =>
-            l.source.id === d.id || l.target.id === d.id ? "#03FF9B" : "#350A8C"
+            l.source.id === d.id || l.target.id === d.id ? 0.8 : 0.05
           )
           .attr("stroke-width", (l: any) =>
-            l.source.id === d.id || l.target.id === d.id ? 1.5 : 0.5
+            l.source.id === d.id || l.target.id === d.id ? 1.5 : 0.3
           );
 
         nodeGroup.selectAll("circle").attr("fill-opacity", (n: any) =>
-          n.id === d.id || connectedIds.has(n.id) ? 1 : 0.2
+          n.id === d.id || connectedIds.has(n.id) ? 1 : 0.1
         );
         nodeGroup.selectAll("text").attr("opacity", (n: any) =>
-          n.id === d.id || connectedIds.has(n.id) ? 1 : 0.15
+          n.id === d.id || connectedIds.has(n.id) ? 1 : 0.05
         );
       })
       .on("mouseout", function () {
-        nodeGroup.selectAll("circle").attr("stroke-opacity", 0.3).attr("r", 8).attr("fill-opacity", 0.8);
-        nodeGroup.selectAll("text").attr("opacity", 0.7).attr("font-size", "9px");
-        link.attr("stroke-opacity", 0.4).attr("stroke", "#350A8C").attr("stroke-width", 0.8);
+        nodeGroup.selectAll("circle").each(function(d: any) {
+          d3.select(this)
+            .attr("stroke-opacity", 0.3)
+            .attr("r", d.isCharacter ? 10 : 4)
+            .attr("fill-opacity", d.isCharacter ? 0.9 : 0.6);
+        });
+        nodeGroup.selectAll("text").each(function(d: any) {
+          d3.select(this)
+            .attr("opacity", d.isCharacter ? 0.85 : 0.5)
+            .attr("font-size", d.isCharacter ? "10px" : "7px");
+        });
+        link.attr("stroke-opacity", 0.25).attr("stroke-width", 0.6);
       })
       .on("click", (_event: any, d: any) => {
-        const original = nodeMap.get(d.id);
-        if (original) setSelectedNode(original);
+        if (d.isCharacter && d.original) {
+          setSelectedNode(d.original);
+        }
       });
 
     simulation.on("tick", () => {
@@ -471,7 +568,7 @@ export default function GraphPage() {
     return () => {
       simulation.stop();
     };
-  }, [filteredNodes, filteredEdges]);
+  }, [filteredGraphNodes, filteredLinks]);
 
   if (isLoading) {
     return (
@@ -499,7 +596,7 @@ export default function GraphPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-shadows-text/30" />
           <Input
             type="search"
-            placeholder="Search figures..."
+            placeholder="Search figures or traits..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 bg-[#0B0626]/80 backdrop-blur-xl border-[#350A8C]/30 text-shadows-text text-sm focus:border-[#03FF9B]/50 focus:ring-[#03FF9B]/20 transition-all"
@@ -508,11 +605,19 @@ export default function GraphPage() {
         </div>
       </div>
 
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-3 flex-wrap">
+      <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15">
+        <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">Traditions</span>
         {Object.entries(TRADITION_COLORS).map(([tradition, color]) => (
           <div key={tradition} className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-xs text-shadows-text/50">{tradition}</span>
+            <span className="text-[10px] text-shadows-text/50">{tradition}</span>
+          </div>
+        ))}
+        <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mt-1 mb-0.5">Attributes</span>
+        {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+          <div key={key} className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[key] }} />
+            <span className="text-[10px] text-shadows-text/40">{label}</span>
           </div>
         ))}
       </div>
