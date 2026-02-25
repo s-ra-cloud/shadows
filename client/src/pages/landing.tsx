@@ -1,14 +1,19 @@
 import { Link } from "wouter";
 import { ArrowRight, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import heroImage from "@assets/hero_1772030235687.jpeg";
+import heroVideo from "@assets/hero_1772053813686.mp4";
 
 function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden" data-testid="section-hero">
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${heroImage})` }}
+      <video
+        className="absolute inset-0 w-full h-full object-cover"
+        src={heroVideo}
+        autoPlay
+        loop
+        muted
+        playsInline
+        ref={(el) => { if (el) el.playbackRate = 0.5; }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[#0B0626]/85 via-[#0B0626]/60 to-[#0B0626]" />
       <div className="absolute inset-0 bg-gradient-to-r from-[#0C0042]/40 to-transparent" />
