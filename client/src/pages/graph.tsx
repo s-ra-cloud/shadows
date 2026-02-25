@@ -43,9 +43,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   animals: "Animals",
   characterTrait: "Trait",
   physicalCharacteristics: "Physical",
-  significantEvent: "Event",
-  birthCircumstances: "Birth",
-  deathCircumstances: "Death",
 };
 
 function getTraditionColor(tradition: string | null) {
@@ -53,9 +50,41 @@ function getTraditionColor(tradition: string | null) {
   return TRADITION_COLORS[tradition] || "#8F00FF";
 }
 
+const STOP_TOKENS = new Set([
+  "in greek mythology", "in roman mythology", "in norse mythology",
+  "in egyptian mythology", "in hindu mythology", "in celtic mythology",
+  "in japanese mythology", "in aztec mythology", "in sumerian mythology",
+  "in mesopotamian mythology", "in chinese mythology", "in slavic mythology",
+  "in finnish mythology", "greek mythology", "roman mythology",
+  "norse mythology", "egyptian mythology", "hindu mythology",
+  "ancient greek", "ancient rome", "ancient egypt",
+  "mythology", "according to", "also known as",
+]);
+
+const STOP_PATTERNS = [
+  /\bmytholog/i, /\bancient\b/i, /\breligion\b/i, /\bworship/i,
+  /\bpantheon\b/i, /\btradition\b/i, /\bgreek\b/i, /\broman\b/i,
+  /\bnorse\b/i, /\begypt\b/i, /\bhindu\b/i, /\bshinto\b/i,
+  /\baztec\b/i, /\bceltic\b/i, /\bsumerian\b/i, /\bmesopotam/i,
+  /\bvedic\b/i, /\bsanskrit\b/i, /\bjapanese\b/i, /\bchinese\b/i,
+  /\bslavic\b/i, /\bfinnish\b/i, /\barthurian\b/i,
+  /\baccording to\b/i, /\balso known\b/i, /\breferred to\b/i,
+  /\bsee also\b/i, /\bvariant\b/i, /\bwas a\b/i, /\bwere\b/i,
+  /\bmay refer\b/i, /\bcan refer\b/i, /\bthe name\b/i,
+  /\blatin/i, /\betruscan/i, /\bphrygian/i, /\bthracian/i,
+];
+
 function tokenize(text: string | null): string[] {
   if (!text) return [];
-  return text.split(/[,;]+/).map(s => s.trim().toLowerCase()).filter(s => s.length > 1 && s.length < 40);
+  return text
+    .split(/[,;]+/)
+    .map(s => s.trim().toLowerCase())
+    .filter(s => {
+      if (s.length <= 1 || s.length >= 60) return false;
+      if (STOP_TOKENS.has(s)) return false;
+      if (STOP_PATTERNS.some(p => p.test(s))) return false;
+      return true;
+    });
 }
 
 interface GraphData {
@@ -96,9 +125,6 @@ function buildGraph(figures: Node[], minShared = 3) {
     { key: "animals", category: "animals" },
     { key: "characterTrait", category: "characterTrait" },
     { key: "physicalCharacteristics", category: "physicalCharacteristics" },
-    { key: "significantEvent", category: "significantEvent" },
-    { key: "birthCircumstances", category: "birthCircumstances" },
-    { key: "deathCircumstances", category: "deathCircumstances" },
   ];
 
   const traitCounts = new Map<string, { label: string; category: string; count: number }>();
