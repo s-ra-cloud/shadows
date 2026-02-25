@@ -1,0 +1,179 @@
+Create a full-stack academic research website called SHADOWS.
+
+The platform is a comparative mythology research project inspired by Jungian psychology.
+It visualizes archetypes, deities, mythological figures, and symbolic motifs from world religions and popular culture using interactive network graphs.
+
+IMPORTANT: I will provide a hero background image file named "hero.jpeg".
+You MUST use this exact image as the Hero section background on the landing page.
+Assume the image is available at: /public/hero.jpeg (Next.js public folder).
+Implement the hero background with an overlay gradient so text remains readable.
+
+-----------------------
+TECH STACK
+-----------------------
+- Frontend: Next.js (React) + TypeScript
+- Styling: TailwindCSS
+- Graph: D3.js or React Flow (zoom, pan, hover, click, clustering)
+- Backend: Next.js API routes (or Express if you prefer, but keep it simple)
+- Database: PostgreSQL
+- Auth: simple admin authentication for /admin
+
+-----------------------
+DESIGN SYSTEM
+-----------------------
+Use ONLY this palette:
+- Background: #0B0626, #0C0042
+- Accents: #350A8C, #8F00FF
+- Highlight glow: #03FF9B
+- Text: #E0DCE6
+
+Visual style:
+- Dark cosmic, academic, elegant
+- Minimal, no clutter
+- Subtle glow effects on interactive elements
+- Serif headings + clean sans-serif body
+- Smooth transitions, refined micro-interactions (not flashy)
+
+-----------------------
+SITE PAGES
+-----------------------
+- / (Landing)
+- /team
+- /partners
+- /news
+- /research
+- /projects
+- /projects/[slug]
+- /admin (protected)
+
+-----------------------
+LANDING PAGE (/) STRUCTURE
+-----------------------
+
+1) HERO SECTION (must use the provided image)
+- Full-screen hero section using /public/hero.jpeg as background.
+- Add a dark overlay (gradient) to ensure readability:
+  e.g. overlay from #0B0626 (80% opacity) to transparent, plus a subtle vignette.
+- Add a subtle animated star/particle layer on top IF it does not clash with the image (very light).
+- Centered content:
+  - Title: SHADOWS
+  - Subtitle: "A Comparative Archetypal Atlas of Myth and Symbol"
+  - One short paragraph describing the project
+  - CTA button: "Explore the Atlas" linking to /projects
+
+Hero typography:
+- Title large, serif, letter-spacing slightly expanded
+- Text color: #E0DCE6
+- CTA outline button in #8F00FF with hover glow #03FF9B
+
+2) ABOUT SECTION
+Two-column layout:
+- Left: academic explanation (purpose, Jungian inspiration, graph methodology)
+- Right: decorative static SVG (circular archetypal diagram placeholder)
+
+3) RESEARCH MODULES (two sub-projects)
+Title: "Research Modules"
+Two elegant cards, each:
+- Title
+- 3–4 lines description
+- Constellation-like SVG icon
+- Button "Open Graph" -> /projects/[slug]
+Hover: slight elevation + violet border glow + subtle node pulse
+
+4) TEAM PANEL (or /team page)
+Grid with:
+- Circular portraits placeholders
+- Name, role, institution
+- Expandable bio preview on click/hover
+
+5) PARTNERS PANEL (or /partners page)
+Logos grid in monochrome / grayscale
+Hover: glow + tooltip with partner description
+
+-----------------------
+NEWS PAGE (/news)
+-----------------------
+Academic blog layout:
+- Title, date, abstract preview, read more
+News stored in database.
+
+-----------------------
+RESEARCH PAGE (/research)
+-----------------------
+Publications list:
+- Title, authors, venue, abstract preview, DOI link, PDF download button
+Loaded from database.
+
+-----------------------
+PROJECTS PAGE (/projects)
+-----------------------
+Shows the two modules with quick preview + "Open Graph".
+
+-----------------------
+GRAPH PAGE (/projects/[slug]) — CORE FEATURE
+-----------------------
+Implement a full-screen interactive graph:
+- Zoom + pan
+- Hover highlight edges and connected nodes
+- Click node opens a right-side sliding panel with:
+  name, archetype category, culture, period, tradition, description, sources, bibliography, related nodes
+
+Node color coding:
+- Archetypes: #8F00FF
+- Cultural deities: #350A8C
+- Pop culture figures: #03FF9B
+- Abstract motifs: #E0DCE6
+
+Edges thin luminous lines.
+Background gradient: #0B0626 -> #0C0042.
+
+Left sidebar filters:
+- culture
+- period
+- religious tradition
+- symbolic domain
+- archetype category
+
+Top search bar with glowing focus border.
+
+-----------------------
+DATABASE SCHEMA (PostgreSQL)
+-----------------------
+Create migrations/models for:
+
+projects(id, title, description, slug)
+nodes(id, project_id, name, type, culture, period, tradition, domain, description, sources, bibliography)
+edges(id, project_id, source_node_id, target_node_id, relation_type, weight)
+news(id, title, content, date)
+publications(id, title, authors, venue, abstract, doi, pdf_url)
+
+Provide seed data with a small sample graph (10–20 nodes, 15–30 edges) to demonstrate.
+
+-----------------------
+ADMIN DASHBOARD (/admin)
+-----------------------
+Password-protected.
+CRUD for:
+- projects
+- nodes
+- edges
+- news
+- publications
+
+UI must be simple and usable by non-technical admins:
+- clear forms
+- confirmation modal on delete
+- basic validation
+
+-----------------------
+DELIVERABLE
+-----------------------
+Generate the full codebase with:
+- clean folder structure
+- reusable components (Hero, Navbar, Footer, Cards, GraphView, SidePanel, Filters)
+- responsive layout
+- accessible color contrast
+- README with setup steps (env vars, database, migrations, run scripts)
+
+FINAL NOTE:
+The landing hero MUST use the image at /public/hero.jpeg as background with an overlay for readability.
