@@ -1,7 +1,7 @@
 # SHADOWS - Comparative Archetypal Atlas
 
 ## Overview
-SHADOWS is an academic research platform for comparative mythology. It visualizes archetypes, deities, mythological figures, and symbolic motifs using interactive network graphs built with D3.js.
+SHADOWS is an academic research platform for comparative mythology. It visualizes mythological figures (deities, heroes, etc.) using interactive network graphs built with D3.js, positioning figures by attribute similarity across world traditions.
 
 ## Tech Stack
 - **Frontend**: React + TypeScript, Vite, TailwindCSS, D3.js
@@ -18,11 +18,21 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 
 ## Database Schema
 - `projects` - Research modules (title, slug, description)
-- `nodes` - Graph nodes (name, type, culture, period, tradition, domain, description, sources, bibliography)
-- `edges` - Graph edges (source_node_id, target_node_id, relation_type, weight)
+- `nodes` - Mythological figures with attributes:
+  - name, tradition, gender, domain, object, animals
+  - characterTrait, physicalCharacteristics
+  - significantEvent, birthCircumstances, deathCircumstances
+- `edges` - Relationships between figures (parent of, married to, sibling of, adversary of, etc.)
 - `news` - News articles (title, content, date)
 - `publications` - Research publications (title, authors, venue, abstract, doi, pdf_url)
 - `users` - Admin users (username, password)
+
+## Graph Visualization
+- Nodes colored by tradition (Greek=purple, Norse=blue, Egyptian=gold, Hindu=orange, Shinto=pink, Sumerian=green, Aztec=cyan)
+- Node positioning uses attribute similarity (gender, domain, objects, animals, traits, events, birth/death)
+- Edges drawn as lines showing explicit relationships
+- Tradition is NOT used for similarity calculation (only for coloring)
+- Filters: tradition, gender, domain
 
 ## Design System
 - Dark cosmic theme: backgrounds #0B0626, #0C0042
@@ -31,22 +41,23 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 - Text: #E0DCE6
 - Serif headings (Playfair Display), sans body (DM Sans)
 
+## Team
+- Laura Duparc (Lead Researcher, University Mohammed VI Polytechnic)
+- Camille Bertrand (Researcher, EHESS)
+- Ami Nagai (Researcher, Aix-Marseille Université)
+
 ## Pages
 - `/` - Landing page with hero, about, graph preview CTA, team, partners sections
 - `/team` - Research team profiles
 - `/partners` - Collaborating institutions
 - `/news` - Academic blog/news articles
 - `/research` - Publications list
-- `/graph` - Interactive D3.js graph visualization (all nodes/edges combined)
+- `/graph` - Interactive D3.js graph visualization (similarity-based layout)
 - `/admin` - Password-protected CRUD dashboard
-
-## Key API Endpoints
-- `GET /api/graph` - Returns all nodes and edges for the unified graph view
-- `GET /api/projects/:slug/graph` - Project-specific graph data (legacy)
 
 ## Admin
 - Login uses SESSION_SECRET env variable as password
-- CRUD for projects, nodes, edges, news, publications
+- CRUD for figures, relationships, projects, news, publications
 - Delete confirmation dialogs
 
 ## Running

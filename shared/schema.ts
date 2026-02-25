@@ -20,14 +20,16 @@ export const nodes = pgTable("nodes", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").notNull().references(() => projects.id),
   name: text("name").notNull(),
-  type: text("type").notNull(),
-  culture: text("culture"),
-  period: text("period"),
   tradition: text("tradition"),
+  gender: text("gender"),
   domain: text("domain"),
-  description: text("description"),
-  sources: text("sources"),
-  bibliography: text("bibliography"),
+  object: text("object"),
+  animals: text("animals"),
+  characterTrait: text("character_trait"),
+  physicalCharacteristics: text("physical_characteristics"),
+  significantEvent: text("significant_event"),
+  birthCircumstances: text("birth_circumstances"),
+  deathCircumstances: text("death_circumstances"),
 });
 
 export const edges = pgTable("edges", {

@@ -1,6 +1,4 @@
-import { storage, db } from "./storage";
-import { projects, nodes, edges, news, publications } from "@shared/schema";
-import { sql } from "drizzle-orm";
+import { storage } from "./storage";
 
 export async function seedDatabase() {
   try {
@@ -9,97 +7,73 @@ export async function seedDatabase() {
 
     console.log("Seeding database...");
 
-    const proj1 = await storage.createProject({
-      title: "Archetypal Pantheon Network",
-      description: "An interactive graph mapping the archetypal relationships between major deities, heroes, and mythological figures across Indo-European, Mesopotamian, and East Asian traditions. Reveals structural homologies in divine hierarchies and hero cycles.",
-      slug: "archetypal-pantheon",
+    const proj = await storage.createProject({
+      title: "Comparative Mythological Atlas",
+      description: "An interactive network mapping mythological figures across world traditions, positioning them by attribute similarity.",
+      slug: "atlas",
     });
 
-    const proj2 = await storage.createProject({
-      title: "Shadow & Symbol in Pop Culture",
-      description: "Tracing the re-emergence of Jungian archetypes in contemporary popular culture — from comic book superheroes to cinematic mythologies. Maps the symbolic DNA connecting ancient gods to modern icons.",
-      slug: "shadow-pop-culture",
-    });
+    const zeus = await storage.createNode({ projectId: proj.id, name: "Zeus", tradition: "Greek", gender: "Male", domain: "Sky, thunder, justice, kingship", object: "Thunderbolt, aegis, scepter", animals: "Eagle, bull", characterTrait: "Authoritative, unfaithful, wrathful, protective", physicalCharacteristics: "Imposing, bearded, muscular", significantEvent: "Overthrew the Titans, swallowed by Kronos as infant", birthCircumstances: "Born to Kronos and Rhea, hidden in Crete to escape being swallowed", deathCircumstances: null });
+    const odin = await storage.createNode({ projectId: proj.id, name: "Odin", tradition: "Norse", gender: "Male", domain: "Wisdom, war, death, poetry, magic", object: "Spear Gungnir, ring Draupnir", animals: "Ravens (Huginn & Muninn), wolves (Geri & Freki), horse Sleipnir", characterTrait: "Wise, cunning, self-sacrificing, wandering", physicalCharacteristics: "One-eyed, cloaked, old but powerful", significantEvent: "Sacrificed an eye at Mimir's well, hung on Yggdrasil for runes", birthCircumstances: "Son of Borr and Bestla", deathCircumstances: "Swallowed by Fenrir at Ragnarok" });
+    const isis = await storage.createNode({ projectId: proj.id, name: "Isis", tradition: "Egyptian", gender: "Female", domain: "Magic, motherhood, healing, wisdom", object: "Tyet knot, throne headdress", animals: "Kite (bird), scorpion", characterTrait: "Devoted, cunning, powerful, nurturing", physicalCharacteristics: "Winged, crowned with throne symbol", significantEvent: "Reassembled Osiris's body, learned Ra's secret name", birthCircumstances: "Daughter of Geb (earth) and Nut (sky)", deathCircumstances: null });
+    const amaterasu = await storage.createNode({ projectId: proj.id, name: "Amaterasu", tradition: "Shinto", gender: "Female", domain: "Sun, sovereignty, weaving", object: "Sacred mirror Yata no Kagami, jewel Yasakani no Magatama", animals: "Rooster", characterTrait: "Radiant, benevolent, withdrawn when offended", physicalCharacteristics: "Radiating light, luminous", significantEvent: "Withdrew into a cave plunging the world into darkness", birthCircumstances: "Born from Izanagi's left eye during purification", deathCircumstances: null });
+    const thor = await storage.createNode({ projectId: proj.id, name: "Thor", tradition: "Norse", gender: "Male", domain: "Thunder, strength, protection of humanity", object: "Hammer Mjolnir, belt Megingjord, iron gloves", animals: "Goats (Tanngrisnir & Tanngnjóstr)", characterTrait: "Brave, hot-tempered, loyal, straightforward", physicalCharacteristics: "Red-bearded, massive, strongest of the gods", significantEvent: "Fishing for Jörmungandr, battles at Ragnarok", birthCircumstances: "Son of Odin and the giantess Jord", deathCircumstances: "Kills Jörmungandr at Ragnarok but dies from its venom" });
+    const athena = await storage.createNode({ projectId: proj.id, name: "Athena", tradition: "Greek", gender: "Female", domain: "Wisdom, strategic warfare, crafts", object: "Aegis, shield with Medusa's head, olive tree", animals: "Owl, serpent", characterTrait: "Strategic, just, virginal, competitive", physicalCharacteristics: "Grey-eyed, helmeted, armored", significantEvent: "Won patronage of Athens over Poseidon, aided Perseus and Odysseus", birthCircumstances: "Born fully armored from Zeus's forehead", deathCircumstances: null });
+    const vishnu = await storage.createNode({ projectId: proj.id, name: "Vishnu", tradition: "Hindu", gender: "Male", domain: "Preservation, cosmic order, protection", object: "Discus Sudarshana Chakra, conch Panchajanya, mace Kaumodaki, lotus", animals: "Eagle Garuda, serpent Shesha", characterTrait: "Benevolent, just, protective, patient", physicalCharacteristics: "Blue-skinned, four-armed", significantEvent: "Incarnates as avatars (Rama, Krishna) to restore cosmic order", birthCircumstances: "Self-existent, part of the Trimurti", deathCircumstances: null });
+    const persephone = await storage.createNode({ projectId: proj.id, name: "Persephone", tradition: "Greek", gender: "Female", domain: "Spring, underworld, vegetation, death", object: "Pomegranate, torch, flowers", animals: "Deer", characterTrait: "Dual-natured, innocent yet fearsome, seasonal", physicalCharacteristics: "Youthful, beautiful, sometimes depicted with crown", significantEvent: "Abducted by Hades, ate pomegranate seeds binding her to underworld", birthCircumstances: "Daughter of Zeus and Demeter", deathCircumstances: null });
+    const osiris = await storage.createNode({ projectId: proj.id, name: "Osiris", tradition: "Egyptian", gender: "Male", domain: "Afterlife, resurrection, agriculture, fertility", object: "Crook and flail, atef crown", animals: "Ram", characterTrait: "Just, merciful, civilizing", physicalCharacteristics: "Green or black skinned, mummiform", significantEvent: "Murdered and dismembered by Set, resurrected by Isis", birthCircumstances: "Son of Geb (earth) and Nut (sky)", deathCircumstances: "Murdered by his brother Set, dismembered into pieces" });
+    const loki = await storage.createNode({ projectId: proj.id, name: "Loki", tradition: "Norse", gender: "Male (shape-shifter)", domain: "Trickery, fire, chaos", object: "None specific, uses cunning", animals: "Salmon, fly, mare (shape-shifted forms)", characterTrait: "Cunning, deceitful, unpredictable, witty", physicalCharacteristics: "Handsome, shape-shifting", significantEvent: "Caused Baldr's death, bound with serpent venom", birthCircumstances: "Son of giants Farbauti and Laufey", deathCircumstances: "Kills and is killed by Heimdall at Ragnarok" });
+    const inanna = await storage.createNode({ projectId: proj.id, name: "Inanna", tradition: "Sumerian", gender: "Female", domain: "Love, war, fertility, political power", object: "Lapis lazuli necklace, me (divine powers)", animals: "Lion", characterTrait: "Ambitious, passionate, fierce, imperious", physicalCharacteristics: "Adorned with jewels, radiating power", significantEvent: "Descended to the underworld and returned", birthCircumstances: "Daughter of Nanna (moon god) or An (sky god)", deathCircumstances: "Died in the underworld but was resurrected" });
+    const quetzalcoatl = await storage.createNode({ projectId: proj.id, name: "Quetzalcoatl", tradition: "Aztec", gender: "Male", domain: "Wind, learning, creation, morning star", object: "Conch shell, feathered headdress", animals: "Feathered serpent, quetzal bird", characterTrait: "Wise, civilizing, peaceful, penitent", physicalCharacteristics: "Feathered serpent or pale-skinned bearded man", significantEvent: "Created humanity from bones of the dead, self-exiled after being tricked", birthCircumstances: "Son of Ometecuhtli and Omecihuatl, or born from Coatlicue", deathCircumstances: "Self-immolated and became the morning star" });
 
-    const n1 = await storage.createNode({ projectId: proj1.id, name: "The Hero", type: "archetype", culture: "Universal", period: "Timeless", tradition: "Cross-cultural", domain: "Transformation", description: "The central archetypal figure of the monomyth. Represents the ego's journey through trials toward individuation.", sources: "Campbell, The Hero with a Thousand Faces", bibliography: "Campbell, J. (1949). The Hero with a Thousand Faces. Pantheon Books." });
-    const n2 = await storage.createNode({ projectId: proj1.id, name: "The Shadow", type: "archetype", culture: "Universal", period: "Timeless", tradition: "Jungian", domain: "Unconscious", description: "The repressed, dark side of the personality. Appears as antagonists, monsters, and tricksters in mythology.", sources: "Jung, Aion", bibliography: "Jung, C.G. (1951). Aion: Researches into the Phenomenology of the Self." });
-    const n3 = await storage.createNode({ projectId: proj1.id, name: "The Anima", type: "archetype", culture: "Universal", period: "Timeless", tradition: "Jungian", domain: "Psyche", description: "The feminine aspect of the male psyche. Manifests as goddesses, enchantresses, and muse figures.", sources: "Jung, The Archetypes and the Collective Unconscious" });
-    const n4 = await storage.createNode({ projectId: proj1.id, name: "Zeus", type: "deity", culture: "Greek", period: "Classical Antiquity", tradition: "Hellenic polytheism", domain: "Sky / Sovereignty", description: "King of the Olympian gods. Embodies the archetype of the divine father and celestial sovereign.", sources: "Hesiod, Theogony" });
-    const n5 = await storage.createNode({ projectId: proj1.id, name: "Odin", type: "deity", culture: "Norse", period: "Viking Age", tradition: "Norse polytheism", domain: "Wisdom / War", description: "Allfather of the Norse pantheon. A complex figure combining the Wise Old Man and Trickster archetypes.", sources: "Poetic Edda, Prose Edda" });
-    const n6 = await storage.createNode({ projectId: proj1.id, name: "Amaterasu", type: "deity", culture: "Japanese", period: "Ancient", tradition: "Shinto", domain: "Sun / Sovereignty", description: "Sun goddess and supreme deity of Shinto. Represents solar sovereignty and divine feminine authority.", sources: "Kojiki, Nihon Shoki" });
-    const n7 = await storage.createNode({ projectId: proj1.id, name: "Isis", type: "deity", culture: "Egyptian", period: "Ancient", tradition: "Egyptian polytheism", domain: "Magic / Motherhood", description: "The Great Mother goddess of Egypt. Embodies magical wisdom, devotion, and regenerative power.", sources: "Plutarch, De Iside et Osiride" });
-    const n8 = await storage.createNode({ projectId: proj1.id, name: "The Trickster", type: "archetype", culture: "Universal", period: "Timeless", tradition: "Cross-cultural", domain: "Chaos / Creativity", description: "The boundary-crosser and rule-breaker. Disrupts established order to catalyze transformation.", sources: "Radin, The Trickster" });
-    const n9 = await storage.createNode({ projectId: proj1.id, name: "Loki", type: "deity", culture: "Norse", period: "Viking Age", tradition: "Norse polytheism", domain: "Chaos / Fire", description: "Shape-shifting trickster of Norse mythology. Embodies creative destruction and ambiguity.", sources: "Prose Edda, Lokasenna" });
-    const n10 = await storage.createNode({ projectId: proj1.id, name: "Hermes", type: "deity", culture: "Greek", period: "Classical Antiquity", tradition: "Hellenic polytheism", domain: "Communication / Boundaries", description: "Messenger of the gods and psychopomp. The divine trickster who crosses between worlds.", sources: "Homeric Hymn to Hermes" });
-    const n11 = await storage.createNode({ projectId: proj1.id, name: "The World Tree", type: "motif", culture: "Indo-European", period: "Ancient", tradition: "Cross-cultural", domain: "Cosmology", description: "The axis mundi connecting heaven, earth, and underworld. Yggdrasil in Norse, Ashvattha in Hindu tradition.", sources: "Eliade, The Sacred and the Profane" });
-    const n12 = await storage.createNode({ projectId: proj1.id, name: "The Serpent", type: "motif", culture: "Universal", period: "Timeless", tradition: "Cross-cultural", domain: "Transformation / Knowledge", description: "Universal symbol of transformation, wisdom, and the chthonic powers. The ouroboros, kundalini, and the Edenic serpent.", sources: "Mundkur, The Cult of the Serpent" });
-
-    const n13 = await storage.createNode({ projectId: proj2.id, name: "Superman", type: "pop-culture", culture: "American", period: "20th Century", tradition: "Comics", domain: "Heroism", description: "The archetypal modern superhero. A solar hero figure combining the Messiah and the Hero archetypes in American popular mythology.", sources: "Fingeroth, Superman on the Couch" });
-    const n14 = await storage.createNode({ projectId: proj2.id, name: "Darth Vader", type: "pop-culture", culture: "American", period: "20th Century", tradition: "Cinema", domain: "Shadow", description: "The fallen father-figure of Star Wars. A direct embodiment of the Jungian Shadow integrated into the Hero's journey.", sources: "Lucas, Star Wars; Campbell correspondence" });
-    const n15 = await storage.createNode({ projectId: proj2.id, name: "The Joker", type: "pop-culture", culture: "American", period: "20th Century", tradition: "Comics", domain: "Chaos", description: "Batman's nemesis as modern Trickster. Represents the anarchic, shadow-trickster at the boundary of civilization.", sources: "Morrison, Arkham Asylum" });
-    const n16 = await storage.createNode({ projectId: proj2.id, name: "Wonder Woman", type: "pop-culture", culture: "American", period: "20th Century", tradition: "Comics", domain: "Divine Feminine", description: "Amazon warrior-princess modeled on classical goddess archetypes. A modern Athena/Artemis synthesis.", sources: "Marston, Sensation Comics" });
-    const n17 = await storage.createNode({ projectId: proj2.id, name: "The Hero (Campbell)", type: "archetype", culture: "Universal", period: "Timeless", tradition: "Jungian", domain: "Transformation", description: "The monomythic hero as theorized by Joseph Campbell. The template underlying Luke Skywalker, Neo, and countless modern protagonists." });
-    const n18 = await storage.createNode({ projectId: proj2.id, name: "The Mentor", type: "archetype", culture: "Universal", period: "Timeless", tradition: "Cross-cultural", domain: "Wisdom", description: "The Wise Old Man archetype as it appears in popular culture: Gandalf, Obi-Wan Kenobi, Dumbledore, Morpheus." });
-
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n1.id, targetNodeId: n2.id, relationType: "opposition", weight: 3 });
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n1.id, targetNodeId: n3.id, relationType: "complementarity", weight: 2 });
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n4.id, targetNodeId: n1.id, relationType: "embodies", weight: 2 });
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n5.id, targetNodeId: n1.id, relationType: "embodies", weight: 2 });
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n4.id, targetNodeId: n5.id, relationType: "homology", weight: 3 });
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n6.id, targetNodeId: n7.id, relationType: "homology", weight: 2 });
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n7.id, targetNodeId: n3.id, relationType: "embodies", weight: 2 });
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n8.id, targetNodeId: n2.id, relationType: "overlap", weight: 2 });
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n9.id, targetNodeId: n8.id, relationType: "embodies", weight: 3 });
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n10.id, targetNodeId: n8.id, relationType: "embodies", weight: 3 });
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n9.id, targetNodeId: n10.id, relationType: "homology", weight: 2 });
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n5.id, targetNodeId: n11.id, relationType: "association", weight: 2 });
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n12.id, targetNodeId: n2.id, relationType: "symbolizes", weight: 2 });
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n12.id, targetNodeId: n11.id, relationType: "opposition", weight: 1 });
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n6.id, targetNodeId: n1.id, relationType: "embodies", weight: 1 });
-    await storage.createEdge({ projectId: proj1.id, sourceNodeId: n4.id, targetNodeId: n6.id, relationType: "homology", weight: 2 });
-
-    await storage.createEdge({ projectId: proj2.id, sourceNodeId: n13.id, targetNodeId: n17.id, relationType: "embodies", weight: 3 });
-    await storage.createEdge({ projectId: proj2.id, sourceNodeId: n14.id, targetNodeId: n17.id, relationType: "inversion", weight: 2 });
-    await storage.createEdge({ projectId: proj2.id, sourceNodeId: n15.id, targetNodeId: n17.id, relationType: "opposition", weight: 2 });
-    await storage.createEdge({ projectId: proj2.id, sourceNodeId: n16.id, targetNodeId: n17.id, relationType: "embodies", weight: 2 });
-    await storage.createEdge({ projectId: proj2.id, sourceNodeId: n14.id, targetNodeId: n13.id, relationType: "opposition", weight: 1 });
-    await storage.createEdge({ projectId: proj2.id, sourceNodeId: n15.id, targetNodeId: n14.id, relationType: "parallel", weight: 1 });
-    await storage.createEdge({ projectId: proj2.id, sourceNodeId: n18.id, targetNodeId: n17.id, relationType: "guides", weight: 3 });
-    await storage.createEdge({ projectId: proj2.id, sourceNodeId: n16.id, targetNodeId: n18.id, relationType: "complements", weight: 1 });
+    await storage.createEdge({ projectId: proj.id, sourceNodeId: zeus.id, targetNodeId: athena.id, relationType: "parent of", weight: 3 });
+    await storage.createEdge({ projectId: proj.id, sourceNodeId: zeus.id, targetNodeId: persephone.id, relationType: "parent of", weight: 3 });
+    await storage.createEdge({ projectId: proj.id, sourceNodeId: isis.id, targetNodeId: osiris.id, relationType: "married to", weight: 3 });
+    await storage.createEdge({ projectId: proj.id, sourceNodeId: odin.id, targetNodeId: thor.id, relationType: "parent of", weight: 3 });
+    await storage.createEdge({ projectId: proj.id, sourceNodeId: odin.id, targetNodeId: loki.id, relationType: "blood brother of", weight: 2 });
+    await storage.createEdge({ projectId: proj.id, sourceNodeId: thor.id, targetNodeId: loki.id, relationType: "companion of", weight: 2 });
+    await storage.createEdge({ projectId: proj.id, sourceNodeId: persephone.id, targetNodeId: osiris.id, relationType: "parallel (underworld ruler)", weight: 1 });
+    await storage.createEdge({ projectId: proj.id, sourceNodeId: isis.id, targetNodeId: osiris.id, relationType: "resurrected", weight: 3 });
+    await storage.createEdge({ projectId: proj.id, sourceNodeId: inanna.id, targetNodeId: persephone.id, relationType: "parallel (underworld descent)", weight: 2 });
+    await storage.createEdge({ projectId: proj.id, sourceNodeId: inanna.id, targetNodeId: isis.id, relationType: "parallel (powerful goddess)", weight: 1 });
+    await storage.createEdge({ projectId: proj.id, sourceNodeId: loki.id, targetNodeId: quetzalcoatl.id, relationType: "parallel (trickster/transformation)", weight: 1 });
+    await storage.createEdge({ projectId: proj.id, sourceNodeId: vishnu.id, targetNodeId: osiris.id, relationType: "parallel (death and rebirth)", weight: 1 });
+    await storage.createEdge({ projectId: proj.id, sourceNodeId: amaterasu.id, targetNodeId: zeus.id, relationType: "parallel (supreme sky deity)", weight: 1 });
+    await storage.createEdge({ projectId: proj.id, sourceNodeId: athena.id, targetNodeId: inanna.id, relationType: "parallel (war goddess)", weight: 1 });
 
     await storage.createNews({
       title: "SHADOWS Atlas v2.0 Released with Enhanced Graph Engine",
-      content: "We are pleased to announce the release of SHADOWS Atlas version 2.0, featuring a completely redesigned graph visualization engine. The new force-directed layout algorithm provides improved clustering of culturally related nodes, while the enhanced hover mechanics reveal edge semantics and connection weights. The update also introduces a new filtering system allowing researchers to isolate nodes by cultural tradition, historical period, and symbolic domain.",
+      content: "We are pleased to announce the release of SHADOWS Atlas version 2.0, featuring a completely redesigned graph visualization engine. The new similarity-based layout algorithm positions mythological figures by shared attributes, revealing structural parallels across traditions. The update also introduces a new filtering system allowing researchers to isolate figures by tradition, domain, and other characteristics.",
     });
     await storage.createNews({
       title: "Keynote at Digital Humanities Conference 2026",
-      content: "Dr. Elena Vasquez will deliver the keynote address at the Digital Humanities Conference in Berlin, presenting the SHADOWS methodology for computational comparative mythology. The talk will demonstrate how network graph analysis reveals previously unrecognized structural parallels between Mesopotamian and Mesoamerican mythological systems, with implications for theories of independent cultural evolution versus diffusionist models.",
+      content: "Laura Duparc will deliver the keynote address at the Digital Humanities Conference in Berlin, presenting the SHADOWS methodology for computational comparative mythology. The talk will demonstrate how similarity-based network analysis reveals previously unrecognized structural parallels between mythological traditions worldwide.",
     });
     await storage.createNews({
-      title: "New Research Module: Pop Culture Archetypes",
-      content: "The SHADOWS team has launched a new research module tracing the survival and transformation of classical archetypes in contemporary popular culture. From the Jungian Shadow in Darth Vader to the Trickster archetype in the Joker, this module maps the symbolic DNA connecting ancient mythological figures to modern cinematic and literary icons. The module is now available for interactive exploration.",
+      title: "New Figures Added: Mesoamerican and Sumerian Traditions",
+      content: "The SHADOWS team has expanded the atlas to include key figures from Mesoamerican and Sumerian mythological traditions. Quetzalcoatl and Inanna join the network, revealing fascinating parallels with figures from other traditions in terms of underworld descent narratives and civilizing hero motifs.",
     });
 
     await storage.createPublication({
-      title: "Network Analysis of Archetypal Structures in Indo-European Mythology",
-      authors: "Vasquez, E., Tanaka, A., Chen, M.",
+      title: "Network Analysis of Mythological Structures Across World Traditions",
+      authors: "Duparc, L., Bertrand, C., Nagai, A.",
       venue: "Journal of Digital Humanities, Vol. 12",
-      abstract: "This paper presents a novel computational approach to comparative mythology, applying force-directed graph algorithms to model the structural relationships between archetypal figures across Indo-European mythological traditions. Our analysis reveals statistically significant clustering patterns that support the hypothesis of a shared archetypal substrate underlying diverse cultural mythologies.",
+      abstract: "This paper presents a novel computational approach to comparative mythology, using attribute-based similarity metrics to position mythological figures in network space. Our analysis reveals statistically significant clustering patterns that illuminate shared structural motifs across geographically distant traditions.",
       doi: "10.1234/jdh.2025.0042",
     });
     await storage.createPublication({
-      title: "The Trickster Graph: Mapping Boundary-Crossing Figures Across World Mythologies",
-      authors: "Osei, A., Vasquez, E.",
+      title: "Descent Narratives Across Cultures: A Computational Comparison",
+      authors: "Bertrand, C., Duparc, L.",
       venue: "Comparative Mythology Review, Vol. 8",
-      abstract: "An analysis of trickster figures across African, European, and Asian mythological traditions using graph-theoretic methods. We demonstrate that trickster archetypes occupy structurally homologous positions in otherwise disparate mythological networks, suggesting a universal cognitive template for boundary-transgression narratives.",
+      abstract: "An analysis of underworld descent narratives across Sumerian, Greek, Egyptian, and Mesoamerican traditions using graph-theoretic methods. We demonstrate that figures associated with death-and-return motifs occupy structurally homologous positions in the SHADOWS atlas.",
       doi: "10.1234/cmr.2025.0018",
     });
     await storage.createPublication({
-      title: "Jung in the Machine: Computational Approaches to the Collective Unconscious",
-      authors: "Chen, M., Petrov, S., Tanaka, A.",
-      venue: "Digital Psychology Quarterly",
-      abstract: "We propose a computational framework for modeling Jungian archetypes as emergent properties of mythological network structures. Using spectral clustering on a graph of 500+ mythological figures, we identify archetypal 'attractors' that correspond closely to Jung's theoretical taxonomy of the collective unconscious.",
-      doi: "10.1234/dpq.2024.0091",
+      title: "Similarity Metrics for Cross-Cultural Mythological Comparison",
+      authors: "Nagai, A., Duparc, L., Bertrand, C.",
+      venue: "Digital Humanities Quarterly",
+      abstract: "We propose a computational framework for measuring similarity between mythological figures based on categorical attributes including domain, gender, associated objects, animals, character traits, and narrative events. Our multi-dimensional similarity metric enables automated clustering and visualization of cross-cultural parallels.",
+      doi: "10.1234/dhq.2024.0091",
     });
 
     console.log("Database seeded successfully.");

@@ -165,8 +165,9 @@ function CrudSection<T extends { id: number }>({
                 <p className="text-sm text-shadows-text truncate">
                   {item.title || item.name || `#${item.id}`}
                 </p>
+                {item.tradition && <p className="text-xs text-shadows-text/30">{item.tradition}</p>}
                 {item.slug && <p className="text-xs text-shadows-text/30">/{item.slug}</p>}
-                {item.type && <p className="text-xs text-shadows-text/30 capitalize">{item.type}</p>}
+                {item.relationType && <p className="text-xs text-shadows-text/30">{item.relationType}</p>}
               </div>
               <button
                 onClick={() => setDeleteId(item.id)}
@@ -290,14 +291,53 @@ export default function AdminPage() {
           </Button>
         </div>
 
-        <Tabs defaultValue="projects">
+        <Tabs defaultValue="figures">
           <TabsList className="bg-[#0C0042]/30 border border-[#350A8C]/20 mb-6">
+            <TabsTrigger value="figures" className="data-[state=active]:bg-[#8F00FF]/20 data-[state=active]:text-shadows-text text-shadows-text/50" data-testid="tab-admin-figures">Figures</TabsTrigger>
+            <TabsTrigger value="edges" className="data-[state=active]:bg-[#8F00FF]/20 data-[state=active]:text-shadows-text text-shadows-text/50" data-testid="tab-admin-edges">Relationships</TabsTrigger>
             <TabsTrigger value="projects" className="data-[state=active]:bg-[#8F00FF]/20 data-[state=active]:text-shadows-text text-shadows-text/50" data-testid="tab-admin-projects">Projects</TabsTrigger>
-            <TabsTrigger value="nodes" className="data-[state=active]:bg-[#8F00FF]/20 data-[state=active]:text-shadows-text text-shadows-text/50" data-testid="tab-admin-nodes">Nodes</TabsTrigger>
-            <TabsTrigger value="edges" className="data-[state=active]:bg-[#8F00FF]/20 data-[state=active]:text-shadows-text text-shadows-text/50" data-testid="tab-admin-edges">Edges</TabsTrigger>
             <TabsTrigger value="news" className="data-[state=active]:bg-[#8F00FF]/20 data-[state=active]:text-shadows-text text-shadows-text/50" data-testid="tab-admin-news">News</TabsTrigger>
             <TabsTrigger value="publications" className="data-[state=active]:bg-[#8F00FF]/20 data-[state=active]:text-shadows-text text-shadows-text/50" data-testid="tab-admin-publications">Publications</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="figures">
+            <CrudSection
+              title="Figure"
+              queryKey="nodes"
+              fields={[
+                { key: "projectId", label: "Project ID", type: "text" },
+                { key: "name", label: "Name", type: "text" },
+                { key: "tradition", label: "Tradition", type: "text" },
+                { key: "gender", label: "Gender", type: "text" },
+                { key: "domain", label: "Domain (comma-separated)", type: "text" },
+                { key: "object", label: "Object (associated objects/symbols)", type: "text" },
+                { key: "animals", label: "Animals", type: "text" },
+                { key: "characterTrait", label: "Character Trait", type: "text" },
+                { key: "physicalCharacteristics", label: "Physical Characteristics", type: "text" },
+                { key: "significantEvent", label: "Significant Event", type: "textarea" },
+                { key: "birthCircumstances", label: "Circumstances of Birth", type: "textarea" },
+                { key: "deathCircumstances", label: "Circumstances of Death", type: "textarea" },
+              ]}
+              data={allNodes}
+              isLoading={loadingNodes}
+            />
+          </TabsContent>
+
+          <TabsContent value="edges">
+            <CrudSection
+              title="Relationship"
+              queryKey="edges"
+              fields={[
+                { key: "projectId", label: "Project ID", type: "text" },
+                { key: "sourceNodeId", label: "Source Figure ID", type: "text" },
+                { key: "targetNodeId", label: "Target Figure ID", type: "text" },
+                { key: "relationType", label: "Relation Type (e.g., parent of, married to, sibling of, adversary of)", type: "text" },
+                { key: "weight", label: "Weight", type: "text" },
+              ]}
+              data={allEdges}
+              isLoading={loadingEdges}
+            />
+          </TabsContent>
 
           <TabsContent value="projects">
             <CrudSection
@@ -310,43 +350,6 @@ export default function AdminPage() {
               ]}
               data={projects}
               isLoading={loadingProjects}
-            />
-          </TabsContent>
-
-          <TabsContent value="nodes">
-            <CrudSection
-              title="Node"
-              queryKey="nodes"
-              fields={[
-                { key: "projectId", label: "Project ID", type: "text" },
-                { key: "name", label: "Name", type: "text" },
-                { key: "type", label: "Type (archetype, deity, pop-culture, motif)", type: "text" },
-                { key: "culture", label: "Culture", type: "text" },
-                { key: "period", label: "Period", type: "text" },
-                { key: "tradition", label: "Tradition", type: "text" },
-                { key: "domain", label: "Domain", type: "text" },
-                { key: "description", label: "Description", type: "textarea" },
-                { key: "sources", label: "Sources", type: "text" },
-                { key: "bibliography", label: "Bibliography", type: "textarea" },
-              ]}
-              data={allNodes}
-              isLoading={loadingNodes}
-            />
-          </TabsContent>
-
-          <TabsContent value="edges">
-            <CrudSection
-              title="Edge"
-              queryKey="edges"
-              fields={[
-                { key: "projectId", label: "Project ID", type: "text" },
-                { key: "sourceNodeId", label: "Source Node ID", type: "text" },
-                { key: "targetNodeId", label: "Target Node ID", type: "text" },
-                { key: "relationType", label: "Relation Type", type: "text" },
-                { key: "weight", label: "Weight", type: "text" },
-              ]}
-              data={allEdges}
-              isLoading={loadingEdges}
             />
           </TabsContent>
 
