@@ -158,24 +158,41 @@ function buildGraph(figures: Node[], minShared = 3) {
 
   const graphNodes: GraphNode[] = [];
   const graphLinks: GraphLink[] = [];
-  const connectedFigureIds = new Set<number>();
+
+  const figureSharedTraitCount = new Map<number, number>();
+  const figureLinkData = new Map<number, { traitId: string; category: string }[]>();
 
   for (const fig of figures) {
     const traits = figureTraits.get(fig.id) || [];
+    const links: { traitId: string; category: string }[] = [];
     for (const traitId of traits) {
       if (sharedTraits.has(traitId)) {
-        connectedFigureIds.add(fig.id);
-        graphLinks.push({
-          source: `fig-${fig.id}`,
-          target: traitId,
-          category: sharedTraits.get(traitId)!.category,
-        });
+        links.push({ traitId, category: sharedTraits.get(traitId)!.category });
       }
+    }
+    figureSharedTraitCount.set(fig.id, links.length);
+    figureLinkData.set(fig.id, links);
+  }
+
+  const qualifiedFigureIds = new Set<number>();
+  for (const [figId, count] of figureSharedTraitCount) {
+    if (count >= 2) qualifiedFigureIds.add(figId);
+  }
+
+  for (const fig of figures) {
+    if (!qualifiedFigureIds.has(fig.id)) continue;
+    const links = figureLinkData.get(fig.id) || [];
+    for (const { traitId, category } of links) {
+      graphLinks.push({
+        source: `fig-${fig.id}`,
+        target: traitId,
+        category,
+      });
     }
   }
 
   for (const fig of figures) {
-    if (connectedFigureIds.has(fig.id)) {
+    if (qualifiedFigureIds.has(fig.id)) {
       graphNodes.push({
         id: `fig-${fig.id}`,
         nodeId: fig.id,
