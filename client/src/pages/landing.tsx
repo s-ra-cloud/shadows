@@ -222,8 +222,8 @@ function GraphPreviewSection() {
 
 function TeamPreview() {
   const teamMembers = [
-    { name: "Laura Duparc", role: "Lead Researcher", institution: "University Mohammed VI Polytechnic" },
     { name: "Camille Bertrand", role: "Researcher", institution: "EHESS" },
+    { name: "Laura Duparc", role: "Lead Researcher", institution: "University Mohammed VI Polytechnic" },
     { name: "Ami Nagai", role: "Researcher", institution: "Aix-Marseille Université" },
   ];
 

@@ -3,16 +3,16 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 
 const teamMembers = [
   {
-    name: "Laura Duparc",
-    role: "Lead Researcher",
-    institution: "University Mohammed VI Polytechnic",
-    bio: "Laura Duparc leads the SHADOWS research initiative, bringing expertise in comparative mythology and digital humanities. Her work focuses on mapping structural parallels across mythological traditions using computational network analysis, with particular interest in how archetypal motifs migrate and transform across cultures and historical periods.",
-  },
-  {
     name: "Camille Bertrand",
     role: "Researcher",
     institution: "EHESS",
     bio: "Camille Bertrand is a researcher at the École des Hautes Études en Sciences Sociales specializing in the anthropology of religion and symbolic systems. Her contribution to SHADOWS centers on the classification and cross-referencing of mythological motifs across Indo-European, Semitic, and East Asian traditions.",
+  },
+  {
+    name: "Laura Duparc",
+    role: "Lead Researcher",
+    institution: "University Mohammed VI Polytechnic",
+    bio: "Laura Duparc leads the SHADOWS research initiative, bringing expertise in comparative mythology and digital humanities. Her work focuses on mapping structural parallels across mythological traditions using computational network analysis, with particular interest in how archetypal motifs migrate and transform across cultures and historical periods.",
   },
   {
     name: "Ami Nagai",
@@ -36,7 +36,7 @@ export default function TeamPage() {
           through computational analysis and network visualization.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {teamMembers.map((member, i) => (
             <div
               key={i}
