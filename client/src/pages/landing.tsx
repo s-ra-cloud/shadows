@@ -21,7 +21,7 @@ function HeroSection() {
 
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
         <h1
-          className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-[0.2em] text-shadows-text mb-6 animate-fade-in-up font-bold"
+          className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-[0.2em] text-shadows-text mb-6 animate-fade-in-up font-normal"
           style={{ animationDelay: "0.1s", fontFamily: "'Cinzel Decorative', serif" }}
           data-testid="text-hero-title"
         >
