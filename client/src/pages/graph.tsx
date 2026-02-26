@@ -1135,6 +1135,7 @@ function NetworkView({
   onSelectTrait,
   onHoverNode,
   hoveredNode,
+  selectedNodeId,
 }: {
   filteredGraphNodes: GraphNode[];
   filteredLinks: GraphLink[];
@@ -1142,6 +1143,7 @@ function NetworkView({
   onSelectTrait: (trait: TraitNode | null) => void;
   onHoverNode: (node: any) => void;
   hoveredNode: any;
+  selectedNodeId: number | null;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
@@ -1150,8 +1152,10 @@ function NetworkView({
   const simLinksRef = useRef<any[]>([]);
   const onSelectNodeRef = useRef(onSelectNode);
   const onSelectTraitRef = useRef(onSelectTrait);
+  const selectedNodeIdRef = useRef(selectedNodeId);
   onSelectNodeRef.current = onSelectNode;
   onSelectTraitRef.current = onSelectTrait;
+  selectedNodeIdRef.current = selectedNodeId;
 
   useEffect(() => {
     if (!canvasRef.current || filteredGraphNodes.length === 0) return;
@@ -1244,19 +1248,26 @@ function NetworkView({
 
       ctx.globalAlpha = 1;
 
+      const selId = selectedNodeIdRef.current;
       for (const n of simNodes) {
         const isHovered = n.id === hoveredId;
+        const isSelected = n.isCharacter && n.original?.id === selId;
         const isConnected = connectedIds.has(n.id);
         const dimmed = hoveredId && !isHovered && !isConnected;
 
         if (n.isCharacter) {
-          const r = isHovered ? 10 : 6;
+          const r = isHovered ? 10 : isSelected ? 8 : 6;
           ctx.beginPath();
           ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
           ctx.fillStyle = "#E0DCE6";
           ctx.globalAlpha = dimmed ? 0.08 : 0.85;
           ctx.fill();
-          if (isHovered || isConnected) {
+          if (isSelected) {
+            ctx.strokeStyle = "#FFD700";
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.9;
+            ctx.stroke();
+          } else if (isHovered || isConnected) {
             ctx.strokeStyle = "#8F00FF";
             ctx.lineWidth = 1.5;
             ctx.globalAlpha = 0.6;
@@ -1279,16 +1290,17 @@ function NetworkView({
       if (showLabels) {
         for (const n of simNodes) {
           const isHovered = n.id === hoveredId;
+          const isSelected = n.isCharacter && n.original?.id === selId;
           const isConnected = connectedIds.has(n.id);
           const dimmed = hoveredId && !isHovered && !isConnected;
 
           if (n.isCharacter) {
-            if (dimmed && !isConnected) continue;
-            ctx.font = isHovered ? "bold 11px 'Cinzel Decorative', serif" : "9px 'Cinzel Decorative', serif";
-            ctx.fillStyle = "#E0DCE6";
-            ctx.globalAlpha = isHovered ? 1 : isConnected ? 0.9 : (t.k > 1.5 ? 0.7 : 0.4);
+            if (dimmed && !isConnected && !isSelected) continue;
+            ctx.font = (isHovered || isSelected) ? "bold 11px 'Cinzel Decorative', serif" : "9px 'Cinzel Decorative', serif";
+            ctx.fillStyle = isSelected ? "#FFD700" : "#E0DCE6";
+            ctx.globalAlpha = (isHovered || isSelected) ? 1 : isConnected ? 0.9 : (t.k > 1.5 ? 0.7 : 0.4);
             ctx.textAlign = "center";
-            ctx.fillText(n.label, n.x, n.y - (isHovered ? 14 : 10));
+            ctx.fillText(n.label, n.x, n.y - (isHovered || isSelected ? 14 : 10));
           } else if (isHovered || isConnected) {
             ctx.font = "8px 'Sofia Pro Light', sans-serif";
             ctx.fillStyle = CATEGORY_COLORS[n.category] || "#E0DCE6";
@@ -1361,6 +1373,12 @@ function NetworkView({
     };
   }, [filteredGraphNodes, filteredLinks]);
 
+  useEffect(() => {
+    if (!canvasRef.current || simNodesRef.current.length === 0) return;
+    const sim = simulationRef.current;
+    if (sim) sim.alpha(0).restart();
+  }, [selectedNodeId]);
+
   return <canvas ref={canvasRef} className="w-full h-full" />;
 }
 
@@ -1369,14 +1387,19 @@ function DirectView({
   directLinks,
   onSelectNode,
   onHoverNode,
+  selectedNodeId,
 }: {
   charNodes: CharNode[];
   directLinks: DirectLink[];
   onSelectNode: (node: Node | null) => void;
   onHoverNode: (node: any) => void;
+  selectedNodeId: number | null;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const transformRef = useRef(d3.zoomIdentity);
+  const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
+  const selectedNodeIdRef = useRef(selectedNodeId);
+  selectedNodeIdRef.current = selectedNodeId;
 
   useEffect(() => {
     if (!canvasRef.current || charNodes.length === 0) return;
@@ -1427,6 +1450,7 @@ function DirectView({
       .alphaDecay(0.02)
       .velocityDecay(0.4);
 
+    simulationRef.current = simulation;
     let currentHovered: any = null;
 
     function draw() {
@@ -1470,18 +1494,25 @@ function DirectView({
 
       ctx.globalAlpha = 1;
 
+      const selId = selectedNodeIdRef.current;
       for (const n of simNodes) {
         const isHovered = n.id === hoveredId;
+        const isSelected = n.original?.id === selId;
         const isConnected = connectedIds.has(n.id);
         const dimmed = hoveredId && !isHovered && !isConnected;
 
-        const r = isHovered ? 10 : 6;
+        const r = isHovered ? 10 : isSelected ? 8 : 6;
         ctx.beginPath();
         ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
         ctx.fillStyle = "#E0DCE6";
         ctx.globalAlpha = dimmed ? 0.08 : 0.85;
         ctx.fill();
-        if (isHovered || isConnected) {
+        if (isSelected) {
+          ctx.strokeStyle = "#FFD700";
+          ctx.lineWidth = 2;
+          ctx.globalAlpha = 0.9;
+          ctx.stroke();
+        } else if (isHovered || isConnected) {
           ctx.strokeStyle = isHovered ? "#03FF9B" : "#8F00FF";
           ctx.lineWidth = isHovered ? 2 : 1.5;
           ctx.globalAlpha = 0.7;
@@ -1495,15 +1526,16 @@ function DirectView({
       if (showLabels) {
         for (const n of simNodes) {
           const isHovered = n.id === hoveredId;
+          const isSelected = n.original?.id === selId;
           const isConnected = connectedIds.has(n.id);
           const dimmed = hoveredId && !isHovered && !isConnected;
 
-          if (dimmed) continue;
-          ctx.font = isHovered ? "bold 11px 'Cinzel Decorative', serif" : "9px 'Cinzel Decorative', serif";
-          ctx.fillStyle = "#E0DCE6";
-          ctx.globalAlpha = isHovered ? 1 : isConnected ? 0.9 : (t.k > 1.5 ? 0.7 : 0.35);
+          if (dimmed && !isSelected) continue;
+          ctx.font = (isHovered || isSelected) ? "bold 11px 'Cinzel Decorative', serif" : "9px 'Cinzel Decorative', serif";
+          ctx.fillStyle = isSelected ? "#FFD700" : "#E0DCE6";
+          ctx.globalAlpha = (isHovered || isSelected) ? 1 : isConnected ? 0.9 : (t.k > 1.5 ? 0.7 : 0.35);
           ctx.textAlign = "center";
-          ctx.fillText(n.label, n.x, n.y - (isHovered ? 14 : 10));
+          ctx.fillText(n.label, n.x, n.y - ((isHovered || isSelected) ? 14 : 10));
         }
       }
 
@@ -1581,6 +1613,11 @@ function DirectView({
     };
   }, [charNodes, directLinks]);
 
+  useEffect(() => {
+    const sim = simulationRef.current;
+    if (sim) sim.alpha(0).restart();
+  }, [selectedNodeId]);
+
   return <canvas ref={canvasRef} className="w-full h-full" />;
 }
 
@@ -1588,13 +1625,18 @@ function CorrespondenceView({
   figures,
   onSelectNode,
   onHoverNode,
+  selectedNodeId,
 }: {
   figures: Node[];
   onSelectNode: (node: Node | null) => void;
   onHoverNode: (node: any) => void;
+  selectedNodeId: number | null;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const transformRef = useRef(d3.zoomIdentity);
+  const drawRef = useRef<(() => void) | null>(null);
+  const selectedNodeIdRef = useRef(selectedNodeId);
+  selectedNodeIdRef.current = selectedNodeId;
 
   const caPoints = useMemo(() => computeCorrespondenceAnalysis(figures), [figures]);
 
@@ -1704,13 +1746,20 @@ function CorrespondenceView({
       for (const p of screenPoints) {
         if (!p.isCharacter) continue;
         const isHovered = p.id === hoveredId;
-        const r = isHovered ? 8 : 4.5;
+        const caSelId = selectedNodeIdRef.current;
+        const isSelected = p.original?.id === caSelId;
+        const r = isHovered ? 8 : isSelected ? 6 : 4.5;
         ctx.beginPath();
         ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
         ctx.fillStyle = "#E0DCE6";
-        ctx.globalAlpha = hoveredId ? (isHovered ? 1 : 0.15) : 0.7;
+        ctx.globalAlpha = hoveredId ? (isHovered ? 1 : isSelected ? 0.9 : 0.15) : isSelected ? 0.95 : 0.7;
         ctx.fill();
-        if (isHovered) {
+        if (isSelected) {
+          ctx.strokeStyle = "#FFD700";
+          ctx.lineWidth = 2;
+          ctx.globalAlpha = 0.9;
+          ctx.stroke();
+        } else if (isHovered) {
           ctx.strokeStyle = "#8F00FF";
           ctx.lineWidth = 1.5;
           ctx.globalAlpha = 0.8;
@@ -1732,15 +1781,17 @@ function CorrespondenceView({
 
       const showCharLabels = t.k > 0.6;
       if (showCharLabels) {
+        const caSelId2 = selectedNodeIdRef.current;
         for (const p of screenPoints) {
           if (!p.isCharacter) continue;
           const isHovered = p.id === hoveredId;
-          if (!isHovered && hoveredId) continue;
-          ctx.font = isHovered ? "bold 11px 'Cinzel Decorative', serif" : "9px 'Cinzel Decorative', serif";
-          ctx.fillStyle = "#E0DCE6";
-          ctx.globalAlpha = isHovered ? 1 : (t.k > 1.5 ? 0.6 : 0.3);
+          const isSelected = p.original?.id === caSelId2;
+          if (!isHovered && !isSelected && hoveredId) continue;
+          ctx.font = (isHovered || isSelected) ? "bold 11px 'Cinzel Decorative', serif" : "9px 'Cinzel Decorative', serif";
+          ctx.fillStyle = isSelected ? "#FFD700" : "#E0DCE6";
+          ctx.globalAlpha = (isHovered || isSelected) ? 1 : (t.k > 1.5 ? 0.6 : 0.3);
           ctx.textAlign = "center";
-          ctx.fillText(p.label, p.sx, p.sy - (isHovered ? 12 : 8));
+          ctx.fillText(p.label, p.sx, p.sy - ((isHovered || isSelected) ? 12 : 8));
         }
       }
 
@@ -1779,6 +1830,7 @@ function CorrespondenceView({
       ctx.restore();
     }
 
+    drawRef.current = draw;
     draw();
 
     const zoomBehavior = d3.zoom<HTMLCanvasElement, unknown>()
@@ -1843,8 +1895,13 @@ function CorrespondenceView({
       canvas.onmousemove = null;
       canvas.onclick = null;
       canvas.onmouseleave = null;
+      drawRef.current = null;
     };
   }, [caPoints]);
+
+  useEffect(() => {
+    if (drawRef.current) drawRef.current();
+  }, [selectedNodeId]);
 
   if (caPoints.length === 0) {
     return (
@@ -1952,6 +2009,17 @@ export default function GraphPage() {
   const filteredLinks = useMemo(() => {
     return graphLinks.filter(l => filteredNodeIds.has(l.source) && filteredNodeIds.has(l.target));
   }, [graphLinks, filteredNodeIds]);
+
+  useEffect(() => {
+    if (selectedNode && viewMode !== "ca") {
+      const charIds = viewMode === "direct"
+        ? new Set(directNodes.map(n => n.id))
+        : new Set(filteredGraphNodes.filter(n => n.isCharacter).map(n => n.original?.id));
+      if (!charIds.has(selectedNode.id)) {
+        setSelectedNode(null);
+      }
+    }
+  }, [filteredGraphNodes, directNodes, viewMode, selectedNode]);
 
   const relatedNodes = selectedNode
     ? data?.nodes.filter((n) => {
@@ -2136,6 +2204,7 @@ export default function GraphPage() {
             onSelectTrait={(t) => handleGraphNodeSelect(null, t)}
             onHoverNode={setHoveredNode}
             hoveredNode={hoveredNode}
+            selectedNodeId={selectedNode?.id ?? null}
           />
         ) : viewMode === "direct" ? (
           <DirectView
@@ -2143,12 +2212,14 @@ export default function GraphPage() {
             directLinks={directLinks}
             onSelectNode={(n) => handleGraphNodeSelect(n)}
             onHoverNode={setHoveredNode}
+            selectedNodeId={selectedNode?.id ?? null}
           />
         ) : (
           <CorrespondenceView
             figures={data.nodes}
             onSelectNode={(n) => handleGraphNodeSelect(n)}
             onHoverNode={setHoveredNode}
+            selectedNodeId={selectedNode?.id ?? null}
           />
         )}
       </div>
