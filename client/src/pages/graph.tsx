@@ -1219,6 +1219,9 @@ function NetworkView({
       .alphaDecay(0.03)
       .velocityDecay(0.4);
 
+    simulation.stop();
+    for (let i = 0; i < 300; i++) simulation.tick();
+
     simulationRef.current = simulation;
 
     let currentHovered: any = null;
@@ -1328,7 +1331,9 @@ function NetworkView({
       ctx.restore();
     }
 
+    draw();
     simulation.on("tick", draw);
+    simulation.alpha(0.01).restart();
 
     const zoomBehavior = d3.zoom<HTMLCanvasElement, unknown>()
       .scaleExtent([0.1, 8])
@@ -1463,6 +1468,9 @@ function DirectView({
       .alphaDecay(0.02)
       .velocityDecay(0.4);
 
+    simulation.stop();
+    for (let i = 0; i < 300; i++) simulation.tick();
+
     simulationRef.current = simulation;
     let currentHovered: any = null;
 
@@ -1571,7 +1579,9 @@ function DirectView({
       ctx.restore();
     }
 
+    draw();
     simulation.on("tick", draw);
+    simulation.alpha(0.01).restart();
 
     const zoomBehavior = d3.zoom<HTMLCanvasElement, unknown>()
       .scaleExtent([0.1, 8])
