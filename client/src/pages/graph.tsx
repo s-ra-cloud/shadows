@@ -40,6 +40,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   eventTypes: "#E53935",
   birthTypes: "#00BCD4",
   deathTypes: "#B71C1C",
+  familyRoles: "#F48FB1",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -53,6 +54,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   eventTypes: "Event Type",
   birthTypes: "Birth Type",
   deathTypes: "Death Type",
+  familyRoles: "Family Role",
 };
 
 function getTraditionColor(tradition: string | null) {
@@ -310,6 +312,7 @@ const ARRAY_TRAIT_FIELDS: { key: keyof Node; category: string }[] = [
   { key: "eventTypes", category: "eventTypes" },
   { key: "birthTypes", category: "birthTypes" },
   { key: "deathTypes", category: "deathTypes" },
+  { key: "familyRoles", category: "familyRoles" },
 ];
 
 function getTraitsForFigure(fig: Node): string[] {
@@ -750,6 +753,7 @@ function NodePanel({ node, relatedNodes, edges, onClose }: { node: Node; related
     { key: "eventTypes", label: "Event Types", color: CATEGORY_COLORS.eventTypes },
     { key: "birthTypes", label: "Birth Types", color: CATEGORY_COLORS.birthTypes },
     { key: "deathTypes", label: "Death Types", color: CATEGORY_COLORS.deathTypes },
+    { key: "familyRoles", label: "Family Roles", color: CATEGORY_COLORS.familyRoles },
   ];
 
   return (

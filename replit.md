@@ -26,6 +26,7 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
   - eventTypes (text array) - 23 types: rescue, sacrifice, descent_to_underworld, quest, etc.
   - birthTypes (text array) - 10 types: divine_parentage, born_from_body, miraculous_conception, etc.
   - deathTypes (text array) - 13 types: dismemberment, killed_by_kin, resurrection, etc.
+  - familyRoles (text array) - 4 types: mother, father, sister, brother (409 figures)
   - birthCircumstances, deathCircumstances
 - `edges` - Relationships between figures (parent of, married to, sibling of, etc.) - 401 edges
 - `news` - News articles (title, content, date)

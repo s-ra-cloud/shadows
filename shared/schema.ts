@@ -34,6 +34,7 @@ export const nodes = pgTable("nodes", {
   eventTypes: text("event_types").array(),
   birthTypes: text("birth_types").array(),
   deathTypes: text("death_types").array(),
+  familyRoles: text("family_roles").array(),
   birthCircumstances: text("birth_circumstances"),
   deathCircumstances: text("death_circumstances"),
 });

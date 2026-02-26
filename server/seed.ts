@@ -31,8 +31,9 @@ export async function seedDatabase() {
 
     let data: any;
     const jsonPaths = [
-      path.join(process.cwd(), "attached_assets", "mythology-database_(1)_1772119800603.json"),
       path.join(process.cwd(), "data", "mythology-database.json"),
+      path.join(process.cwd(), "attached_assets", "mythology-database_(2)_1772124184100.json"),
+      path.join(process.cwd(), "attached_assets", "mythology-database_(1)_1772119800603.json"),
       path.join(process.cwd(), "attached_assets", "mythology-database_1772118861322.json"),
     ];
 
@@ -72,6 +73,7 @@ export async function seedDatabase() {
         eventTypes: n.eventTypes && n.eventTypes.length > 0 ? n.eventTypes : null,
         birthTypes: n.birthTypes && n.birthTypes.length > 0 ? n.birthTypes : null,
         deathTypes: n.deathTypes && n.deathTypes.length > 0 ? n.deathTypes : null,
+        familyRoles: n.familyRoles && n.familyRoles.length > 0 ? n.familyRoles : null,
         birthCircumstances: n.birthCircumstances || null,
         deathCircumstances: n.deathCircumstances || null,
       }));
