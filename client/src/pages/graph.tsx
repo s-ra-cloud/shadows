@@ -1196,8 +1196,9 @@ function NetworkView({
     simLinksRef.current = simLinks;
 
     const charCount = simNodes.filter(n => n.isCharacter).length;
+    const totalNodes = simNodes.length;
     const isLarge = charCount > 400;
-    const nodeR = isLarge ? 3 : charCount > 100 ? 4 : 6;
+    const nodeR = isLarge ? 4 : charCount > 100 ? 5 : 6;
 
     const nodeDegree = new Map<string, number>();
     for (const l of simLinks) {
@@ -1207,15 +1208,22 @@ function NetworkView({
       nodeDegree.set(tid, (nodeDegree.get(tid) || 0) + 1);
     }
 
+    const viewArea = width * height;
+    const targetDensity = 0.15;
+    const nodeArea = totalNodes * Math.PI * nodeR * nodeR;
+    const desiredSpread = Math.sqrt(nodeArea / targetDensity);
+    const chargeStr = -(viewArea / totalNodes) * 0.15;
+    const clampedCharge = Math.max(-300, Math.min(-30, chargeStr));
+
     const simulation = d3.forceSimulation(simNodes)
       .force("link", d3.forceLink(simLinks).id((d: any) => d.id).distance(60).strength((l: any) => {
         const sd = nodeDegree.get(typeof l.source === "object" ? l.source.id : l.source) || 1;
         const td = nodeDegree.get(typeof l.target === "object" ? l.target.id : l.target) || 1;
-        return Math.min(0.15, Math.max(0.01, 1 / Math.max(sd, td)));
+        return Math.min(0.2, Math.max(0.02, 1 / Math.max(sd, td)));
       }))
-      .force("charge", d3.forceManyBody().strength(-200))
+      .force("charge", d3.forceManyBody().strength(clampedCharge))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius(nodeR))
+      .force("collision", d3.forceCollide().radius(nodeR + 1))
       .alphaDecay(0.03)
       .velocityDecay(0.4);
 
