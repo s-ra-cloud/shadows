@@ -276,34 +276,59 @@ function TeamPreview() {
 
 function PartnersPreview() {
   const partners = [
-    { name: "Centre for Comparative Mythology" },
-    { name: "Digital Humanities Lab" },
-    { name: "Mythology Archive" },
-    { name: "Archetype Foundation" },
+    {
+      name: "Legacy — UM6P / 1337",
+      url: "https://legacy-um6p.1337.ma/home",
+      initials: "L",
+    },
+    {
+      name: "Machina Research Network",
+      url: "https://machina-research.net",
+      initials: "M",
+    },
   ];
 
   return (
     <section className="py-24 bg-gradient-to-b from-[#0C0042] to-[#0B0626]" data-testid="section-partners">
       <div className="max-w-7xl mx-auto px-6">
-        <h2 className="font-serif text-3xl md:text-4xl text-shadows-text tracking-wide text-center mb-16">
+        <h2 className="font-serif text-3xl md:text-4xl text-shadows-text tracking-wide text-center mb-4">
           Partners
         </h2>
+        <p className="text-shadows-text/50 text-center max-w-xl mx-auto mb-16">
+          SHADOWS is developed in collaboration with leading research institutions in digital humanities and computational interdisciplinary research.
+        </p>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-2xl mx-auto">
           {partners.map((partner, i) => (
-            <div
+            <a
               key={i}
-              className="group flex flex-col items-center gap-3 p-6 rounded-md border border-[#350A8C]/10 hover:border-[#350A8C]/30 transition-all duration-300"
+              href={partner.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex flex-col items-center gap-4 p-8 rounded-md border border-[#350A8C]/10 hover:border-[#8F00FF]/40 transition-all duration-300"
               data-testid={`card-partner-${i}`}
             >
-              <div className="w-16 h-16 rounded-full bg-[#350A8C]/10 border border-[#350A8C]/20 flex items-center justify-center opacity-50 group-hover:opacity-100 transition-opacity">
-                <span className="font-serif text-xs text-shadows-text/60">{partner.name.split(" ")[0][0]}{partner.name.split(" ").slice(-1)[0][0]}</span>
+              <div className="w-20 h-20 rounded-full bg-[#350A8C]/10 border border-[#350A8C]/20 flex items-center justify-center opacity-60 group-hover:opacity-100 transition-opacity group-hover:border-[#8F00FF]/40">
+                <span className="font-serif text-2xl text-shadows-text/60 group-hover:text-shadows-text transition-colors">{partner.initials}</span>
               </div>
-              <span className="text-shadows-text/50 text-xs text-center group-hover:text-shadows-text/80 transition-colors">
+              <span className="text-shadows-text/60 text-sm text-center group-hover:text-shadows-text transition-colors">
                 {partner.name}
               </span>
-            </div>
+            </a>
           ))}
+        </div>
+
+        <div className="text-center mt-12">
+          <Link href="/partners">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-[#350A8C]/40 text-shadows-text/60 hover:border-[#03FF9B] hover:text-[#03FF9B] no-default-hover-elevate no-default-active-elevate transition-all duration-300"
+              data-testid="button-view-partners"
+            >
+              Learn More
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
