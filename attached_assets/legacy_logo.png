@@ -1,0 +1,58 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/><link rel="modulepreload" href="/@fs/app/node_modules/.pnpm/@react-router+dev@7.10.1_@react-router+serve@7.10.1_react-router@7.10.1_react-dom@19.2._05cc732bc432c553c6a7d0f9dc1cb979/node_modules/@react-router/dev/dist/config/defaults/entry.client.tsx"/><link rel="modulepreload" href="/app/root.tsx"/><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;display=swap"/></head><body><div class="" style="position:fixed;top:0;left:0;height:2px;background:transparent;z-index:99999999999;width:100%"><div class="" style="height:100%;background:#e86337;transition:all 500ms ease;width:0%"></div></div><section aria-label="Notifications alt+T" tabindex="-1" aria-live="polite" aria-relevant="additions text" aria-atomic="false"></section><main class="container mx-auto p-4 pt-16"><h1>404</h1><p>The requested page could not be found.</p></main><script>((storageKey2, restoreKey) => {
+    if (!window.history.state || !window.history.state.key) {
+      let key = Math.random().toString(32).slice(2);
+      window.history.replaceState({ key }, "");
+    }
+    try {
+      let positions = JSON.parse(sessionStorage.getItem(storageKey2) || "{}");
+      let storedY = positions[restoreKey || window.history.state.key];
+      if (typeof storedY === "number") {
+        window.scrollTo(0, storedY);
+      }
+    } catch (error) {
+      console.error(error);
+      sessionStorage.removeItem(storageKey2);
+    }
+  })("react-router-scroll-positions", null)</script><script>window.__reactRouterContext = {"basename":"/","future":{"unstable_optimizeDeps":false,"unstable_subResourceIntegrity":false,"v8_middleware":false,"v8_splitRouteModules":false,"v8_viteEnvironmentApi":false},"routeDiscovery":{"mode":"lazy","manifestPath":"/__manifest"},"ssr":true,"isSpaMode":false};window.__reactRouterContext.stream = new ReadableStream({start(controller){window.__reactRouterContext.streamController = controller;}}).pipeThrough(new TextEncoderStream());</script><script type="module" async="">import "/@id/__x00__virtual:react-router/inject-hmr-runtime";;
+import * as route0 from "/app/root.tsx";
+  window.__reactRouterManifest = {
+  "version": "0.6982518460030074",
+  "url": "/@id/__x00__virtual:react-router/browser-manifest",
+  "hmr": {
+    "runtime": "/@id/__x00__virtual:react-router/inject-hmr-runtime"
+  },
+  "entry": {
+    "module": "/@fs/app/node_modules/.pnpm/@react-router+dev@7.10.1_@react-router+serve@7.10.1_react-router@7.10.1_react-dom@19.2._05cc732bc432c553c6a7d0f9dc1cb979/node_modules/@react-router/dev/dist/config/defaults/entry.client.tsx",
+    "imports": []
+  },
+  "routes": {
+    "root": {
+      "id": "root",
+      "path": "",
+      "module": "/app/root.tsx",
+      "hasAction": false,
+      "hasLoader": true,
+      "hasClientAction": false,
+      "hasClientLoader": false,
+      "hasClientMiddleware": false,
+      "hasErrorBoundary": true,
+      "imports": []
+    },
+    "routes/index": {
+      "id": "routes/index",
+      "parentId": "root",
+      "index": true,
+      "module": "/app/routes/index.tsx",
+      "hasAction": false,
+      "hasLoader": true,
+      "hasClientAction": false,
+      "hasClientLoader": false,
+      "hasClientMiddleware": false,
+      "hasErrorBoundary": false,
+      "imports": []
+    }
+  }
+};
+  window.__reactRouterRouteModules = {"root":route0};
+
+import("/@fs/app/node_modules/.pnpm/@react-router+dev@7.10.1_@react-router+serve@7.10.1_react-router@7.10.1_react-dom@19.2._05cc732bc432c553c6a7d0f9dc1cb979/node_modules/@react-router/dev/dist/config/defaults/entry.client.tsx");</script><!--$--><script>window.__reactRouterContext.streamController.enqueue("[{\"_1\":2,\"_3\":-5,\"_4\":5},\"loaderData\",{},\"actionData\",\"errors\",{\"_6\":7},\"root\",{\"_8\":9,\"_10\":11,\"_12\":13,\"_14\":15,\"_16\":17,\"_21\":22},\"status\",404,\"statusText\",\"Not Found\",\"internal\",true,\"data\",\"Error: No route matches URL \\\"/favicon.png\\\"\",\"error\",[\"SanitizedError\",18,19,20],\"Error\",\"No route matches URL \\\"/favicon.png\\\"\",\"Error: No route matches URL \\\"/favicon.png\\\"\\n    at getInternalRouterError (file:///app/node_modules/.pnpm/react-router@7.10.1_react-dom@19.2.1_react@19.2.1__react@19.2.1/node_modules/react-router/dist/development/chunk-WWGJGFF6.mjs:5049:5)\\n    at Object.query (file:///app/node_modules/.pnpm/react-router@7.10.1_react-dom@19.2.1_react@19.2.1__react@19.2.1/node_modules/react-router/dist/development/chunk-WWGJGFF6.mjs:3179:19)\\n    at handleDocumentRequest (file:///app/node_modules/.pnpm/react-router@7.10.1_react-dom@19.2.1_react@19.2.1__react@19.2.1/node_modules/react-router/dist/development/chunk-PMGK554W.mjs:1304:38)\\n    at requestHandler (file:///app/node_modules/.pnpm/react-router@7.10.1_react-dom@19.2.1_react@19.2.1__react@19.2.1/node_modules/react-router/dist/development/chunk-PMGK554W.mjs:1176:24)\\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\\n    at nodeHandler (/app/node_modules/.pnpm/@react-router+dev@7.10.1_@react-router+serve@7.10.1_react-router@7.10.1_react-dom@19.2._05cc732bc432c553c6a7d0f9dc1cb979/node_modules/@react-router/dev/dist/vite.js:3499:30)\\n    at /app/node_modules/.pnpm/@react-router+dev@7.10.1_@react-router+serve@7.10.1_react-router@7.10.1_react-dom@19.2._05cc732bc432c553c6a7d0f9dc1cb979/node_modules/@react-router/dev/dist/vite.js:3505:17\",\"__type\",\"RouteErrorResponse\"]\n");</script><!--$--><script>window.__reactRouterContext.streamController.close();</script><!--/$--><!--/$--></body></html>

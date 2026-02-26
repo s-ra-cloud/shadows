@@ -274,17 +274,58 @@ function TeamPreview() {
   );
 }
 
+function LegacyLogoSmall() {
+  return (
+    <svg width={80} height={80} viewBox="0 0 120 120" fill="none">
+      <rect x="4" y="4" width="112" height="112" rx="16" stroke="#8F00FF" strokeWidth="1.5" strokeOpacity="0.3" />
+      <rect x="12" y="12" width="96" height="96" rx="10" fill="#350A8C" fillOpacity="0.15" />
+      <path d="M35 82V38h6v38h20v6H35z" fill="#E0DCE6" fillOpacity="0.9" />
+      <rect x="68" y="38" width="22" height="6" rx="1" fill="#03FF9B" fillOpacity="0.7" />
+      <rect x="68" y="52" width="16" height="6" rx="1" fill="#03FF9B" fillOpacity="0.5" />
+      <rect x="68" y="66" width="22" height="6" rx="1" fill="#03FF9B" fillOpacity="0.7" />
+      <rect x="68" y="80" width="18" height="6" rx="1" fill="#03FF9B" fillOpacity="0.5" />
+      <circle cx="98" cy="28" r="3" fill="#8F00FF" fillOpacity="0.6" />
+      <circle cx="22" cy="28" r="2" fill="#03FF9B" fillOpacity="0.4" />
+    </svg>
+  );
+}
+
+function MachinaLogoSmall() {
+  return (
+    <svg width={80} height={80} viewBox="0 0 120 120" fill="none">
+      <rect x="4" y="4" width="112" height="112" rx="16" stroke="#8F00FF" strokeWidth="1.5" strokeOpacity="0.3" />
+      <rect x="12" y="12" width="96" height="96" rx="10" fill="#350A8C" fillOpacity="0.15" />
+      <circle cx="60" cy="50" r="18" stroke="#E0DCE6" strokeWidth="1.5" strokeOpacity="0.6" strokeDasharray="3 3" />
+      <circle cx="60" cy="50" r="8" fill="#8F00FF" fillOpacity="0.4" />
+      <circle cx="60" cy="50" r="3" fill="#E0DCE6" fillOpacity="0.9" />
+      <circle cx="42" cy="50" r="4" fill="#03FF9B" fillOpacity="0.7" />
+      <circle cx="78" cy="50" r="4" fill="#03FF9B" fillOpacity="0.7" />
+      <circle cx="51" cy="35" r="3.5" fill="#E0DCE6" fillOpacity="0.5" />
+      <circle cx="69" cy="35" r="3.5" fill="#E0DCE6" fillOpacity="0.5" />
+      <circle cx="51" cy="65" r="3.5" fill="#E0DCE6" fillOpacity="0.5" />
+      <circle cx="69" cy="65" r="3.5" fill="#E0DCE6" fillOpacity="0.5" />
+      <line x1="42" y1="50" x2="51" y2="35" stroke="#8F00FF" strokeWidth="0.8" strokeOpacity="0.4" />
+      <line x1="42" y1="50" x2="51" y2="65" stroke="#8F00FF" strokeWidth="0.8" strokeOpacity="0.4" />
+      <line x1="78" y1="50" x2="69" y2="35" stroke="#8F00FF" strokeWidth="0.8" strokeOpacity="0.4" />
+      <line x1="78" y1="50" x2="69" y2="65" stroke="#8F00FF" strokeWidth="0.8" strokeOpacity="0.4" />
+      <line x1="51" y1="35" x2="69" y2="35" stroke="#03FF9B" strokeWidth="0.6" strokeOpacity="0.3" />
+      <line x1="51" y1="65" x2="69" y2="65" stroke="#03FF9B" strokeWidth="0.6" strokeOpacity="0.3" />
+      <text x="60" y="90" textAnchor="middle" fill="#E0DCE6" fillOpacity="0.7" fontSize="10" fontFamily="monospace" letterSpacing="3">MRN</text>
+    </svg>
+  );
+}
+
 function PartnersPreview() {
   const partners = [
     {
       name: "Legacy — UM6P / 1337",
       url: "https://legacy-um6p.1337.ma/home",
-      initials: "L",
+      Logo: LegacyLogoSmall,
     },
     {
       name: "Machina Research Network",
       url: "https://machina-research.net",
-      initials: "M",
+      Logo: MachinaLogoSmall,
     },
   ];
 
@@ -305,11 +346,11 @@ function PartnersPreview() {
               href={partner.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex flex-col items-center gap-4 p-8 rounded-md border border-[#350A8C]/10 hover:border-[#8F00FF]/40 transition-all duration-300"
+              className="group flex flex-col items-center gap-5 p-8 rounded-md border border-[#350A8C]/10 hover:border-[#8F00FF]/40 transition-all duration-300"
               data-testid={`card-partner-${i}`}
             >
-              <div className="w-20 h-20 rounded-full bg-[#350A8C]/10 border border-[#350A8C]/20 flex items-center justify-center opacity-60 group-hover:opacity-100 transition-opacity group-hover:border-[#8F00FF]/40">
-                <span className="font-serif text-2xl text-shadows-text/60 group-hover:text-shadows-text transition-colors">{partner.initials}</span>
+              <div className="opacity-60 group-hover:opacity-100 transition-opacity">
+                <partner.Logo />
               </div>
               <span className="text-shadows-text/60 text-sm text-center group-hover:text-shadows-text transition-colors">
                 {partner.name}
