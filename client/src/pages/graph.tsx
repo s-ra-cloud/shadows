@@ -2155,13 +2155,9 @@ function DichotomyView({
     canvas.style.height = height + "px";
     ctx.scale(dpr, dpr);
 
-    const numGroups = leafGroups.length;
-    const cols = Math.ceil(Math.sqrt(numGroups));
-    const rows = Math.ceil(numGroups / cols);
-    const labelSpace = 50;
-    const cellW = width / cols;
-    const cellH = height / rows;
-    const padding = 40;
+    interface CellRect {
+      x: number; y: number; w: number; h: number;
+    }
 
     interface SimNode {
       id: string;
@@ -2173,20 +2169,78 @@ function DichotomyView({
       original: Node;
     }
 
+    const cellRects: CellRect[] = [];
+    const gap = 6;
+
+    function assignRects(
+      groups: DichotomyGroup[],
+      rect: CellRect,
+      depth: number,
+      colorIdx: { val: number }
+    ) {
+      if (groups.length === 0) return;
+      if (groups.length === 1 && (!groups[0].children || groups[0].children.length === 0)) {
+        cellRects.push({ ...rect });
+        return;
+      }
+      if (groups.length === 2) {
+        const a = groups[0];
+        const b = groups[1];
+        const aCount = countLeafFigures(a);
+        const bCount = countLeafFigures(b);
+        const ratio = aCount / Math.max(1, aCount + bCount);
+        const splitHorizontally = rect.w >= rect.h;
+
+        if (splitHorizontally) {
+          const splitX = rect.x + rect.w * ratio;
+          const rA: CellRect = { x: rect.x, y: rect.y, w: splitX - rect.x - gap / 2, h: rect.h };
+          const rB: CellRect = { x: splitX + gap / 2, y: rect.y, w: rect.x + rect.w - splitX - gap / 2, h: rect.h };
+          assignRectsForGroup(a, rA, depth + 1, colorIdx);
+          assignRectsForGroup(b, rB, depth + 1, colorIdx);
+        } else {
+          const splitY = rect.y + rect.h * ratio;
+          const rA: CellRect = { x: rect.x, y: rect.y, w: rect.w, h: splitY - rect.y - gap / 2 };
+          const rB: CellRect = { x: rect.x, y: splitY + gap / 2, w: rect.w, h: rect.y + rect.h - splitY - gap / 2 };
+          assignRectsForGroup(a, rA, depth + 1, colorIdx);
+          assignRectsForGroup(b, rB, depth + 1, colorIdx);
+        }
+      }
+    }
+
+    function countLeafFigures(g: DichotomyGroup): number {
+      if (!g.children || g.children.length === 0) return g.figures.length;
+      return g.children.reduce((sum, c) => sum + countLeafFigures(c), 0);
+    }
+
+    function assignRectsForGroup(g: DichotomyGroup, rect: CellRect, depth: number, colorIdx: { val: number }) {
+      if (g.children && g.children.length > 0) {
+        assignRects(g.children, rect, depth, colorIdx);
+      } else {
+        cellRects.push({ ...rect });
+      }
+    }
+
+    const rootRect: CellRect = { x: gap, y: gap, w: width - gap * 2, h: height - gap * 2 };
+    assignRects(dichotomyResult, rootRect, 0, { val: 0 });
+
     const allSimNodes: SimNode[] = [];
-    const groupCenters: { cx: number; cy: number; label: string; category: string; count: number }[] = [];
+    const groupMeta: { rect: CellRect; label: string; category: string; count: number; color: string }[] = [];
 
-    for (let gi = 0; gi < numGroups; gi++) {
+    for (let gi = 0; gi < leafGroups.length; gi++) {
       const group = leafGroups[gi];
-      const col = gi % cols;
-      const row = Math.floor(gi / cols);
-      const cx = cellW * col + cellW / 2;
-      const cy = cellH * row + cellH / 2 + labelSpace / 2;
+      const rect = cellRects[gi] || { x: 0, y: 0, w: width, h: height };
       const label = groupLabels[gi] || group.traitLabel;
+      const color = DICHOTOMY_COLORS[gi % DICHOTOMY_COLORS.length];
 
-      groupCenters.push({ cx, cy, label, category: group.traitCategory, count: group.figures.length });
+      const labelH = 40;
+      const cx = rect.x + rect.w / 2;
+      const cy = rect.y + labelH + (rect.h - labelH) / 2;
 
-      const spread = Math.min(cellW, cellH) * 0.25;
+      groupMeta.push({ rect, label, category: group.traitCategory, count: group.figures.length, color });
+
+      const areaW = rect.w - 20;
+      const areaH = rect.h - labelH - 10;
+      const spread = Math.min(areaW, areaH) * 0.35;
       for (const fig of group.figures) {
         const angle = Math.random() * Math.PI * 2;
         const r = Math.sqrt(Math.random()) * spread;
@@ -2202,18 +2256,34 @@ function DichotomyView({
       }
     }
 
-    const nodeR = allSimNodes.length > 1000 ? 3 : allSimNodes.length > 500 ? 4 : 5;
+    const nodeR = allSimNodes.length > 1000 ? 2.5 : allSimNodes.length > 500 ? 3 : 4;
 
     const simulation = d3.forceSimulation(allSimNodes as any)
-      .force("charge", d3.forceManyBody().strength(-15))
-      .force("collision", d3.forceCollide().radius(nodeR + 1))
-      .force("x", d3.forceX((d: any) => groupCenters[d.groupIdx].cx).strength(0.5))
-      .force("y", d3.forceY((d: any) => groupCenters[d.groupIdx].cy).strength(0.5))
-      .alphaDecay(0.03)
-      .velocityDecay(0.4);
+      .force("charge", d3.forceManyBody().strength(-8))
+      .force("collision", d3.forceCollide().radius(nodeR + 0.5))
+      .force("x", d3.forceX((d: any) => {
+        const m = groupMeta[d.groupIdx];
+        return m.rect.x + m.rect.w / 2;
+      }).strength(0.6))
+      .force("y", d3.forceY((d: any) => {
+        const m = groupMeta[d.groupIdx];
+        return m.rect.y + 40 + (m.rect.h - 40) / 2;
+      }).strength(0.6))
+      .alphaDecay(0.04)
+      .velocityDecay(0.45);
 
     simulation.stop();
     for (let i = 0; i < 200; i++) simulation.tick();
+
+    for (const n of allSimNodes) {
+      const m = groupMeta[n.groupIdx];
+      const nx = n as any;
+      const padX = 10;
+      const padTop = 44;
+      const padBot = 6;
+      nx.x = Math.max(m.rect.x + padX, Math.min(m.rect.x + m.rect.w - padX, nx.x));
+      nx.y = Math.max(m.rect.y + padTop, Math.min(m.rect.y + m.rect.h - padBot, nx.y));
+    }
 
     let currentHovered: SimNode | null = null;
 
@@ -2231,71 +2301,54 @@ function DichotomyView({
       ctx.translate(t.x, t.y);
       ctx.scale(t.k, t.k);
 
-      for (let gi = 0; gi < numGroups; gi++) {
-        const gc = groupCenters[gi];
-        const color = DICHOTOMY_COLORS[gi % DICHOTOMY_COLORS.length];
+      for (let gi = 0; gi < groupMeta.length; gi++) {
+        const m = groupMeta[gi];
+        const { rect, color, label, count } = m;
 
         ctx.beginPath();
-        const nodesInGroup = allSimNodes.filter(n => n.groupIdx === gi);
-        if (nodesInGroup.length > 0) {
-          let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-          for (const n of nodesInGroup) {
-            if ((n as any).x < minX) minX = (n as any).x;
-            if ((n as any).x > maxX) maxX = (n as any).x;
-            if ((n as any).y < minY) minY = (n as any).y;
-            if ((n as any).y > maxY) maxY = (n as any).y;
-          }
-          const blobCx = (minX + maxX) / 2;
-          const blobCy = (minY + maxY) / 2;
-          const blobR = Math.max(40, Math.max(maxX - minX, maxY - minY) / 2 + 20);
-          ctx.arc(blobCx, blobCy, blobR, 0, Math.PI * 2);
-          ctx.fillStyle = color;
-          ctx.globalAlpha = 0.04;
-          ctx.fill();
-          ctx.strokeStyle = color;
-          ctx.globalAlpha = 0.15;
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
+        const cr = 8;
+        ctx.moveTo(rect.x + cr, rect.y);
+        ctx.lineTo(rect.x + rect.w - cr, rect.y);
+        ctx.quadraticCurveTo(rect.x + rect.w, rect.y, rect.x + rect.w, rect.y + cr);
+        ctx.lineTo(rect.x + rect.w, rect.y + rect.h - cr);
+        ctx.quadraticCurveTo(rect.x + rect.w, rect.y + rect.h, rect.x + rect.w - cr, rect.y + rect.h);
+        ctx.lineTo(rect.x + cr, rect.y + rect.h);
+        ctx.quadraticCurveTo(rect.x, rect.y + rect.h, rect.x, rect.y + rect.h - cr);
+        ctx.lineTo(rect.x, rect.y + cr);
+        ctx.quadraticCurveTo(rect.x, rect.y, rect.x + cr, rect.y);
+        ctx.closePath();
 
-        const nodesForLabel = allSimNodes.filter(n => n.groupIdx === gi);
-        let labelCx = gc.cx;
-        let labelCy = gc.cy;
-        if (nodesForLabel.length > 0) {
-          let mMinY = Infinity;
-          let sumX = 0;
-          for (const n of nodesForLabel) {
-            if ((n as any).y < mMinY) mMinY = (n as any).y;
-            sumX += (n as any).x;
-          }
-          labelCx = sumX / nodesForLabel.length;
-          labelCy = mMinY - 20;
-        }
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.03;
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.globalAlpha = 0.12;
+        ctx.lineWidth = 1;
+        ctx.stroke();
 
-        const maxLabelWidth = cellW - 20;
-        const fontSize = Math.max(10, Math.min(20, cellW / 14));
+        const maxLabelW = rect.w - 16;
+        const fontSize = Math.max(9, Math.min(16, rect.w / 16));
         ctx.font = `bold ${fontSize}px 'Cinzel Decorative', serif`;
         ctx.fillStyle = color;
         ctx.globalAlpha = 0.9;
         ctx.textAlign = "center";
 
-        let labelText = gc.label.toUpperCase();
+        let labelText = label.toUpperCase();
         const parts = labelText.split(" → ");
-        if (parts.length > 2) {
-          labelText = parts[0] + " → ... → " + parts[parts.length - 1];
+        if (parts.length > 3) {
+          labelText = parts[0] + " → " + parts[1] + " → … → " + parts[parts.length - 1];
         }
-
-        if (ctx.measureText(labelText).width > maxLabelWidth) {
-          while (labelText.length > 10 && ctx.measureText(labelText).width > maxLabelWidth) {
+        if (ctx.measureText(labelText).width > maxLabelW) {
+          while (labelText.length > 8 && ctx.measureText(labelText).width > maxLabelW) {
             labelText = labelText.slice(0, -4) + "…";
           }
         }
 
-        ctx.fillText(labelText, labelCx, labelCy);
+        ctx.fillText(labelText, rect.x + rect.w / 2, rect.y + 18);
 
-        ctx.font = `${fontSize * 0.55}px 'Sofia Pro Light', sans-serif`;
-        ctx.globalAlpha = 0.5;
-        ctx.fillText(`${gc.count} figures`, labelCx, labelCy + fontSize * 0.8);
+        ctx.font = `${Math.max(8, fontSize * 0.6)}px 'Sofia Pro Light', sans-serif`;
+        ctx.globalAlpha = 0.45;
+        ctx.fillText(`${count} figures`, rect.x + rect.w / 2, rect.y + 18 + fontSize * 0.75);
       }
 
       ctx.globalAlpha = 1;
@@ -2308,7 +2361,7 @@ function DichotomyView({
         const ny = (n as any).y;
         const isHovered = n.id === hoveredId;
         const isSelected = n.nodeId === selId;
-        const color = DICHOTOMY_COLORS[n.groupIdx % DICHOTOMY_COLORS.length];
+        const color = groupMeta[n.groupIdx].color;
 
         const r = isHovered ? nodeR + 3 : isSelected ? nodeR + 2 : nodeR;
         ctx.beginPath();
@@ -2346,8 +2399,6 @@ function DichotomyView({
 
     drawRef.current = draw;
     draw();
-    simulation.on("tick", draw);
-    simulation.alpha(0.01).restart();
 
     const zoomBehavior = d3.zoom<HTMLCanvasElement, unknown>()
       .scaleExtent([0.1, 8])
@@ -2405,7 +2456,7 @@ function DichotomyView({
       canvas.onmouseleave = null;
       drawRef.current = null;
     };
-  }, [leafGroups, groupLabels]);
+  }, [leafGroups, groupLabels, dichotomyResult]);
 
   useEffect(() => {
     if (drawRef.current) drawRef.current();
