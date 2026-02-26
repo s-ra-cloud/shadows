@@ -513,14 +513,15 @@ function findDichotomies(
     }
   }
 
-  function splitGroup(groupFigs: Node[], remainingDepth: number): DichotomyGroup[] {
+  function splitGroup(groupFigs: Node[], remainingDepth: number, usedCategories: Set<string> = new Set()): DichotomyGroup[] {
     if (remainingDepth <= 0 || groupFigs.length < 4) return [];
 
-    const groupIds = new Set(groupFigs.map(f => f.id));
     const localTraitFigs = new Map<string, Set<number>>();
     for (const fig of groupFigs) {
       const traits = figTraitSets.get(fig.id) || new Set<string>();
       for (const t of traits) {
+        const cat = t.split("::")[0];
+        if (usedCategories.has(cat)) continue;
         if (!localTraitFigs.has(t)) localTraitFigs.set(t, new Set());
         localTraitFigs.get(t)!.add(fig.id);
       }
@@ -535,15 +536,18 @@ function findDichotomies(
 
     for (let i = 0; i < Math.min(traitsBySize.length, 30); i++) {
       const [tA, idsA] = traitsBySize[i];
+      const catA = tA.split("::")[0];
       for (let j = i + 1; j < Math.min(traitsBySize.length, 30); j++) {
         const [tB, idsB] = traitsBySize[j];
+        const catB = tB.split("::")[0];
+        if (catA !== catB) continue;
         let overlap = 0;
         for (const id of idsA) {
           if (idsB.has(id)) overlap++;
         }
-        const union = idsA.size + idsB.size - overlap;
         const exclusion = 1 - overlap / Math.min(idsA.size, idsB.size);
         if (exclusion >= threshold) {
+          const union = idsA.size + idsB.size - overlap;
           const coverage = union / groupFigs.length;
           const balance = Math.min(idsA.size, idsB.size) / Math.max(idsA.size, idsB.size);
           const score = coverage * 0.6 + balance * 0.4 + (idsA.size + idsB.size) * 0.001;
@@ -611,8 +615,11 @@ function findDichotomies(
     };
 
     if (remainingDepth > 1) {
-      resultA.children = splitGroup(groupAFigs, remainingDepth - 1);
-      resultB.children = splitGroup(groupBFigs, remainingDepth - 1);
+      const splitCategory = traitA.split("::")[0];
+      const nextUsed = new Set(usedCategories);
+      nextUsed.add(splitCategory);
+      resultA.children = splitGroup(groupAFigs, remainingDepth - 1, nextUsed);
+      resultB.children = splitGroup(groupBFigs, remainingDepth - 1, nextUsed);
     }
 
     return [resultA, resultB];
