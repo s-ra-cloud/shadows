@@ -43,10 +43,11 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 
 ## Graph Visualization
 - **Canvas-based** rendering for performance with 1000+ nodes
-- **Three view modes:**
+- **Four view modes:**
   - **Network** — Bipartite layout: character nodes + shared trait nodes (including eventTypes, birthTypes, deathTypes)
   - **Direct** — Characters only, connected by number of shared traits (line thickness = common traits count)
   - **Correspondence Analysis** — 2D projection of characters and traits
+  - **Dichotomy** — Recursive binary splits by mutually exclusive traits (e.g., male/female → mortal/immortal). Controls: depth (2/4/8/16 groups) and exclusion threshold (80-100%). Algorithm finds highest-coverage, most-balanced exclusive trait pairs at each level.
 - Character nodes uniform #E0DCE6, no tradition coloring
 - Trait nodes colored by category: gender, domain, object, animals, characterTrait, physicalCharacteristics, eventTypes (#E53935), birthTypes (#00BCD4), deathTypes (#B71C1C), familyRoles (#F48FB1)
 - **Character selection** — Search and pick specific characters to display

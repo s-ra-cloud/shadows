@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as d3 from "d3";
-import { X, Search, Filter, ArrowLeft, Download, Network, ScatterChart, Users, SlidersHorizontal } from "lucide-react";
+import { X, Search, Filter, ArrowLeft, Download, Network, ScatterChart, Users, SlidersHorizontal, Split } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -486,6 +486,154 @@ function buildDirectGraph(figures: Node[], minConnections: number, selectedChara
   const filteredLinks = directLinks.filter(l => qualifiedNodeIds.has(l.source) && qualifiedNodeIds.has(l.target));
 
   return { nodes: charNodes, links: filteredLinks };
+}
+
+interface DichotomyGroup {
+  traitId: string;
+  traitLabel: string;
+  traitCategory: string;
+  figures: Node[];
+  children?: DichotomyGroup[];
+}
+
+function findDichotomies(
+  figures: Node[],
+  depth: number,
+  threshold: number
+): DichotomyGroup[] {
+  const figTraitSets = new Map<number, Set<string>>();
+  const traitFigures = new Map<string, Set<number>>();
+
+  for (const fig of figures) {
+    const traits = getTraitsForFigure(fig);
+    figTraitSets.set(fig.id, new Set(traits));
+    for (const t of traits) {
+      if (!traitFigures.has(t)) traitFigures.set(t, new Set());
+      traitFigures.get(t)!.add(fig.id);
+    }
+  }
+
+  function splitGroup(groupFigs: Node[], remainingDepth: number): DichotomyGroup[] {
+    if (remainingDepth <= 0 || groupFigs.length < 4) return [];
+
+    const groupIds = new Set(groupFigs.map(f => f.id));
+    const localTraitFigs = new Map<string, Set<number>>();
+    for (const fig of groupFigs) {
+      const traits = figTraitSets.get(fig.id) || new Set<string>();
+      for (const t of traits) {
+        if (!localTraitFigs.has(t)) localTraitFigs.set(t, new Set());
+        localTraitFigs.get(t)!.add(fig.id);
+      }
+    }
+
+    const traitsBySize = Array.from(localTraitFigs.entries())
+      .filter(([, ids]) => ids.size >= 3)
+      .sort((a, b) => b[1].size - a[1].size);
+
+    let bestPair: [string, string] | null = null;
+    let bestScore = -1;
+
+    for (let i = 0; i < Math.min(traitsBySize.length, 30); i++) {
+      const [tA, idsA] = traitsBySize[i];
+      for (let j = i + 1; j < Math.min(traitsBySize.length, 30); j++) {
+        const [tB, idsB] = traitsBySize[j];
+        let overlap = 0;
+        for (const id of idsA) {
+          if (idsB.has(id)) overlap++;
+        }
+        const union = idsA.size + idsB.size - overlap;
+        const exclusion = 1 - overlap / Math.min(idsA.size, idsB.size);
+        if (exclusion >= threshold) {
+          const coverage = union / groupFigs.length;
+          const balance = Math.min(idsA.size, idsB.size) / Math.max(idsA.size, idsB.size);
+          const score = coverage * 0.6 + balance * 0.4 + (idsA.size + idsB.size) * 0.001;
+          if (score > bestScore) {
+            bestScore = score;
+            bestPair = [tA, tB];
+          }
+        }
+      }
+    }
+
+    if (!bestPair) return [];
+
+    const [traitA, traitB] = bestPair;
+    const idsA = localTraitFigs.get(traitA)!;
+    const idsB = localTraitFigs.get(traitB)!;
+
+    const assignedIds = new Set<number>();
+    const groupAFigs: Node[] = [];
+    const groupBFigs: Node[] = [];
+
+    for (const f of groupFigs) {
+      const inA = idsA.has(f.id);
+      const inB = idsB.has(f.id);
+      if (inA && !inB) {
+        groupAFigs.push(f);
+        assignedIds.add(f.id);
+      } else if (inB && !inA) {
+        groupBFigs.push(f);
+        assignedIds.add(f.id);
+      } else if (inA && inB) {
+        if (groupAFigs.length <= groupBFigs.length) {
+          groupAFigs.push(f);
+        } else {
+          groupBFigs.push(f);
+        }
+        assignedIds.add(f.id);
+      }
+    }
+
+    for (const f of groupFigs) {
+      if (!assignedIds.has(f.id)) {
+        if (groupAFigs.length <= groupBFigs.length) {
+          groupAFigs.push(f);
+        } else {
+          groupBFigs.push(f);
+        }
+      }
+    }
+
+    const partsA = traitA.split("::");
+    const partsB = traitB.split("::");
+
+    const resultA: DichotomyGroup = {
+      traitId: traitA,
+      traitLabel: partsA[1],
+      traitCategory: partsA[0],
+      figures: groupAFigs,
+    };
+    const resultB: DichotomyGroup = {
+      traitId: traitB,
+      traitLabel: partsB[1],
+      traitCategory: partsB[0],
+      figures: groupBFigs,
+    };
+
+    if (remainingDepth > 1) {
+      resultA.children = splitGroup(groupAFigs, remainingDepth - 1);
+      resultB.children = splitGroup(groupBFigs, remainingDepth - 1);
+    }
+
+    return [resultA, resultB];
+  }
+
+  return splitGroup(figures, depth);
+}
+
+function flattenDichotomyGroups(groups: DichotomyGroup[]): DichotomyGroup[] {
+  const result: DichotomyGroup[] = [];
+  function collect(g: DichotomyGroup[]) {
+    for (const group of g) {
+      if (group.children && group.children.length > 0) {
+        collect(group.children);
+      } else {
+        result.push(group);
+      }
+    }
+  }
+  collect(groups);
+  return result;
 }
 
 interface CAPoint {
@@ -1945,6 +2093,316 @@ function CorrespondenceView({
   return <canvas ref={canvasRef} className="w-full h-full" />;
 }
 
+const DICHOTOMY_COLORS = [
+  "#8F00FF", "#03FF9B", "#FFB800", "#FF4081",
+  "#4A7BFF", "#FF6B35", "#00BCD4", "#B388FF",
+  "#7FFF00", "#FF8A65", "#E53935", "#F48FB1",
+  "#D4A574", "#FFD700", "#B71C1C", "#C0C0C0",
+];
+
+function DichotomyView({
+  figures,
+  dichotomyDepth,
+  dichotomyThreshold,
+  onSelectNode,
+  onHoverNode,
+  selectedNodeId,
+}: {
+  figures: Node[];
+  dichotomyDepth: number;
+  dichotomyThreshold: number;
+  onSelectNode: (n: Node) => void;
+  onHoverNode: (n: any) => void;
+  selectedNodeId: number | null;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const transformRef = useRef({ x: 0, y: 0, k: 1 });
+  const selectedNodeIdRef = useRef(selectedNodeId);
+  const drawRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    selectedNodeIdRef.current = selectedNodeId;
+  }, [selectedNodeId]);
+
+  const dichotomyResult = useMemo(() => {
+    if (!figures || figures.length === 0) return [];
+    return findDichotomies(figures, dichotomyDepth, dichotomyThreshold);
+  }, [figures, dichotomyDepth, dichotomyThreshold]);
+
+  const leafGroups = useMemo(() => {
+    return flattenDichotomyGroups(dichotomyResult);
+  }, [dichotomyResult]);
+
+  const groupLabels = useMemo(() => {
+    const labels: string[] = [];
+    function buildLabel(groups: DichotomyGroup[], ancestors: string[]) {
+      for (const g of groups) {
+        const path = [...ancestors, g.traitLabel];
+        if (g.children && g.children.length > 0) {
+          buildLabel(g.children, path);
+        } else {
+          labels.push(path.join(" → "));
+        }
+      }
+    }
+    buildLabel(dichotomyResult, []);
+    return labels;
+  }, [dichotomyResult]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || leafGroups.length === 0) return;
+
+    const container = canvas.parentElement;
+    if (!container) return;
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    const ctx = canvas.getContext("2d")!;
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+    ctx.scale(dpr, dpr);
+
+    const numGroups = leafGroups.length;
+    const cols = Math.ceil(Math.sqrt(numGroups));
+    const rows = Math.ceil(numGroups / cols);
+    const cellW = width / cols;
+    const cellH = height / rows;
+    const padding = 40;
+
+    interface SimNode {
+      id: string;
+      nodeId: number;
+      label: string;
+      x: number;
+      y: number;
+      groupIdx: number;
+      original: Node;
+    }
+
+    const allSimNodes: SimNode[] = [];
+    const groupCenters: { cx: number; cy: number; label: string; category: string; count: number }[] = [];
+
+    for (let gi = 0; gi < numGroups; gi++) {
+      const group = leafGroups[gi];
+      const col = gi % cols;
+      const row = Math.floor(gi / cols);
+      const cx = cellW * col + cellW / 2;
+      const cy = cellH * row + cellH / 2;
+      const label = groupLabels[gi] || group.traitLabel;
+
+      groupCenters.push({ cx, cy, label, category: group.traitCategory, count: group.figures.length });
+
+      const spread = Math.min(cellW, cellH) * 0.35;
+      for (const fig of group.figures) {
+        const angle = Math.random() * Math.PI * 2;
+        const r = Math.sqrt(Math.random()) * spread;
+        allSimNodes.push({
+          id: `fig-${fig.id}`,
+          nodeId: fig.id,
+          label: fig.name,
+          x: cx + Math.cos(angle) * r,
+          y: cy + Math.sin(angle) * r,
+          groupIdx: gi,
+          original: fig,
+        });
+      }
+    }
+
+    const nodeR = allSimNodes.length > 1000 ? 3 : allSimNodes.length > 500 ? 4 : 5;
+
+    const simulation = d3.forceSimulation(allSimNodes as any)
+      .force("charge", d3.forceManyBody().strength(-15))
+      .force("collision", d3.forceCollide().radius(nodeR + 1))
+      .force("x", d3.forceX((d: any) => groupCenters[d.groupIdx].cx).strength(0.3))
+      .force("y", d3.forceY((d: any) => groupCenters[d.groupIdx].cy).strength(0.3))
+      .alphaDecay(0.03)
+      .velocityDecay(0.4);
+
+    simulation.stop();
+    for (let i = 0; i < 200; i++) simulation.tick();
+
+    let currentHovered: SimNode | null = null;
+
+    function draw() {
+      ctx.save();
+      ctx.clearRect(0, 0, width, height);
+
+      const grad = ctx.createLinearGradient(0, 0, width, height);
+      grad.addColorStop(0, "#0B0626");
+      grad.addColorStop(1, "#0C0042");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+
+      const t = transformRef.current;
+      ctx.translate(t.x, t.y);
+      ctx.scale(t.k, t.k);
+
+      for (let gi = 0; gi < numGroups; gi++) {
+        const gc = groupCenters[gi];
+        const color = DICHOTOMY_COLORS[gi % DICHOTOMY_COLORS.length];
+
+        ctx.beginPath();
+        const nodesInGroup = allSimNodes.filter(n => n.groupIdx === gi);
+        if (nodesInGroup.length > 0) {
+          let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+          for (const n of nodesInGroup) {
+            if ((n as any).x < minX) minX = (n as any).x;
+            if ((n as any).x > maxX) maxX = (n as any).x;
+            if ((n as any).y < minY) minY = (n as any).y;
+            if ((n as any).y > maxY) maxY = (n as any).y;
+          }
+          const blobCx = (minX + maxX) / 2;
+          const blobCy = (minY + maxY) / 2;
+          const blobR = Math.max(40, Math.max(maxX - minX, maxY - minY) / 2 + 20);
+          ctx.arc(blobCx, blobCy, blobR, 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.globalAlpha = 0.04;
+          ctx.fill();
+          ctx.strokeStyle = color;
+          ctx.globalAlpha = 0.15;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        const fontSize = Math.max(12, Math.min(24, cellW / 12));
+        ctx.font = `bold ${fontSize}px 'Cinzel Decorative', serif`;
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.9;
+        ctx.textAlign = "center";
+        ctx.fillText(gc.label.toUpperCase(), gc.cx, gc.cy - cellH * 0.35);
+
+        ctx.font = `${fontSize * 0.5}px 'Sofia Pro Light', sans-serif`;
+        ctx.globalAlpha = 0.5;
+        ctx.fillText(`${gc.count} figures`, gc.cx, gc.cy - cellH * 0.35 + fontSize * 0.7);
+      }
+
+      ctx.globalAlpha = 1;
+
+      const hoveredId = currentHovered?.id;
+      const selId = selectedNodeIdRef.current;
+
+      for (const n of allSimNodes) {
+        const nx = (n as any).x;
+        const ny = (n as any).y;
+        const isHovered = n.id === hoveredId;
+        const isSelected = n.nodeId === selId;
+        const color = DICHOTOMY_COLORS[n.groupIdx % DICHOTOMY_COLORS.length];
+
+        const r = isHovered ? nodeR + 3 : isSelected ? nodeR + 2 : nodeR;
+        ctx.beginPath();
+        ctx.arc(nx, ny, r, 0, Math.PI * 2);
+        ctx.fillStyle = "#E0DCE6";
+        ctx.globalAlpha = isHovered || isSelected ? 1 : 0.7;
+        ctx.fill();
+
+        if (isSelected) {
+          ctx.strokeStyle = "#FFD700";
+          ctx.lineWidth = 2;
+          ctx.globalAlpha = 0.9;
+          ctx.stroke();
+        } else if (isHovered) {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.5;
+          ctx.globalAlpha = 0.8;
+          ctx.stroke();
+        }
+
+        if ((isHovered || isSelected) || (t.k > 1.5)) {
+          if (isHovered || isSelected || t.k > 2) {
+            ctx.font = (isHovered || isSelected) ? "bold 10px 'Cinzel Decorative', serif" : "8px 'Sofia Pro Light', sans-serif";
+            ctx.fillStyle = isSelected ? "#FFD700" : "#E0DCE6";
+            ctx.globalAlpha = (isHovered || isSelected) ? 1 : 0.5;
+            ctx.textAlign = "center";
+            ctx.fillText(n.label, nx, ny - r - 4);
+          }
+        }
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
+    drawRef.current = draw;
+    draw();
+    simulation.on("tick", draw);
+    simulation.alpha(0.01).restart();
+
+    const zoomBehavior = d3.zoom<HTMLCanvasElement, unknown>()
+      .scaleExtent([0.1, 8])
+      .on("zoom", (event) => {
+        transformRef.current = event.transform;
+        draw();
+      });
+
+    d3.select(canvas).call(zoomBehavior);
+
+    function getNodeAt(px: number, py: number): SimNode | null {
+      const t = transformRef.current;
+      const x = (px - t.x) / t.k;
+      const y = (py - t.y) / t.k;
+      for (let i = allSimNodes.length - 1; i >= 0; i--) {
+        const n = allSimNodes[i];
+        const dx = x - (n as any).x;
+        const dy = y - (n as any).y;
+        if (dx * dx + dy * dy < (nodeR + 4) * (nodeR + 4)) {
+          return n;
+        }
+      }
+      return null;
+    }
+
+    canvas.onmousemove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const node = getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
+      if (node !== currentHovered) {
+        currentHovered = node;
+        onHoverNode(node ? { ...node, isCharacter: true } : null);
+        canvas.style.cursor = node ? "pointer" : "default";
+        draw();
+      }
+    };
+
+    canvas.onclick = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const node = getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
+      if (node) {
+        onSelectNode(node.original);
+      }
+    };
+
+    canvas.onmouseleave = () => {
+      currentHovered = null;
+      onHoverNode(null);
+      draw();
+    };
+
+    return () => {
+      simulation.stop();
+      canvas.onmousemove = null;
+      canvas.onclick = null;
+      canvas.onmouseleave = null;
+      drawRef.current = null;
+    };
+  }, [leafGroups, groupLabels]);
+
+  useEffect(() => {
+    if (drawRef.current) drawRef.current();
+  }, [selectedNodeId]);
+
+  if (leafGroups.length === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <p className="text-shadows-text/40 text-sm" data-testid="text-no-dichotomy">No dichotomies found at this threshold. Try lowering the exclusion threshold.</p>
+      </div>
+    );
+  }
+
+  return <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-dichotomy" />;
+}
+
 export default function GraphPage() {
   const { data, isLoading } = useQuery<GraphData>({
     queryKey: ["/api/graph"],
@@ -1956,7 +2414,9 @@ export default function GraphPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, Set<string>>>({});
   const [hoveredNode, setHoveredNode] = useState<any>(null);
-  const [viewMode, setViewMode] = useState<"network" | "direct" | "ca">("network");
+  const [viewMode, setViewMode] = useState<"network" | "direct" | "ca" | "dichotomy">("network");
+  const [dichotomyDepth, setDichotomyDepth] = useState(1);
+  const [dichotomyThreshold, setDichotomyThreshold] = useState(0.9);
   const [minConnections, setMinConnections] = useState(2);
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<Set<number>>(new Set());
   const [characterSearch, setCharacterSearch] = useState("");
@@ -2126,12 +2586,20 @@ export default function GraphPage() {
           >
             <ScatterChart size={18} />
           </button>
+          <button
+            className={`p-2 transition-colors ${viewMode === "dichotomy" ? "bg-[#8F00FF]/30 text-[#E0DCE6]" : "text-shadows-text/40 hover:text-shadows-text/70"}`}
+            onClick={() => setViewMode("dichotomy")}
+            title="Dichotomy view (recursive binary splits)"
+            data-testid="button-view-dichotomy"
+          >
+            <Split size={18} />
+          </button>
         </div>
       </div>
 
       <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[80vh] overflow-y-auto">
         <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">
-          {viewMode === "network" ? "Attributes" : viewMode === "direct" ? "Direct Connections" : "Correspondence Analysis"}
+          {viewMode === "network" ? "Attributes" : viewMode === "direct" ? "Direct Connections" : viewMode === "ca" ? "Correspondence Analysis" : "Dichotomies"}
         </span>
         {viewMode === "direct" && (
           <div className="mb-1 space-y-1">
@@ -2153,16 +2621,55 @@ export default function GraphPage() {
             </p>
           </div>
         )}
-        {viewMode !== "direct" && Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+        {viewMode === "dichotomy" && (
+          <div className="mb-1 space-y-2">
+            <p className="text-[9px] text-shadows-text/30 leading-tight">
+              Recursive binary splits by mutually exclusive traits.
+            </p>
+            <div>
+              <span className="text-[9px] text-shadows-text/40 block mb-1">Divisions: {Math.pow(2, dichotomyDepth)}</span>
+              <Slider
+                min={1}
+                max={4}
+                step={1}
+                value={[dichotomyDepth]}
+                onValueChange={([v]) => setDichotomyDepth(v)}
+                className="w-full"
+                data-testid="slider-dichotomy-depth"
+              />
+              <div className="flex justify-between text-[8px] text-shadows-text/25 mt-0.5">
+                <span>2</span><span>4</span><span>8</span><span>16</span>
+              </div>
+            </div>
+            <div>
+              <span className="text-[9px] text-shadows-text/40 block mb-1">Exclusion: {Math.round(dichotomyThreshold * 100)}%</span>
+              <Slider
+                min={0.8}
+                max={1}
+                step={0.05}
+                value={[dichotomyThreshold]}
+                onValueChange={([v]) => setDichotomyThreshold(v)}
+                className="w-full"
+                data-testid="slider-dichotomy-threshold"
+              />
+              <div className="flex justify-between text-[8px] text-shadows-text/25 mt-0.5">
+                <span>80%</span><span>90%</span><span>100%</span>
+              </div>
+            </div>
+          </div>
+        )}
+        {viewMode !== "direct" && viewMode !== "dichotomy" && Object.entries(CATEGORY_LABELS).map(([key, label]) => (
           <div key={key} className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[key] }} />
             <span className="text-[10px] text-shadows-text/40">{label}</span>
           </div>
         ))}
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-[#E0DCE6]" />
-          <span className="text-[10px] text-shadows-text/40">Character</span>
-        </div>
+        {viewMode !== "dichotomy" && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-[#E0DCE6]" />
+            <span className="text-[10px] text-shadows-text/40">Character</span>
+          </div>
+        )}
         {viewMode === "direct" && (
           <>
             <div className="flex items-center gap-1.5 mt-1">
@@ -2245,9 +2752,18 @@ export default function GraphPage() {
             onHoverNode={setHoveredNode}
             selectedNodeId={selectedNode?.id ?? null}
           />
-        ) : (
+        ) : viewMode === "ca" ? (
           <CorrespondenceView
             figures={data.nodes}
+            onSelectNode={(n) => handleGraphNodeSelect(n)}
+            onHoverNode={setHoveredNode}
+            selectedNodeId={selectedNode?.id ?? null}
+          />
+        ) : (
+          <DichotomyView
+            figures={data.nodes}
+            dichotomyDepth={dichotomyDepth}
+            dichotomyThreshold={dichotomyThreshold}
             onSelectNode={(n) => handleGraphNodeSelect(n)}
             onHoverNode={setHoveredNode}
             selectedNodeId={selectedNode?.id ?? null}
