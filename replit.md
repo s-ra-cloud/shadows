@@ -42,13 +42,17 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 
 ## Graph Visualization
 - **Canvas-based** rendering for performance with 1000+ nodes
-- Bipartite layout: character nodes + shared trait nodes
-- Character nodes colored by tradition (Greek=#8F00FF, Norse=#4A7BFF, Egyptian=#FFB800, Hindu=#FF6B35, Shinto=#FF4081, Sumerian=#03FF9B, Aztec=#00BCD4, Celtic=#7FFF00, Roman=#FF8A65, Mythological=#B388FF)
-- Trait nodes colored by attribute category (gender, domain, object, animals, etc.)
-- Only traits shared by 3+ figures appear as nodes
+- **Three view modes:**
+  - **Network** — Bipartite layout: character nodes + shared trait nodes (including eventTypes, birthTypes, deathTypes)
+  - **Direct** — Characters only, connected by number of shared traits (line thickness = common traits count)
+  - **Correspondence Analysis** — 2D projection of characters and traits
+- Character nodes uniform #E0DCE6, no tradition coloring
+- Trait nodes colored by category: gender, domain, object, animals, characterTrait, physicalCharacteristics, eventTypes (#E53935), birthTypes (#00BCD4), deathTypes (#B71C1C)
+- **Character selection** — Search and pick specific characters to display
+- **Min. connections slider** (1-10, default 2) — Controls minimum shared traits for trait nodes to appear in network view, and minimum connections for characters to appear in direct view
 - Hover highlights connections, click opens detail panel
 - Zoom/pan with mouse, labels appear at zoom > 0.6x
-- Filters: tradition checkboxes, attribute category checkboxes, search
+- Filters: attribute category checkboxes, search, character picker
 
 ## Design System
 - Dark cosmic theme: backgrounds #0B0626, #0C0042
