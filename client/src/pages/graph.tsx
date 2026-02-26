@@ -513,15 +513,14 @@ function findDichotomies(
     }
   }
 
-  function splitGroup(groupFigs: Node[], remainingDepth: number, usedCategories: Set<string> = new Set()): DichotomyGroup[] {
+  function splitGroup(groupFigs: Node[], remainingDepth: number, usedTraits: Set<string> = new Set()): DichotomyGroup[] {
     if (remainingDepth <= 0 || groupFigs.length < 4) return [];
 
     const localTraitFigs = new Map<string, Set<number>>();
     for (const fig of groupFigs) {
       const traits = figTraitSets.get(fig.id) || new Set<string>();
       for (const t of traits) {
-        const cat = t.split("::")[0];
-        if (usedCategories.has(cat)) continue;
+        if (usedTraits.has(t)) continue;
         if (!localTraitFigs.has(t)) localTraitFigs.set(t, new Set());
         localTraitFigs.get(t)!.add(fig.id);
       }
@@ -534,13 +533,10 @@ function findDichotomies(
     let bestPair: [string, string] | null = null;
     let bestScore = -1;
 
-    for (let i = 0; i < Math.min(traitsBySize.length, 30); i++) {
+    for (let i = 0; i < Math.min(traitsBySize.length, 40); i++) {
       const [tA, idsA] = traitsBySize[i];
-      const catA = tA.split("::")[0];
-      for (let j = i + 1; j < Math.min(traitsBySize.length, 30); j++) {
+      for (let j = i + 1; j < Math.min(traitsBySize.length, 40); j++) {
         const [tB, idsB] = traitsBySize[j];
-        const catB = tB.split("::")[0];
-        if (catA !== catB) continue;
         let overlap = 0;
         for (const id of idsA) {
           if (idsB.has(id)) overlap++;
@@ -549,8 +545,9 @@ function findDichotomies(
         if (exclusion >= threshold) {
           const union = idsA.size + idsB.size - overlap;
           const coverage = union / groupFigs.length;
+          if (coverage < 0.1) continue;
           const balance = Math.min(idsA.size, idsB.size) / Math.max(idsA.size, idsB.size);
-          const score = coverage * 0.6 + balance * 0.4 + (idsA.size + idsB.size) * 0.001;
+          const score = coverage * coverage * 10 + balance * 0.2;
           if (score > bestScore) {
             bestScore = score;
             bestPair = [tA, tB];
@@ -601,9 +598,9 @@ function findDichotomies(
     };
 
     if (remainingDepth > 1) {
-      const splitCategory = traitA.split("::")[0];
-      const nextUsed = new Set(usedCategories);
-      nextUsed.add(splitCategory);
+      const nextUsed = new Set(usedTraits);
+      nextUsed.add(traitA);
+      nextUsed.add(traitB);
       resultA.children = splitGroup(groupAFigs, remainingDepth - 1, nextUsed);
       resultB.children = splitGroup(groupBFigs, remainingDepth - 1, nextUsed);
     }
