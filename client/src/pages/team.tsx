@@ -2,8 +2,8 @@ const teamMembers = [
   {
     name: "Laura Duparc",
     role: "Lead Researcher",
-    institution: "Aix-Marseille Université / Université Mohammed VI Polytechnique",
-    bio: "Laura Duparc holds a doctorate in law and is a postdoctoral researcher working on large language models applied to law and digital humanities at Aix-Marseille Université. She is the founder and lead designer of LEGACY, a platform for exploring classical academic texts through NLP, graph analysis, and AI, hosted at Université Mohammed VI Polytechnique. Her broader portfolio includes the co-creation of several digital humanities platforms — Knowledge Tree (University of Chicago), La Grande Conversation, Future of Science Network, and Thesis Center. Her published research spans jurimetrics, criminal sciences, and computational approaches to the humanities, with articles in Droit et Société, AJ Pénal, and the Revue de Sciences Criminelles. She leads the SHADOWS initiative, bringing her expertise in network-based analysis and interdisciplinary platform design to the comparative study of world mythologies.",
+    institution: "Université Mohammed VI Polytechnique",
+    bio: "Laura Duparc holds a doctorate in law and is an affiliated researcher at Université Mohammed VI Polytechnique. She is the founder and lead designer of LEGACY, a platform for exploring classical academic texts through NLP, graph analysis, and AI, hosted at Université Mohammed VI Polytechnique. Her broader portfolio includes the co-creation of several digital humanities platforms — Knowledge Tree (University of Chicago), La Grande Conversation, Future of Science Network, and Thesis Center. Her published research spans jurimetrics, criminal sciences, and computational approaches to the humanities, with articles in Droit et Société, AJ Pénal, and the Revue de Sciences Criminelles. She leads the SHADOWS initiative, bringing her expertise in network-based analysis and interdisciplinary platform design to the comparative study of world mythologies.",
   },
   {
     name: "Camille Bertrand",
