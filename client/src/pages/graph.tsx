@@ -1176,10 +1176,11 @@ function NetworkView({
     canvas.style.height = height + "px";
     ctx.scale(dpr, dpr);
 
+    const spread = filteredGraphNodes.length > 800 ? 200 : filteredGraphNodes.length > 300 ? 400 : Math.min(width, 800);
     const simNodes = filteredGraphNodes.map((n) => ({
       ...n,
-      x: width / 2 + (Math.random() - 0.5) * Math.min(width, 800),
-      y: height / 2 + (Math.random() - 0.5) * Math.min(height, 600),
+      x: width / 2 + (Math.random() - 0.5) * spread,
+      y: height / 2 + (Math.random() - 0.5) * spread,
     }));
     const simNodeMap = new Map<string, any>();
     simNodes.forEach((n) => simNodeMap.set(n.id, n));
@@ -1196,14 +1197,28 @@ function NetworkView({
     simLinksRef.current = simLinks;
 
     const charCount = simNodes.filter(n => n.isCharacter).length;
-    const linkDist = charCount > 200 ? 60 : charCount > 100 ? 80 : 100;
-    const chargeStr = charCount > 200 ? -100 : charCount > 100 ? -150 : -200;
+    const isLarge = charCount > 400;
+    const nodeR = isLarge ? 3 : charCount > 100 ? 4 : 6;
+    const linkDist = isLarge ? 30 : charCount > 100 ? 60 : 100;
+    const chargeStr = isLarge ? -30 : charCount > 100 ? -60 : -200;
+
+    const nodeDegree = new Map<string, number>();
+    for (const l of simLinks) {
+      const sid = typeof l.source === "object" ? l.source.id : l.source;
+      const tid = typeof l.target === "object" ? l.target.id : l.target;
+      nodeDegree.set(sid, (nodeDegree.get(sid) || 0) + 1);
+      nodeDegree.set(tid, (nodeDegree.get(tid) || 0) + 1);
+    }
 
     const simulation = d3.forceSimulation(simNodes)
-      .force("link", d3.forceLink(simLinks).id((d: any) => d.id).distance(linkDist).strength(0.15))
-      .force("charge", d3.forceManyBody().strength((d: any) => d.isCharacter ? chargeStr : chargeStr * 0.3))
+      .force("link", d3.forceLink(simLinks).id((d: any) => d.id).distance(linkDist).strength((l: any) => {
+        const sd = nodeDegree.get(typeof l.source === "object" ? l.source.id : l.source) || 1;
+        const td = nodeDegree.get(typeof l.target === "object" ? l.target.id : l.target) || 1;
+        return Math.min(0.3, Math.max(0.05, 1 / Math.max(sd, td)));
+      }))
+      .force("charge", d3.forceManyBody().strength(chargeStr).distanceMax(isLarge ? 150 : 500))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius((d: any) => d.isCharacter ? 8 : 4))
+      .force("collision", d3.forceCollide().radius(nodeR + 1))
       .alphaDecay(0.03)
       .velocityDecay(0.4);
 
@@ -1249,6 +1264,7 @@ function NetworkView({
       ctx.globalAlpha = 1;
 
       const selId = selectedNodeIdRef.current;
+      const baseR = nodeR;
       for (const n of simNodes) {
         const isHovered = n.id === hoveredId;
         const isSelected = n.isCharacter && n.original?.id === selId;
@@ -1256,7 +1272,7 @@ function NetworkView({
         const dimmed = hoveredId && !isHovered && !isConnected;
 
         if (n.isCharacter) {
-          const r = isHovered ? 10 : isSelected ? 8 : 6;
+          const r = isHovered ? baseR + 4 : isSelected ? baseR + 2 : baseR;
           ctx.beginPath();
           ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
           ctx.fillStyle = "#E0DCE6";
@@ -1275,7 +1291,7 @@ function NetworkView({
           }
         } else {
           const color = CATEGORY_COLORS[n.category] || "#350A8C";
-          const r = isHovered ? 5 : 3;
+          const r = isHovered ? 5 : (baseR > 4 ? 3 : 2);
           ctx.beginPath();
           ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
           ctx.fillStyle = color;

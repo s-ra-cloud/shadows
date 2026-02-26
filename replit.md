@@ -48,12 +48,14 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
   - **Direct** — Characters only, connected by number of shared traits (line thickness = common traits count)
   - **Correspondence Analysis** — 2D projection of characters and traits
 - Character nodes uniform #E0DCE6, no tradition coloring
-- Trait nodes colored by category: gender, domain, object, animals, characterTrait, physicalCharacteristics, eventTypes (#E53935), birthTypes (#00BCD4), deathTypes (#B71C1C)
+- Trait nodes colored by category: gender, domain, object, animals, characterTrait, physicalCharacteristics, eventTypes (#E53935), birthTypes (#00BCD4), deathTypes (#B71C1C), familyRoles (#F48FB1)
 - **Character selection** — Search and pick specific characters to display
 - **Min. connections slider** (1-10, default 2) — Controls minimum shared traits for trait nodes to appear in network view, and minimum connections for characters to appear in direct view
 - Hover highlights connections, click opens detail panel
 - Zoom/pan with mouse, labels appear at zoom > 0.6x
 - Filters: attribute category checkboxes, search, character picker
+- **Persistent selection** — Selected nodes stay highlighted (gold ring) across filter/search changes
+- **Adaptive layout** — Force simulation uses degree-based link strength, compact initial spread, and adaptive node sizing for large graphs (1000+ nodes form compact organic clusters centered in viewport)
 
 ## Design System
 - Dark cosmic theme: backgrounds #0B0626, #0C0042
