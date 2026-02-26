@@ -1176,10 +1176,10 @@ function NetworkView({
     canvas.style.height = height + "px";
     ctx.scale(dpr, dpr);
 
-    const simNodes = filteredGraphNodes.map((n) => ({
+    const simNodes = filteredGraphNodes.map((n, i) => ({
       ...n,
-      x: width / 2 + (Math.random() - 0.5) * Math.min(width, 800),
-      y: height / 2 + (Math.random() - 0.5) * Math.min(height, 600),
+      x: width / 2 + Math.cos(i / filteredGraphNodes.length * Math.PI * 2) * Math.min(width, height) * 0.4 * (0.3 + Math.random() * 0.7),
+      y: height / 2 + Math.sin(i / filteredGraphNodes.length * Math.PI * 2) * Math.min(width, height) * 0.4 * (0.3 + Math.random() * 0.7),
     }));
     const simNodeMap = new Map<string, any>();
     simNodes.forEach((n) => simNodeMap.set(n.id, n));
@@ -1196,16 +1196,19 @@ function NetworkView({
     simLinksRef.current = simLinks;
 
     const charCount = simNodes.filter(n => n.isCharacter).length;
-    const linkDist = charCount > 200 ? 60 : charCount > 100 ? 80 : 100;
-    const chargeStr = charCount > 200 ? -50 : charCount > 100 ? -100 : -200;
+    const totalCount = simNodes.length;
+    const linkDist = charCount > 500 ? 40 : charCount > 200 ? 60 : charCount > 100 ? 80 : 100;
+    const chargeStr = charCount > 500 ? -30 : charCount > 200 ? -60 : charCount > 100 ? -100 : -200;
+    const linkStr = charCount > 500 ? 0.08 : charCount > 200 ? 0.15 : 0.3;
 
     const simulation = d3.forceSimulation(simNodes)
-      .force("link", d3.forceLink(simLinks).id((d: any) => d.id).distance(linkDist).strength(0.3))
-      .force("charge", d3.forceManyBody().strength((d: any) => d.isCharacter ? chargeStr : chargeStr * 0.3))
-      .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius((d: any) => d.isCharacter ? 8 : 4))
-      .alphaDecay(0.03)
-      .velocityDecay(0.4);
+      .force("link", d3.forceLink(simLinks).id((d: any) => d.id).distance(linkDist).strength(linkStr))
+      .force("charge", d3.forceManyBody().strength((d: any) => d.isCharacter ? chargeStr : chargeStr * 0.3).distanceMax(totalCount > 500 ? 300 : 500))
+      .force("x", d3.forceX(width / 2).strength(totalCount > 500 ? 0.015 : 0.03))
+      .force("y", d3.forceY(height / 2).strength(totalCount > 500 ? 0.015 : 0.03))
+      .force("collision", d3.forceCollide().radius((d: any) => d.isCharacter ? (charCount > 500 ? 5 : 8) : 3))
+      .alphaDecay(charCount > 500 ? 0.015 : 0.03)
+      .velocityDecay(0.5);
 
     simulationRef.current = simulation;
 
@@ -1420,10 +1423,10 @@ function DirectView({
     canvas.style.height = height + "px";
     ctx.scale(dpr, dpr);
 
-    const simNodes = charNodes.map((n) => ({
+    const simNodes = charNodes.map((n, i) => ({
       ...n,
-      x: width / 2 + (Math.random() - 0.5) * Math.min(width, 800),
-      y: height / 2 + (Math.random() - 0.5) * Math.min(height, 600),
+      x: width / 2 + Math.cos(i / charNodes.length * Math.PI * 2) * Math.min(width, height) * 0.4 * (0.3 + Math.random() * 0.7),
+      y: height / 2 + Math.sin(i / charNodes.length * Math.PI * 2) * Math.min(width, height) * 0.4 * (0.3 + Math.random() * 0.7),
     }));
     const simNodeMap = new Map<string, any>();
     simNodes.forEach((n) => simNodeMap.set(n.id, n));
@@ -1439,16 +1442,18 @@ function DirectView({
       .filter((l) => l.source && l.target);
 
     const nodeCount = simNodes.length;
-    const linkDist = nodeCount > 100 ? 80 : nodeCount > 50 ? 120 : 160;
-    const chargeStr = nodeCount > 100 ? -80 : nodeCount > 50 ? -150 : -300;
+    const linkDist = nodeCount > 500 ? 30 : nodeCount > 200 ? 50 : nodeCount > 100 ? 80 : 160;
+    const chargeStr = nodeCount > 500 ? -20 : nodeCount > 200 ? -50 : nodeCount > 100 ? -80 : -300;
+    const linkStr = nodeCount > 500 ? 0.05 : nodeCount > 200 ? 0.1 : 0.2;
 
     const simulation = d3.forceSimulation(simNodes)
-      .force("link", d3.forceLink(simLinks).id((d: any) => d.id).distance((d: any) => linkDist * (1 - d.weight / maxWeight * 0.5)).strength((d: any) => 0.1 + d.weight / maxWeight * 0.4))
-      .force("charge", d3.forceManyBody().strength(chargeStr))
-      .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius(12))
-      .alphaDecay(0.02)
-      .velocityDecay(0.4);
+      .force("link", d3.forceLink(simLinks).id((d: any) => d.id).distance((d: any) => linkDist * (1 - d.weight / maxWeight * 0.5)).strength((d: any) => linkStr + d.weight / maxWeight * 0.2))
+      .force("charge", d3.forceManyBody().strength(chargeStr).distanceMax(nodeCount > 200 ? 250 : 500))
+      .force("x", d3.forceX(width / 2).strength(nodeCount > 200 ? 0.012 : 0.03))
+      .force("y", d3.forceY(height / 2).strength(nodeCount > 200 ? 0.012 : 0.03))
+      .force("collision", d3.forceCollide().radius(nodeCount > 500 ? 4 : 8))
+      .alphaDecay(nodeCount > 500 ? 0.012 : 0.02)
+      .velocityDecay(0.5);
 
     simulationRef.current = simulation;
     let currentHovered: any = null;
