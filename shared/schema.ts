@@ -28,6 +28,12 @@ export const nodes = pgTable("nodes", {
   characterTrait: text("character_trait"),
   physicalCharacteristics: text("physical_characteristics"),
   significantEvent: text("significant_event"),
+  symbolism: text("symbolism"),
+  neumannArchetype: text("neumann_archetype"),
+  mentionCount: integer("mention_count"),
+  eventTypes: text("event_types").array(),
+  birthTypes: text("birth_types").array(),
+  deathTypes: text("death_types").array(),
   birthCircumstances: text("birth_circumstances"),
   deathCircumstances: text("death_circumstances"),
 });

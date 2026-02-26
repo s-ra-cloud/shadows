@@ -22,21 +22,23 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 - `nodes` - Mythological figures with attributes:
   - name, tradition, gender, domain, object, animals
   - characterTrait, physicalCharacteristics
-  - significantEvent, birthCircumstances, deathCircumstances
-- `edges` - Relationships between figures (parent of, married to, sibling of, etc.)
+  - significantEvent, symbolism, neumannArchetype, mentionCount
+  - eventTypes (text array) - 23 types: rescue, sacrifice, descent_to_underworld, quest, etc.
+  - birthTypes (text array) - 10 types: divine_parentage, born_from_body, miraculous_conception, etc.
+  - deathTypes (text array) - 13 types: dismemberment, killed_by_kin, resurrection, etc.
+  - birthCircumstances, deathCircumstances
+- `edges` - Relationships between figures (parent of, married to, sibling of, etc.) - 401 edges
 - `news` - News articles (title, content, date)
 - `publications` - Research publications (title, authors, venue, abstract, doi, pdf_url)
 - `users` - Admin users (username, password)
 
 ## Data Source
-- 1,186 mythological figures scraped from Wikipedia categories:
-  - Characters in Greek mythology (+ subcategories)
-  - Norse, Egyptian, Hindu, Shinto, Sumerian, Aztec, Celtic, Roman deities
-  - General mythological characters
-- Infobox data parsed for structured fields (domain, symbols, animals, relationships)
-- Intro text parsed for gender, birth/death, physical descriptions, events
-- 294 relationship edges extracted from infobox family data
-- Run `npx tsx server/scrape-wikipedia.ts` to re-scrape
+- 1,131 mythological figures from curated database (JSON seed file)
+  - 258 with normalized eventTypes, 387 with birthTypes, 60 with deathTypes
+  - 83 with symbolism and archetype analysis
+  - 401 relationship edges (married_to, child_of, sibling_of, etc.)
+- Seed runs automatically on startup if database is empty
+- Data file: data/mythology-database.json
 
 ## Graph Visualization
 - **Canvas-based** rendering for performance with 1000+ nodes
