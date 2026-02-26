@@ -2528,12 +2528,13 @@ function DichotomyView({
         const ny = (n as any).y;
         const isHovered = n.id === hoveredId;
         const isSelected = n.nodeId === selId;
-        const color = groupMeta[n.groupIdx].color;
+        const groupColor = groupMeta[n.groupIdx].color;
+        const tradColor = getTraditionColor(n.original.tradition);
 
         const r = isHovered ? nodeR + 3 : isSelected ? nodeR + 2 : nodeR;
         ctx.beginPath();
         ctx.arc(nx, ny, r, 0, Math.PI * 2);
-        ctx.fillStyle = "#E0DCE6";
+        ctx.fillStyle = tradColor;
         ctx.globalAlpha = isHovered || isSelected ? 1 : 0.7;
         ctx.fill();
 
@@ -2543,7 +2544,7 @@ function DichotomyView({
           ctx.globalAlpha = 0.9;
           ctx.stroke();
         } else if (isHovered) {
-          ctx.strokeStyle = color;
+          ctx.strokeStyle = groupColor;
           ctx.lineWidth = 1.5;
           ctx.globalAlpha = 0.8;
           ctx.stroke();
@@ -2552,7 +2553,7 @@ function DichotomyView({
         if ((isHovered || isSelected) || (t.k > 1.5)) {
           if (isHovered || isSelected || t.k > 2) {
             ctx.font = (isHovered || isSelected) ? "bold 10px 'Cinzel Decorative', serif" : "8px 'Sofia Pro Light', sans-serif";
-            ctx.fillStyle = isSelected ? "#FFD700" : "#E0DCE6";
+            ctx.fillStyle = isSelected ? "#FFD700" : tradColor;
             ctx.globalAlpha = (isHovered || isSelected) ? 1 : 0.5;
             ctx.textAlign = "center";
             ctx.fillText(n.label, nx, ny - r - 4);
@@ -2637,7 +2638,34 @@ function DichotomyView({
     );
   }
 
-  return <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-dichotomy" />;
+  const traditionsInView = useMemo(() => {
+    const traditions = new Set<string>();
+    for (const g of leafGroups) {
+      for (const fig of g.figures) {
+        if (fig.tradition) traditions.add(fig.tradition);
+      }
+    }
+    return Array.from(traditions).sort();
+  }, [leafGroups]);
+
+  return (
+    <div className="w-full h-full relative">
+      <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-dichotomy" />
+      {traditionsInView.length > 0 && (
+        <div className="absolute bottom-3 left-3 bg-black/60 rounded-lg border border-white/10 p-2 max-w-[180px]" data-testid="panel-tradition-legend">
+          <div className="text-[8px] text-shadows-text/40 uppercase tracking-wider mb-1">Traditions</div>
+          <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+            {traditionsInView.map(t => (
+              <div key={t} className="flex items-center gap-1" data-testid={`legend-tradition-${t.toLowerCase()}`}>
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getTraditionColor(t) }} />
+                <span className="text-[8px] text-shadows-text/50">{t}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function GraphPage() {
