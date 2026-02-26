@@ -246,7 +246,7 @@ function TeamPreview() {
               data-testid="img-team-photo"
             />
           </div>
-          <div className="flex justify-between px-4 mt-6">
+          <div className="flex justify-center gap-12 mt-6">
             <div className="text-center" data-testid="card-team-member-0">
               <span className="font-serif text-sm text-shadows-text/70 block" data-testid="text-team-name-0">Camille Bertrand</span>
               <span className="text-[#8F00FF]/80 text-xs">Researcher</span>
