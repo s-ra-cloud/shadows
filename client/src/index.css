@@ -2,6 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Sofia Pro';
+  src: url('/fonts/Sofia_Pro_Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sofia Pro';
+  src: url('/fonts/Sofia_Pro_Light_Italic.otf') format('opentype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sofia Pro';
+  src: url('/fonts/Sofia_Pro_Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sofia Pro';
+  src: url('/fonts/Sofia_Pro_Regular_Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sofia Pro';
+  src: url('/fonts/Sofia_Pro_Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sofia Pro';
+  src: url('/fonts/Sofia_Pro_Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --button-outline: rgba(255,255,255, .10);
   --badge-outline: rgba(255,255,255, .05);
@@ -42,7 +90,7 @@
   --chart-3: 270 70% 60%;
   --chart-4: 157 80% 60%;
   --chart-5: 260 60% 70%;
-  --font-sans: 'DM Sans', 'Inter', sans-serif;
+  --font-sans: 'Sofia Pro', 'DM Sans', 'Inter', sans-serif;
   --font-serif: 'Cinzel Decorative', 'Playfair Display', Georgia, serif;
   --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
   --radius: .5rem;
@@ -233,4 +281,8 @@
   .text-glow-violet {
     text-shadow: 0 0 20px rgba(143, 0, 255, 0.5);
   }
+}
+
+body {
+  font-weight: 300;
 }
