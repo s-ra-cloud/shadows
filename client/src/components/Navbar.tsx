@@ -19,7 +19,7 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0B0626]/80 backdrop-blur-xl border-b border-[#350A8C]/20">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
         <Link href="/" data-testid="link-home-logo">
-          <span className="font-serif text-xl tracking-[0.15em] text-shadows-text font-bold">
+          <span className="text-xl tracking-[0.15em] text-shadows-text font-bold" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
             SHADOWS
           </span>
         </Link>

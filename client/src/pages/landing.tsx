@@ -21,15 +21,15 @@ function HeroSection() {
 
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
         <h1
-          className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-[0.2em] text-shadows-text mb-6 animate-fade-in-up"
-          style={{ animationDelay: "0.1s" }}
+          className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-[0.2em] text-shadows-text mb-6 animate-fade-in-up font-bold"
+          style={{ animationDelay: "0.1s", fontFamily: "'Cinzel Decorative', serif" }}
           data-testid="text-hero-title"
         >
           SHADOWS
         </h1>
         <p
-          className="font-serif text-lg sm:text-xl md:text-2xl text-shadows-text/80 tracking-wider mb-4 animate-fade-in-up"
-          style={{ animationDelay: "0.3s" }}
+          className="text-lg sm:text-xl md:text-2xl text-shadows-text/80 tracking-wider mb-4 animate-fade-in-up"
+          style={{ animationDelay: "0.3s", fontFamily: "'Cinzel Decorative', serif" }}
           data-testid="text-hero-subtitle"
         >
           A Comparative Archetypal Atlas of Myth and Symbol
