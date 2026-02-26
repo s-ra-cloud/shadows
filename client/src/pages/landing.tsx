@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { ArrowRight, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroVideo from "@assets/hero_1772053813686.mp4";
+import legacyLogo from "@assets/Logo_fond_foncé_1772111990533.png";
 
 function HeroSection() {
   return (
@@ -274,43 +275,45 @@ function TeamPreview() {
   );
 }
 
-function LegacyLogoSmall() {
+function MachinaLogoSvg({ size = 80 }: { size?: number }) {
+  const cx = 60, cy = 60;
+  const r = 38;
+  const nodes = Array.from({ length: 6 }, (_, i) => {
+    const angle = (Math.PI / 3) * i - Math.PI / 2;
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+  });
   return (
-    <svg width={80} height={80} viewBox="0 0 120 120" fill="none">
-      <rect x="4" y="4" width="112" height="112" rx="16" stroke="#8F00FF" strokeWidth="1.5" strokeOpacity="0.3" />
-      <rect x="12" y="12" width="96" height="96" rx="10" fill="#350A8C" fillOpacity="0.15" />
-      <path d="M35 82V38h6v38h20v6H35z" fill="#E0DCE6" fillOpacity="0.9" />
-      <rect x="68" y="38" width="22" height="6" rx="1" fill="#03FF9B" fillOpacity="0.7" />
-      <rect x="68" y="52" width="16" height="6" rx="1" fill="#03FF9B" fillOpacity="0.5" />
-      <rect x="68" y="66" width="22" height="6" rx="1" fill="#03FF9B" fillOpacity="0.7" />
-      <rect x="68" y="80" width="18" height="6" rx="1" fill="#03FF9B" fillOpacity="0.5" />
-      <circle cx="98" cy="28" r="3" fill="#8F00FF" fillOpacity="0.6" />
-      <circle cx="22" cy="28" r="2" fill="#03FF9B" fillOpacity="0.4" />
-    </svg>
-  );
-}
-
-function MachinaLogoSmall() {
-  return (
-    <svg width={80} height={80} viewBox="0 0 120 120" fill="none">
-      <rect x="4" y="4" width="112" height="112" rx="16" stroke="#8F00FF" strokeWidth="1.5" strokeOpacity="0.3" />
-      <rect x="12" y="12" width="96" height="96" rx="10" fill="#350A8C" fillOpacity="0.15" />
-      <circle cx="60" cy="50" r="18" stroke="#E0DCE6" strokeWidth="1.5" strokeOpacity="0.6" strokeDasharray="3 3" />
-      <circle cx="60" cy="50" r="8" fill="#8F00FF" fillOpacity="0.4" />
-      <circle cx="60" cy="50" r="3" fill="#E0DCE6" fillOpacity="0.9" />
-      <circle cx="42" cy="50" r="4" fill="#03FF9B" fillOpacity="0.7" />
-      <circle cx="78" cy="50" r="4" fill="#03FF9B" fillOpacity="0.7" />
-      <circle cx="51" cy="35" r="3.5" fill="#E0DCE6" fillOpacity="0.5" />
-      <circle cx="69" cy="35" r="3.5" fill="#E0DCE6" fillOpacity="0.5" />
-      <circle cx="51" cy="65" r="3.5" fill="#E0DCE6" fillOpacity="0.5" />
-      <circle cx="69" cy="65" r="3.5" fill="#E0DCE6" fillOpacity="0.5" />
-      <line x1="42" y1="50" x2="51" y2="35" stroke="#8F00FF" strokeWidth="0.8" strokeOpacity="0.4" />
-      <line x1="42" y1="50" x2="51" y2="65" stroke="#8F00FF" strokeWidth="0.8" strokeOpacity="0.4" />
-      <line x1="78" y1="50" x2="69" y2="35" stroke="#8F00FF" strokeWidth="0.8" strokeOpacity="0.4" />
-      <line x1="78" y1="50" x2="69" y2="65" stroke="#8F00FF" strokeWidth="0.8" strokeOpacity="0.4" />
-      <line x1="51" y1="35" x2="69" y2="35" stroke="#03FF9B" strokeWidth="0.6" strokeOpacity="0.3" />
-      <line x1="51" y1="65" x2="69" y2="65" stroke="#03FF9B" strokeWidth="0.6" strokeOpacity="0.3" />
-      <text x="60" y="90" textAnchor="middle" fill="#E0DCE6" fillOpacity="0.7" fontSize="10" fontFamily="monospace" letterSpacing="3">MRN</text>
+    <svg width={size} height={size} viewBox="0 0 120 120" fill="none">
+      <defs>
+        <radialGradient id="mNodeGlow">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+          <stop offset="40%" stopColor="#c8d8e8" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#8899aa" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="mCenterGlow">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+          <stop offset="30%" stopColor="#dde8f0" stopOpacity="0.7" />
+          <stop offset="70%" stopColor="#aa8866" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#664422" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      {nodes.map((a, i) => {
+        const b = nodes[(i + 1) % 6];
+        return <line key={`edge-${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#8090a0" strokeWidth="3" strokeOpacity="0.5" />;
+      })}
+      {nodes.map((n, i) => (
+        <line key={`spoke-${i}`} x1={cx} y1={cy} x2={n.x} y2={n.y} stroke="#8090a0" strokeWidth="2.5" strokeOpacity="0.4" />
+      ))}
+      {nodes.map((n, i) => (
+        <g key={`node-${i}`}>
+          <circle cx={n.x} cy={n.y} r="10" fill="url(#mNodeGlow)" opacity="0.7" />
+          <circle cx={n.x} cy={n.y} r="5" fill="#c8d8e8" fillOpacity="0.6" />
+          <circle cx={n.x} cy={n.y} r="2" fill="#ffffff" fillOpacity="0.9" />
+        </g>
+      ))}
+      <circle cx={cx} cy={cy} r="18" fill="url(#mCenterGlow)" opacity="0.8" />
+      <circle cx={cx} cy={cy} r="9" fill="#d0dce6" fillOpacity="0.5" />
+      <circle cx={cx} cy={cy} r="3.5" fill="#ffffff" fillOpacity="0.95" />
     </svg>
   );
 }
@@ -320,12 +323,12 @@ function PartnersPreview() {
     {
       name: "Legacy — UM6P / 1337",
       url: "https://legacy-um6p.1337.ma/home",
-      Logo: LegacyLogoSmall,
+      visual: <img src={legacyLogo} alt="Legacy UM6P" className="w-20 h-20 object-contain rounded-lg" />,
     },
     {
       name: "Machina Research Network",
       url: "https://machina-research.net",
-      Logo: MachinaLogoSmall,
+      visual: <MachinaLogoSvg size={80} />,
     },
   ];
 
@@ -350,7 +353,7 @@ function PartnersPreview() {
               data-testid={`card-partner-${i}`}
             >
               <div className="opacity-60 group-hover:opacity-100 transition-opacity">
-                <partner.Logo />
+                {partner.visual}
               </div>
               <span className="text-shadows-text/60 text-sm text-center group-hover:text-shadows-text transition-colors">
                 {partner.name}
