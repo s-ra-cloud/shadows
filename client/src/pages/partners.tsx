@@ -1,9 +1,7 @@
 import { Link } from "wouter";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import legacyLogo from "@assets/legacy_logo_dark.png";
-
-function MachinaLogoSvg({ size = 112 }: { size?: number }) {
+function LegacyLogoSvg({ size = 112 }: { size?: number }) {
   const cx = 60, cy = 60;
   const r = 38;
   const nodes = Array.from({ length: 6 }, (_, i) => {
@@ -117,9 +115,11 @@ export default function PartnersPage() {
                   <div className="flex-shrink-0">
                     <a href={partner.url} target="_blank" rel="noopener noreferrer" className="block opacity-80 hover:opacity-100 transition-opacity">
                       {partner.visual === "legacy" ? (
-                        <img src={legacyLogo} alt="Legacy UM6P" className="w-28 h-28 object-contain rounded-lg" />
+                        <LegacyLogoSvg size={112} />
                       ) : (
-                        <MachinaLogoSvg size={112} />
+                        <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#350A8C]/20 to-[#8F00FF]/10 border border-[#350A8C]/20 flex items-center justify-center">
+                          <span className="font-serif text-3xl text-shadows-text/60">{partner.name.split(" ")[0][0]}</span>
+                        </div>
                       )}
                     </a>
                   </div>

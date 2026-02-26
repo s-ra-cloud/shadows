@@ -2,7 +2,6 @@ import { Link } from "wouter";
 import { ArrowRight, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroVideo from "@assets/hero_1772053813686.mp4";
-import legacyLogo from "@assets/legacy_logo_dark.png";
 
 function HeroSection() {
   return (
@@ -275,7 +274,7 @@ function TeamPreview() {
   );
 }
 
-function MachinaLogoSvg({ size = 80 }: { size?: number }) {
+function LegacyLogoSvg({ size = 80 }: { size?: number }) {
   const cx = 60, cy = 60;
   const r = 38;
   const nodes = Array.from({ length: 6 }, (_, i) => {
@@ -323,12 +322,12 @@ function PartnersPreview() {
     {
       name: "Legacy — UM6P / 1337",
       url: "https://legacy-um6p.1337.ma/home",
-      visual: <img src={legacyLogo} alt="Legacy UM6P" className="w-20 h-20 object-contain rounded-lg" />,
+      visual: <LegacyLogoSvg size={80} />,
     },
     {
       name: "Machina Research Network",
       url: "https://machina-research.net",
-      visual: <MachinaLogoSvg size={80} />,
+      visual: null,
     },
   ];
 
@@ -353,7 +352,11 @@ function PartnersPreview() {
               data-testid={`card-partner-${i}`}
             >
               <div className="opacity-60 group-hover:opacity-100 transition-opacity">
-                {partner.visual}
+                {partner.visual || (
+                  <div className="w-20 h-20 rounded-full bg-[#350A8C]/10 border border-[#350A8C]/20 flex items-center justify-center group-hover:border-[#8F00FF]/40">
+                    <span className="font-serif text-2xl text-shadows-text/60 group-hover:text-shadows-text transition-colors">{partner.name.split(" ")[0][0]}</span>
+                  </div>
+                )}
               </div>
               <span className="text-shadows-text/60 text-sm text-center group-hover:text-shadows-text transition-colors">
                 {partner.name}
