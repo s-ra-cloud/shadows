@@ -3,22 +3,22 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 
 const teamMembers = [
   {
-    name: "Camille Bertrand",
-    role: "Researcher",
-    institution: "EHESS",
-    bio: "Camille Bertrand is a researcher at the École des Hautes Études en Sciences Sociales specializing in the anthropology of religion and symbolic systems. Her contribution to SHADOWS centers on the classification and cross-referencing of mythological motifs across Indo-European, Semitic, and East Asian traditions.",
-  },
-  {
     name: "Laura Duparc",
     role: "Lead Researcher",
-    institution: "University Mohammed VI Polytechnic",
-    bio: "Laura Duparc leads the SHADOWS research initiative, bringing expertise in comparative mythology and digital humanities. Her work focuses on mapping structural parallels across mythological traditions using computational network analysis, with particular interest in how archetypal motifs migrate and transform across cultures and historical periods.",
+    institution: "Université Paris-Panthéon-Assas / Université Mohammed VI Polytechnique",
+    bio: "Laura Duparc holds a doctorate in law from Université Paris-Panthéon-Assas and is a postdoctoral researcher working on large language models applied to law and digital humanities at Aix-Marseille Université. She is the founder and lead designer of LEGACY, a platform for exploring classical academic texts through NLP, graph analysis, and AI, hosted at Université Mohammed VI Polytechnique. Her broader portfolio includes the co-creation of several digital humanities platforms — Knowledge Tree (University of Chicago), La Grande Conversation, Future of Science Network, and Thesis Center. Her published research spans jurimetrics, criminal sciences, and computational approaches to the humanities, with articles in Droit et Société, AJ Pénal, and the Revue de Sciences Criminelles. She leads the SHADOWS initiative, bringing her expertise in network-based analysis and interdisciplinary platform design to the comparative study of world mythologies.",
+  },
+  {
+    name: "Camille Bertrand",
+    role: "Researcher",
+    institution: "École des Hautes Études en Sciences Sociales",
+    bio: "Camille Bertrand holds a Master's degree in political studies from the École des Hautes Études en Sciences Sociales (EHESS) and a law degree from Aix-Marseille Université, where she is currently pursuing a doctorate in law and political studies. She has worked as a research assistant at the Laboratory of Private Law and Criminal Sciences of Aix-Marseille Université on a SATT Sud-Est funded project, collaborating with a web developer to build a tool for substituting equivalent propositions in the work of Wittgenstein (Semantica.AI). Her experience bridges legal analysis, political theory, and digital tools for the humanities. Within SHADOWS, she contributes her skills in textual analysis and interdisciplinary research methodology.",
   },
   {
     name: "Ami Nagai",
     role: "Researcher",
     institution: "Aix-Marseille Université",
-    bio: "Ami Nagai brings expertise in East Asian religious studies and comparative symbolism to the SHADOWS project. Her research explores the structural resonances between Japanese, Chinese, and South Asian mythological systems, contributing to the atlas's coverage of pan-Asian archetypal networks.",
+    bio: "Ami Nagai is a doctoral candidate in history at Aix-Marseille Université, affiliated with the TELEMMe laboratory (CNRS). Born in Tokyo, she holds a bachelor's degree in international and Francophone studies from Sophia University (Tokyo) and a master's in modern and contemporary history from Aix-Marseille Université, where she was a recipient of the French Government Scholarship. She is also pursuing a university diploma in criminal sciences and criminology. Her research fields include the history of criminality, law, gender, and medicine, with a doctoral thesis on castration in France from the 18th to 20th centuries. Fluent in Japanese, French, and English, she brings a cross-cultural perspective to SHADOWS, contributing to the atlas's coverage of Japanese and East Asian mythological traditions.",
   },
 ];
 
