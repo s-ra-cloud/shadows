@@ -46,11 +46,11 @@ function LegacyLogoSvg({ size = 112 }: { size?: number }) {
 
 const partners = [
   {
-    name: "Legacy — UM6P / 1337",
+    name: "LEGACY",
     url: "https://legacy-um6p.1337.ma/home",
     visual: "legacy",
     description:
-      "Legacy is a digital humanities programme housed at Mohammed VI Polytechnic University (UM6P) and 1337 coding school in Morocco. It focuses on preserving and computationally analysing cultural heritage through advanced data science, machine learning, and interactive visualisation. Legacy partners with SHADOWS to bring North-African and pan-Mediterranean mythological traditions into the comparative atlas.",
+      "LEGACY is a digital humanities programme based in Morocco. It focuses on preserving and computationally analysing cultural heritage through advanced data science, machine learning, and interactive visualisation. LEGACY partners with SHADOWS to bring North-African and pan-Mediterranean mythological traditions into the comparative atlas.",
     focus: [
       "Cultural heritage preservation",
       "Computational analysis of historical texts",

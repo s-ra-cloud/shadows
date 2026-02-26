@@ -320,7 +320,7 @@ function LegacyLogoSvg({ size = 80 }: { size?: number }) {
 function PartnersPreview() {
   const partners = [
     {
-      name: "Legacy — UM6P / 1337",
+      name: "LEGACY",
       url: "https://legacy-um6p.1337.ma/home",
       visual: <LegacyLogoSvg size={80} />,
     },
