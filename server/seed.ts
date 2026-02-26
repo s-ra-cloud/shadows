@@ -23,8 +23,23 @@ export async function seedDatabase() {
 
     const existingNodes = await storage.getNodes(project.id);
     if (existingNodes.length > 0) {
-      console.log(`Database already has ${existingNodes.length} nodes, skipping seed.`);
-      return;
+      const hasNewFields = existingNodes.some(
+        (n) => n.eventTypes || n.birthTypes || n.deathTypes || n.familyRoles
+      );
+      if (hasNewFields) {
+        console.log(`Database already has ${existingNodes.length} nodes with full data, skipping seed.`);
+        return;
+      }
+      console.log(`Database has ${existingNodes.length} nodes but missing new trait fields. Re-seeding...`);
+      await db.delete(edges);
+      await db.delete(nodes);
+      const allProjects = await storage.getProjects();
+      for (const p of allProjects) {
+        if (p.id !== project.id) {
+          await db.delete(edges);
+          await db.delete(nodes);
+        }
+      }
     }
 
     console.log("Seeding mythology nodes...");
