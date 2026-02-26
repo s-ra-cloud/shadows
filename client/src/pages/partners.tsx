@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import legacyLogo from "@assets/Logo_fond_foncé_1772111990533.png";
+import legacyLogo from "@assets/legacy_logo_dark.png";
 
 function MachinaLogoSvg({ size = 112 }: { size?: number }) {
   const cx = 60, cy = 60;

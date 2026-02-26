@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { ArrowRight, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroVideo from "@assets/hero_1772053813686.mp4";
-import legacyLogo from "@assets/Logo_fond_foncé_1772111990533.png";
+import legacyLogo from "@assets/legacy_logo_dark.png";
 
 function HeroSection() {
   return (
