@@ -2158,6 +2158,7 @@ function DichotomyView({
     const numGroups = leafGroups.length;
     const cols = Math.ceil(Math.sqrt(numGroups));
     const rows = Math.ceil(numGroups / cols);
+    const labelSpace = 50;
     const cellW = width / cols;
     const cellH = height / rows;
     const padding = 40;
@@ -2180,12 +2181,12 @@ function DichotomyView({
       const col = gi % cols;
       const row = Math.floor(gi / cols);
       const cx = cellW * col + cellW / 2;
-      const cy = cellH * row + cellH / 2;
+      const cy = cellH * row + cellH / 2 + labelSpace / 2;
       const label = groupLabels[gi] || group.traitLabel;
 
       groupCenters.push({ cx, cy, label, category: group.traitCategory, count: group.figures.length });
 
-      const spread = Math.min(cellW, cellH) * 0.35;
+      const spread = Math.min(cellW, cellH) * 0.25;
       for (const fig of group.figures) {
         const angle = Math.random() * Math.PI * 2;
         const r = Math.sqrt(Math.random()) * spread;
@@ -2206,8 +2207,8 @@ function DichotomyView({
     const simulation = d3.forceSimulation(allSimNodes as any)
       .force("charge", d3.forceManyBody().strength(-15))
       .force("collision", d3.forceCollide().radius(nodeR + 1))
-      .force("x", d3.forceX((d: any) => groupCenters[d.groupIdx].cx).strength(0.3))
-      .force("y", d3.forceY((d: any) => groupCenters[d.groupIdx].cy).strength(0.3))
+      .force("x", d3.forceX((d: any) => groupCenters[d.groupIdx].cx).strength(0.5))
+      .force("y", d3.forceY((d: any) => groupCenters[d.groupIdx].cy).strength(0.5))
       .alphaDecay(0.03)
       .velocityDecay(0.4);
 
@@ -2257,16 +2258,44 @@ function DichotomyView({
           ctx.stroke();
         }
 
-        const fontSize = Math.max(12, Math.min(24, cellW / 12));
+        const nodesForLabel = allSimNodes.filter(n => n.groupIdx === gi);
+        let labelCx = gc.cx;
+        let labelCy = gc.cy;
+        if (nodesForLabel.length > 0) {
+          let mMinY = Infinity;
+          let sumX = 0;
+          for (const n of nodesForLabel) {
+            if ((n as any).y < mMinY) mMinY = (n as any).y;
+            sumX += (n as any).x;
+          }
+          labelCx = sumX / nodesForLabel.length;
+          labelCy = mMinY - 20;
+        }
+
+        const maxLabelWidth = cellW - 20;
+        const fontSize = Math.max(10, Math.min(20, cellW / 14));
         ctx.font = `bold ${fontSize}px 'Cinzel Decorative', serif`;
         ctx.fillStyle = color;
         ctx.globalAlpha = 0.9;
         ctx.textAlign = "center";
-        ctx.fillText(gc.label.toUpperCase(), gc.cx, gc.cy - cellH * 0.35);
 
-        ctx.font = `${fontSize * 0.5}px 'Sofia Pro Light', sans-serif`;
+        let labelText = gc.label.toUpperCase();
+        const parts = labelText.split(" → ");
+        if (parts.length > 2) {
+          labelText = parts[0] + " → ... → " + parts[parts.length - 1];
+        }
+
+        if (ctx.measureText(labelText).width > maxLabelWidth) {
+          while (labelText.length > 10 && ctx.measureText(labelText).width > maxLabelWidth) {
+            labelText = labelText.slice(0, -4) + "…";
+          }
+        }
+
+        ctx.fillText(labelText, labelCx, labelCy);
+
+        ctx.font = `${fontSize * 0.55}px 'Sofia Pro Light', sans-serif`;
         ctx.globalAlpha = 0.5;
-        ctx.fillText(`${gc.count} figures`, gc.cx, gc.cy - cellH * 0.35 + fontSize * 0.7);
+        ctx.fillText(`${gc.count} figures`, labelCx, labelCy + fontSize * 0.8);
       }
 
       ctx.globalAlpha = 1;
