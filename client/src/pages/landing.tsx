@@ -70,7 +70,7 @@ function AboutSection() {
             <h2 className="font-serif text-3xl md:text-4xl text-shadows-text tracking-wide mb-6">
               About the Project
             </h2>
-            <div className="space-y-4 text-shadows-text/60 leading-relaxed">
+            <div className="space-y-4 text-shadows-text/60 leading-relaxed text-justify">
               <p>
                 SHADOWS is a digital humanities initiative that maps the structural patterns underlying
                 world mythologies. This project constructs interactive network graphs revealing the hidden
