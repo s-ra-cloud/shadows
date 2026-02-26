@@ -1825,6 +1825,35 @@ function DirectView({
   return <canvas ref={canvasRef} className="w-full h-full" />;
 }
 
+function d4ColorMap(t: number): string {
+  const clamped = Math.max(0, Math.min(1, t));
+  if (clamped < 0.25) {
+    const f = clamped / 0.25;
+    const r = Math.round(143 * (1 - f) + 3 * f);
+    const g = Math.round(0 * (1 - f) + 255 * f);
+    const b = Math.round(255 * (1 - f) + 155 * f);
+    return `rgb(${r},${g},${b})`;
+  } else if (clamped < 0.5) {
+    const f = (clamped - 0.25) / 0.25;
+    const r = Math.round(3 * (1 - f) + 224 * f);
+    const g = Math.round(255 * (1 - f) + 220 * f);
+    const b = Math.round(155 * (1 - f) + 230 * f);
+    return `rgb(${r},${g},${b})`;
+  } else if (clamped < 0.75) {
+    const f = (clamped - 0.5) / 0.25;
+    const r = Math.round(224 * (1 - f) + 255 * f);
+    const g = Math.round(220 * (1 - f) + 184 * f);
+    const b = Math.round(230 * (1 - f) + 0 * f);
+    return `rgb(${r},${g},${b})`;
+  } else {
+    const f = (clamped - 0.75) / 0.25;
+    const r = Math.round(255 * (1 - f) + 229 * f);
+    const g = Math.round(184 * (1 - f) + 57 * f);
+    const b = Math.round(0 * (1 - f) + 53 * f);
+    return `rgb(${r},${g},${b})`;
+  }
+}
+
 function CorrespondenceView({
   figures,
   onSelectNode,
@@ -1837,17 +1866,15 @@ function CorrespondenceView({
   selectedNodeId: number | null;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const transformRef = useRef(d3.zoomIdentity);
   const drawRef = useRef<(() => void) | null>(null);
   const selectedNodeIdRef = useRef(selectedNodeId);
   selectedNodeIdRef.current = selectedNodeId;
-  const [activePlot, setActivePlot] = useState<{ dimX: number; dimY: number } | null>(null);
 
   const caResult = useMemo(() => computeCorrespondenceAnalysis(figures), [figures]);
   const { points: caPoints, dimensions: caDimensions } = caResult;
 
   useEffect(() => {
-    if (!canvasRef.current || caPoints.length === 0 || caDimensions.length < 2) return;
+    if (!canvasRef.current || caPoints.length === 0 || caDimensions.length < 3) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -1865,59 +1892,50 @@ function CorrespondenceView({
     canvas.style.height = height + "px";
     ctx.scale(dpr, dpr);
 
-    const dimPairs: [number, number][] = [];
-    const numDims = Math.min(caDimensions.length, 4);
-    for (let i = 0; i < numDims; i++) {
-      for (let j = i + 1; j < numDims; j++) {
-        dimPairs.push([i, j]);
-      }
-    }
+    let rotX = -0.4;
+    let rotY = 0.6;
+    let zoom = 1;
+    let isDragging = false;
+    let lastMx = 0;
+    let lastMy = 0;
 
-    const isZoomed = activePlot !== null;
-    const zoomedPair = isZoomed ? [activePlot!.dimX, activePlot!.dimY] as [number, number] : null;
-
-    interface PlotCell {
-      x: number; y: number; w: number; h: number;
-      dimX: number; dimY: number;
-      margin: number;
-    }
-
-    const gap = 4;
-    let cells: PlotCell[];
-
-    if (isZoomed && zoomedPair) {
-      const margin = 50;
-      cells = [{
-        x: gap, y: gap, w: width - gap * 2, h: height - gap * 2,
-        dimX: zoomedPair[0], dimY: zoomedPair[1], margin,
-      }];
-    } else {
-      const cols = dimPairs.length <= 3 ? dimPairs.length : Math.ceil(Math.sqrt(dimPairs.length));
-      const rows = Math.ceil(dimPairs.length / cols);
-      const cellW = (width - gap * (cols + 1)) / cols;
-      const cellH = (height - gap * (rows + 1)) / rows;
-      cells = dimPairs.map(([dx, dy], idx) => {
-        const col = idx % cols;
-        const row = Math.floor(idx / cols);
-        return {
-          x: gap + col * (cellW + gap),
-          y: gap + row * (cellH + gap),
-          w: cellW, h: cellH,
-          dimX: dx, dimY: dy,
-          margin: 35,
-        };
-      });
-    }
-
-    function getBoundsForDim(dimIdx: number) {
+    function getBound(dimIdx: number) {
       const vals = caPoints.map(p => p.coords[dimIdx] || 0);
       const absVals = vals.map(Math.abs).sort((a, b) => a - b);
-      const p90 = absVals[Math.floor(absVals.length * 0.90)] || 1;
-      return p90 * 1.4;
+      const p95 = absVals[Math.floor(absVals.length * 0.95)] || 1;
+      return p95 * 1.3;
     }
 
-    let currentHovered: CAPoint | null = null;
-    let hoveredCell: PlotCell | null = null;
+    const bounds = [0, 1, 2, 3].map(getBound);
+    const hasD4 = caDimensions.length >= 4;
+
+    function project(x3: number, y3: number, z3: number): [number, number, number] {
+      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+
+      let x = x3, y = y3, z = z3;
+      const y1 = y * cosX - z * sinX;
+      const z1 = y * sinX + z * cosX;
+      const x2 = x * cosY + z1 * sinY;
+      const z2 = -x * sinY + z1 * cosY;
+
+      const perspective = 800;
+      const scale = perspective / (perspective + z2) * zoom;
+      const sx = width / 2 + x2 * scale;
+      const sy = height / 2 - y1 * scale;
+      return [sx, sy, z2];
+    }
+
+    const scaleF = Math.min(width, height) * 0.35;
+
+    interface Projected {
+      sx: number; sy: number; z: number;
+      point: CAPoint;
+      color: string;
+      r: number;
+    }
+
+    let currentHovered: Projected | null = null;
 
     function draw() {
       ctx!.save();
@@ -1929,182 +1947,145 @@ function CorrespondenceView({
       ctx!.fillStyle = grad;
       ctx!.fillRect(0, 0, width, height);
 
-      const t = transformRef.current;
-      ctx!.translate(t.x, t.y);
-      ctx!.scale(t.k, t.k);
+      const axisLen = scaleF * 0.8;
+      const axes = [
+        { dir: [1, 0, 0] as [number, number, number], label: `D1`, color: "#8F00FF" },
+        { dir: [0, 1, 0] as [number, number, number], label: `D2`, color: "#03FF9B" },
+        { dir: [0, 0, 1] as [number, number, number], label: `D3`, color: "#4A7BFF" },
+      ];
 
-      const hoveredId = currentHovered?.id;
-
-      for (const cell of cells) {
-        const { x: cx, y: cy, w: cw, h: ch, dimX, dimY, margin } = cell;
-        const xBound = getBoundsForDim(dimX);
-        const yBound = getBoundsForDim(dimY);
-        const plotW = cw - margin * 2;
-        const plotH = ch - margin * 2;
-        const scX = plotW / (2 * xBound);
-        const scY = plotH / (2 * yBound);
-        const centerX = cx + cw / 2;
-        const centerY = cy + ch / 2;
+      for (const axis of axes) {
+        const [ox, oy] = project(0, 0, 0);
+        const [px, py] = project(axis.dir[0] * axisLen, axis.dir[1] * axisLen, axis.dir[2] * axisLen);
+        const [nx, ny] = project(-axis.dir[0] * axisLen, -axis.dir[1] * axisLen, -axis.dir[2] * axisLen);
 
         ctx!.beginPath();
-        const cr = 6;
-        ctx!.moveTo(cx + cr, cy);
-        ctx!.lineTo(cx + cw - cr, cy);
-        ctx!.quadraticCurveTo(cx + cw, cy, cx + cw, cy + cr);
-        ctx!.lineTo(cx + cw, cy + ch - cr);
-        ctx!.quadraticCurveTo(cx + cw, cy + ch, cx + cw - cr, cy + ch);
-        ctx!.lineTo(cx + cr, cy + ch);
-        ctx!.quadraticCurveTo(cx, cy + ch, cx, cy + ch - cr);
-        ctx!.lineTo(cx, cy + cr);
-        ctx!.quadraticCurveTo(cx, cy, cx + cr, cy);
-        ctx!.closePath();
-        ctx!.fillStyle = "#0D0830";
-        ctx!.globalAlpha = 0.6;
-        ctx!.fill();
-        ctx!.strokeStyle = "#350A8C";
-        ctx!.globalAlpha = 0.25;
+        ctx!.moveTo(nx, ny);
+        ctx!.lineTo(px, py);
+        ctx!.strokeStyle = axis.color;
+        ctx!.globalAlpha = 0.2;
         ctx!.lineWidth = 1;
         ctx!.stroke();
 
-        ctx!.save();
-        ctx!.beginPath();
-        ctx!.rect(cx, cy, cw, ch);
-        ctx!.clip();
-
-        ctx!.strokeStyle = "#350A8C";
-        ctx!.globalAlpha = 0.2;
-        ctx!.lineWidth = 0.5;
-        ctx!.beginPath();
-        ctx!.moveTo(cx + margin, centerY);
-        ctx!.lineTo(cx + cw - margin, centerY);
-        ctx!.stroke();
-        ctx!.beginPath();
-        ctx!.moveTo(centerX, cy + margin);
-        ctx!.lineTo(centerX, cy + ch - margin);
-        ctx!.stroke();
-
-        const dimXInfo = caDimensions[dimX];
-        const dimYInfo = caDimensions[dimY];
-        const isSmall = !isZoomed;
-        const axisFont = isSmall ? 7 : 10;
-
-        ctx!.globalAlpha = 0.35;
-        ctx!.font = `${axisFont}px 'Sofia Pro Light', sans-serif`;
-        ctx!.fillStyle = "#E0DCE6";
+        ctx!.globalAlpha = 0.4;
+        ctx!.font = "10px 'Sofia Pro Light', sans-serif";
+        ctx!.fillStyle = axis.color;
         ctx!.textAlign = "center";
-        const xLabel = `Dim ${dimXInfo.index} (${dimXInfo.inertia.toFixed(1)}%) — ${dimXInfo.negTraits[0]} ←→ ${dimXInfo.posTraits[0]}`;
-        ctx!.fillText(isSmall ? `D${dimXInfo.index} (${dimXInfo.inertia.toFixed(0)}%)` : xLabel, centerX, cy + ch - (isSmall ? 4 : 8));
+        ctx!.fillText(axis.label, px + (px - ox) * 0.08, py + (py - oy) * 0.08);
+      }
 
-        ctx!.save();
-        ctx!.translate(cx + (isSmall ? 6 : 12), centerY);
-        ctx!.rotate(-Math.PI / 2);
-        const yLabel = `Dim ${dimYInfo.index} (${dimYInfo.inertia.toFixed(1)}%) — ${dimYInfo.negTraits[0]} ←→ ${dimYInfo.posTraits[0]}`;
-        ctx!.fillText(isSmall ? `D${dimYInfo.index} (${dimYInfo.inertia.toFixed(0)}%)` : yLabel, 0, 0);
-        ctx!.restore();
+      const gridAlpha = 0.06;
+      const gridSteps = 5;
+      ctx!.strokeStyle = "#E0DCE6";
+      ctx!.lineWidth = 0.5;
+      ctx!.globalAlpha = gridAlpha;
+      for (let i = -gridSteps; i <= gridSteps; i++) {
+        const t = (i / gridSteps) * axisLen;
+        const [x1, y1] = project(t, 0, -axisLen);
+        const [x2, y2] = project(t, 0, axisLen);
+        ctx!.beginPath(); ctx!.moveTo(x1, y1); ctx!.lineTo(x2, y2); ctx!.stroke();
+        const [x3, y3] = project(-axisLen, 0, t);
+        const [x4, y4] = project(axisLen, 0, t);
+        ctx!.beginPath(); ctx!.moveTo(x3, y3); ctx!.lineTo(x4, y4); ctx!.stroke();
+      }
 
-        ctx!.globalAlpha = 1;
+      const projected: Projected[] = [];
+      const hoveredId = currentHovered?.point.id;
 
-        const nodeR = isSmall ? 2.5 : 4;
-        const traitR = isSmall ? 2 : 3.5;
+      for (const p of caPoints) {
+        const nx = ((p.coords[0] || 0) / bounds[0]) * scaleF;
+        const ny = ((p.coords[1] || 0) / bounds[1]) * scaleF;
+        const nz = ((p.coords[2] || 0) / bounds[2]) * scaleF;
+        const [sx, sy, z] = project(nx, ny, nz);
 
-        for (const p of caPoints) {
-          if (p.isCharacter) continue;
-          const pvx = p.coords[dimX] || 0;
-          const pvy = p.coords[dimY] || 0;
-          const sx = centerX + Math.max(-xBound, Math.min(xBound, pvx)) * scX;
-          const sy = centerY - Math.max(-yBound, Math.min(yBound, pvy)) * scY;
-          const isHov = p.id === hoveredId && hoveredCell === cell;
-          const color = CATEGORY_COLORS[p.category || ""] || "#8F00FF";
-          const r = isHov ? traitR + 2 : traitR;
-          ctx!.beginPath();
-          ctx!.arc(sx, sy, r, 0, Math.PI * 2);
-          ctx!.fillStyle = color;
-          ctx!.globalAlpha = hoveredId ? (isHov ? 0.9 : 0.1) : 0.4;
-          ctx!.fill();
-
-          if (isZoomed || isHov) {
-            ctx!.font = isHov ? `bold ${axisFont + 2}px 'Sofia Pro Light', sans-serif` : `${axisFont}px 'Sofia Pro Light', sans-serif`;
-            ctx!.fillStyle = color;
-            ctx!.globalAlpha = hoveredId ? (isHov ? 0.95 : 0.1) : 0.45;
-            ctx!.textAlign = "center";
-            ctx!.fillText(p.label, sx, sy - r - 2);
+        let color: string;
+        if (p.isCharacter) {
+          if (hasD4) {
+            const d4val = p.coords[3] || 0;
+            const d4norm = (d4val / bounds[3] + 1) / 2;
+            color = d4ColorMap(d4norm);
+          } else {
+            color = "#E0DCE6";
           }
+        } else {
+          color = CATEGORY_COLORS[p.category || ""] || "#8F00FF";
         }
 
-        for (const p of caPoints) {
-          if (!p.isCharacter) continue;
-          const pvx = p.coords[dimX] || 0;
-          const pvy = p.coords[dimY] || 0;
-          const sx = centerX + Math.max(-xBound, Math.min(xBound, pvx)) * scX;
-          const sy = centerY - Math.max(-yBound, Math.min(yBound, pvy)) * scY;
-          const isHov = p.id === hoveredId && hoveredCell === cell;
-          const caSelId = selectedNodeIdRef.current;
-          const isSel = p.original?.id === caSelId;
-          const r = isHov ? nodeR + 3 : isSel ? nodeR + 2 : nodeR;
-          ctx!.beginPath();
-          ctx!.arc(sx, sy, r, 0, Math.PI * 2);
-          ctx!.fillStyle = "#E0DCE6";
-          ctx!.globalAlpha = hoveredId ? (isHov ? 1 : isSel ? 0.8 : 0.08) : isSel ? 0.95 : 0.6;
-          ctx!.fill();
-          if (isSel) {
-            ctx!.strokeStyle = "#FFD700";
-            ctx!.lineWidth = 1.5;
-            ctx!.globalAlpha = 0.9;
-            ctx!.stroke();
-          } else if (isHov) {
-            ctx!.strokeStyle = "#8F00FF";
+        const baseR = p.isCharacter ? 3.5 : 2.5;
+        const depthFade = Math.max(0.3, 1 - (z + scaleF) / (scaleF * 3));
+        projected.push({ sx, sy, z, point: p, color, r: baseR * depthFade });
+      }
+
+      projected.sort((a, b) => b.z - a.z);
+
+      for (const pp of projected) {
+        const { sx, sy, point: p, color, r } = pp;
+        const isHov = p.id === hoveredId;
+        const caSelId = selectedNodeIdRef.current;
+        const isSel = p.isCharacter && p.original?.id === caSelId;
+        const drawR = isHov ? r + 3 : isSel ? r + 2 : r;
+
+        ctx!.beginPath();
+        ctx!.arc(sx, sy, drawR, 0, Math.PI * 2);
+        ctx!.fillStyle = color;
+
+        if (hoveredId) {
+          ctx!.globalAlpha = isHov ? 0.95 : isSel ? 0.7 : 0.06;
+        } else {
+          ctx!.globalAlpha = isSel ? 0.95 : p.isCharacter ? 0.6 : 0.3;
+        }
+        ctx!.fill();
+
+        if (isSel) {
+          ctx!.strokeStyle = "#FFD700";
+          ctx!.lineWidth = 1.5;
+          ctx!.globalAlpha = 0.9;
+          ctx!.stroke();
+        } else if (isHov) {
+          ctx!.strokeStyle = "#FFFFFF";
+          ctx!.lineWidth = 1;
+          ctx!.globalAlpha = 0.7;
+          ctx!.stroke();
+        }
+
+        if ((isHov || isSel) && p.isCharacter) {
+          ctx!.font = "bold 10px 'Cinzel Decorative', serif";
+          ctx!.fillStyle = isSel ? "#FFD700" : "#FFFFFF";
+          ctx!.globalAlpha = 1;
+          ctx!.textAlign = "center";
+          ctx!.fillText(p.label, sx, sy - drawR - 5);
+        }
+      }
+
+      if (currentHovered && currentHovered.point.isCharacter && currentHovered.point.original) {
+        const fig = currentHovered.point.original;
+        const figTraits = new Set(getTraitsForFigure(fig));
+        const hsx = currentHovered.sx;
+        const hsy = currentHovered.sy;
+
+        for (const pp of projected) {
+          if (!pp.point.isCharacter && figTraits.has(pp.point.id)) {
+            ctx!.beginPath();
+            ctx!.moveTo(hsx, hsy);
+            ctx!.lineTo(pp.sx, pp.sy);
+            ctx!.strokeStyle = pp.color;
+            ctx!.globalAlpha = 0.4;
             ctx!.lineWidth = 1;
-            ctx!.globalAlpha = 0.8;
             ctx!.stroke();
-          }
 
-          if (isZoomed && (isHov || isSel || t.k > 1.5)) {
-            ctx!.font = (isHov || isSel) ? "bold 10px 'Cinzel Decorative', serif" : "8px 'Cinzel Decorative', serif";
-            ctx!.fillStyle = isSel ? "#FFD700" : "#E0DCE6";
-            ctx!.globalAlpha = (isHov || isSel) ? 1 : 0.3;
+            ctx!.beginPath();
+            ctx!.arc(pp.sx, pp.sy, 4, 0, Math.PI * 2);
+            ctx!.fillStyle = pp.color;
+            ctx!.globalAlpha = 0.85;
+            ctx!.fill();
+
+            ctx!.font = "8px 'Sofia Pro Light', sans-serif";
+            ctx!.fillStyle = pp.color;
+            ctx!.globalAlpha = 0.9;
             ctx!.textAlign = "center";
-            ctx!.fillText(p.label, sx, sy - r - 3);
+            ctx!.fillText(pp.point.label, pp.sx, pp.sy - 7);
           }
         }
-
-        if (isZoomed && hoveredId && currentHovered?.isCharacter && currentHovered.original) {
-          const fig = currentHovered.original;
-          const figTraits = new Set(getTraitsForFigure(fig));
-          const hpvx = currentHovered.coords[dimX] || 0;
-          const hpvy = currentHovered.coords[dimY] || 0;
-          const hsx = centerX + Math.max(-xBound, Math.min(xBound, hpvx)) * scX;
-          const hsy = centerY - Math.max(-yBound, Math.min(yBound, hpvy)) * scY;
-
-          for (const p of caPoints) {
-            if (!p.isCharacter && figTraits.has(p.id)) {
-              const tpvx = p.coords[dimX] || 0;
-              const tpvy = p.coords[dimY] || 0;
-              const tsx = centerX + Math.max(-xBound, Math.min(xBound, tpvx)) * scX;
-              const tsy = centerY - Math.max(-yBound, Math.min(yBound, tpvy)) * scY;
-              ctx!.beginPath();
-              ctx!.moveTo(hsx, hsy);
-              ctx!.lineTo(tsx, tsy);
-              ctx!.strokeStyle = CATEGORY_COLORS[p.category || ""] || "#8F00FF";
-              ctx!.globalAlpha = 0.35;
-              ctx!.lineWidth = 1;
-              ctx!.stroke();
-
-              ctx!.beginPath();
-              ctx!.arc(tsx, tsy, 4, 0, Math.PI * 2);
-              ctx!.fillStyle = CATEGORY_COLORS[p.category || ""] || "#8F00FF";
-              ctx!.globalAlpha = 0.8;
-              ctx!.fill();
-
-              ctx!.font = "8px 'Sofia Pro Light', sans-serif";
-              ctx!.fillStyle = CATEGORY_COLORS[p.category || ""] || "#E0DCE6";
-              ctx!.globalAlpha = 0.85;
-              ctx!.textAlign = "center";
-              ctx!.fillText(p.label, tsx, tsy - 7);
-            }
-          }
-        }
-
-        ctx!.restore();
       }
 
       ctx!.globalAlpha = 1;
@@ -2114,102 +2095,117 @@ function CorrespondenceView({
     drawRef.current = draw;
     draw();
 
-    const zoomBehavior = d3.zoom<HTMLCanvasElement, unknown>()
-      .scaleExtent([0.3, 10])
-      .on("zoom", (event) => {
-        transformRef.current = event.transform;
-        draw();
-      });
-
-    d3.select(canvas).call(zoomBehavior);
-
-    function getCellAt(px: number, py: number): PlotCell | null {
-      const t = transformRef.current;
-      const x = (px - t.x) / t.k;
-      const y = (py - t.y) / t.k;
-      for (const cell of cells) {
-        if (x >= cell.x && x <= cell.x + cell.w && y >= cell.y && y <= cell.y + cell.h) return cell;
-      }
-      return null;
-    }
-
-    function getPointAt(px: number, py: number): { point: CAPoint | null; cell: PlotCell | null } {
-      const t = transformRef.current;
-      const x = (px - t.x) / t.k;
-      const y = (py - t.y) / t.k;
-      const cell = getCellAt(px, py);
-      if (!cell) return { point: null, cell: null };
-
-      const { dimX, dimY, margin } = cell;
-      const xBound = getBoundsForDim(dimX);
-      const yBound = getBoundsForDim(dimY);
-      const plotW = cell.w - margin * 2;
-      const plotH = cell.h - margin * 2;
-      const scX = plotW / (2 * xBound);
-      const scY = plotH / (2 * yBound);
-      const centerX = cell.x + cell.w / 2;
-      const centerY = cell.y + cell.h / 2;
-
-      let closest: CAPoint | null = null;
+    function getPointAt(mx: number, my: number): Projected | null {
+      let closest: Projected | null = null;
       let closestDist = Infinity;
+      const projected: Projected[] = [];
+
       for (const p of caPoints) {
-        const pvx = p.coords[dimX] || 0;
-        const pvy = p.coords[dimY] || 0;
-        const sx = centerX + Math.max(-xBound, Math.min(xBound, pvx)) * scX;
-        const sy = centerY - Math.max(-yBound, Math.min(yBound, pvy)) * scY;
-        const dx = x - sx;
-        const dy = y - sy;
+        const nx = ((p.coords[0] || 0) / bounds[0]) * scaleF;
+        const ny = ((p.coords[1] || 0) / bounds[1]) * scaleF;
+        const nz = ((p.coords[2] || 0) / bounds[2]) * scaleF;
+        const [sx, sy, z] = project(nx, ny, nz);
+        let color: string;
+        if (p.isCharacter) {
+          if (hasD4) {
+            const d4val = p.coords[3] || 0;
+            const d4norm = (d4val / bounds[3] + 1) / 2;
+            color = d4ColorMap(d4norm);
+          } else {
+            color = "#E0DCE6";
+          }
+        } else {
+          color = CATEGORY_COLORS[p.category || ""] || "#8F00FF";
+        }
+        const depthFade = Math.max(0.3, 1 - (z + scaleF) / (scaleF * 3));
+        const baseR = p.isCharacter ? 3.5 : 2.5;
+        projected.push({ sx, sy, z, point: p, color, r: baseR * depthFade });
+      }
+
+      projected.sort((a, b) => a.z - b.z);
+
+      for (const pp of projected) {
+        const dx = mx - pp.sx;
+        const dy = my - pp.sy;
         const d = dx * dx + dy * dy;
-        const threshold = p.isCharacter ? 200 : 100;
-        if (d < threshold && d < closestDist) {
-          closest = p;
+        const thresh = pp.point.isCharacter ? 200 : 100;
+        if (d < thresh && d < closestDist) {
+          closest = pp;
           closestDist = d;
         }
       }
-      return { point: closest, cell };
+      return closest;
     }
 
+    canvas.onmousedown = (e) => {
+      isDragging = true;
+      lastMx = e.clientX;
+      lastMy = e.clientY;
+    };
+
     canvas.onmousemove = (e) => {
+      if (isDragging) {
+        const dx = e.clientX - lastMx;
+        const dy = e.clientY - lastMy;
+        rotY += dx * 0.005;
+        rotX += dy * 0.005;
+        rotX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotX));
+        lastMx = e.clientX;
+        lastMy = e.clientY;
+        draw();
+        return;
+      }
+
       const rect = canvas.getBoundingClientRect();
-      const { point: pt, cell } = getPointAt(e.clientX - rect.left, e.clientY - rect.top);
+      const pt = getPointAt(e.clientX - rect.left, e.clientY - rect.top);
       currentHovered = pt;
-      hoveredCell = cell;
       onHoverNode(pt ? {
-        ...pt,
-        isCharacter: pt.isCharacter,
-        label: pt.label,
-        original: pt.original,
-        tradition: pt.tradition,
-        category: pt.category,
+        ...pt.point,
+        isCharacter: pt.point.isCharacter,
+        label: pt.point.label,
+        original: pt.point.original,
+        tradition: pt.point.tradition,
+        category: pt.point.category,
       } : null);
-      canvas.style.cursor = pt ? "pointer" : (cell && !isZoomed ? "pointer" : "default");
+      canvas.style.cursor = isDragging ? "grabbing" : pt ? "pointer" : "grab";
+      draw();
+    };
+
+    canvas.onmouseup = () => { isDragging = false; canvas.style.cursor = "grab"; };
+    canvas.onmouseleave = () => {
+      isDragging = false;
+      currentHovered = null;
+      onHoverNode(null);
       draw();
     };
 
     canvas.onclick = (e) => {
       const rect = canvas.getBoundingClientRect();
-      const { point: pt, cell } = getPointAt(e.clientX - rect.left, e.clientY - rect.top);
-      if (pt?.isCharacter && pt.original) {
-        onSelectNode(pt.original);
-      } else if (!pt && cell && !isZoomed) {
-        setActivePlot({ dimX: cell.dimX, dimY: cell.dimY });
+      const pt = getPointAt(e.clientX - rect.left, e.clientY - rect.top);
+      if (pt?.point.isCharacter && pt.point.original) {
+        onSelectNode(pt.point.original);
       }
     };
 
-    canvas.onmouseleave = () => {
-      currentHovered = null;
-      hoveredCell = null;
-      onHoverNode(null);
+    canvas.onwheel = (e) => {
+      e.preventDefault();
+      zoom *= e.deltaY > 0 ? 0.93 : 1.07;
+      zoom = Math.max(0.3, Math.min(5, zoom));
       draw();
     };
 
+    canvas.style.cursor = "grab";
+
     return () => {
+      canvas.onmousedown = null;
       canvas.onmousemove = null;
+      canvas.onmouseup = null;
       canvas.onclick = null;
       canvas.onmouseleave = null;
+      canvas.onwheel = null;
       drawRef.current = null;
     };
-  }, [caPoints, caDimensions, activePlot]);
+  }, [caPoints, caDimensions]);
 
   useEffect(() => {
     if (drawRef.current) drawRef.current();
@@ -2226,27 +2222,30 @@ function CorrespondenceView({
   return (
     <div className="w-full h-full relative">
       <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-ca" />
-      {activePlot && (
-        <button
-          onClick={() => setActivePlot(null)}
-          className="absolute top-3 left-3 px-3 py-1 rounded bg-black/50 text-shadows-text/70 text-xs border border-white/10 hover:bg-black/70 hover:text-white transition-colors"
-          data-testid="button-ca-back"
-        >
-          ← All dimensions
-        </button>
-      )}
       {caDimensions.length > 0 && (
-        <div className="absolute bottom-3 right-3 bg-black/60 rounded-lg border border-white/10 p-2 max-w-[240px]" data-testid="panel-ca-dimensions">
-          <div className="text-[8px] text-shadows-text/40 uppercase tracking-wider mb-1">Dimensions</div>
+        <div className="absolute bottom-3 right-3 bg-black/60 rounded-lg border border-white/10 p-2 max-w-[260px]" data-testid="panel-ca-dimensions">
+          <div className="text-[8px] text-shadows-text/40 uppercase tracking-wider mb-1">Axes → Spatial (D1–D3) · Color (D4)</div>
           {caDimensions.map(dim => (
             <div key={dim.index} className="text-[9px] text-shadows-text/60 mb-0.5 leading-tight" data-testid={`text-ca-dim-${dim.index}`}>
               <span className="text-shadows-text/80 font-medium">D{dim.index}</span>
               <span className="text-shadows-text/40"> ({dim.inertia.toFixed(1)}%)</span>
               <span className="text-shadows-text/50"> {dim.negTraits[0]} ↔ {dim.posTraits[0]}</span>
+              {dim.index <= 3 && <span className="text-shadows-text/30 ml-1">[{dim.index === 1 ? 'X' : dim.index === 2 ? 'Y' : 'Z'}]</span>}
+              {dim.index === 4 && <span className="text-shadows-text/30 ml-1">[color]</span>}
             </div>
           ))}
+          {caDimensions.length >= 4 && (
+            <div className="mt-1.5 flex items-center gap-1">
+              <div className="text-[7px] text-shadows-text/30">{caDimensions[3].negTraits[0]}</div>
+              <div className="flex-1 h-2 rounded-full" style={{background: "linear-gradient(to right, #8F00FF, #03FF9B, #E0DCE6, #FFB800, #E53935)"}} />
+              <div className="text-[7px] text-shadows-text/30">{caDimensions[3].posTraits[0]}</div>
+            </div>
+          )}
         </div>
       )}
+      <div className="absolute top-3 left-3 bg-black/40 rounded px-2 py-1 text-[9px] text-shadows-text/40" data-testid="text-ca-controls">
+        Drag to rotate · Scroll to zoom
+      </div>
     </div>
   );
 }

@@ -46,7 +46,7 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 - **Four view modes:**
   - **Network** — Bipartite layout: character nodes + shared trait nodes (including eventTypes, birthTypes, deathTypes)
   - **Direct** — Characters only, connected by number of shared traits (line thickness = common traits count)
-  - **Correspondence Analysis** — 4-dimensional CA with 6 scatter plots (all dimension pairs). Dimension labels computed from top-loading traits. Click any plot to zoom in, "← All dimensions" to return. Bottom-right panel shows all dimensions with inertia % and trait poles.
+  - **Correspondence Analysis** — Interactive 3D scatter plot: D1/D2/D3 map to X/Y/Z spatial axes, D4 maps to color gradient (purple→green→white→yellow→red). Mouse drag to rotate, scroll to zoom. Perspective projection with depth-based sizing. Dimension labels computed from top-loading traits. Bottom-right panel shows all 4 dimensions with inertia % and trait poles + color bar.
   - **Dichotomy** — Recursive binary splits by exclusive traits using binary space partition layout (treemap-style). Cross-category trait pairs allowed. Coverage floor 10%, scoring: coverage²×10 + balance×0.2. Used traits blocked (not categories) across recursion levels.
 - Character nodes uniform #E0DCE6, no tradition coloring
 - Trait nodes colored by category: gender, domain, object, animals, characterTrait, physicalCharacteristics, eventTypes (#E53935), birthTypes (#00BCD4), deathTypes (#B71C1C), familyRoles (#F48FB1)
