@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { ArrowRight, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroVideo from "@assets/hero_1772053813686.mp4";
+import teamPhotoPath from "@assets/Team_1772115638559.jpeg";
 
 function HeroSection() {
   return (
@@ -226,35 +227,30 @@ function GraphPreviewSection() {
 }
 
 function TeamPreview() {
-  const teamMembers = [
-    { name: "Camille Bertrand", role: "Researcher", institution: "EHESS" },
-    { name: "Laura Duparc", role: "Lead Researcher", institution: "University Mohammed VI Polytechnic" },
-    { name: "Ami Nagai", role: "Researcher", institution: "Aix-Marseille Université" },
-  ];
-
   return (
     <section className="py-24 bg-[#0C0042]" data-testid="section-team-preview">
       <div className="max-w-7xl mx-auto px-6">
         <h2 className="font-serif text-3xl md:text-4xl text-shadows-text tracking-wide text-center mb-4">
           Research Team
         </h2>
-        <p className="text-shadows-text/50 text-center max-w-xl mx-auto mb-16">
+        <p className="text-shadows-text/50 text-center max-w-xl mx-auto mb-12">
           An interdisciplinary team of scholars bridging comparative mythology, religious studies, and computational analysis.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto">
-          {teamMembers.map((member, i) => (
-            <div key={i} className="text-center group" data-testid={`card-team-member-${i}`}>
-              <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#350A8C] to-[#8F00FF]/30 border border-[#8F00FF]/20 flex items-center justify-center">
-                <span className="font-serif text-2xl text-shadows-text/60">
-                  {member.name.split(" ").map(n => n[0]).join("")}
-                </span>
-              </div>
-              <h3 className="font-serif text-base text-shadows-text mb-1">{member.name}</h3>
-              <p className="text-[#8F00FF]/80 text-xs mb-1">{member.role}</p>
-              <p className="text-shadows-text/40 text-xs">{member.institution}</p>
-            </div>
-          ))}
+        <div className="max-w-2xl mx-auto">
+          <div className="rounded-lg overflow-hidden border border-[#350A8C]/20">
+            <img
+              src={teamPhotoPath}
+              alt="Research team — Camille Bertrand, Laura Duparc, Ami Nagai"
+              className="w-full h-auto object-cover"
+              data-testid="img-team-photo"
+            />
+          </div>
+          <div className="flex justify-between px-4 mt-6">
+            <span className="font-serif text-sm text-shadows-text/70" data-testid="text-team-name-0">Camille Bertrand</span>
+            <span className="font-serif text-sm text-shadows-text/70" data-testid="text-team-name-1">Laura Duparc</span>
+            <span className="font-serif text-sm text-shadows-text/70" data-testid="text-team-name-2">Ami Nagai</span>
+          </div>
         </div>
 
         <div className="text-center mt-12">
