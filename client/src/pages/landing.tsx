@@ -247,9 +247,18 @@ function TeamPreview() {
             />
           </div>
           <div className="flex justify-between px-4 mt-6">
-            <span className="font-serif text-sm text-shadows-text/70" data-testid="text-team-name-0">Camille Bertrand</span>
-            <span className="font-serif text-sm text-shadows-text/70" data-testid="text-team-name-1">Laura Duparc</span>
-            <span className="font-serif text-sm text-shadows-text/70" data-testid="text-team-name-2">Ami Nagai</span>
+            <div className="text-center" data-testid="card-team-member-0">
+              <span className="font-serif text-sm text-shadows-text/70 block" data-testid="text-team-name-0">Camille Bertrand</span>
+              <span className="text-[#8F00FF]/80 text-xs">Researcher</span>
+            </div>
+            <div className="text-center" data-testid="card-team-member-1">
+              <span className="font-serif text-sm text-shadows-text/70 block" data-testid="text-team-name-1">Laura Duparc</span>
+              <span className="text-[#8F00FF]/80 text-xs">Lead Researcher</span>
+            </div>
+            <div className="text-center" data-testid="card-team-member-2">
+              <span className="font-serif text-sm text-shadows-text/70 block" data-testid="text-team-name-2">Ami Nagai</span>
+              <span className="text-[#8F00FF]/80 text-xs">Researcher</span>
+            </div>
           </div>
         </div>
 
