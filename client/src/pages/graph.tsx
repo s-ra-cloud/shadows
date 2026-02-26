@@ -629,15 +629,32 @@ function flattenDichotomyGroups(groups: DichotomyGroup[]): DichotomyGroup[] {
 interface CAPoint {
   id: string;
   label: string;
-  x: number;
-  y: number;
+  coords: number[];
   isCharacter: boolean;
   category?: string;
   tradition?: string | null;
   original?: Node;
+  x: number;
+  y: number;
 }
 
-function computeCorrespondenceAnalysis(figures: Node[]): CAPoint[] {
+interface CADimension {
+  index: number;
+  eigenvalue: number;
+  inertia: number;
+  posLabel: string;
+  negLabel: string;
+  posTraits: string[];
+  negTraits: string[];
+}
+
+interface CAResult {
+  points: CAPoint[];
+  dimensions: CADimension[];
+  totalInertia: number;
+}
+
+function computeCorrespondenceAnalysis(figures: Node[]): CAResult {
   const minShared = 3;
   const traitCounts = new Map<string, { label: string; category: string; count: number }>();
   const figTraitSets = new Map<number, Set<string>>();
@@ -686,7 +703,7 @@ function computeCorrespondenceAnalysis(figures: Node[]): CAPoint[] {
     F.push(row);
   }
 
-  if (grandTotal === 0) return [];
+  if (grandTotal === 0) return { points: [], dimensions: [], totalInertia: 0 };
 
   const ri = F.map(r => r.reduce((a, b) => a + b, 0) / grandTotal);
   const cj = new Array(nCols).fill(0);
@@ -711,6 +728,7 @@ function computeCorrespondenceAnalysis(figures: Node[]): CAPoint[] {
     Z.push(row);
   }
 
+  const numDims = 4;
   const useRows = nRows <= nCols;
   let M: number[][];
 
@@ -736,27 +754,28 @@ function computeCorrespondenceAnalysis(figures: Node[]): CAPoint[] {
     }
   }
 
-  const eigenPairs = powerIterationMultiple(M, 3);
+  const eigenPairs = powerIterationMultiple(M, numDims + 2);
+  const dims = eigenPairs.filter(ep => ep.value > 1e-8).slice(0, numDims);
+  if (dims.length < 2) return { points: [], dimensions: [], totalInertia: 0 };
 
-  const dims = eigenPairs.filter(ep => ep.value > 1e-8).slice(0, 2);
-  if (dims.length < 2) return [];
+  const totalInertia = dims.reduce((s, d) => s + d.value, 0);
 
   const rowCoords: number[][] = [];
   const colCoords: number[][] = [];
+  const activeDims = dims.length;
 
   if (useRows) {
     for (let i = 0; i < nRows; i++) {
       const coords: number[] = [];
-      for (let d = 0; d < 2; d++) {
+      for (let d = 0; d < activeDims; d++) {
         const sv = Math.sqrt(dims[d].value);
         coords.push(ri[i] > 0 ? dims[d].vector[i] * sv / Math.sqrt(ri[i]) : 0);
       }
       rowCoords.push(coords);
     }
-
     for (let j = 0; j < nCols; j++) {
       const coords: number[] = [];
-      for (let d = 0; d < 2; d++) {
+      for (let d = 0; d < activeDims; d++) {
         const sv = Math.sqrt(dims[d].value);
         if (sv < 1e-10) { coords.push(0); continue; }
         let c = 0;
@@ -768,16 +787,15 @@ function computeCorrespondenceAnalysis(figures: Node[]): CAPoint[] {
   } else {
     for (let j = 0; j < nCols; j++) {
       const coords: number[] = [];
-      for (let d = 0; d < 2; d++) {
+      for (let d = 0; d < activeDims; d++) {
         const sv = Math.sqrt(dims[d].value);
         coords.push(cj[j] > 0 ? dims[d].vector[j] * sv / Math.sqrt(cj[j]) : 0);
       }
       colCoords.push(coords);
     }
-
     for (let i = 0; i < nRows; i++) {
       const coords: number[] = [];
-      for (let d = 0; d < 2; d++) {
+      for (let d = 0; d < activeDims; d++) {
         const sv = Math.sqrt(dims[d].value);
         if (sv < 1e-10) { coords.push(0); continue; }
         let c = 0;
@@ -788,23 +806,41 @@ function computeCorrespondenceAnalysis(figures: Node[]): CAPoint[] {
     }
   }
 
-  const allX = [...rowCoords.map(c => c[0]), ...colCoords.map(c => c[0])];
-  const allY = [...rowCoords.map(c => c[1]), ...colCoords.map(c => c[1])];
-  const p95x = percentile(allX.map(Math.abs), 0.95);
-  const p95y = percentile(allY.map(Math.abs), 0.95);
-  const capX = p95x > 0 ? p95x * 2 : 1;
-  const capY = p95y > 0 ? p95y * 2 : 1;
+  const caDimensions: CADimension[] = [];
+  for (let d = 0; d < activeDims; d++) {
+    const traitLoadings: { label: string; category: string; loading: number }[] = [];
+    for (let j = 0; j < nCols; j++) {
+      const tData = traitCounts.get(sharedTraitIds[j])!;
+      traitLoadings.push({ label: tData.label, category: tData.category, loading: colCoords[j][d] });
+    }
+    traitLoadings.sort((a, b) => b.loading - a.loading);
+
+    const topPos = traitLoadings.slice(0, 3);
+    const topNeg = traitLoadings.slice(-3).reverse();
+
+    const posLabel = topPos.map(t => t.label).join(", ");
+    const negLabel = topNeg.map(t => t.label).join(", ");
+
+    caDimensions.push({
+      index: d + 1,
+      eigenvalue: dims[d].value,
+      inertia: dims[d].value / totalInertia * 100,
+      posLabel,
+      negLabel,
+      posTraits: topPos.map(t => t.label),
+      negTraits: topNeg.map(t => t.label),
+    });
+  }
 
   const points: CAPoint[] = [];
 
   for (let i = 0; i < nRows; i++) {
-    const cx = Math.max(-capX, Math.min(capX, rowCoords[i][0]));
-    const cy = Math.max(-capY, Math.min(capY, rowCoords[i][1]));
     points.push({
       id: `fig-${qualifiedFigs[i].id}`,
       label: qualifiedFigs[i].name,
-      x: cx,
-      y: cy,
+      coords: rowCoords[i],
+      x: rowCoords[i][0] || 0,
+      y: rowCoords[i][1] || 0,
       isCharacter: true,
       tradition: qualifiedFigs[i].tradition,
       original: qualifiedFigs[i],
@@ -813,19 +849,18 @@ function computeCorrespondenceAnalysis(figures: Node[]): CAPoint[] {
 
   for (let j = 0; j < nCols; j++) {
     const data = traitCounts.get(sharedTraitIds[j])!;
-    const cx = Math.max(-capX, Math.min(capX, colCoords[j][0]));
-    const cy = Math.max(-capY, Math.min(capY, colCoords[j][1]));
     points.push({
       id: sharedTraitIds[j],
       label: data.label,
-      x: cx,
-      y: cy,
+      coords: colCoords[j],
+      x: colCoords[j][0] || 0,
+      y: colCoords[j][1] || 0,
       isCharacter: false,
       category: data.category,
     });
   }
 
-  return points;
+  return { points, dimensions: caDimensions, totalInertia };
 }
 
 function percentile(arr: number[], p: number): number {
@@ -1806,11 +1841,13 @@ function CorrespondenceView({
   const drawRef = useRef<(() => void) | null>(null);
   const selectedNodeIdRef = useRef(selectedNodeId);
   selectedNodeIdRef.current = selectedNodeId;
+  const [activePlot, setActivePlot] = useState<{ dimX: number; dimY: number } | null>(null);
 
-  const caPoints = useMemo(() => computeCorrespondenceAnalysis(figures), [figures]);
+  const caResult = useMemo(() => computeCorrespondenceAnalysis(figures), [figures]);
+  const { points: caPoints, dimensions: caDimensions } = caResult;
 
   useEffect(() => {
-    if (!canvasRef.current || caPoints.length === 0) return;
+    if (!canvasRef.current || caPoints.length === 0 || caDimensions.length < 2) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -1828,175 +1865,250 @@ function CorrespondenceView({
     canvas.style.height = height + "px";
     ctx.scale(dpr, dpr);
 
-    const xs = caPoints.map(p => p.x);
-    const ys = caPoints.map(p => p.y);
-    const absXs = xs.map(Math.abs).sort((a, b) => a - b);
-    const absYs = ys.map(Math.abs).sort((a, b) => a - b);
-    const p90x = absXs[Math.floor(absXs.length * 0.90)] || 1;
-    const p90y = absYs[Math.floor(absYs.length * 0.90)] || 1;
-    const xBound = p90x * 1.4;
-    const yBound = p90y * 1.4;
-    const margin = 60;
-    const plotW = width - margin * 2;
-    const plotH = height - margin * 2;
+    const dimPairs: [number, number][] = [];
+    const numDims = Math.min(caDimensions.length, 4);
+    for (let i = 0; i < numDims; i++) {
+      for (let j = i + 1; j < numDims; j++) {
+        dimPairs.push([i, j]);
+      }
+    }
 
-    const scaleX = plotW / (2 * xBound);
-    const scaleY = plotH / (2 * yBound);
-    const cx = width / 2;
-    const cy = height / 2;
+    const isZoomed = activePlot !== null;
+    const zoomedPair = isZoomed ? [activePlot!.dimX, activePlot!.dimY] as [number, number] : null;
 
-    const screenPoints = caPoints.map(p => {
-      const clampedX = Math.max(-xBound, Math.min(xBound, p.x));
-      const clampedY = Math.max(-yBound, Math.min(yBound, p.y));
-      return {
-        ...p,
-        sx: cx + clampedX * scaleX,
-        sy: cy - clampedY * scaleY,
-      };
-    });
+    interface PlotCell {
+      x: number; y: number; w: number; h: number;
+      dimX: number; dimY: number;
+      margin: number;
+    }
 
-    let currentHovered: typeof screenPoints[0] | null = null;
+    const gap = 4;
+    let cells: PlotCell[];
+
+    if (isZoomed && zoomedPair) {
+      const margin = 50;
+      cells = [{
+        x: gap, y: gap, w: width - gap * 2, h: height - gap * 2,
+        dimX: zoomedPair[0], dimY: zoomedPair[1], margin,
+      }];
+    } else {
+      const cols = dimPairs.length <= 3 ? dimPairs.length : Math.ceil(Math.sqrt(dimPairs.length));
+      const rows = Math.ceil(dimPairs.length / cols);
+      const cellW = (width - gap * (cols + 1)) / cols;
+      const cellH = (height - gap * (rows + 1)) / rows;
+      cells = dimPairs.map(([dx, dy], idx) => {
+        const col = idx % cols;
+        const row = Math.floor(idx / cols);
+        return {
+          x: gap + col * (cellW + gap),
+          y: gap + row * (cellH + gap),
+          w: cellW, h: cellH,
+          dimX: dx, dimY: dy,
+          margin: 35,
+        };
+      });
+    }
+
+    function getBoundsForDim(dimIdx: number) {
+      const vals = caPoints.map(p => p.coords[dimIdx] || 0);
+      const absVals = vals.map(Math.abs).sort((a, b) => a - b);
+      const p90 = absVals[Math.floor(absVals.length * 0.90)] || 1;
+      return p90 * 1.4;
+    }
+
+    let currentHovered: CAPoint | null = null;
+    let hoveredCell: PlotCell | null = null;
 
     function draw() {
-      ctx.save();
-      ctx.clearRect(0, 0, width, height);
+      ctx!.save();
+      ctx!.clearRect(0, 0, width, height);
 
-      const grad = ctx.createLinearGradient(0, 0, width, height);
+      const grad = ctx!.createLinearGradient(0, 0, width, height);
       grad.addColorStop(0, "#0B0626");
       grad.addColorStop(1, "#0C0042");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, width, height);
+      ctx!.fillStyle = grad;
+      ctx!.fillRect(0, 0, width, height);
 
       const t = transformRef.current;
-      ctx.translate(t.x, t.y);
-      ctx.scale(t.k, t.k);
-
-      ctx.strokeStyle = "#350A8C";
-      ctx.globalAlpha = 0.3;
-      ctx.lineWidth = 0.5;
-
-      ctx.beginPath();
-      ctx.moveTo(0, cy);
-      ctx.lineTo(width, cy);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(cx, 0);
-      ctx.lineTo(cx, height);
-      ctx.stroke();
-
-      ctx.globalAlpha = 0.25;
-      ctx.font = "10px 'Sofia Pro Light', sans-serif";
-      ctx.fillStyle = "#E0DCE6";
-      ctx.textAlign = "center";
-      ctx.fillText("Dim 1 — Compassionate / Salvific ←→ Chthonic / Heroic", width / 2, height - 15);
-      ctx.save();
-      ctx.translate(18, height / 2);
-      ctx.rotate(-Math.PI / 2);
-      ctx.fillText("Dim 2 — Terrible / Underworld ←→ Benevolent / Celestial", 0, 0);
-      ctx.restore();
-
-      ctx.globalAlpha = 1;
+      ctx!.translate(t.x, t.y);
+      ctx!.scale(t.k, t.k);
 
       const hoveredId = currentHovered?.id;
 
-      for (const p of screenPoints) {
-        if (p.isCharacter) continue;
-        const isHovered = p.id === hoveredId;
-        const color = CATEGORY_COLORS[p.category || ""] || "#8F00FF";
-        const r = isHovered ? 6 : 3.5;
-        ctx.beginPath();
-        ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.globalAlpha = hoveredId ? (isHovered ? 0.9 : 0.15) : 0.5;
-        ctx.fill();
-      }
+      for (const cell of cells) {
+        const { x: cx, y: cy, w: cw, h: ch, dimX, dimY, margin } = cell;
+        const xBound = getBoundsForDim(dimX);
+        const yBound = getBoundsForDim(dimY);
+        const plotW = cw - margin * 2;
+        const plotH = ch - margin * 2;
+        const scX = plotW / (2 * xBound);
+        const scY = plotH / (2 * yBound);
+        const centerX = cx + cw / 2;
+        const centerY = cy + ch / 2;
 
-      for (const p of screenPoints) {
-        if (!p.isCharacter) continue;
-        const isHovered = p.id === hoveredId;
-        const caSelId = selectedNodeIdRef.current;
-        const isSelected = p.original?.id === caSelId;
-        const r = isHovered ? 8 : isSelected ? 6 : 4.5;
-        ctx.beginPath();
-        ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
-        ctx.fillStyle = "#E0DCE6";
-        ctx.globalAlpha = hoveredId ? (isHovered ? 1 : isSelected ? 0.9 : 0.15) : isSelected ? 0.95 : 0.7;
-        ctx.fill();
-        if (isSelected) {
-          ctx.strokeStyle = "#FFD700";
-          ctx.lineWidth = 2;
-          ctx.globalAlpha = 0.9;
-          ctx.stroke();
-        } else if (isHovered) {
-          ctx.strokeStyle = "#8F00FF";
-          ctx.lineWidth = 1.5;
-          ctx.globalAlpha = 0.8;
-          ctx.stroke();
-        }
-      }
+        ctx!.beginPath();
+        const cr = 6;
+        ctx!.moveTo(cx + cr, cy);
+        ctx!.lineTo(cx + cw - cr, cy);
+        ctx!.quadraticCurveTo(cx + cw, cy, cx + cw, cy + cr);
+        ctx!.lineTo(cx + cw, cy + ch - cr);
+        ctx!.quadraticCurveTo(cx + cw, cy + ch, cx + cw - cr, cy + ch);
+        ctx!.lineTo(cx + cr, cy + ch);
+        ctx!.quadraticCurveTo(cx, cy + ch, cx, cy + ch - cr);
+        ctx!.lineTo(cx, cy + cr);
+        ctx!.quadraticCurveTo(cx, cy, cx + cr, cy);
+        ctx!.closePath();
+        ctx!.fillStyle = "#0D0830";
+        ctx!.globalAlpha = 0.6;
+        ctx!.fill();
+        ctx!.strokeStyle = "#350A8C";
+        ctx!.globalAlpha = 0.25;
+        ctx!.lineWidth = 1;
+        ctx!.stroke();
 
-      ctx.globalAlpha = 1;
+        ctx!.save();
+        ctx!.beginPath();
+        ctx!.rect(cx, cy, cw, ch);
+        ctx!.clip();
 
-      for (const p of screenPoints) {
-        if (p.isCharacter) continue;
-        const isHovered = p.id === hoveredId;
-        ctx.font = isHovered ? "bold 10px 'Sofia Pro Light', sans-serif" : "8px 'Sofia Pro Light', sans-serif";
-        ctx.fillStyle = CATEGORY_COLORS[p.category || ""] || "#E0DCE6";
-        ctx.globalAlpha = hoveredId ? (isHovered ? 0.95 : 0.15) : 0.55;
-        ctx.textAlign = "center";
-        ctx.fillText(p.label, p.sx, p.sy - (isHovered ? 9 : 6));
-      }
+        ctx!.strokeStyle = "#350A8C";
+        ctx!.globalAlpha = 0.2;
+        ctx!.lineWidth = 0.5;
+        ctx!.beginPath();
+        ctx!.moveTo(cx + margin, centerY);
+        ctx!.lineTo(cx + cw - margin, centerY);
+        ctx!.stroke();
+        ctx!.beginPath();
+        ctx!.moveTo(centerX, cy + margin);
+        ctx!.lineTo(centerX, cy + ch - margin);
+        ctx!.stroke();
 
-      const showCharLabels = t.k > 0.6;
-      if (showCharLabels) {
-        const caSelId2 = selectedNodeIdRef.current;
-        for (const p of screenPoints) {
-          if (!p.isCharacter) continue;
-          const isHovered = p.id === hoveredId;
-          const isSelected = p.original?.id === caSelId2;
-          if (!isHovered && !isSelected && hoveredId) continue;
-          ctx.font = (isHovered || isSelected) ? "bold 11px 'Cinzel Decorative', serif" : "9px 'Cinzel Decorative', serif";
-          ctx.fillStyle = isSelected ? "#FFD700" : "#E0DCE6";
-          ctx.globalAlpha = (isHovered || isSelected) ? 1 : (t.k > 1.5 ? 0.6 : 0.3);
-          ctx.textAlign = "center";
-          ctx.fillText(p.label, p.sx, p.sy - ((isHovered || isSelected) ? 12 : 8));
-        }
-      }
+        const dimXInfo = caDimensions[dimX];
+        const dimYInfo = caDimensions[dimY];
+        const isSmall = !isZoomed;
+        const axisFont = isSmall ? 7 : 10;
 
-      if (hoveredId && currentHovered?.isCharacter && currentHovered.original) {
-        const fig = currentHovered.original;
-        const charPt = screenPoints.find(p => p.id === hoveredId)!;
-        const figTraits = new Set(getTraitsForFigure(fig));
+        ctx!.globalAlpha = 0.35;
+        ctx!.font = `${axisFont}px 'Sofia Pro Light', sans-serif`;
+        ctx!.fillStyle = "#E0DCE6";
+        ctx!.textAlign = "center";
+        const xLabel = `Dim ${dimXInfo.index} (${dimXInfo.inertia.toFixed(1)}%) — ${dimXInfo.negTraits[0]} ←→ ${dimXInfo.posTraits[0]}`;
+        ctx!.fillText(isSmall ? `D${dimXInfo.index} (${dimXInfo.inertia.toFixed(0)}%)` : xLabel, centerX, cy + ch - (isSmall ? 4 : 8));
 
-        for (const p of screenPoints) {
-          if (!p.isCharacter && figTraits.has(p.id)) {
-            ctx.beginPath();
-            ctx.moveTo(charPt.sx, charPt.sy);
-            ctx.lineTo(p.sx, p.sy);
-            ctx.strokeStyle = CATEGORY_COLORS[p.category || ""] || "#8F00FF";
-            ctx.globalAlpha = 0.35;
-            ctx.lineWidth = 1;
-            ctx.stroke();
+        ctx!.save();
+        ctx!.translate(cx + (isSmall ? 6 : 12), centerY);
+        ctx!.rotate(-Math.PI / 2);
+        const yLabel = `Dim ${dimYInfo.index} (${dimYInfo.inertia.toFixed(1)}%) — ${dimYInfo.negTraits[0]} ←→ ${dimYInfo.posTraits[0]}`;
+        ctx!.fillText(isSmall ? `D${dimYInfo.index} (${dimYInfo.inertia.toFixed(0)}%)` : yLabel, 0, 0);
+        ctx!.restore();
 
-            ctx.font = "8px 'Sofia Pro Light', sans-serif";
-            ctx.fillStyle = CATEGORY_COLORS[p.category || ""] || "#E0DCE6";
-            ctx.globalAlpha = 0.8;
-            ctx.textAlign = "center";
-            ctx.fillText(p.label, p.sx, p.sy - 6);
+        ctx!.globalAlpha = 1;
 
-            const r = 4.5;
-            ctx.beginPath();
-            ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
-            ctx.fillStyle = CATEGORY_COLORS[p.category || ""] || "#8F00FF";
-            ctx.globalAlpha = 0.8;
-            ctx.fill();
+        const nodeR = isSmall ? 2.5 : 4;
+        const traitR = isSmall ? 2 : 3.5;
+
+        for (const p of caPoints) {
+          if (p.isCharacter) continue;
+          const pvx = p.coords[dimX] || 0;
+          const pvy = p.coords[dimY] || 0;
+          const sx = centerX + Math.max(-xBound, Math.min(xBound, pvx)) * scX;
+          const sy = centerY - Math.max(-yBound, Math.min(yBound, pvy)) * scY;
+          const isHov = p.id === hoveredId && hoveredCell === cell;
+          const color = CATEGORY_COLORS[p.category || ""] || "#8F00FF";
+          const r = isHov ? traitR + 2 : traitR;
+          ctx!.beginPath();
+          ctx!.arc(sx, sy, r, 0, Math.PI * 2);
+          ctx!.fillStyle = color;
+          ctx!.globalAlpha = hoveredId ? (isHov ? 0.9 : 0.1) : 0.4;
+          ctx!.fill();
+
+          if (isZoomed || isHov) {
+            ctx!.font = isHov ? `bold ${axisFont + 2}px 'Sofia Pro Light', sans-serif` : `${axisFont}px 'Sofia Pro Light', sans-serif`;
+            ctx!.fillStyle = color;
+            ctx!.globalAlpha = hoveredId ? (isHov ? 0.95 : 0.1) : 0.45;
+            ctx!.textAlign = "center";
+            ctx!.fillText(p.label, sx, sy - r - 2);
           }
         }
+
+        for (const p of caPoints) {
+          if (!p.isCharacter) continue;
+          const pvx = p.coords[dimX] || 0;
+          const pvy = p.coords[dimY] || 0;
+          const sx = centerX + Math.max(-xBound, Math.min(xBound, pvx)) * scX;
+          const sy = centerY - Math.max(-yBound, Math.min(yBound, pvy)) * scY;
+          const isHov = p.id === hoveredId && hoveredCell === cell;
+          const caSelId = selectedNodeIdRef.current;
+          const isSel = p.original?.id === caSelId;
+          const r = isHov ? nodeR + 3 : isSel ? nodeR + 2 : nodeR;
+          ctx!.beginPath();
+          ctx!.arc(sx, sy, r, 0, Math.PI * 2);
+          ctx!.fillStyle = "#E0DCE6";
+          ctx!.globalAlpha = hoveredId ? (isHov ? 1 : isSel ? 0.8 : 0.08) : isSel ? 0.95 : 0.6;
+          ctx!.fill();
+          if (isSel) {
+            ctx!.strokeStyle = "#FFD700";
+            ctx!.lineWidth = 1.5;
+            ctx!.globalAlpha = 0.9;
+            ctx!.stroke();
+          } else if (isHov) {
+            ctx!.strokeStyle = "#8F00FF";
+            ctx!.lineWidth = 1;
+            ctx!.globalAlpha = 0.8;
+            ctx!.stroke();
+          }
+
+          if (isZoomed && (isHov || isSel || t.k > 1.5)) {
+            ctx!.font = (isHov || isSel) ? "bold 10px 'Cinzel Decorative', serif" : "8px 'Cinzel Decorative', serif";
+            ctx!.fillStyle = isSel ? "#FFD700" : "#E0DCE6";
+            ctx!.globalAlpha = (isHov || isSel) ? 1 : 0.3;
+            ctx!.textAlign = "center";
+            ctx!.fillText(p.label, sx, sy - r - 3);
+          }
+        }
+
+        if (isZoomed && hoveredId && currentHovered?.isCharacter && currentHovered.original) {
+          const fig = currentHovered.original;
+          const figTraits = new Set(getTraitsForFigure(fig));
+          const hpvx = currentHovered.coords[dimX] || 0;
+          const hpvy = currentHovered.coords[dimY] || 0;
+          const hsx = centerX + Math.max(-xBound, Math.min(xBound, hpvx)) * scX;
+          const hsy = centerY - Math.max(-yBound, Math.min(yBound, hpvy)) * scY;
+
+          for (const p of caPoints) {
+            if (!p.isCharacter && figTraits.has(p.id)) {
+              const tpvx = p.coords[dimX] || 0;
+              const tpvy = p.coords[dimY] || 0;
+              const tsx = centerX + Math.max(-xBound, Math.min(xBound, tpvx)) * scX;
+              const tsy = centerY - Math.max(-yBound, Math.min(yBound, tpvy)) * scY;
+              ctx!.beginPath();
+              ctx!.moveTo(hsx, hsy);
+              ctx!.lineTo(tsx, tsy);
+              ctx!.strokeStyle = CATEGORY_COLORS[p.category || ""] || "#8F00FF";
+              ctx!.globalAlpha = 0.35;
+              ctx!.lineWidth = 1;
+              ctx!.stroke();
+
+              ctx!.beginPath();
+              ctx!.arc(tsx, tsy, 4, 0, Math.PI * 2);
+              ctx!.fillStyle = CATEGORY_COLORS[p.category || ""] || "#8F00FF";
+              ctx!.globalAlpha = 0.8;
+              ctx!.fill();
+
+              ctx!.font = "8px 'Sofia Pro Light', sans-serif";
+              ctx!.fillStyle = CATEGORY_COLORS[p.category || ""] || "#E0DCE6";
+              ctx!.globalAlpha = 0.85;
+              ctx!.textAlign = "center";
+              ctx!.fillText(p.label, tsx, tsy - 7);
+            }
+          }
+        }
+
+        ctx!.restore();
       }
 
-      ctx.globalAlpha = 1;
-      ctx.restore();
+      ctx!.globalAlpha = 1;
+      ctx!.restore();
     }
 
     drawRef.current = draw;
@@ -2011,15 +2123,42 @@ function CorrespondenceView({
 
     d3.select(canvas).call(zoomBehavior);
 
-    function getPointAt(px: number, py: number) {
+    function getCellAt(px: number, py: number): PlotCell | null {
       const t = transformRef.current;
       const x = (px - t.x) / t.k;
       const y = (py - t.y) / t.k;
-      let closest: typeof screenPoints[0] | null = null;
+      for (const cell of cells) {
+        if (x >= cell.x && x <= cell.x + cell.w && y >= cell.y && y <= cell.y + cell.h) return cell;
+      }
+      return null;
+    }
+
+    function getPointAt(px: number, py: number): { point: CAPoint | null; cell: PlotCell | null } {
+      const t = transformRef.current;
+      const x = (px - t.x) / t.k;
+      const y = (py - t.y) / t.k;
+      const cell = getCellAt(px, py);
+      if (!cell) return { point: null, cell: null };
+
+      const { dimX, dimY, margin } = cell;
+      const xBound = getBoundsForDim(dimX);
+      const yBound = getBoundsForDim(dimY);
+      const plotW = cell.w - margin * 2;
+      const plotH = cell.h - margin * 2;
+      const scX = plotW / (2 * xBound);
+      const scY = plotH / (2 * yBound);
+      const centerX = cell.x + cell.w / 2;
+      const centerY = cell.y + cell.h / 2;
+
+      let closest: CAPoint | null = null;
       let closestDist = Infinity;
-      for (const p of screenPoints) {
-        const dx = x - p.sx;
-        const dy = y - p.sy;
+      for (const p of caPoints) {
+        const pvx = p.coords[dimX] || 0;
+        const pvy = p.coords[dimY] || 0;
+        const sx = centerX + Math.max(-xBound, Math.min(xBound, pvx)) * scX;
+        const sy = centerY - Math.max(-yBound, Math.min(yBound, pvy)) * scY;
+        const dx = x - sx;
+        const dy = y - sy;
         const d = dx * dx + dy * dy;
         const threshold = p.isCharacter ? 200 : 100;
         if (d < threshold && d < closestDist) {
@@ -2027,13 +2166,14 @@ function CorrespondenceView({
           closestDist = d;
         }
       }
-      return closest;
+      return { point: closest, cell };
     }
 
     canvas.onmousemove = (e) => {
       const rect = canvas.getBoundingClientRect();
-      const pt = getPointAt(e.clientX - rect.left, e.clientY - rect.top);
+      const { point: pt, cell } = getPointAt(e.clientX - rect.left, e.clientY - rect.top);
       currentHovered = pt;
+      hoveredCell = cell;
       onHoverNode(pt ? {
         ...pt,
         isCharacter: pt.isCharacter,
@@ -2042,20 +2182,23 @@ function CorrespondenceView({
         tradition: pt.tradition,
         category: pt.category,
       } : null);
-      canvas.style.cursor = pt ? "pointer" : "default";
+      canvas.style.cursor = pt ? "pointer" : (cell && !isZoomed ? "pointer" : "default");
       draw();
     };
 
     canvas.onclick = (e) => {
       const rect = canvas.getBoundingClientRect();
-      const pt = getPointAt(e.clientX - rect.left, e.clientY - rect.top);
+      const { point: pt, cell } = getPointAt(e.clientX - rect.left, e.clientY - rect.top);
       if (pt?.isCharacter && pt.original) {
         onSelectNode(pt.original);
+      } else if (!pt && cell && !isZoomed) {
+        setActivePlot({ dimX: cell.dimX, dimY: cell.dimY });
       }
     };
 
     canvas.onmouseleave = () => {
       currentHovered = null;
+      hoveredCell = null;
       onHoverNode(null);
       draw();
     };
@@ -2066,7 +2209,7 @@ function CorrespondenceView({
       canvas.onmouseleave = null;
       drawRef.current = null;
     };
-  }, [caPoints]);
+  }, [caPoints, caDimensions, activePlot]);
 
   useEffect(() => {
     if (drawRef.current) drawRef.current();
@@ -2075,12 +2218,37 @@ function CorrespondenceView({
   if (caPoints.length === 0) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <p className="text-shadows-text/40 text-sm">Computing correspondence analysis...</p>
+        <p className="text-shadows-text/40 text-sm" data-testid="text-ca-computing">Computing correspondence analysis...</p>
       </div>
     );
   }
 
-  return <canvas ref={canvasRef} className="w-full h-full" />;
+  return (
+    <div className="w-full h-full relative">
+      <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-ca" />
+      {activePlot && (
+        <button
+          onClick={() => setActivePlot(null)}
+          className="absolute top-3 left-3 px-3 py-1 rounded bg-black/50 text-shadows-text/70 text-xs border border-white/10 hover:bg-black/70 hover:text-white transition-colors"
+          data-testid="button-ca-back"
+        >
+          ← All dimensions
+        </button>
+      )}
+      {caDimensions.length > 0 && (
+        <div className="absolute bottom-3 right-3 bg-black/60 rounded-lg border border-white/10 p-2 max-w-[240px]" data-testid="panel-ca-dimensions">
+          <div className="text-[8px] text-shadows-text/40 uppercase tracking-wider mb-1">Dimensions</div>
+          {caDimensions.map(dim => (
+            <div key={dim.index} className="text-[9px] text-shadows-text/60 mb-0.5 leading-tight" data-testid={`text-ca-dim-${dim.index}`}>
+              <span className="text-shadows-text/80 font-medium">D{dim.index}</span>
+              <span className="text-shadows-text/40"> ({dim.inertia.toFixed(1)}%)</span>
+              <span className="text-shadows-text/50"> {dim.negTraits[0]} ↔ {dim.posTraits[0]}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 const DICHOTOMY_COLORS = [
