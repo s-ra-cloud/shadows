@@ -565,7 +565,6 @@ function findDichotomies(
     const idsA = localTraitFigs.get(traitA)!;
     const idsB = localTraitFigs.get(traitB)!;
 
-    const assignedIds = new Set<number>();
     const groupAFigs: Node[] = [];
     const groupBFigs: Node[] = [];
 
@@ -574,22 +573,9 @@ function findDichotomies(
       const inB = idsB.has(f.id);
       if (inA && !inB) {
         groupAFigs.push(f);
-        assignedIds.add(f.id);
       } else if (inB && !inA) {
         groupBFigs.push(f);
-        assignedIds.add(f.id);
       } else if (inA && inB) {
-        if (groupAFigs.length <= groupBFigs.length) {
-          groupAFigs.push(f);
-        } else {
-          groupBFigs.push(f);
-        }
-        assignedIds.add(f.id);
-      }
-    }
-
-    for (const f of groupFigs) {
-      if (!assignedIds.has(f.id)) {
         if (groupAFigs.length <= groupBFigs.length) {
           groupAFigs.push(f);
         } else {
