@@ -13,7 +13,7 @@ export default function NewsPage() {
         <h1 className="font-serif text-4xl md:text-5xl text-shadows-text tracking-wide mb-4" data-testid="text-news-title">
           News & Updates
         </h1>
-        <p className="text-shadows-text/50 max-w-2xl mb-16 leading-relaxed">
+        <p className="text-shadows-text/50 max-w-2xl mb-16 leading-relaxed text-justify">
           Latest developments, publications, and events from the SHADOWS research project.
         </p>
 
@@ -53,7 +53,7 @@ export default function NewsPage() {
                 <h2 className="font-serif text-xl text-shadows-text mb-3" data-testid={`text-news-title-${item.id}`}>
                   {item.title}
                 </h2>
-                <p className="text-shadows-text/50 text-sm leading-relaxed">
+                <p className="text-shadows-text/50 text-sm leading-relaxed text-justify">
                   {item.content.length > 300 ? item.content.substring(0, 300) + "..." : item.content}
                 </p>
               </article>

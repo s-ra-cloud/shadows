@@ -14,7 +14,7 @@ export default function ResearchPage() {
         <h1 className="font-serif text-4xl md:text-5xl text-shadows-text tracking-wide mb-4" data-testid="text-research-title">
           Research & Publications
         </h1>
-        <p className="text-shadows-text/50 max-w-2xl mb-16 leading-relaxed">
+        <p className="text-shadows-text/50 max-w-2xl mb-16 leading-relaxed text-justify">
           Peer-reviewed publications, conference papers, and working papers from the SHADOWS research team.
         </p>
 
@@ -49,7 +49,7 @@ export default function ResearchPage() {
                   <p className="text-shadows-text/40 text-xs italic mb-3">{pub.venue}</p>
                 )}
                 {pub.abstract && (
-                  <p className="text-shadows-text/50 text-sm leading-relaxed mb-4">
+                  <p className="text-shadows-text/50 text-sm leading-relaxed mb-4 text-justify">
                     {pub.abstract.length > 250 ? pub.abstract.substring(0, 250) + "..." : pub.abstract}
                   </p>
                 )}

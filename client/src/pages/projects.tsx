@@ -15,7 +15,7 @@ export default function ProjectsPage() {
         <h1 className="font-serif text-4xl md:text-5xl text-shadows-text tracking-wide mb-4" data-testid="text-projects-title">
           Research Modules
         </h1>
-        <p className="text-shadows-text/50 max-w-2xl mb-16 leading-relaxed">
+        <p className="text-shadows-text/50 max-w-2xl mb-16 leading-relaxed text-justify">
           Each module is an interactive graph exploration mapping archetypal patterns, mythological figures,
           and symbolic motifs within a specific comparative framework.
         </p>
@@ -48,7 +48,7 @@ export default function ProjectsPage() {
                   <h2 className="font-serif text-2xl text-shadows-text mb-3" data-testid={`text-project-title-${project.slug}`}>
                     {project.title}
                   </h2>
-                  <p className="text-shadows-text/50 text-sm leading-relaxed mb-8">
+                  <p className="text-shadows-text/50 text-sm leading-relaxed mb-8 text-justify">
                     {project.description}
                   </p>
                   <Link href={`/projects/${project.slug}`}>

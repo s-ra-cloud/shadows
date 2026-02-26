@@ -31,7 +31,7 @@ export default function TeamPage() {
         <h1 className="font-serif text-4xl md:text-5xl text-shadows-text tracking-wide mb-4" data-testid="text-team-title">
           Research Team
         </h1>
-        <p className="text-shadows-text/50 max-w-2xl mb-16 leading-relaxed">
+        <p className="text-shadows-text/50 max-w-2xl mb-16 leading-relaxed text-justify">
           An interdisciplinary team of scholars advancing the frontiers of comparative mythology
           through computational analysis and network visualization.
         </p>
@@ -60,7 +60,7 @@ export default function TeamPage() {
               <p className="text-[#8F00FF]/80 text-xs mb-1">{member.role}</p>
               <p className="text-shadows-text/40 text-xs mb-3">{member.institution}</p>
               {expanded === i && (
-                <p className="text-shadows-text/50 text-sm leading-relaxed border-t border-[#350A8C]/10 pt-3 mt-2" data-testid={`text-member-bio-${i}`}>
+                <p className="text-shadows-text/50 text-sm leading-relaxed border-t border-[#350A8C]/10 pt-3 mt-2 text-justify" data-testid={`text-member-bio-${i}`}>
                   {member.bio}
                 </p>
               )}
