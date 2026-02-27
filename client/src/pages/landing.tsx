@@ -67,7 +67,7 @@ function AboutSection() {
   return (
     <section className="py-24 bg-[#0B0626]" data-testid="section-about">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <div>
             <h2 className="font-serif text-3xl md:text-4xl text-shadows-text tracking-wide mb-6">
               About the Project
