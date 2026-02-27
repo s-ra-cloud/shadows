@@ -274,14 +274,19 @@ function SuggestionModal({ target, onClose }: {
         )}
 
         <div className="space-y-3">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Your name *"
-            className="w-full px-3 py-2 rounded-lg bg-[#0B0626] border border-[#350A8C]/40 text-[#E0DCE6] text-sm focus:outline-none focus:border-[#8F00FF]/60"
-            data-testid="input-suggestion-name"
-          />
+          <div>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name *"
+              className="w-full px-3 py-2 rounded-lg bg-[#0B0626] border border-[#350A8C]/40 text-[#E0DCE6] text-sm focus:outline-none focus:border-[#8F00FF]/60"
+              data-testid="input-suggestion-name"
+            />
+            <p className="text-[10px] text-[#E0DCE6]/40 mt-1 pl-1" data-testid="text-contributor-note">
+              You will be listed as a contributor if your suggestion is accepted.
+            </p>
+          </div>
           <textarea
             value={value}
             onChange={(e) => setValue(e.target.value)}
