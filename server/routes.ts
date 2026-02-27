@@ -90,32 +90,34 @@ export async function registerRoutes(
       let sourcesImported = 0;
 
       await db.delete(edges);
+      await db.delete(sources);
       await db.delete(nodes);
 
       if (data.nodes && Array.isArray(data.nodes)) {
         for (const node of data.nodes) {
-          const { id, ...rest } = node;
-          await db.insert(nodes).values({ id, ...rest }).onConflictDoNothing();
+          await db.insert(nodes).values(node).onConflictDoNothing();
           nodesImported++;
         }
       }
 
       if (data.edges && Array.isArray(data.edges)) {
         for (const edge of data.edges) {
-          const { id, ...rest } = edge;
-          await db.insert(edges).values({ id, ...rest }).onConflictDoNothing();
+          await db.insert(edges).values(edge).onConflictDoNothing();
           edgesImported++;
         }
       }
 
       if (data.sources && Array.isArray(data.sources)) {
-        await db.delete(sources);
         for (const source of data.sources) {
-          const { id, ...rest } = source;
-          await db.insert(sources).values({ id, ...rest }).onConflictDoNothing();
+          await db.insert(sources).values(source).onConflictDoNothing();
           sourcesImported++;
         }
       }
+
+      const { sql } = await import("drizzle-orm");
+      await db.execute(sql`SELECT setval('nodes_id_seq', (SELECT COALESCE(MAX(id), 0) FROM nodes))`);
+      await db.execute(sql`SELECT setval('edges_id_seq', (SELECT COALESCE(MAX(id), 0) FROM edges))`);
+      await db.execute(sql`SELECT setval('sources_id_seq', (SELECT COALESCE(MAX(id), 0) FROM sources))`);
 
       res.json({
         success: true,
