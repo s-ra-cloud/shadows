@@ -3,6 +3,7 @@ import { ArrowRight, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroVideo from "@assets/hero_1772053813686.mp4";
 import teamPhotoPath from "@assets/Team_1772115638559.jpeg";
+import psycheImgPath from "@assets/Psyche_1772196302322.png";
 
 function HeroSection() {
   return (
@@ -93,60 +94,12 @@ function AboutSection() {
           </div>
 
           <div className="flex items-center justify-center">
-            <svg viewBox="0 0 400 400" className="w-72 h-72 md:w-96 md:h-96 opacity-40">
-              <circle cx="200" cy="200" r="180" fill="none" stroke="#350A8C" strokeWidth="0.5" strokeDasharray="4 4" />
-              <circle cx="200" cy="200" r="130" fill="none" stroke="#8F00FF" strokeWidth="0.5" strokeDasharray="2 6" />
-
-              <circle cx="200" cy="40" r="5" fill="#8F00FF" className="animate-pulse-glow" />
-              <circle cx="340" cy="120" r="4" fill="#350A8C" className="animate-pulse-glow" />
-              <circle cx="360" cy="240" r="4.5" fill="#03FF9B" className="animate-pulse-glow" />
-              <circle cx="280" cy="350" r="4" fill="#E0DCE6" className="animate-pulse-glow" />
-              <circle cx="120" cy="350" r="5" fill="#8F00FF" className="animate-pulse-glow" />
-              <circle cx="40" cy="240" r="4" fill="#350A8C" className="animate-pulse-glow" />
-              <circle cx="60" cy="120" r="4.5" fill="#03FF9B" className="animate-pulse-glow" />
-
-              <circle cx="200" cy="120" r="3.5" fill="#8F00FF" />
-              <circle cx="270" cy="180" r="3" fill="#350A8C" />
-              <circle cx="260" cy="260" r="3.5" fill="#E0DCE6" />
-              <circle cx="200" cy="300" r="3" fill="#03FF9B" />
-              <circle cx="140" cy="260" r="3" fill="#350A8C" />
-              <circle cx="130" cy="180" r="3.5" fill="#8F00FF" />
-
-              <line x1="200" y1="40" x2="340" y2="120" stroke="#350A8C" strokeWidth="0.4" strokeOpacity="0.5" />
-              <line x1="340" y1="120" x2="360" y2="240" stroke="#350A8C" strokeWidth="0.4" strokeOpacity="0.5" />
-              <line x1="360" y1="240" x2="280" y2="350" stroke="#350A8C" strokeWidth="0.4" strokeOpacity="0.5" />
-              <line x1="280" y1="350" x2="120" y2="350" stroke="#350A8C" strokeWidth="0.4" strokeOpacity="0.5" />
-              <line x1="120" y1="350" x2="40" y2="240" stroke="#350A8C" strokeWidth="0.4" strokeOpacity="0.5" />
-              <line x1="40" y1="240" x2="60" y2="120" stroke="#350A8C" strokeWidth="0.4" strokeOpacity="0.5" />
-              <line x1="60" y1="120" x2="200" y2="40" stroke="#350A8C" strokeWidth="0.4" strokeOpacity="0.5" />
-
-              <line x1="200" y1="40" x2="200" y2="120" stroke="#8F00FF" strokeWidth="0.3" strokeOpacity="0.4" />
-              <line x1="340" y1="120" x2="270" y2="180" stroke="#8F00FF" strokeWidth="0.3" strokeOpacity="0.4" />
-              <line x1="360" y1="240" x2="260" y2="260" stroke="#8F00FF" strokeWidth="0.3" strokeOpacity="0.4" />
-              <line x1="280" y1="350" x2="200" y2="300" stroke="#8F00FF" strokeWidth="0.3" strokeOpacity="0.4" />
-              <line x1="120" y1="350" x2="140" y2="260" stroke="#8F00FF" strokeWidth="0.3" strokeOpacity="0.4" />
-              <line x1="40" y1="240" x2="130" y2="180" stroke="#8F00FF" strokeWidth="0.3" strokeOpacity="0.4" />
-              <line x1="60" y1="120" x2="200" y2="120" stroke="#8F00FF" strokeWidth="0.3" strokeOpacity="0.4" />
-
-              <line x1="200" y1="120" x2="270" y2="180" stroke="#03FF9B" strokeWidth="0.3" strokeOpacity="0.3" />
-              <line x1="270" y1="180" x2="260" y2="260" stroke="#03FF9B" strokeWidth="0.3" strokeOpacity="0.3" />
-              <line x1="260" y1="260" x2="200" y2="300" stroke="#03FF9B" strokeWidth="0.3" strokeOpacity="0.3" />
-              <line x1="200" y1="300" x2="140" y2="260" stroke="#03FF9B" strokeWidth="0.3" strokeOpacity="0.3" />
-              <line x1="140" y1="260" x2="130" y2="180" stroke="#03FF9B" strokeWidth="0.3" strokeOpacity="0.3" />
-              <line x1="130" y1="180" x2="200" y2="120" stroke="#03FF9B" strokeWidth="0.3" strokeOpacity="0.3" />
-
-              <line x1="200" y1="120" x2="260" y2="260" stroke="#350A8C" strokeWidth="0.2" strokeOpacity="0.3" />
-              <line x1="270" y1="180" x2="140" y2="260" stroke="#350A8C" strokeWidth="0.2" strokeOpacity="0.3" />
-              <line x1="130" y1="180" x2="200" y2="300" stroke="#350A8C" strokeWidth="0.2" strokeOpacity="0.3" />
-
-              <text x="200" y="32" textAnchor="middle" fill="#E0DCE6" fontSize="7" fontFamily="serif">Zeus</text>
-              <text x="355" y="115" textAnchor="start" fill="#E0DCE6" fontSize="7" fontFamily="serif">Odin</text>
-              <text x="372" y="244" textAnchor="start" fill="#E0DCE6" fontSize="7" fontFamily="serif">Vishnu</text>
-              <text x="280" y="370" textAnchor="middle" fill="#E0DCE6" fontSize="7" fontFamily="serif">Isis</text>
-              <text x="120" y="370" textAnchor="middle" fill="#E0DCE6" fontSize="7" fontFamily="serif">Athena</text>
-              <text x="28" y="244" textAnchor="end" fill="#E0DCE6" fontSize="7" fontFamily="serif">Amaterasu</text>
-              <text x="48" y="115" textAnchor="end" fill="#E0DCE6" fontSize="7" fontFamily="serif">Quetzalcoatl</text>
-            </svg>
+            <img
+              src={psycheImgPath}
+              alt="Psyche node graph visualization"
+              className="w-full max-w-md rounded-lg"
+              data-testid="img-about-psyche"
+            />
           </div>
         </div>
       </div>
