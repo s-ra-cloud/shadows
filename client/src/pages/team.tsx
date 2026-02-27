@@ -9,12 +9,14 @@ const teamMembers = [
     institution: "University Mohammed VI Polytechnic",
     bio: "Laura Duparc holds a doctorate in law and is an affiliated researcher at University Mohammed VI Polytechnic. She is the founder and lead designer of LEGACY, a platform for exploring classical academic texts through NLP, graph analysis, and AI, hosted at University Mohammed VI Polytechnic. Her broader portfolio includes the co-creation of several digital humanities platforms — Knowledge Tree (University of Chicago), The Great Conversation, Future of Science Network, and Thesis Center. Her current research focuses on computational psychology and mythology. She leads the SHADOWS initiative, bringing her expertise in network-based analysis and interdisciplinary platform design to the comparative study of world mythologies.",
     image: lauraPhotoPath,
+    imageStyle: { objectPosition: "50% 20%", transform: "scale(1.3)" },
   },
   {
     name: "Camille Bertrand",
     role: "Researcher",
     institution: "École des Hautes Études en Sciences Sociales",
     image: camillePhotoPath,
+    imageStyle: { objectPosition: "50% 25%", transform: "scale(1.1)" },
     bio: "Camille Bertrand holds a Master's degree in political studies from the École des Hautes Études en Sciences Sociales (EHESS) and a law degree from Aix-Marseille Université, where she is currently pursuing a doctorate in law and political studies. She has worked as a research assistant at the Laboratory of Private Law and Criminal Sciences of Aix-Marseille Université on a SATT Sud-Est funded project, collaborating with a web developer to build a tool for substituting equivalent propositions in the work of Wittgenstein (Semantica.AI). Her experience bridges legal analysis, political theory, and digital tools for the humanities. Within SHADOWS, she contributes her skills in textual analysis and interdisciplinary research methodology.",
   },
   {
@@ -22,6 +24,7 @@ const teamMembers = [
     role: "Researcher",
     institution: "Aix-Marseille Université",
     image: amiPhotoPath,
+    imageStyle: { objectPosition: "50% 15%", transform: "scale(1.2)" },
     bio: "Ami Nagai is a doctoral candidate in history at Aix-Marseille Université, affiliated with the TELEMMe laboratory (CNRS). Born in Tokyo, she holds a bachelor's degree in international and Francophone studies from Sophia University (Tokyo) and a master's in modern and contemporary history from Aix-Marseille Université, where she was a recipient of the French Government Scholarship. She also holds a university diploma in criminal sciences and criminology. Her research fields include the history of criminality, law, gender, and medicine, with a doctoral thesis on castration in France from the 18th to 20th centuries. Fluent in Japanese, French, and English, she brings a cross-cultural perspective to SHADOWS, contributing to the atlas's coverage of Japanese and East Asian mythological traditions.",
   },
 ];
@@ -47,12 +50,15 @@ export default function TeamPage() {
             >
               <div className="flex items-center gap-4 mb-5">
                 {member.image ? (
-                  <img
-                    src={member.image}
-                    alt={member.name}
-                    className="w-24 h-24 rounded-full object-cover object-top border border-[#8F00FF]/20 flex-shrink-0"
-                    data-testid={`img-member-${member.name.split(" ")[0].toLowerCase()}`}
-                  />
+                  <div className="w-24 h-24 rounded-full border border-[#8F00FF]/20 flex-shrink-0 overflow-hidden">
+                    <img
+                      src={member.image}
+                      alt={member.name}
+                      className="w-full h-full object-cover"
+                      style={member.imageStyle}
+                      data-testid={`img-member-${member.name.split(" ")[0].toLowerCase()}`}
+                    />
+                  </div>
                 ) : (
                   <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#350A8C] to-[#8F00FF]/30 border border-[#8F00FF]/20 flex items-center justify-center flex-shrink-0">
                     <span className="font-serif text-2xl text-shadows-text/60">
