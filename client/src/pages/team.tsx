@@ -46,12 +46,12 @@ export default function TeamPage() {
                   <img
                     src={member.image}
                     alt={member.name}
-                    className="w-14 h-14 rounded-full object-cover border border-[#8F00FF]/20 flex-shrink-0"
+                    className="w-24 h-24 rounded-full object-cover border border-[#8F00FF]/20 flex-shrink-0"
                     data-testid={`img-member-${member.name.split(" ")[0].toLowerCase()}`}
                   />
                 ) : (
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#350A8C] to-[#8F00FF]/30 border border-[#8F00FF]/20 flex items-center justify-center flex-shrink-0">
-                    <span className="font-serif text-lg text-shadows-text/60">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#350A8C] to-[#8F00FF]/30 border border-[#8F00FF]/20 flex items-center justify-center flex-shrink-0">
+                    <span className="font-serif text-2xl text-shadows-text/60">
                       {member.name.split(" ").map(n => n[0]).join("")}
                     </span>
                   </div>
