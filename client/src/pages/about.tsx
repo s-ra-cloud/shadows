@@ -71,7 +71,7 @@ export default function AboutPage() {
           </div>
           <div className="space-y-5 text-shadows-text/60 leading-relaxed text-justify">
             <p>
-              Across cultures and historical periods, mythological corpora encode structured systems of entities, attributes, and relations that articulate cosmology, social order, and symbolic logic. Yet these systems are rarely studied through formal, large-scale comparative models capable of revealing deep structural correspondences.
+              Across cultures and historical periods, mythological corpora encode structured systems of entities, attributes, and relations that articulate cosmology, social order, and symbolic logic. Yet these systems are rarely studied through formal, large-scale comparative models capable of revealing deep structural correspondences. Comparative mythology has long sought to identify and analyze these patterns, from early philological approaches to contemporary interdisciplinary research.
             </p>
             <p>
               Shadows builds upon this tradition by offering a research infrastructure designed to document, contextualize, and visualize relationships between mythological entities across cultures. Rather than proposing simplistic equivalences, the project emphasizes:
