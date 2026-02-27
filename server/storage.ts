@@ -5,10 +5,12 @@ import {
   type Edge, type InsertEdge,
   type News, type InsertNews,
   type Publication, type InsertPublication,
-  users, projects, nodes, edges, news, publications,
+  type Suggestion, type InsertSuggestion,
+  type Source, type InsertSource,
+  users, projects, nodes, edges, news, publications, suggestions, sources,
 } from "@shared/schema";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import pg from "pg";
 
 const pool = new pg.Pool({
@@ -44,6 +46,20 @@ export interface IStorage {
   getPublications(): Promise<Publication[]>;
   createPublication(pub: InsertPublication): Promise<Publication>;
   deletePublication(id: number): Promise<void>;
+
+  getNodeById(id: number): Promise<Node | undefined>;
+  updateNode(id: number, data: Partial<InsertNode>): Promise<Node>;
+
+  getSuggestions(): Promise<Suggestion[]>;
+  createSuggestion(suggestion: InsertSuggestion): Promise<Suggestion>;
+  updateSuggestionStatus(id: number, status: string): Promise<void>;
+  deleteSuggestion(id: number): Promise<void>;
+
+  getSources(): Promise<Source[]>;
+  createSource(source: InsertSource): Promise<Source>;
+  deleteSource(id: number): Promise<void>;
+
+  updateEdge(id: number, data: Partial<InsertEdge>): Promise<Edge>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -142,6 +158,51 @@ export class DatabaseStorage implements IStorage {
 
   async deletePublication(id: number): Promise<void> {
     await db.delete(publications).where(eq(publications.id, id));
+  }
+
+  async getNodeById(id: number): Promise<Node | undefined> {
+    const result = await db.select().from(nodes).where(eq(nodes.id, id));
+    return result[0];
+  }
+
+  async updateNode(id: number, data: Partial<InsertNode>): Promise<Node> {
+    const result = await db.update(nodes).set(data).where(eq(nodes.id, id)).returning();
+    return result[0];
+  }
+
+  async getSuggestions(): Promise<Suggestion[]> {
+    return db.select().from(suggestions).orderBy(desc(suggestions.createdAt));
+  }
+
+  async createSuggestion(suggestion: InsertSuggestion): Promise<Suggestion> {
+    const result = await db.insert(suggestions).values(suggestion).returning();
+    return result[0];
+  }
+
+  async updateSuggestionStatus(id: number, status: string): Promise<void> {
+    await db.update(suggestions).set({ status }).where(eq(suggestions.id, id));
+  }
+
+  async deleteSuggestion(id: number): Promise<void> {
+    await db.delete(suggestions).where(eq(suggestions.id, id));
+  }
+
+  async getSources(): Promise<Source[]> {
+    return db.select().from(sources).orderBy(desc(sources.createdAt));
+  }
+
+  async createSource(source: InsertSource): Promise<Source> {
+    const result = await db.insert(sources).values(source).returning();
+    return result[0];
+  }
+
+  async deleteSource(id: number): Promise<void> {
+    await db.delete(sources).where(eq(sources.id, id));
+  }
+
+  async updateEdge(id: number, data: Partial<InsertEdge>): Promise<Edge> {
+    const result = await db.update(edges).set(data).where(eq(edges.id, id)).returning();
+    return result[0];
   }
 }
 

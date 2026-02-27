@@ -31,6 +31,8 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 - `edges` - Relationships between figures (parent of, married to, sibling of, etc.) - 401 edges
 - `news` - News articles (title, content, date)
 - `publications` - Research publications (title, authors, venue, abstract, doi, pdf_url)
+- `suggestions` - Public suggestions for edits (type, status, submitterName, source, nodeId, field, currentValue, suggestedValue, sourceNodeId, targetNodeId, relationType, edgeId, createdAt)
+- `sources` - Reference sources (title, author, url, description, createdAt)
 - `users` - Admin users (username, password)
 
 ## Data Source
@@ -77,6 +79,7 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 - `/news` - Academic blog/news articles
 - `/research` - Publications list
 - `/graph` - Interactive D3.js canvas graph (bipartite layout)
+- `/database` - Browsable/editable mythology database with Characters, Relations, Suggestions, Sources tabs. Public users can suggest edits (requires name, suggestion, source). Edit mode is password-protected (DB_EDITOR_PASSWORD env var or default).
 - `/admin` - Password-protected CRUD dashboard
 
 ## Admin

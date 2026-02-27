@@ -7,11 +7,20 @@ import { seedDatabase } from "./seed";
 declare module "express-session" {
   interface SessionData {
     isAdmin: boolean;
+    isEditor: boolean;
   }
 }
 
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
   if (req.session && req.session.isAdmin) {
+    next();
+  } else {
+    res.status(401).json({ message: "Unauthorized" });
+  }
+}
+
+function requireEditor(req: Request, res: Response, next: NextFunction) {
+  if (req.session && (req.session.isEditor || req.session.isAdmin)) {
     next();
   } else {
     res.status(401).json({ message: "Unauthorized" });
@@ -176,6 +185,148 @@ export async function registerRoutes(
   app.delete("/api/admin/publications/:id", requireAdmin, async (req, res) => {
     await storage.deletePublication(parseInt(req.params.id));
     res.json({ success: true });
+  });
+
+  app.get("/api/nodes/:id", async (req, res) => {
+    const node = await storage.getNodeById(parseInt(req.params.id));
+    if (!node) return res.status(404).json({ message: "Node not found" });
+    res.json(node);
+  });
+
+  app.put("/api/editor/nodes/:id", requireEditor, async (req, res) => {
+    try {
+      const allowedFields = [
+        "tradition", "gender", "domain", "object", "animals",
+        "characterTrait", "physicalCharacteristics", "significantEvent",
+        "symbolism", "neumannArchetype", "birthCircumstances", "deathCircumstances",
+      ];
+      const data: Record<string, any> = {};
+      for (const key of allowedFields) {
+        if (key in req.body) data[key] = req.body[key];
+      }
+      const node = await storage.updateNode(parseInt(req.params.id), data);
+      res.json(node);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
+  app.delete("/api/editor/nodes/:id", requireEditor, async (req, res) => {
+    await storage.deleteNode(parseInt(req.params.id));
+    res.json({ success: true });
+  });
+
+  app.put("/api/editor/edges/:id", requireEditor, async (req, res) => {
+    try {
+      const edge = await storage.updateEdge(parseInt(req.params.id), req.body);
+      res.json(edge);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
+  app.delete("/api/editor/edges/:id", requireEditor, async (req, res) => {
+    await storage.deleteEdge(parseInt(req.params.id));
+    res.json({ success: true });
+  });
+
+  app.get("/api/suggestions", async (_req, res) => {
+    const items = await storage.getSuggestions();
+    res.json(items);
+  });
+
+  app.post("/api/suggestions", async (req, res) => {
+    try {
+      const { type, submitterName, source, nodeId, field, currentValue, suggestedValue, sourceNodeId, targetNodeId, relationType, edgeId } = req.body;
+      if (!type || !submitterName || !source) {
+        return res.status(400).json({ message: "type, submitterName, and source are required" });
+      }
+      const suggestion = await storage.createSuggestion({
+        type,
+        submitterName,
+        source,
+        status: "pending",
+        nodeId: nodeId || null,
+        field: field || null,
+        currentValue: currentValue || null,
+        suggestedValue: suggestedValue || null,
+        sourceNodeId: sourceNodeId || null,
+        targetNodeId: targetNodeId || null,
+        relationType: relationType || null,
+        edgeId: edgeId || null,
+      });
+      res.json(suggestion);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
+  app.put("/api/editor/suggestions/:id/status", requireEditor, async (req, res) => {
+    try {
+      const { status } = req.body;
+      if (!["approved", "rejected", "pending"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      await storage.updateSuggestionStatus(parseInt(req.params.id), status);
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
+  app.delete("/api/editor/suggestions/:id", requireEditor, async (req, res) => {
+    await storage.deleteSuggestion(parseInt(req.params.id));
+    res.json({ success: true });
+  });
+
+  app.get("/api/sources", async (_req, res) => {
+    const items = await storage.getSources();
+    res.json(items);
+  });
+
+  app.post("/api/editor/sources", requireEditor, async (req, res) => {
+    try {
+      const { title, author, url, description } = req.body;
+      if (!title) {
+        return res.status(400).json({ message: "title is required" });
+      }
+      const source = await storage.createSource({
+        title,
+        author: author || null,
+        url: url || null,
+        description: description || null,
+      });
+      res.json(source);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
+  app.delete("/api/editor/sources/:id", requireEditor, async (req, res) => {
+    await storage.deleteSource(parseInt(req.params.id));
+    res.json({ success: true });
+  });
+
+  app.post("/api/database/login", (req, res) => {
+    const { password } = req.body;
+    const editorPassword = process.env.DB_EDITOR_PASSWORD || "shadows-editor-2024";
+    if (password === editorPassword) {
+      req.session.isEditor = true;
+      res.json({ success: true });
+    } else {
+      res.status(401).json({ message: "Invalid password" });
+    }
+  });
+
+  app.post("/api/database/logout", (req, res) => {
+    if (req.session) {
+      req.session.isEditor = false;
+    }
+    res.json({ success: true });
+  });
+
+  app.get("/api/database/auth-status", (req, res) => {
+    res.json({ isEditor: !!(req.session && (req.session.isEditor || req.session.isAdmin)) });
   });
 
   return httpServer;

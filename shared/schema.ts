@@ -65,6 +65,32 @@ export const publications = pgTable("publications", {
   pdfUrl: text("pdf_url"),
 });
 
+export const suggestions = pgTable("suggestions", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(),
+  status: text("status").notNull().default("pending"),
+  submitterName: text("submitter_name").notNull(),
+  source: text("source").notNull(),
+  nodeId: integer("node_id").references(() => nodes.id),
+  field: text("field"),
+  currentValue: text("current_value"),
+  suggestedValue: text("suggested_value"),
+  sourceNodeId: integer("suggestion_source_node_id").references(() => nodes.id),
+  targetNodeId: integer("suggestion_target_node_id").references(() => nodes.id),
+  relationType: text("suggestion_relation_type"),
+  edgeId: integer("edge_id").references(() => edges.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const sources = pgTable("sources", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  author: text("author"),
+  url: text("url"),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -75,6 +101,8 @@ export const insertNodeSchema = createInsertSchema(nodes).omit({ id: true });
 export const insertEdgeSchema = createInsertSchema(edges).omit({ id: true });
 export const insertNewsSchema = createInsertSchema(news).omit({ id: true });
 export const insertPublicationSchema = createInsertSchema(publications).omit({ id: true });
+export const insertSuggestionSchema = createInsertSchema(suggestions).omit({ id: true, createdAt: true });
+export const insertSourceSchema = createInsertSchema(sources).omit({ id: true, createdAt: true });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -88,3 +116,7 @@ export type News = typeof news.$inferSelect;
 export type InsertNews = z.infer<typeof insertNewsSchema>;
 export type Publication = typeof publications.$inferSelect;
 export type InsertPublication = z.infer<typeof insertPublicationSchema>;
+export type Suggestion = typeof suggestions.$inferSelect;
+export type InsertSuggestion = z.infer<typeof insertSuggestionSchema>;
+export type Source = typeof sources.$inferSelect;
+export type InsertSource = z.infer<typeof insertSourceSchema>;

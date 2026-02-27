@@ -6,6 +6,7 @@ import logoPath from "@assets/Screenshot_2026-02-26_at_21.43.01_1772138586634.pn
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/graph", label: "Graph" },
+  { href: "/database", label: "Database" },
   { href: "/research", label: "Research" },
   { href: "/news", label: "News" },
   { href: "/team", label: "Team" },
