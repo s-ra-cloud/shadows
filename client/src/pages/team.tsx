@@ -48,7 +48,7 @@ export default function TeamPage() {
                   <img
                     src={member.image}
                     alt={member.name}
-                    className="w-24 h-24 rounded-full object-cover border border-[#8F00FF]/20 flex-shrink-0"
+                    className="w-24 h-24 rounded-full object-cover object-top border border-[#8F00FF]/20 flex-shrink-0"
                     data-testid={`img-member-${member.name.split(" ")[0].toLowerCase()}`}
                   />
                 ) : (
