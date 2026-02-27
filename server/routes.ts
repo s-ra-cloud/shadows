@@ -1,8 +1,9 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
-import { storage } from "./storage";
+import { storage, db } from "./storage";
 import { seedDatabase } from "./seed";
+import { nodes, edges, sources, suggestions, news, publications, projects } from "@shared/schema";
 
 declare module "express-session" {
   interface SessionData {
@@ -55,15 +56,75 @@ export async function registerRoutes(
     res.json({ project, nodes: projectNodes, edges: projectEdges });
   });
 
-  app.get("/api/export", async (_req, res) => {
-    const projects = await storage.getProjects();
+  app.get("/api/export", requireEditor, async (_req, res) => {
+    const allProjects = await storage.getProjects();
     const allNodes = await storage.getNodes();
     const allEdges = await storage.getEdges();
     const newsItems = await storage.getNews();
-    const publications = await storage.getPublications();
-    res.setHeader("Content-Disposition", "attachment; filename=shadows-database.json");
+    const allPublications = await storage.getPublications();
+    const allSources = await storage.getSources();
+    const allSuggestions = await storage.getSuggestions();
+    res.setHeader("Content-Disposition", `attachment; filename=shadows-export-${new Date().toISOString().slice(0, 10)}.json`);
     res.setHeader("Content-Type", "application/json");
-    res.json({ projects, nodes: allNodes, edges: allEdges, news: newsItems, publications });
+    res.json({
+      exportedAt: new Date().toISOString(),
+      projects: allProjects,
+      nodes: allNodes,
+      edges: allEdges,
+      news: newsItems,
+      publications: allPublications,
+      sources: allSources,
+      suggestions: allSuggestions,
+    });
+  });
+
+  app.post("/api/import", requireEditor, async (req, res) => {
+    try {
+      const data = req.body;
+      if (!data || !data.nodes || !data.edges) {
+        return res.status(400).json({ error: "Invalid import file: must contain nodes and edges" });
+      }
+
+      let nodesImported = 0;
+      let edgesImported = 0;
+      let sourcesImported = 0;
+
+      await db.delete(edges);
+      await db.delete(nodes);
+
+      if (data.nodes && Array.isArray(data.nodes)) {
+        for (const node of data.nodes) {
+          const { id, ...rest } = node;
+          await db.insert(nodes).values({ id, ...rest }).onConflictDoNothing();
+          nodesImported++;
+        }
+      }
+
+      if (data.edges && Array.isArray(data.edges)) {
+        for (const edge of data.edges) {
+          const { id, ...rest } = edge;
+          await db.insert(edges).values({ id, ...rest }).onConflictDoNothing();
+          edgesImported++;
+        }
+      }
+
+      if (data.sources && Array.isArray(data.sources)) {
+        await db.delete(sources);
+        for (const source of data.sources) {
+          const { id, ...rest } = source;
+          await db.insert(sources).values({ id, ...rest }).onConflictDoNothing();
+          sourcesImported++;
+        }
+      }
+
+      res.json({
+        success: true,
+        imported: { nodes: nodesImported, edges: edgesImported, sources: sourcesImported },
+      });
+    } catch (err) {
+      console.error("Import error:", err);
+      res.status(500).json({ error: "Import failed: " + (err instanceof Error ? err.message : "Unknown error") });
+    }
   });
 
   app.get("/api/graph", async (_req, res) => {

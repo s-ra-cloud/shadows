@@ -1,11 +1,12 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Node, Edge, Suggestion, Source } from "@shared/schema";
 import {
   Search, Lock, Unlock, ChevronDown, ChevronRight, Plus, Pencil, Trash2,
-  MessageSquarePlus, BookOpen, X, Check, AlertCircle, ArrowUpDown, ExternalLink
+  MessageSquarePlus, BookOpen, X, Check, AlertCircle, ArrowUpDown, ExternalLink,
+  Download, Upload
 } from "lucide-react";
 
 type Tab = "nodes" | "relations" | "suggestions" | "sources";
@@ -64,6 +65,7 @@ export default function DatabasePage() {
     edgeId?: number;
   } | null>(null);
   const { toast } = useToast();
+  const importFileRef = useRef<HTMLInputElement>(null);
 
   const { data: authStatus } = useQuery<{ isEditor: boolean }>({
     queryKey: ["/api/database/auth-status"],
@@ -99,27 +101,91 @@ export default function DatabasePage() {
               1,131 mythological figures · 401 relationships · Browse, suggest, or edit
             </p>
           </div>
-          <button
-            onClick={() => {
-              if (editorMode) {
-                setIsEditor(false);
-                apiRequest("POST", "/api/database/logout");
-                queryClient.invalidateQueries({ queryKey: ["/api/database/auth-status"] });
-                toast({ title: "Exited edit mode" });
-              } else {
-                setShowLoginModal(true);
-              }
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              editorMode
-                ? "bg-[#03FF9B]/20 text-[#03FF9B] border border-[#03FF9B]/30"
-                : "bg-[#350A8C]/30 text-[#E0DCE6]/70 border border-[#350A8C]/40 hover:border-[#8F00FF]/50"
-            }`}
-            data-testid="button-toggle-edit-mode"
-          >
-            {editorMode ? <Unlock size={16} /> : <Lock size={16} />}
-            {editorMode ? "Edit Mode" : "Enter Edit Mode"}
-          </button>
+          <div className="flex items-center gap-2">
+            {editorMode && (
+              <>
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch("/api/export", { credentials: "include" });
+                      if (!res.ok) throw new Error("Export failed");
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `shadows-export-${new Date().toISOString().slice(0, 10)}.json`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      toast({ title: "Database exported" });
+                    } catch {
+                      toast({ title: "Export failed", variant: "destructive" });
+                    }
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all bg-[#350A8C]/30 text-[#E0DCE6]/70 border border-[#350A8C]/40 hover:border-[#8F00FF]/50"
+                  data-testid="button-export-db"
+                >
+                  <Download size={16} />
+                  Export
+                </button>
+                <input
+                  ref={importFileRef}
+                  type="file"
+                  accept=".json"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      const text = await file.text();
+                      const data = JSON.parse(text);
+                      if (!data.nodes || !data.edges) {
+                        toast({ title: "Invalid file: must contain nodes and edges", variant: "destructive" });
+                        return;
+                      }
+                      if (!confirm(`This will replace all current data with:\n• ${data.nodes.length} nodes\n• ${data.edges.length} edges\n${data.sources ? `• ${data.sources.length} sources\n` : ""}\nThis action cannot be undone. Continue?`)) return;
+                      const res = await apiRequest("POST", "/api/import", data);
+                      const result = await res.json();
+                      toast({ title: `Imported ${result.imported.nodes} nodes, ${result.imported.edges} edges` });
+                      queryClient.invalidateQueries();
+                    } catch {
+                      toast({ title: "Import failed", variant: "destructive" });
+                    }
+                    if (importFileRef.current) importFileRef.current.value = "";
+                  }}
+                  data-testid="input-import-file"
+                />
+                <button
+                  onClick={() => importFileRef.current?.click()}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all bg-[#350A8C]/30 text-[#E0DCE6]/70 border border-[#350A8C]/40 hover:border-[#8F00FF]/50"
+                  data-testid="button-import-db"
+                >
+                  <Upload size={16} />
+                  Import
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => {
+                if (editorMode) {
+                  setIsEditor(false);
+                  apiRequest("POST", "/api/database/logout");
+                  queryClient.invalidateQueries({ queryKey: ["/api/database/auth-status"] });
+                  toast({ title: "Exited edit mode" });
+                } else {
+                  setShowLoginModal(true);
+                }
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                editorMode
+                  ? "bg-[#03FF9B]/20 text-[#03FF9B] border border-[#03FF9B]/30"
+                  : "bg-[#350A8C]/30 text-[#E0DCE6]/70 border border-[#350A8C]/40 hover:border-[#8F00FF]/50"
+              }`}
+              data-testid="button-toggle-edit-mode"
+            >
+              {editorMode ? <Unlock size={16} /> : <Lock size={16} />}
+              {editorMode ? "Edit Mode" : "Enter Edit Mode"}
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-1 mb-6 border-b border-[#350A8C]/30">

@@ -19,7 +19,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0B0626]/80 backdrop-blur-xl border-b border-[#350A8C]/20">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0B0626] border-b border-[#350A8C]/20">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
         <Link href="/" data-testid="link-home-logo">
           <img src={logoPath} alt="SHADOWS" className="h-10 w-auto" />
