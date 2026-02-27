@@ -86,46 +86,76 @@ export async function registerRoutes(
       }
 
       const { sql } = await import("drizzle-orm");
-      let nodesImported = 0;
-      let edgesImported = 0;
-      let sourcesImported = 0;
+      const counts = { projects: 0, nodes: 0, edges: 0, sources: 0, suggestions: 0, news: 0, publications: 0 };
 
       await db.transaction(async (tx) => {
         await tx.delete(edges);
         await tx.delete(suggestions);
         await tx.delete(sources);
         await tx.delete(nodes);
+        await tx.delete(publications);
+        await tx.delete(news);
+        await tx.delete(projects);
+
+        if (data.projects && Array.isArray(data.projects)) {
+          for (const project of data.projects) {
+            await tx.insert(projects).values(project).onConflictDoNothing();
+            counts.projects++;
+          }
+        }
 
         if (data.nodes && Array.isArray(data.nodes)) {
           for (const node of data.nodes) {
             await tx.insert(nodes).values(node).onConflictDoNothing();
-            nodesImported++;
+            counts.nodes++;
           }
         }
 
         if (data.edges && Array.isArray(data.edges)) {
           for (const edge of data.edges) {
             await tx.insert(edges).values(edge).onConflictDoNothing();
-            edgesImported++;
+            counts.edges++;
           }
         }
 
         if (data.sources && Array.isArray(data.sources)) {
           for (const source of data.sources) {
             await tx.insert(sources).values(source).onConflictDoNothing();
-            sourcesImported++;
+            counts.sources++;
           }
         }
 
+        if (data.suggestions && Array.isArray(data.suggestions)) {
+          for (const suggestion of data.suggestions) {
+            await tx.insert(suggestions).values(suggestion).onConflictDoNothing();
+            counts.suggestions++;
+          }
+        }
+
+        if (data.news && Array.isArray(data.news)) {
+          for (const item of data.news) {
+            await tx.insert(news).values(item).onConflictDoNothing();
+            counts.news++;
+          }
+        }
+
+        if (data.publications && Array.isArray(data.publications)) {
+          for (const pub of data.publications) {
+            await tx.insert(publications).values(pub).onConflictDoNothing();
+            counts.publications++;
+          }
+        }
+
+        await tx.execute(sql`SELECT setval('projects_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM projects), 1))`);
         await tx.execute(sql`SELECT setval('nodes_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM nodes), 1))`);
         await tx.execute(sql`SELECT setval('edges_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM edges), 1))`);
         await tx.execute(sql`SELECT setval('sources_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM sources), 1))`);
+        await tx.execute(sql`SELECT setval('suggestions_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM suggestions), 1))`);
+        await tx.execute(sql`SELECT setval('news_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM news), 1))`);
+        await tx.execute(sql`SELECT setval('publications_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM publications), 1))`);
       });
 
-      res.json({
-        success: true,
-        imported: { nodes: nodesImported, edges: edgesImported, sources: sourcesImported },
-      });
+      res.json({ success: true, imported: counts });
     } catch (err) {
       console.error("Import error:", err);
       res.status(500).json({ error: "Import failed: " + (err instanceof Error ? err.message : "Unknown error") });
