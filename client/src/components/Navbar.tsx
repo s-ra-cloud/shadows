@@ -22,7 +22,7 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0B0626] border-b border-[#350A8C]/20">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
         <Link href="/" data-testid="link-home-logo">
-          <img src={logoPath} alt="SHADOWS" className="h-10 w-auto" style={{ mixBlendMode: "lighten" }} />
+          <img src={logoPath} alt="SHADOWS" className="h-14 w-auto" style={{ mixBlendMode: "lighten" }} />
         </Link>
 
         <div className="hidden md:flex items-center gap-1">
