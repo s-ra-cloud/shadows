@@ -1409,17 +1409,20 @@ function FilterSidebar({
                 <SlidersHorizontal size={12} />
                 Min. Connections
               </h4>
-              <div className="flex items-center gap-3">
-                <Slider
-                  value={[minConnections]}
-                  onValueChange={(val) => onMinConnectionsChange(val[0])}
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={minConnections}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value);
+                    if (!isNaN(v) && v >= 1) onMinConnectionsChange(v);
+                  }}
                   min={1}
-                  max={maxConnectionCount > 50 ? Math.ceil(maxConnectionCount / 10) * 10 : Math.max(10, maxConnectionCount)}
-                  step={1}
-                  className="flex-1"
-                  data-testid="slider-min-connections"
+                  max={maxConnectionCount}
+                  className="w-16 h-7 px-2 text-xs font-mono text-center rounded border border-shadows-text/20 bg-shadows-bg text-shadows-text focus:outline-none focus:border-shadows-accent"
+                  data-testid="input-min-connections"
                 />
-                <span className="text-xs text-shadows-text/60 font-mono w-8 text-center" data-testid="text-min-connections">{minConnections}</span>
+                <span className="text-[10px] text-shadows-text/40">/ {maxConnectionCount} max</span>
               </div>
             </div>
 
