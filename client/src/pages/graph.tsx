@@ -409,10 +409,8 @@ function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: 
     }
   }
 
-  let maxConnectionCount = 0;
   const qualifiedFigureIds = new Set<number>();
   for (const [figId, connections] of figureConnections) {
-    if (connections.size > maxConnectionCount) maxConnectionCount = connections.size;
     if (connections.size >= minConnections) qualifiedFigureIds.add(figId);
   }
 
@@ -465,7 +463,7 @@ function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: 
     });
   }
 
-  return { graphNodes, graphLinks, maxConnectionCount };
+  return { graphNodes, graphLinks };
 }
 
 function buildDirectGraph(figures: Node[], minConnections: number, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>): { nodes: CharNode[]; links: DirectLink[] } {
@@ -2811,8 +2809,52 @@ export default function GraphPage() {
     return catFilter && catFilter.size > 0 ? catFilter : undefined;
   }, [activeFilters]);
 
-  const { graphNodes, graphLinks, maxConnectionCount } = useMemo(() => {
-    if (!data?.nodes) return { graphNodes: [], graphLinks: [], maxConnectionCount: 10 };
+  const connectionStats = useMemo(() => {
+    if (!data?.nodes) return { max: 10, thresholds: [1, 2, 3, 5, 10] };
+    const selIds = selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined;
+    const effectiveFigures = selIds ? data.nodes.filter((f: Node) => selIds.has(f.id)) : data.nodes;
+    const figTraitSets = new Map<number, Set<string>>();
+    const traitFigures = new Map<string, Set<number>>();
+    for (const fig of effectiveFigures) {
+      const traits = getTraitsForFigure(fig, enabledCategoriesSet);
+      figTraitSets.set(fig.id, new Set(traits));
+      for (const t of traits) {
+        if (!traitFigures.has(t)) traitFigures.set(t, new Set());
+        traitFigures.get(t)!.add(fig.id);
+      }
+    }
+    const connCounts: number[] = [];
+    for (const fig of effectiveFigures) {
+      const connected = new Set<number>();
+      const traits = figTraitSets.get(fig.id) || new Set();
+      for (const t of traits) {
+        const figs = traitFigures.get(t);
+        if (figs) for (const fid of figs) if (fid !== fig.id) connected.add(fid);
+      }
+      connCounts.push(connected.size);
+    }
+    connCounts.sort((a, b) => a - b);
+    const max = connCounts.length > 0 ? connCounts[connCounts.length - 1] : 10;
+    const uniqueSorted = [...new Set(connCounts)].sort((a, b) => a - b);
+    const steps: number[] = [1];
+    const targetSteps = 20;
+    if (uniqueSorted.length > targetSteps) {
+      for (let i = 1; i < targetSteps; i++) {
+        const idx = Math.floor((i / targetSteps) * uniqueSorted.length);
+        const val = uniqueSorted[idx];
+        if (val > steps[steps.length - 1]) steps.push(val);
+      }
+    } else {
+      for (const v of uniqueSorted) {
+        if (v > 1) steps.push(v);
+      }
+    }
+    if (max > steps[steps.length - 1]) steps.push(max);
+    return { max, thresholds: steps };
+  }, [data?.nodes, selectedCharacterIds, enabledCategoriesSet]);
+
+  const { graphNodes, graphLinks } = useMemo(() => {
+    if (!data?.nodes) return { graphNodes: [], graphLinks: [] };
     return buildGraph(data.nodes, minConnections, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet);
   }, [data?.nodes, minConnections, selectedCharacterIds, enabledCategoriesSet]);
 
@@ -3080,7 +3122,7 @@ export default function GraphPage() {
         totalCount={data.nodes.length}
         minConnections={minConnections}
         onMinConnectionsChange={setMinConnections}
-        maxConnectionCount={maxConnectionCount}
+        maxConnectionCount={connectionStats.max}
         allNodes={data.nodes}
         selectedCharacterIds={selectedCharacterIds}
         onToggleCharacter={toggleCharacter}
