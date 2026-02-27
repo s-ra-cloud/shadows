@@ -1711,35 +1711,37 @@ function NetworkView({
       ctx.scale(t.k, t.k);
 
       const hoveredId = currentHovered?.id;
+      const selId = selectedNodeIdRef.current;
+      const selectedSimNode = selId ? simNodes.find((n: any) => n.isCharacter && n.original?.id === selId) : null;
+      const activeId = hoveredId || selectedSimNode?.id;
       const connectedIds = new Set<string>();
-      if (hoveredId) {
+      if (activeId) {
         for (const l of simLinks) {
-          if (l.source.id === hoveredId) connectedIds.add(l.target.id);
-          if (l.target.id === hoveredId) connectedIds.add(l.source.id);
+          if (l.source.id === activeId) connectedIds.add(l.target.id);
+          if (l.target.id === activeId) connectedIds.add(l.source.id);
         }
       }
 
       for (const l of simLinks) {
-        const isHighlighted = hoveredId && (l.source.id === hoveredId || l.target.id === hoveredId);
+        const isHighlighted = activeId && (l.source.id === activeId || l.target.id === activeId);
         const color = CATEGORY_COLORS[l.category] || "#350A8C";
         ctx.beginPath();
         ctx.moveTo(l.source.x, l.source.y);
         ctx.lineTo(l.target.x, l.target.y);
         ctx.strokeStyle = color;
-        ctx.globalAlpha = isHighlighted ? 0.7 : hoveredId ? 0.03 : 0.15;
+        ctx.globalAlpha = isHighlighted ? 0.7 : activeId ? 0.03 : 0.15;
         ctx.lineWidth = isHighlighted ? 1.5 : 0.5;
         ctx.stroke();
       }
 
       ctx.globalAlpha = 1;
 
-      const selId = selectedNodeIdRef.current;
       const baseR = nodeR;
       for (const n of simNodes) {
         const isHovered = n.id === hoveredId;
         const isSelected = n.isCharacter && n.original?.id === selId;
         const isConnected = connectedIds.has(n.id);
-        const dimmed = hoveredId && !isHovered && !isConnected;
+        const dimmed = activeId && !isHovered && !isConnected && !(n.id === activeId);
 
         if (n.isCharacter) {
           const r = isHovered ? baseR + 4 : isSelected ? baseR + 2 : baseR;
@@ -1772,21 +1774,22 @@ function NetworkView({
 
       ctx.globalAlpha = 1;
 
-      const showLabels = t.k > 0.6;
+      const showLabels = t.k > 0.6 || activeId;
       if (showLabels) {
         for (const n of simNodes) {
           const isHovered = n.id === hoveredId;
+          const isActive = n.id === activeId;
           const isSelected = n.isCharacter && n.original?.id === selId;
           const isConnected = connectedIds.has(n.id);
-          const dimmed = hoveredId && !isHovered && !isConnected;
+          const dimmed = activeId && !isHovered && !isActive && !isConnected;
 
           if (n.isCharacter) {
             if (dimmed && !isConnected && !isSelected) continue;
-            ctx.font = (isHovered || isSelected) ? "bold 11px 'Cinzel Decorative', serif" : "9px 'Cinzel Decorative', serif";
+            ctx.font = (isHovered || isSelected || isActive) ? "bold 11px 'Cinzel Decorative', serif" : "9px 'Cinzel Decorative', serif";
             ctx.fillStyle = isSelected ? "#FFD700" : "#E0DCE6";
-            ctx.globalAlpha = (isHovered || isSelected) ? 1 : isConnected ? 0.9 : (t.k > 1.5 ? 0.7 : 0.4);
+            ctx.globalAlpha = (isHovered || isSelected || isActive) ? 1 : isConnected ? 0.9 : (t.k > 1.5 ? 0.7 : 0.4);
             ctx.textAlign = "center";
-            ctx.fillText(n.label, n.x, n.y - (isHovered || isSelected ? 14 : 10));
+            ctx.fillText(n.label, n.x, n.y - (isHovered || isSelected || isActive ? 14 : 10));
           } else if (isHovered || isConnected) {
             ctx.font = "8px 'Sofia Pro Light', sans-serif";
             ctx.fillStyle = CATEGORY_COLORS[n.category] || "#E0DCE6";
