@@ -3258,28 +3258,15 @@ export default function GraphPage() {
         </div>
       </div>
 
-      {viewMode !== "network" && (
+      {(viewMode === "direct" || viewMode === "dichotomy") && (
       <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[80vh] overflow-y-auto">
         <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">
-          {viewMode === "direct" ? "Direct Connections" : viewMode === "ca" ? "Correspondence Analysis" : "Dichotomies"}
+          {viewMode === "direct" ? "Direct Connections" : "Dichotomies"}
         </span>
         {viewMode === "direct" && (
           <div className="mb-1 space-y-1">
             <p className="text-[9px] text-shadows-text/30 leading-tight">
               Characters connected by shared traits. Line thickness = number of common traits.
-            </p>
-          </div>
-        )}
-        {viewMode === "ca" && (
-          <div className="mb-1 space-y-1">
-            <p className="text-[9px] text-shadows-text/30 leading-tight">
-              Characters and attributes projected into 2D. Points closer together share more traits.
-            </p>
-            <p className="text-[9px] text-shadows-text/25 leading-tight">
-              Dim 1 (29%): Compassionate/salvific vs. chthonic/heroic
-            </p>
-            <p className="text-[9px] text-shadows-text/25 leading-tight">
-              Dim 2 (26%): Terrible/underworld vs. benevolent/celestial
             </p>
           </div>
         )}
