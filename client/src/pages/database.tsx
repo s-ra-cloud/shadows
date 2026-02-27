@@ -578,13 +578,13 @@ function NodesTab({ isEditor, onSuggest }: {
             ))}
           </select>
         )}
-        {!isEditor && category === "characters" && (
+        {!isEditor && (
           <button
-            onClick={() => onSuggest({ type: "add_character" })}
+            onClick={() => onSuggest({ type: category === "characters" ? "add_character" : "edit_trait", field: catLabel })}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#350A8C]/30 border border-[#350A8C]/40 text-sm text-[#E0DCE6]/70 hover:border-[#8F00FF]/50 transition-colors"
-            data-testid="button-suggest-character"
+            data-testid="button-suggest-category"
           >
-            <MessageSquarePlus size={14} /> Suggest Character
+            <MessageSquarePlus size={14} /> {category === "characters" ? "Suggest Character" : "Suggest Feedback"}
           </button>
         )}
       </div>
@@ -764,7 +764,22 @@ function NodesTab({ isEditor, onSuggest }: {
                         : <ChevronRight size={14} className="text-[#E0DCE6]/30" />}
                       <span className="font-medium">{entry.value}</span>
                     </div>
-                    <span className="text-[#E0DCE6]/60">{entry.count}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[#E0DCE6]/60">{entry.count}</span>
+                      {!isEditor && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSuggest({ type: "edit_trait", field: catLabel, currentValue: entry.value });
+                          }}
+                          className="p-1 rounded hover:bg-[#350A8C]/40 text-[#E0DCE6]/20 hover:text-[#8F00FF] transition-colors"
+                          title="Suggest feedback"
+                          data-testid={`button-suggest-trait-${entry.value.replace(/\s+/g, "-").toLowerCase()}`}
+                        >
+                          <MessageSquarePlus size={13} />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {expandedTrait === entry.value && (
