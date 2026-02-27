@@ -93,12 +93,13 @@ function AboutSection() {
             </div>
           </div>
 
-          <div className="flex items-center justify-center">
+          <div className="relative flex items-center justify-center">
             <img
               src={psycheImgPath}
               alt="Psyche node graph visualization"
-              className="w-full max-w-md rounded-lg"
+              className="w-full max-w-md"
               data-testid="img-about-psyche"
+              style={{ mask: "radial-gradient(ellipse 85% 85% at center, black 50%, transparent 100%)", WebkitMask: "radial-gradient(ellipse 85% 85% at center, black 50%, transparent 100%)" }}
             />
           </div>
         </div>
