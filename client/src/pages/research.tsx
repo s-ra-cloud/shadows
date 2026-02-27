@@ -41,7 +41,7 @@ export default function ResearchPage() {
                 className="rounded-md border border-[#350A8C]/15 bg-[#0C0042]/20 p-6 transition-all duration-300 hover:border-[#350A8C]/30"
                 data-testid={`card-publication-${pub.id}`}
               >
-                <h2 className="font-serif text-lg text-shadows-text mb-2" data-testid={`text-pub-title-${pub.id}`}>
+                <h2 className="font-serif text-lg text-shadows-text mb-2 text-justify" data-testid={`text-pub-title-${pub.id}`}>
                   {pub.title}
                 </h2>
                 <p className="text-[#8F00FF]/70 text-sm mb-1">{pub.authors}</p>

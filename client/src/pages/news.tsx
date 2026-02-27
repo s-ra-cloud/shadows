@@ -50,7 +50,7 @@ export default function NewsPage() {
                     })}
                   </time>
                 </div>
-                <h2 className="font-serif text-xl text-shadows-text mb-3" data-testid={`text-news-title-${item.id}`}>
+                <h2 className="font-serif text-xl text-shadows-text mb-3 text-justify" data-testid={`text-news-title-${item.id}`}>
                   {item.title}
                 </h2>
                 <p className="text-shadows-text/50 text-sm leading-relaxed text-justify">
