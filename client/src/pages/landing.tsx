@@ -297,7 +297,7 @@ function PartnersPreview() {
           Partners
         </h2>
         <p className="text-shadows-text/50 text-center max-w-xl mx-auto mb-16">
-          SHADOWS is developed in collaboration with leading research institutions in digital humanities and computational interdisciplinary research.
+          SHADOWS is developed in collaboration with other projects in digital humanities and computational interdisciplinary research.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-2xl mx-auto">

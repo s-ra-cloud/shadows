@@ -99,7 +99,7 @@ export default function PartnersPage() {
             Partners
           </h1>
           <p className="text-shadows-text/50 max-w-2xl leading-relaxed mb-20 text-justify" data-testid="text-partners-intro">
-            SHADOWS is developed in collaboration with leading research institutions in digital humanities
+            SHADOWS is developed in collaboration with other projects in digital humanities
             and computational interdisciplinary research. Our partners contribute expertise in cultural heritage
             preservation, network science, and quantitative approaches to the study of myth and symbol.
           </p>
