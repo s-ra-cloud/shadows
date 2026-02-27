@@ -2327,25 +2327,18 @@ function DichotomyView({
     return flattenDichotomyGroups(dichotomyResult);
   }, [dichotomyResult]);
 
-  const groupLabels = useMemo(() => {
-    const labels: string[] = [];
-    function buildLabel(groups: DichotomyGroup[], ancestors: string[]) {
-      for (const g of groups) {
-        const path = [...ancestors, g.traitLabel];
-        if (g.children && g.children.length > 0) {
-          buildLabel(g.children, path);
-        } else {
-          labels.push(path.join(" → "));
-        }
-      }
-    }
-    buildLabel(dichotomyResult, []);
-    return labels;
-  }, [dichotomyResult]);
+  interface HierBox {
+    group: DichotomyGroup;
+    rect: { x: number; y: number; w: number; h: number };
+    depth: number;
+    color: string;
+    children: HierBox[];
+    leafIndex: number;
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || leafGroups.length === 0) return;
+    if (!canvas || dichotomyResult.length === 0) return;
 
     const container = canvas.parentElement;
     if (!container) return;
@@ -2369,46 +2362,8 @@ function DichotomyView({
       label: string;
       x: number;
       y: number;
-      groupIdx: number;
+      leafIdx: number;
       original: Node;
-    }
-
-    const cellRects: CellRect[] = [];
-    const gap = 6;
-
-    function assignRects(
-      groups: DichotomyGroup[],
-      rect: CellRect,
-      depth: number,
-      colorIdx: { val: number }
-    ) {
-      if (groups.length === 0) return;
-      if (groups.length === 1 && (!groups[0].children || groups[0].children.length === 0)) {
-        cellRects.push({ ...rect });
-        return;
-      }
-      if (groups.length === 2) {
-        const a = groups[0];
-        const b = groups[1];
-        const aCount = countLeafFigures(a);
-        const bCount = countLeafFigures(b);
-        const ratio = aCount / Math.max(1, aCount + bCount);
-        const splitHorizontally = rect.w >= rect.h;
-
-        if (splitHorizontally) {
-          const splitX = rect.x + rect.w * ratio;
-          const rA: CellRect = { x: rect.x, y: rect.y, w: splitX - rect.x - gap / 2, h: rect.h };
-          const rB: CellRect = { x: splitX + gap / 2, y: rect.y, w: rect.x + rect.w - splitX - gap / 2, h: rect.h };
-          assignRectsForGroup(a, rA, depth + 1, colorIdx);
-          assignRectsForGroup(b, rB, depth + 1, colorIdx);
-        } else {
-          const splitY = rect.y + rect.h * ratio;
-          const rA: CellRect = { x: rect.x, y: rect.y, w: rect.w, h: splitY - rect.y - gap / 2 };
-          const rB: CellRect = { x: rect.x, y: splitY + gap / 2, w: rect.w, h: rect.y + rect.h - splitY - gap / 2 };
-          assignRectsForGroup(a, rA, depth + 1, colorIdx);
-          assignRectsForGroup(b, rB, depth + 1, colorIdx);
-        }
-      }
     }
 
     function countLeafFigures(g: DichotomyGroup): number {
@@ -2416,36 +2371,101 @@ function DichotomyView({
       return g.children.reduce((sum, c) => sum + countLeafFigures(c), 0);
     }
 
-    function assignRectsForGroup(g: DichotomyGroup, rect: CellRect, depth: number, colorIdx: { val: number }) {
-      if (g.children && g.children.length > 0) {
-        assignRects(g.children, rect, depth, colorIdx);
-      } else {
-        cellRects.push({ ...rect });
+    const allBoxes: HierBox[] = [];
+    let leafCounter = { val: 0 };
+
+    function buildHierarchy(
+      groups: DichotomyGroup[],
+      rect: CellRect,
+      depth: number,
+      colorIdx: { val: number }
+    ) {
+      if (groups.length === 0) return;
+
+      if (groups.length === 1 && (!groups[0].children || groups[0].children.length === 0)) {
+        const color = DICHOTOMY_COLORS[colorIdx.val % DICHOTOMY_COLORS.length];
+        colorIdx.val++;
+        const box: HierBox = {
+          group: groups[0], rect: { ...rect }, depth, color, children: [],
+          leafIndex: leafCounter.val++,
+        };
+        allBoxes.push(box);
+        return;
+      }
+
+      if (groups.length === 2) {
+        const a = groups[0];
+        const b = groups[1];
+        const aCount = countLeafFigures(a);
+        const bCount = countLeafFigures(b);
+        const ratio = aCount / Math.max(1, aCount + bCount);
+        const gap = 8;
+        const headerH = depth === 0 ? 36 : 30;
+        const splitHorizontally = rect.w >= rect.h;
+
+        if (splitHorizontally) {
+          const splitX = rect.x + rect.w * ratio;
+          const rA: CellRect = { x: rect.x, y: rect.y, w: splitX - rect.x - gap / 2, h: rect.h };
+          const rB: CellRect = { x: splitX + gap / 2, y: rect.y, w: rect.x + rect.w - splitX - gap / 2, h: rect.h };
+          buildGroupHierarchy(a, rA, depth, colorIdx);
+          buildGroupHierarchy(b, rB, depth, colorIdx);
+        } else {
+          const splitY = rect.y + rect.h * ratio;
+          const rA: CellRect = { x: rect.x, y: rect.y, w: rect.w, h: splitY - rect.y - gap / 2 };
+          const rB: CellRect = { x: rect.x, y: splitY + gap / 2, w: rect.w, h: rect.y + rect.h - splitY - gap / 2 };
+          buildGroupHierarchy(a, rA, depth, colorIdx);
+          buildGroupHierarchy(b, rB, depth, colorIdx);
+        }
       }
     }
 
-    const rootRect: CellRect = { x: gap, y: gap, w: width - gap * 2, h: height - gap * 2 };
-    assignRects(dichotomyResult, rootRect, 0, { val: 0 });
+    function buildGroupHierarchy(g: DichotomyGroup, rect: CellRect, depth: number, colorIdx: { val: number }) {
+      const color = DICHOTOMY_COLORS[colorIdx.val % DICHOTOMY_COLORS.length];
+      const hasChildren = g.children && g.children.length > 0;
+
+      if (hasChildren) {
+        const headerH = Math.max(28, Math.min(36, rect.h * 0.08));
+        const pad = 6;
+        const box: HierBox = {
+          group: g, rect: { ...rect }, depth, color, children: [],
+          leafIndex: -1,
+        };
+        allBoxes.push(box);
+
+        const innerRect: CellRect = {
+          x: rect.x + pad,
+          y: rect.y + headerH + pad / 2,
+          w: rect.w - pad * 2,
+          h: rect.h - headerH - pad * 1.5,
+        };
+        buildHierarchy(g.children!, innerRect, depth + 1, colorIdx);
+      } else {
+        colorIdx.val++;
+        const box: HierBox = {
+          group: g, rect: { ...rect }, depth, color, children: [],
+          leafIndex: leafCounter.val++,
+        };
+        allBoxes.push(box);
+      }
+    }
+
+    const rootRect: CellRect = { x: 8, y: 8, w: width - 16, h: height - 16 };
+    buildHierarchy(dichotomyResult, rootRect, 0, { val: 0 });
+
+    const parentBoxes = allBoxes.filter(b => b.leafIndex === -1);
+    const leafBoxes = allBoxes.filter(b => b.leafIndex >= 0);
 
     const allSimNodes: SimNode[] = [];
-    const groupMeta: { rect: CellRect; label: string; category: string; count: number; color: string }[] = [];
 
-    for (let gi = 0; gi < leafGroups.length; gi++) {
-      const group = leafGroups[gi];
-      const rect = cellRects[gi] || { x: 0, y: 0, w: width, h: height };
-      const label = groupLabels[gi] || group.traitLabel;
-      const color = DICHOTOMY_COLORS[gi % DICHOTOMY_COLORS.length];
-
-      const labelH = 40;
+    for (const box of leafBoxes) {
+      const { rect } = box;
+      const labelH = 32;
       const cx = rect.x + rect.w / 2;
       const cy = rect.y + labelH + (rect.h - labelH) / 2;
-
-      groupMeta.push({ rect, label, category: group.traitCategory, count: group.figures.length, color });
-
-      const areaW = rect.w - 20;
-      const areaH = rect.h - labelH - 10;
+      const areaW = rect.w - 16;
+      const areaH = rect.h - labelH - 8;
       const spread = Math.min(areaW, areaH) * 0.35;
-      for (const fig of group.figures) {
+      for (const fig of box.group.figures) {
         const angle = Math.random() * Math.PI * 2;
         const r = Math.sqrt(Math.random()) * spread;
         allSimNodes.push({
@@ -2454,7 +2474,7 @@ function DichotomyView({
           label: fig.name,
           x: cx + Math.cos(angle) * r,
           y: cy + Math.sin(angle) * r,
-          groupIdx: gi,
+          leafIdx: box.leafIndex,
           original: fig,
         });
       }
@@ -2462,16 +2482,19 @@ function DichotomyView({
 
     const nodeR = allSimNodes.length > 1000 ? 2.5 : allSimNodes.length > 500 ? 3 : 4;
 
+    const leafRectMap = new Map<number, CellRect>();
+    for (const b of leafBoxes) leafRectMap.set(b.leafIndex, b.rect);
+
     const simulation = d3.forceSimulation(allSimNodes as any)
       .force("charge", d3.forceManyBody().strength(-8))
       .force("collision", d3.forceCollide().radius(nodeR + 0.5))
       .force("x", d3.forceX((d: any) => {
-        const m = groupMeta[d.groupIdx];
-        return m.rect.x + m.rect.w / 2;
+        const r = leafRectMap.get(d.leafIdx)!;
+        return r.x + r.w / 2;
       }).strength(0.6))
       .force("y", d3.forceY((d: any) => {
-        const m = groupMeta[d.groupIdx];
-        return m.rect.y + 40 + (m.rect.h - 40) / 2;
+        const r = leafRectMap.get(d.leafIdx)!;
+        return r.y + 32 + (r.h - 32) / 2;
       }).strength(0.6))
       .alphaDecay(0.04)
       .velocityDecay(0.45);
@@ -2480,16 +2503,27 @@ function DichotomyView({
     for (let i = 0; i < 200; i++) simulation.tick();
 
     for (const n of allSimNodes) {
-      const m = groupMeta[n.groupIdx];
+      const r = leafRectMap.get(n.leafIdx)!;
       const nx = n as any;
-      const padX = 10;
-      const padTop = 44;
-      const padBot = 6;
-      nx.x = Math.max(m.rect.x + padX, Math.min(m.rect.x + m.rect.w - padX, nx.x));
-      nx.y = Math.max(m.rect.y + padTop, Math.min(m.rect.y + m.rect.h - padBot, nx.y));
+      nx.x = Math.max(r.x + 8, Math.min(r.x + r.w - 8, nx.x));
+      nx.y = Math.max(r.y + 36, Math.min(r.y + r.h - 6, nx.y));
     }
 
     let currentHovered: SimNode | null = null;
+
+    function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, cr: number) {
+      ctx.beginPath();
+      ctx.moveTo(x + cr, y);
+      ctx.lineTo(x + w - cr, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + cr);
+      ctx.lineTo(x + w, y + h - cr);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - cr, y + h);
+      ctx.lineTo(x + cr, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - cr);
+      ctx.lineTo(x, y + cr);
+      ctx.quadraticCurveTo(x, y, x + cr, y);
+      ctx.closePath();
+    }
 
     function draw() {
       ctx.save();
@@ -2505,23 +2539,44 @@ function DichotomyView({
       ctx.translate(t.x, t.y);
       ctx.scale(t.k, t.k);
 
-      for (let gi = 0; gi < groupMeta.length; gi++) {
-        const m = groupMeta[gi];
-        const { rect, color, label, count } = m;
+      for (const box of parentBoxes) {
+        const { rect, color, depth } = box;
+        const cr = 12 - depth * 2;
+        roundedRect(ctx, rect.x, rect.y, rect.w, rect.h, Math.max(4, cr));
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.04 + depth * 0.01;
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.globalAlpha = 0.25 - depth * 0.05;
+        ctx.lineWidth = 2 - depth * 0.5;
+        ctx.stroke();
 
-        ctx.beginPath();
-        const cr = 8;
-        ctx.moveTo(rect.x + cr, rect.y);
-        ctx.lineTo(rect.x + rect.w - cr, rect.y);
-        ctx.quadraticCurveTo(rect.x + rect.w, rect.y, rect.x + rect.w, rect.y + cr);
-        ctx.lineTo(rect.x + rect.w, rect.y + rect.h - cr);
-        ctx.quadraticCurveTo(rect.x + rect.w, rect.y + rect.h, rect.x + rect.w - cr, rect.y + rect.h);
-        ctx.lineTo(rect.x + cr, rect.y + rect.h);
-        ctx.quadraticCurveTo(rect.x, rect.y + rect.h, rect.x, rect.y + rect.h - cr);
-        ctx.lineTo(rect.x, rect.y + cr);
-        ctx.quadraticCurveTo(rect.x, rect.y, rect.x + cr, rect.y);
-        ctx.closePath();
+        const fontSize = depth === 0
+          ? Math.max(12, Math.min(22, rect.w / 14))
+          : Math.max(10, Math.min(16, rect.w / 16));
+        ctx.font = `bold ${fontSize}px 'Cinzel Decorative', serif`;
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.85;
+        ctx.textAlign = "left";
 
+        let labelText = box.group.traitLabel.toUpperCase();
+        const maxLabelW = rect.w - 24;
+        if (ctx.measureText(labelText).width > maxLabelW) {
+          while (labelText.length > 6 && ctx.measureText(labelText).width > maxLabelW) {
+            labelText = labelText.slice(0, -3) + "…";
+          }
+        }
+        ctx.fillText(labelText, rect.x + 12, rect.y + fontSize + 6);
+
+        const totalFigs = countLeafFigures(box.group);
+        ctx.font = `${Math.max(8, fontSize * 0.55)}px 'Sofia Pro Light', sans-serif`;
+        ctx.globalAlpha = 0.4;
+        ctx.fillText(`${totalFigs} figures`, rect.x + 12, rect.y + fontSize + 6 + fontSize * 0.65);
+      }
+
+      for (const box of leafBoxes) {
+        const { rect, color } = box;
+        roundedRect(ctx, rect.x, rect.y, rect.w, rect.h, 6);
         ctx.fillStyle = color;
         ctx.globalAlpha = 0.03;
         ctx.fill();
@@ -2530,29 +2585,24 @@ function DichotomyView({
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        const maxLabelW = rect.w - 16;
-        const fontSize = Math.max(9, Math.min(16, rect.w / 16));
+        const fontSize = Math.max(8, Math.min(13, rect.w / 14));
         ctx.font = `bold ${fontSize}px 'Cinzel Decorative', serif`;
         ctx.fillStyle = color;
-        ctx.globalAlpha = 0.9;
+        ctx.globalAlpha = 0.8;
         ctx.textAlign = "center";
 
-        let labelText = label.toUpperCase();
-        const parts = labelText.split(" → ");
-        if (parts.length > 3) {
-          labelText = parts[0] + " → " + parts[1] + " → … → " + parts[parts.length - 1];
-        }
+        let labelText = box.group.traitLabel.toUpperCase();
+        const maxLabelW = rect.w - 12;
         if (ctx.measureText(labelText).width > maxLabelW) {
-          while (labelText.length > 8 && ctx.measureText(labelText).width > maxLabelW) {
-            labelText = labelText.slice(0, -4) + "…";
+          while (labelText.length > 6 && ctx.measureText(labelText).width > maxLabelW) {
+            labelText = labelText.slice(0, -3) + "…";
           }
         }
+        ctx.fillText(labelText, rect.x + rect.w / 2, rect.y + fontSize + 6);
 
-        ctx.fillText(labelText, rect.x + rect.w / 2, rect.y + 18);
-
-        ctx.font = `${Math.max(8, fontSize * 0.6)}px 'Sofia Pro Light', sans-serif`;
-        ctx.globalAlpha = 0.45;
-        ctx.fillText(`${count} figures`, rect.x + rect.w / 2, rect.y + 18 + fontSize * 0.75);
+        ctx.font = `${Math.max(7, fontSize * 0.6)}px 'Sofia Pro Light', sans-serif`;
+        ctx.globalAlpha = 0.4;
+        ctx.fillText(`${box.group.figures.length}`, rect.x + rect.w / 2, rect.y + fontSize + 6 + fontSize * 0.7);
       }
 
       ctx.globalAlpha = 1;
@@ -2565,7 +2615,8 @@ function DichotomyView({
         const ny = (n as any).y;
         const isHovered = n.id === hoveredId;
         const isSelected = n.nodeId === selId;
-        const groupColor = groupMeta[n.groupIdx].color;
+        const leafBox = leafBoxes.find(b => b.leafIndex === n.leafIdx);
+        const groupColor = leafBox?.color || "#8F00FF";
         const tradColor = getTraditionColor(n.original.tradition);
 
         const r = isHovered ? nodeR + 3 : isSelected ? nodeR + 2 : nodeR;
@@ -2661,13 +2712,13 @@ function DichotomyView({
       canvas.onmouseleave = null;
       drawRef.current = null;
     };
-  }, [leafGroups, groupLabels, dichotomyResult]);
+  }, [leafGroups, dichotomyResult]);
 
   useEffect(() => {
     if (drawRef.current) drawRef.current();
   }, [selectedNodeId]);
 
-  if (leafGroups.length === 0) {
+  if (dichotomyResult.length === 0) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <p className="text-shadows-text/40 text-sm" data-testid="text-no-dichotomy">No dichotomies found at this threshold. Try lowering the exclusion threshold.</p>
