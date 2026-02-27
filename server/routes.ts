@@ -90,6 +90,7 @@ export async function registerRoutes(
       let sourcesImported = 0;
 
       await db.delete(edges);
+      await db.delete(suggestions);
       await db.delete(sources);
       await db.delete(nodes);
 
