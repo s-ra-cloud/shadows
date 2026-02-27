@@ -3,7 +3,7 @@ import { ArrowRight, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroVideo from "@assets/hero_1772053813686.mp4";
 import teamPhotoPath from "@assets/Team_1772115638559.jpeg";
-import psycheImgPath from "@assets/Psyche_1772196302322.png";
+import odinImgPath from "@assets/Odin_1772207712816.png";
 
 function HeroSection() {
   return (
@@ -95,10 +95,10 @@ function AboutSection() {
 
           <div className="relative flex items-center justify-center overflow-hidden">
             <img
-              src={psycheImgPath}
-              alt="Psyche node graph visualization"
+              src={odinImgPath}
+              alt="Odin node graph visualization"
               className="w-full max-w-md scale-110"
-              data-testid="img-about-psyche"
+              data-testid="img-about-odin"
               style={{ mask: "radial-gradient(ellipse 70% 70% at center, black 30%, rgba(0,0,0,0.6) 50%, transparent 80%)", WebkitMask: "radial-gradient(ellipse 70% 70% at center, black 30%, rgba(0,0,0,0.6) 50%, transparent 80%)" }}
             />
           </div>
