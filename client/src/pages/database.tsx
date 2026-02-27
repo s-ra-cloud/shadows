@@ -8,7 +8,25 @@ import {
   MessageSquarePlus, BookOpen, X, Check, AlertCircle, ArrowUpDown, ExternalLink
 } from "lucide-react";
 
-type Tab = "characters" | "relations" | "suggestions" | "sources";
+type Tab = "nodes" | "relations" | "suggestions" | "sources";
+type NodeCategory = "characters" | "gender" | "domain" | "object" | "animals" | "characterTrait" | "physicalCharacteristics" | "significantEvent" | "symbolism" | "neumannArchetype" | "eventTypes" | "birthTypes" | "deathTypes" | "familyRoles";
+
+const NODE_CATEGORIES: { key: NodeCategory; label: string; isArray?: boolean }[] = [
+  { key: "characters", label: "Characters" },
+  { key: "gender", label: "Gender" },
+  { key: "domain", label: "Domain" },
+  { key: "object", label: "Object" },
+  { key: "animals", label: "Animals" },
+  { key: "characterTrait", label: "Character Trait" },
+  { key: "physicalCharacteristics", label: "Physical Characteristics" },
+  { key: "significantEvent", label: "Significant Event" },
+  { key: "symbolism", label: "Symbolism" },
+  { key: "neumannArchetype", label: "Neumann Archetype" },
+  { key: "eventTypes", label: "Event Types", isArray: true },
+  { key: "birthTypes", label: "Birth Types", isArray: true },
+  { key: "deathTypes", label: "Death Types", isArray: true },
+  { key: "familyRoles", label: "Family Roles", isArray: true },
+];
 
 const TRAIT_FIELDS = [
   { key: "tradition", label: "Tradition" },
@@ -33,7 +51,7 @@ const ARRAY_FIELDS = [
 ] as const;
 
 export default function DatabasePage() {
-  const [activeTab, setActiveTab] = useState<Tab>("characters");
+  const [activeTab, setActiveTab] = useState<Tab>("nodes");
   const [isEditor, setIsEditor] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSuggestionModal, setShowSuggestionModal] = useState(false);
@@ -54,7 +72,7 @@ export default function DatabasePage() {
   const editorMode = isEditor || authStatus?.isEditor;
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: "characters", label: "Characters" },
+    { key: "nodes", label: "Nodes" },
     { key: "relations", label: "Relations" },
     { key: "suggestions", label: "Suggestions" },
     { key: "sources", label: "Sources" },
@@ -121,8 +139,8 @@ export default function DatabasePage() {
           ))}
         </div>
 
-        {activeTab === "characters" && (
-          <CharactersTab
+        {activeTab === "nodes" && (
+          <NodesTab
             isEditor={!!editorMode}
             onSuggest={openSuggestion}
           />
@@ -318,12 +336,14 @@ function SuggestionModal({ target, onClose }: {
   );
 }
 
-function CharactersTab({ isEditor, onSuggest }: {
+function NodesTab({ isEditor, onSuggest }: {
   isEditor: boolean;
   onSuggest: (t: any) => void;
 }) {
+  const [category, setCategory] = useState<NodeCategory>("characters");
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedTrait, setExpandedTrait] = useState<string | null>(null);
   const [editingNode, setEditingNode] = useState<{ id: number; field: string; value: string } | null>(null);
   const [sortField, setSortField] = useState<string>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -363,6 +383,41 @@ function CharactersTab({ isEditor, onSuggest }: {
     return result;
   }, [nodes, search, traditionFilter, sortField, sortDir]);
 
+  const traitData = useMemo(() => {
+    if (category === "characters") return null;
+    const catInfo = NODE_CATEGORIES.find((c) => c.key === category);
+    if (!catInfo) return null;
+    const valueMap = new Map<string, number[]>();
+    nodes.forEach((n) => {
+      if (catInfo.isArray) {
+        const arr = (n as any)[category] as string[] | null;
+        if (arr) arr.forEach((v) => {
+          if (!valueMap.has(v)) valueMap.set(v, []);
+          valueMap.get(v)!.push(n.id);
+        });
+      } else {
+        const val = (n as any)[category] as string | null;
+        if (val) {
+          if (!valueMap.has(val)) valueMap.set(val, []);
+          valueMap.get(val)!.push(n.id);
+        }
+      }
+    });
+    let entries = Array.from(valueMap.entries()).map(([value, ids]) => ({ value, count: ids.length, nodeIds: ids }));
+    if (search) {
+      const q = search.toLowerCase();
+      entries = entries.filter((e) => e.value.toLowerCase().includes(q));
+    }
+    entries.sort((a, b) => {
+      if (sortField === "count") {
+        return sortDir === "asc" ? a.count - b.count : b.count - a.count;
+      }
+      const cmp = a.value.localeCompare(b.value);
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return entries;
+  }, [nodes, category, search, sortField, sortDir]);
+
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) =>
       apiRequest("PUT", `/api/editor/nodes/${id}`, data),
@@ -397,8 +452,34 @@ function CharactersTab({ isEditor, onSuggest }: {
     return <LoadingState />;
   }
 
+  const catLabel = NODE_CATEGORIES.find((c) => c.key === category)?.label || "Characters";
+
   return (
     <div>
+      <div className="flex flex-wrap gap-1.5 mb-4 pb-3 border-b border-[#350A8C]/15">
+        {NODE_CATEGORIES.map((cat) => (
+          <button
+            key={cat.key}
+            onClick={() => {
+              setCategory(cat.key);
+              setSearch("");
+              setExpandedId(null);
+              setExpandedTrait(null);
+              setSortField(cat.key === "characters" ? "name" : "value");
+              setSortDir("asc");
+            }}
+            className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+              category === cat.key
+                ? "bg-[#8F00FF]/20 text-[#8F00FF] border border-[#8F00FF]/30"
+                : "text-[#E0DCE6]/40 hover:text-[#E0DCE6]/70 border border-transparent hover:border-[#350A8C]/30"
+            }`}
+            data-testid={`button-category-${cat.key}`}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#E0DCE6]/40" />
@@ -406,23 +487,25 @@ function CharactersTab({ isEditor, onSuggest }: {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search characters..."
+            placeholder={category === "characters" ? "Search characters..." : `Search ${catLabel.toLowerCase()}...`}
             className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#130D30] border border-[#350A8C]/30 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60"
             data-testid="input-search-characters"
           />
         </div>
-        <select
-          value={traditionFilter}
-          onChange={(e) => setTraditionFilter(e.target.value)}
-          className="px-3 py-2 rounded-lg bg-[#130D30] border border-[#350A8C]/30 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60"
-          data-testid="select-tradition-filter"
-        >
-          <option value="">All Traditions</option>
-          {traditions.map((t) => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
-        {!isEditor && (
+        {category === "characters" && (
+          <select
+            value={traditionFilter}
+            onChange={(e) => setTraditionFilter(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-[#130D30] border border-[#350A8C]/30 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60"
+            data-testid="select-tradition-filter"
+          >
+            <option value="">All Traditions</option>
+            {traditions.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+        )}
+        {!isEditor && category === "characters" && (
           <button
             onClick={() => onSuggest({ type: "add_character" })}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#350A8C]/30 border border-[#350A8C]/40 text-sm text-[#E0DCE6]/70 hover:border-[#8F00FF]/50 transition-colors"
@@ -433,148 +516,209 @@ function CharactersTab({ isEditor, onSuggest }: {
         )}
       </div>
 
-      <div className="text-xs text-[#E0DCE6]/40 mb-3">
-        {filtered.length} character{filtered.length !== 1 ? "s" : ""} found
-      </div>
+      {category === "characters" ? (
+        <>
+          <div className="text-xs text-[#E0DCE6]/40 mb-3">
+            {filtered.length} character{filtered.length !== 1 ? "s" : ""} found
+          </div>
 
-      <div className="border border-[#350A8C]/20 rounded-xl overflow-hidden">
-        <div className="grid grid-cols-[1fr_140px_140px_80px] gap-0 bg-[#130D30]/80 border-b border-[#350A8C]/20 px-4 py-2.5 text-xs font-medium text-[#E0DCE6]/50 uppercase tracking-wider">
-          <button onClick={() => toggleSort("name")} className="flex items-center gap-1 text-left" data-testid="sort-name">
-            Name <ArrowUpDown size={12} />
-          </button>
-          <button onClick={() => toggleSort("tradition")} className="flex items-center gap-1 text-left" data-testid="sort-tradition">
-            Tradition <ArrowUpDown size={12} />
-          </button>
-          <button onClick={() => toggleSort("domain")} className="flex items-center gap-1 text-left" data-testid="sort-domain">
-            Domain <ArrowUpDown size={12} />
-          </button>
-          <span></span>
-        </div>
-
-        <div className="max-h-[60vh] overflow-y-auto">
-          {filtered.map((node) => (
-            <div key={node.id} className="border-b border-[#350A8C]/10 last:border-0">
-              <div
-                className="grid grid-cols-[1fr_140px_140px_80px] gap-0 px-4 py-2.5 text-sm cursor-pointer hover:bg-[#130D30]/50 transition-colors"
-                onClick={() => setExpandedId(expandedId === node.id ? null : node.id)}
-                data-testid={`row-character-${node.id}`}
-              >
-                <div className="flex items-center gap-2">
-                  {expandedId === node.id ? <ChevronDown size={14} className="text-[#8F00FF]" /> : <ChevronRight size={14} className="text-[#E0DCE6]/30" />}
-                  <span className="font-medium">{node.name}</span>
-                </div>
-                <span className="text-[#E0DCE6]/60">{node.tradition || "—"}</span>
-                <span className="text-[#E0DCE6]/60">{node.domain || "—"}</span>
-                <div className="flex items-center gap-1 justify-end">
-                  {!isEditor && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSuggest({ type: "edit_trait", nodeId: node.id, nodeName: node.name });
-                      }}
-                      className="p-1 rounded hover:bg-[#350A8C]/40 text-[#E0DCE6]/40 hover:text-[#8F00FF] transition-colors"
-                      title="Suggest edit"
-                      data-testid={`button-suggest-node-${node.id}`}
-                    >
-                      <MessageSquarePlus size={14} />
-                    </button>
-                  )}
-                  {isEditor && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (confirm(`Delete ${node.name}?`)) deleteMutation.mutate(node.id);
-                      }}
-                      className="p-1 rounded hover:bg-red-500/20 text-[#E0DCE6]/40 hover:text-red-400 transition-colors"
-                      title="Delete"
-                      data-testid={`button-delete-node-${node.id}`}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {expandedId === node.id && (
-                <div className="px-4 pb-4 pl-10 bg-[#0B0626]/50">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
-                    {TRAIT_FIELDS.map(({ key, label }) => {
-                      const val = (node as any)[key] || "";
-                      const isEditing = editingNode?.id === node.id && editingNode.field === key;
-                      return (
-                        <div key={key} className="flex items-start gap-2 text-sm">
-                          <span className="text-[#E0DCE6]/40 min-w-[130px] text-xs pt-0.5">{label}:</span>
-                          {isEditing ? (
-                            <div className="flex items-center gap-1 flex-1">
-                              <input
-                                type="text"
-                                value={editingNode.value}
-                                onChange={(e) => setEditingNode({ ...editingNode, value: e.target.value })}
-                                className="flex-1 px-2 py-0.5 rounded bg-[#130D30] border border-[#8F00FF]/40 text-xs text-[#E0DCE6] focus:outline-none"
-                                data-testid={`input-edit-${key}-${node.id}`}
-                                autoFocus
-                              />
-                              <button
-                                onClick={() => updateMutation.mutate({ id: node.id, data: { [key]: editingNode.value || null } })}
-                                className="text-[#03FF9B]"
-                                data-testid={`button-save-${key}-${node.id}`}
-                              >
-                                <Check size={14} />
-                              </button>
-                              <button onClick={() => setEditingNode(null)} className="text-[#E0DCE6]/40">
-                                <X size={14} />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1 flex-1">
-                              <span className="text-[#E0DCE6]/80 text-xs">{val || "—"}</span>
-                              {isEditor && (
-                                <button
-                                  onClick={() => setEditingNode({ id: node.id, field: key, value: val })}
-                                  className="p-0.5 rounded hover:bg-[#350A8C]/40 text-[#E0DCE6]/30 hover:text-[#8F00FF] ml-1"
-                                  data-testid={`button-edit-${key}-${node.id}`}
-                                >
-                                  <Pencil size={11} />
-                                </button>
-                              )}
-                              {!isEditor && (
-                                <button
-                                  onClick={() => onSuggest({ type: "edit_trait", nodeId: node.id, nodeName: node.name, field: label, currentValue: val })}
-                                  className="p-0.5 rounded hover:bg-[#350A8C]/40 text-[#E0DCE6]/20 hover:text-[#8F00FF] ml-1"
-                                  data-testid={`button-suggest-${key}-${node.id}`}
-                                >
-                                  <MessageSquarePlus size={11} />
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {ARRAY_FIELDS.map(({ key, label }) => {
-                      const val = (node as any)[key] as string[] | null;
-                      return (
-                        <div key={key} className="flex items-start gap-2 text-sm">
-                          <span className="text-[#E0DCE6]/40 min-w-[130px] text-xs pt-0.5">{label}:</span>
-                          <span className="text-[#E0DCE6]/80 text-xs">
-                            {val && val.length > 0 ? val.join(", ") : "—"}
-                          </span>
-                        </div>
-                      );
-                    })}
-                    {node.mentionCount != null && (
-                      <div className="flex items-start gap-2 text-sm">
-                        <span className="text-[#E0DCE6]/40 min-w-[130px] text-xs pt-0.5">Mention Count:</span>
-                        <span className="text-[#E0DCE6]/80 text-xs">{node.mentionCount}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+          <div className="border border-[#350A8C]/20 rounded-xl overflow-hidden">
+            <div className="grid grid-cols-[1fr_140px_140px_80px] gap-0 bg-[#130D30]/80 border-b border-[#350A8C]/20 px-4 py-2.5 text-xs font-medium text-[#E0DCE6]/50 uppercase tracking-wider">
+              <button onClick={() => toggleSort("name")} className="flex items-center gap-1 text-left" data-testid="sort-name">
+                Name <ArrowUpDown size={12} />
+              </button>
+              <button onClick={() => toggleSort("tradition")} className="flex items-center gap-1 text-left" data-testid="sort-tradition">
+                Tradition <ArrowUpDown size={12} />
+              </button>
+              <button onClick={() => toggleSort("domain")} className="flex items-center gap-1 text-left" data-testid="sort-domain">
+                Domain <ArrowUpDown size={12} />
+              </button>
+              <span></span>
             </div>
-          ))}
-        </div>
-      </div>
+
+            <div className="max-h-[60vh] overflow-y-auto">
+              {filtered.map((node) => (
+                <div key={node.id} className="border-b border-[#350A8C]/10 last:border-0">
+                  <div
+                    className="grid grid-cols-[1fr_140px_140px_80px] gap-0 px-4 py-2.5 text-sm cursor-pointer hover:bg-[#130D30]/50 transition-colors"
+                    onClick={() => setExpandedId(expandedId === node.id ? null : node.id)}
+                    data-testid={`row-character-${node.id}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {expandedId === node.id ? <ChevronDown size={14} className="text-[#8F00FF]" /> : <ChevronRight size={14} className="text-[#E0DCE6]/30" />}
+                      <span className="font-medium">{node.name}</span>
+                    </div>
+                    <span className="text-[#E0DCE6]/60">{node.tradition || "—"}</span>
+                    <span className="text-[#E0DCE6]/60">{node.domain || "—"}</span>
+                    <div className="flex items-center gap-1 justify-end">
+                      {!isEditor && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSuggest({ type: "edit_trait", nodeId: node.id, nodeName: node.name });
+                          }}
+                          className="p-1 rounded hover:bg-[#350A8C]/40 text-[#E0DCE6]/40 hover:text-[#8F00FF] transition-colors"
+                          title="Suggest edit"
+                          data-testid={`button-suggest-node-${node.id}`}
+                        >
+                          <MessageSquarePlus size={14} />
+                        </button>
+                      )}
+                      {isEditor && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Delete ${node.name}?`)) deleteMutation.mutate(node.id);
+                          }}
+                          className="p-1 rounded hover:bg-red-500/20 text-[#E0DCE6]/40 hover:text-red-400 transition-colors"
+                          title="Delete"
+                          data-testid={`button-delete-node-${node.id}`}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {expandedId === node.id && (
+                    <div className="px-4 pb-4 pl-10 bg-[#0B0626]/50">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                        {TRAIT_FIELDS.map(({ key, label }) => {
+                          const val = (node as any)[key] || "";
+                          const isEditing = editingNode?.id === node.id && editingNode.field === key;
+                          return (
+                            <div key={key} className="flex items-start gap-2 text-sm">
+                              <span className="text-[#E0DCE6]/40 min-w-[130px] text-xs pt-0.5">{label}:</span>
+                              {isEditing ? (
+                                <div className="flex items-center gap-1 flex-1">
+                                  <input
+                                    type="text"
+                                    value={editingNode.value}
+                                    onChange={(e) => setEditingNode({ ...editingNode, value: e.target.value })}
+                                    className="flex-1 px-2 py-0.5 rounded bg-[#130D30] border border-[#8F00FF]/40 text-xs text-[#E0DCE6] focus:outline-none"
+                                    data-testid={`input-edit-${key}-${node.id}`}
+                                    autoFocus
+                                  />
+                                  <button
+                                    onClick={() => updateMutation.mutate({ id: node.id, data: { [key]: editingNode.value || null } })}
+                                    className="text-[#03FF9B]"
+                                    data-testid={`button-save-${key}-${node.id}`}
+                                  >
+                                    <Check size={14} />
+                                  </button>
+                                  <button onClick={() => setEditingNode(null)} className="text-[#E0DCE6]/40">
+                                    <X size={14} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1 flex-1">
+                                  <span className="text-[#E0DCE6]/80 text-xs">{val || "—"}</span>
+                                  {isEditor && (
+                                    <button
+                                      onClick={() => setEditingNode({ id: node.id, field: key, value: val })}
+                                      className="p-0.5 rounded hover:bg-[#350A8C]/40 text-[#E0DCE6]/30 hover:text-[#8F00FF] ml-1"
+                                      data-testid={`button-edit-${key}-${node.id}`}
+                                    >
+                                      <Pencil size={11} />
+                                    </button>
+                                  )}
+                                  {!isEditor && (
+                                    <button
+                                      onClick={() => onSuggest({ type: "edit_trait", nodeId: node.id, nodeName: node.name, field: label, currentValue: val })}
+                                      className="p-0.5 rounded hover:bg-[#350A8C]/40 text-[#E0DCE6]/20 hover:text-[#8F00FF] ml-1"
+                                      data-testid={`button-suggest-${key}-${node.id}`}
+                                    >
+                                      <MessageSquarePlus size={11} />
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {ARRAY_FIELDS.map(({ key, label }) => {
+                          const val = (node as any)[key] as string[] | null;
+                          return (
+                            <div key={key} className="flex items-start gap-2 text-sm">
+                              <span className="text-[#E0DCE6]/40 min-w-[130px] text-xs pt-0.5">{label}:</span>
+                              <span className="text-[#E0DCE6]/80 text-xs">
+                                {val && val.length > 0 ? val.join(", ") : "—"}
+                              </span>
+                            </div>
+                          );
+                        })}
+                        {node.mentionCount != null && (
+                          <div className="flex items-start gap-2 text-sm">
+                            <span className="text-[#E0DCE6]/40 min-w-[130px] text-xs pt-0.5">Mention Count:</span>
+                            <span className="text-[#E0DCE6]/80 text-xs">{node.mentionCount}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="text-xs text-[#E0DCE6]/40 mb-3">
+            {traitData?.length || 0} unique {catLabel.toLowerCase()} value{(traitData?.length || 0) !== 1 ? "s" : ""}
+          </div>
+
+          <div className="border border-[#350A8C]/20 rounded-xl overflow-hidden">
+            <div className="grid grid-cols-[1fr_100px] gap-0 bg-[#130D30]/80 border-b border-[#350A8C]/20 px-4 py-2.5 text-xs font-medium text-[#E0DCE6]/50 uppercase tracking-wider">
+              <button onClick={() => toggleSort("value")} className="flex items-center gap-1 text-left" data-testid="sort-trait-value">
+                Value <ArrowUpDown size={12} />
+              </button>
+              <button onClick={() => toggleSort("count")} className="flex items-center gap-1 text-left" data-testid="sort-trait-count">
+                Characters <ArrowUpDown size={12} />
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto">
+              {traitData?.map((entry) => (
+                <div key={entry.value} className="border-b border-[#350A8C]/10 last:border-0">
+                  <div
+                    className="grid grid-cols-[1fr_100px] gap-0 px-4 py-2.5 text-sm cursor-pointer hover:bg-[#130D30]/50 transition-colors"
+                    onClick={() => setExpandedTrait(expandedTrait === entry.value ? null : entry.value)}
+                    data-testid={`row-trait-${entry.value.replace(/\s+/g, "-").toLowerCase()}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {expandedTrait === entry.value
+                        ? <ChevronDown size={14} className="text-[#8F00FF]" />
+                        : <ChevronRight size={14} className="text-[#E0DCE6]/30" />}
+                      <span className="font-medium">{entry.value}</span>
+                    </div>
+                    <span className="text-[#E0DCE6]/60">{entry.count}</span>
+                  </div>
+
+                  {expandedTrait === entry.value && (
+                    <div className="px-4 pb-3 pl-10 bg-[#0B0626]/50">
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {entry.nodeIds.map((nid) => {
+                          const n = nodes.find((nd) => nd.id === nid);
+                          return n ? (
+                            <span
+                              key={nid}
+                              className="inline-flex items-center px-2 py-0.5 rounded bg-[#130D30] border border-[#350A8C]/20 text-xs text-[#E0DCE6]/70"
+                              data-testid={`trait-character-${nid}`}
+                            >
+                              {n.name}
+                              {n.tradition && <span className="text-[#E0DCE6]/30 ml-1">({n.tradition})</span>}
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
