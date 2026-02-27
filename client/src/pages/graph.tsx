@@ -409,8 +409,10 @@ function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: 
     }
   }
 
+  let maxConnectionCount = 0;
   const qualifiedFigureIds = new Set<number>();
   for (const [figId, connections] of figureConnections) {
+    if (connections.size > maxConnectionCount) maxConnectionCount = connections.size;
     if (connections.size >= minConnections) qualifiedFigureIds.add(figId);
   }
 
@@ -463,7 +465,7 @@ function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: 
     });
   }
 
-  return { graphNodes, graphLinks };
+  return { graphNodes, graphLinks, maxConnectionCount };
 }
 
 function buildDirectGraph(figures: Node[], minConnections: number, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>): { nodes: CharNode[]; links: DirectLink[] } {
@@ -1146,6 +1148,7 @@ function FilterSidebar({
   totalCount,
   minConnections,
   onMinConnectionsChange,
+  maxConnectionCount,
   allNodes,
   selectedCharacterIds,
   onToggleCharacter,
@@ -1162,6 +1165,7 @@ function FilterSidebar({
   totalCount: number;
   minConnections: number;
   onMinConnectionsChange: (val: number) => void;
+  maxConnectionCount: number;
   allNodes: Node[];
   selectedCharacterIds: Set<number>;
   onToggleCharacter: (id: number) => void;
@@ -1229,8 +1233,8 @@ function FilterSidebar({
                   value={[minConnections]}
                   onValueChange={(val) => onMinConnectionsChange(val[0])}
                   min={1}
-                  max={10}
-                  step={1}
+                  max={Math.max(10, maxConnectionCount)}
+                  step={maxConnectionCount > 100 ? 10 : maxConnectionCount > 50 ? 5 : 1}
                   className="flex-1"
                   data-testid="slider-min-connections"
                 />
@@ -2807,8 +2811,8 @@ export default function GraphPage() {
     return catFilter && catFilter.size > 0 ? catFilter : undefined;
   }, [activeFilters]);
 
-  const { graphNodes, graphLinks } = useMemo(() => {
-    if (!data?.nodes) return { graphNodes: [], graphLinks: [] };
+  const { graphNodes, graphLinks, maxConnectionCount } = useMemo(() => {
+    if (!data?.nodes) return { graphNodes: [], graphLinks: [], maxConnectionCount: 10 };
     return buildGraph(data.nodes, minConnections, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet);
   }, [data?.nodes, minConnections, selectedCharacterIds, enabledCategoriesSet]);
 
@@ -3076,6 +3080,7 @@ export default function GraphPage() {
         totalCount={data.nodes.length}
         minConnections={minConnections}
         onMinConnectionsChange={setMinConnections}
+        maxConnectionCount={maxConnectionCount}
         allNodes={data.nodes}
         selectedCharacterIds={selectedCharacterIds}
         onToggleCharacter={toggleCharacter}
