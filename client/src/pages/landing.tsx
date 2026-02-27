@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import heroVideo from "@assets/hero_1772053813686.mp4";
 import teamPhotoPath from "@assets/Team_1772115638559.jpeg";
 import odinImgPath from "@assets/Odin_1772207712816.png";
+import machinaLogoPath from "@assets/Machin_logo_1772208429837.jpeg";
 
 function HeroSection() {
   return (
@@ -286,7 +287,7 @@ function PartnersPreview() {
     {
       name: "Machina Research Network",
       url: "https://machina-research.net",
-      visual: null,
+      visual: <img src={machinaLogoPath} alt="Machina Research Network logo" className="w-20 h-20 rounded-lg object-contain bg-white/90 p-1" />,
     },
   ];
 
