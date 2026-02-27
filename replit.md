@@ -51,7 +51,8 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
   - **Correspondence Analysis** — Interactive 3D scatter plot: D1/D2/D3 map to X/Y/Z spatial axes, D4 maps to color gradient (purple→green→white→yellow→red). Mouse drag to rotate, scroll to zoom. Perspective projection with depth-based sizing. Dimension labels computed from top-loading traits. Bottom-right panel shows all 4 dimensions with inertia % and trait poles + color bar.
   - **Dichotomy** — Recursive binary splits by exclusive traits using binary space partition layout (treemap-style). Cross-category trait pairs allowed. Coverage floor 10%, scoring: coverage²×10 + balance×0.2. Used traits blocked (not categories) across recursion levels.
 - Character nodes uniform #E0DCE6, no tradition coloring
-- Trait nodes colored by category: gender, domain, object, animals, characterTrait, physicalCharacteristics, eventTypes (#E53935), birthTypes (#00BCD4), deathTypes (#B71C1C), familyRoles (#F48FB1)
+- Trait nodes colored by category: gender, domain, object, animals, characterTrait, physicalCharacteristics, eventTypes (#E53935), birthTypes (#00BCD4), deathTypes (#B71C1C), familyRoles (#F48FB1), animalType (#FF8A65), objectType (#FFD700)
+- **Superset grouping** — "Group" toggle buttons on Animals and Object categories replace individual trait nodes (e.g. snake, eagle, sword) with superset categories (Mammals, Birds, Reptiles, Weapons, Armor & Protection, etc.). Unmapped items fall into "Other Animals"/"Other Objects". Supersets are defined in ANIMAL_SUPERSETS and OBJECT_SUPERSETS mappings. Works across all four view modes.
 - **Character selection** — Search and pick specific characters to display
 - **Min. connections slider** (1-10, default 2) — Controls minimum shared traits for trait nodes to appear in network view, and minimum connections for characters to appear in direct view
 - Hover highlights connections, click opens detail panel

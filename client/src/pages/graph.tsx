@@ -52,6 +52,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   animals: "#FF6B35",
   characterTrait: "#FF4081",
   physicalCharacteristics: "#4A7BFF",
+  animalType: "#FF8A65",
+  objectType: "#FFD700",
   significantEvent: "#8F00FF",
   eventTypes: "#E53935",
   birthTypes: "#00BCD4",
@@ -66,6 +68,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   animals: "Animals",
   characterTrait: "Trait",
   physicalCharacteristics: "Physical",
+  animalType: "Animal Type",
+  objectType: "Object Type",
   significantEvent: "Event",
   eventTypes: "Event Type",
   birthTypes: "Birth Type",
@@ -224,6 +228,164 @@ const SYNONYMS: Record<string, string> = {
   "ostrich feather": "feather",
 };
 
+const ANIMAL_SUPERSETS: Record<string, string> = {
+  snake: "Reptiles",
+  serpent: "Reptiles",
+  dragon: "Mythical Creatures",
+  crocodile: "Reptiles",
+  turtle: "Reptiles",
+  tortoise: "Reptiles",
+  lizard: "Reptiles",
+  frog: "Amphibians",
+
+  eagle: "Birds",
+  falcon: "Birds",
+  hawk: "Birds",
+  vulture: "Birds",
+  crane: "Birds",
+  swan: "Birds",
+  dove: "Birds",
+  peacock: "Birds",
+  raven: "Birds",
+  crow: "Birds",
+  heron: "Birds",
+  owl: "Birds",
+  sparrow: "Birds",
+  rooster: "Birds",
+  cock: "Birds",
+  hen: "Birds",
+  ibis: "Birds",
+  quetzal: "Birds",
+  hummingbird: "Birds",
+  bird: "Birds",
+  cuckoo: "Birds",
+  kite: "Birds",
+
+  horse: "Mammals",
+  lion: "Mammals",
+  bear: "Mammals",
+  bull: "Mammals",
+  cow: "Mammals",
+  ox: "Mammals",
+  dog: "Mammals",
+  tiger: "Mammals",
+  goat: "Mammals",
+  ram: "Mammals",
+  wolf: "Mammals",
+  boar: "Mammals",
+  monkey: "Mammals",
+  cat: "Mammals",
+  deer: "Mammals",
+  stag: "Mammals",
+  donkey: "Mammals",
+  pig: "Mammals",
+  elephant: "Mammals",
+  rabbit: "Mammals",
+  hare: "Mammals",
+  jaguar: "Mammals",
+  panther: "Mammals",
+  whale: "Mammals",
+  dolphin: "Mammals",
+  jackal: "Mammals",
+  hippopotamus: "Mammals",
+  fox: "Mammals",
+  leopard: "Mammals",
+  gazelle: "Mammals",
+  cattle: "Mammals",
+
+  fish: "Fish",
+
+  scorpion: "Insects & Arachnids",
+  scarab: "Insects & Arachnids",
+  bee: "Insects & Arachnids",
+  ant: "Insects & Arachnids",
+  butterfly: "Insects & Arachnids",
+  spider: "Insects & Arachnids",
+  cicada: "Insects & Arachnids",
+
+  phoenix: "Mythical Creatures",
+  centaur: "Mythical Creatures",
+  cerberus: "Mythical Creatures",
+  sphinx: "Mythical Creatures",
+  minotaur: "Mythical Creatures",
+  pegasus: "Mythical Creatures",
+  griffin: "Mythical Creatures",
+  chimera: "Mythical Creatures",
+  hydra: "Mythical Creatures",
+};
+
+const OBJECT_SUPERSETS: Record<string, string> = {
+  sword: "Weapons",
+  spear: "Weapons",
+  bow: "Weapons",
+  arrow: "Weapons",
+  trident: "Weapons",
+  thunderbolt: "Weapons",
+  mace: "Weapons",
+  axe: "Weapons",
+  dagger: "Weapons",
+  knife: "Weapons",
+  lance: "Weapons",
+  flail: "Weapons",
+  discus: "Weapons",
+  hammer: "Weapons",
+  javelin: "Weapons",
+  club: "Weapons",
+  whip: "Weapons",
+
+  shield: "Armor & Protection",
+  helmet: "Armor & Protection",
+  aegis: "Armor & Protection",
+  armor: "Armor & Protection",
+  net: "Armor & Protection",
+  breastplate: "Armor & Protection",
+
+  crown: "Regalia & Authority",
+  scepter: "Regalia & Authority",
+  throne: "Regalia & Authority",
+  chariot: "Regalia & Authority",
+  cornucopia: "Regalia & Authority",
+  caduceus: "Regalia & Authority",
+
+  lyre: "Musical Instruments",
+  flute: "Musical Instruments",
+  drum: "Musical Instruments",
+  lute: "Musical Instruments",
+  conch: "Musical Instruments",
+  sistrum: "Musical Instruments",
+
+  staff: "Sacred & Ritual",
+  ankh: "Sacred & Ritual",
+  torch: "Sacred & Ritual",
+  mirror: "Sacred & Ritual",
+  chalice: "Sacred & Ritual",
+
+  flower: "Nature & Fertility",
+  fruit: "Nature & Fertility",
+  grain: "Nature & Fertility",
+  tree: "Nature & Fertility",
+  wreath: "Nature & Fertility",
+};
+
+const ANIMAL_SUPERSET_COLORS: Record<string, string> = {
+  "Mammals": "#FF6B35",
+  "Birds": "#00BCD4",
+  "Reptiles": "#7FFF00",
+  "Fish": "#4A7BFF",
+  "Insects & Arachnids": "#FFB800",
+  "Amphibians": "#66BB6A",
+  "Mythical Creatures": "#8F00FF",
+};
+
+const OBJECT_SUPERSET_COLORS: Record<string, string> = {
+  "Weapons": "#E53935",
+  "Armor & Protection": "#4A7BFF",
+  "Regalia & Authority": "#FFD700",
+  "Musical Instruments": "#CE93D8",
+  "Sacred & Ritual": "#03FF9B",
+  "Nature & Fertility": "#66BB6A",
+};
+
 const STRIP_PREFIXES = [
   /^goddess of /i,
   /^god of /i,
@@ -331,14 +493,25 @@ const ARRAY_TRAIT_FIELDS: { key: keyof Node; category: string }[] = [
   { key: "familyRoles", category: "familyRoles" },
 ];
 
-function getTraitsForFigure(fig: Node, enabledCategories?: Set<string>): string[] {
+function getTraitsForFigure(fig: Node, enabledCategories?: Set<string>, useSupersets?: Set<string>): string[] {
   const traits: string[] = [];
+  const useAnimalSupersets = useSupersets?.has("animalType");
+  const useObjectSupersets = useSupersets?.has("objectType");
   for (const field of TRAIT_FIELDS) {
     if (enabledCategories && !enabledCategories.has(field.category)) continue;
     const val = fig[field.key] as string | null;
     const tokens = tokenize(val);
     for (const token of tokens) {
-      traits.push(`${field.category}::${token}`);
+      if (field.category === "animals" && useAnimalSupersets) {
+        const superset = ANIMAL_SUPERSETS[token];
+        traits.push(`animalType::${superset || "Other Animals"}`);
+      } else if (field.category === "object" && useObjectSupersets) {
+        const superset = OBJECT_SUPERSETS[token];
+        traits.push(`objectType::${superset || "Other Objects"}`);
+      
+      } else {
+        traits.push(`${field.category}::${token}`);
+      }
     }
   }
   for (const field of ARRAY_TRAIT_FIELDS) {
@@ -350,10 +523,15 @@ function getTraitsForFigure(fig: Node, enabledCategories?: Set<string>): string[
       }
     }
   }
-  return traits;
+  const seen = new Set<string>();
+  return traits.filter(t => {
+    if (seen.has(t)) return false;
+    seen.add(t);
+    return true;
+  });
 }
 
-function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>) {
+function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>, useSupersets?: Set<string>) {
   const traitCounts = new Map<string, { label: string; category: string; count: number }>();
   const figureTraits = new Map<number, string[]>();
 
@@ -362,7 +540,7 @@ function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: 
     : figures;
 
   for (const fig of effectiveFigures) {
-    const traits = getTraitsForFigure(fig, enabledCategories);
+    const traits = getTraitsForFigure(fig, enabledCategories, useSupersets);
     figureTraits.set(fig.id, traits);
     for (const traitId of traits) {
       const parts = traitId.split("::");
@@ -466,14 +644,14 @@ function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: 
   return { graphNodes, graphLinks };
 }
 
-function buildDirectGraph(figures: Node[], minConnections: number, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>): { nodes: CharNode[]; links: DirectLink[] } {
+function buildDirectGraph(figures: Node[], minConnections: number, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>, useSupersets?: Set<string>): { nodes: CharNode[]; links: DirectLink[] } {
   const effectiveFigures = selectedCharacterIds && selectedCharacterIds.size > 0
     ? figures.filter(f => selectedCharacterIds.has(f.id))
     : figures;
 
   const figureTraitSets = new Map<number, Set<string>>();
   for (const fig of effectiveFigures) {
-    figureTraitSets.set(fig.id, new Set(getTraitsForFigure(fig, enabledCategories)));
+    figureTraitSets.set(fig.id, new Set(getTraitsForFigure(fig, enabledCategories, useSupersets)));
   }
 
   const charNodes: CharNode[] = [];
@@ -539,13 +717,14 @@ function findDichotomies(
   figures: Node[],
   depth: number,
   threshold: number,
-  enabledCategories?: Set<string>
+  enabledCategories?: Set<string>,
+  useSupersets?: Set<string>
 ): DichotomyGroup[] {
   const figTraitSets = new Map<number, Set<string>>();
   const traitFigures = new Map<string, Set<number>>();
 
   for (const fig of figures) {
-    const traits = getTraitsForFigure(fig, enabledCategories);
+    const traits = getTraitsForFigure(fig, enabledCategories, useSupersets);
     figTraitSets.set(fig.id, new Set(traits));
     for (const t of traits) {
       if (!traitFigures.has(t)) traitFigures.set(t, new Set());
@@ -694,13 +873,13 @@ interface CAResult {
   totalInertia: number;
 }
 
-function computeCorrespondenceAnalysis(figures: Node[]): CAResult {
+function computeCorrespondenceAnalysis(figures: Node[], useSupersets?: Set<string>): CAResult {
   const minShared = 3;
   const traitCounts = new Map<string, { label: string; category: string; count: number }>();
   const figTraitSets = new Map<number, Set<string>>();
 
   for (const fig of figures) {
-    const traits = new Set(getTraitsForFigure(fig));
+    const traits = new Set(getTraitsForFigure(fig, undefined, useSupersets));
     figTraitSets.set(fig.id, traits);
     for (const traitId of traits) {
       const parts = traitId.split("::");
@@ -1153,6 +1332,8 @@ function FilterSidebar({
   onClearCharacters,
   characterSearch,
   onCharacterSearchChange,
+  activeSupersets,
+  onToggleSuperset,
 }: {
   filters: { traditions: string[]; categories: string[] };
   activeFilters: Record<string, Set<string>>;
@@ -1170,6 +1351,8 @@ function FilterSidebar({
   onClearCharacters: () => void;
   characterSearch: string;
   onCharacterSearchChange: (val: string) => void;
+  activeSupersets: Set<string>;
+  onToggleSuperset: (key: string) => void;
 }) {
   const filteredCharacters = useMemo(() => {
     if (!characterSearch.trim()) return [];
@@ -1333,21 +1516,67 @@ function FilterSidebar({
                   </div>
                   <div className="space-y-1.5">
                     {section.values.map((val) => (
-                      <div key={val} className="flex items-center gap-2">
-                        <Checkbox
-                          id={`${section.key}-${val}`}
-                          checked={activeFilters[section.key]?.has(val) || false}
-                          onCheckedChange={() => onToggleFilter(section.key, val)}
-                          className="border-[#350A8C]/40 data-[state=checked]:bg-[#8F00FF] data-[state=checked]:border-[#8F00FF]"
-                          data-testid={`checkbox-filter-${section.key}-${val}`}
-                        />
-                        <Label
-                          htmlFor={`${section.key}-${val}`}
-                          className="text-xs text-shadows-text/60 cursor-pointer flex items-center gap-1.5"
-                        >
-                          <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: section.getColor(val) }} />
-                          {CATEGORY_LABELS[val] || val}
-                        </Label>
+                      <div key={val}>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id={`${section.key}-${val}`}
+                            checked={activeFilters[section.key]?.has(val) || false}
+                            onCheckedChange={() => onToggleFilter(section.key, val)}
+                            className="border-[#350A8C]/40 data-[state=checked]:bg-[#8F00FF] data-[state=checked]:border-[#8F00FF]"
+                            data-testid={`checkbox-filter-${section.key}-${val}`}
+                          />
+                          <Label
+                            htmlFor={`${section.key}-${val}`}
+                            className="text-xs text-shadows-text/60 cursor-pointer flex items-center gap-1.5"
+                          >
+                            <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: section.getColor(val) }} />
+                            {CATEGORY_LABELS[val] || val}
+                          </Label>
+                          {val === "animals" && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); e.preventDefault(); onToggleSuperset("animalType"); }}
+                              className={`ml-auto text-[9px] px-1.5 py-0.5 rounded border transition-colors ${
+                                activeSupersets.has("animalType")
+                                  ? "bg-[#FF8A65]/20 border-[#FF8A65]/50 text-[#FF8A65]"
+                                  : "border-[#350A8C]/30 text-shadows-text/30 hover:text-shadows-text/50"
+                              }`}
+                              data-testid="button-toggle-animal-supersets"
+                            >
+                              Group
+                            </button>
+                          )}
+                          {val === "object" && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); e.preventDefault(); onToggleSuperset("objectType"); }}
+                              className={`ml-auto text-[9px] px-1.5 py-0.5 rounded border transition-colors ${
+                                activeSupersets.has("objectType")
+                                  ? "bg-[#FFD700]/20 border-[#FFD700]/50 text-[#FFD700]"
+                                  : "border-[#350A8C]/30 text-shadows-text/30 hover:text-shadows-text/50"
+                              }`}
+                              data-testid="button-toggle-object-supersets"
+                            >
+                              Group
+                            </button>
+                          )}
+                        </div>
+                        {val === "animals" && activeSupersets.has("animalType") && activeFilters[section.key]?.has(val) && (
+                          <div className="ml-6 mt-1 flex flex-wrap gap-1">
+                            {Object.entries(ANIMAL_SUPERSET_COLORS).map(([name, color]) => (
+                              <span key={name} className="text-[9px] px-1.5 py-0.5 rounded-full border" style={{ borderColor: color + "60", color }}>
+                                {name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {val === "object" && activeSupersets.has("objectType") && activeFilters[section.key]?.has(val) && (
+                          <div className="ml-6 mt-1 flex flex-wrap gap-1">
+                            {Object.entries(OBJECT_SUPERSET_COLORS).map(([name, color]) => (
+                              <span key={name} className="text-[9px] px-1.5 py-0.5 rounded-full border" style={{ borderColor: color + "60", color }}>
+                                {name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1919,18 +2148,20 @@ function CorrespondenceView({
   onSelectNode,
   onHoverNode,
   selectedNodeId,
+  useSupersets,
 }: {
   figures: Node[];
   onSelectNode: (node: Node | null) => void;
   onHoverNode: (node: any) => void;
   selectedNodeId: number | null;
+  useSupersets?: Set<string>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawRef = useRef<(() => void) | null>(null);
   const selectedNodeIdRef = useRef(selectedNodeId);
   selectedNodeIdRef.current = selectedNodeId;
 
-  const caResult = useMemo(() => computeCorrespondenceAnalysis(figures), [figures]);
+  const caResult = useMemo(() => computeCorrespondenceAnalysis(figures, useSupersets), [figures, useSupersets]);
   const { points: caPoints, dimensions: caDimensions } = caResult;
 
   useEffect(() => {
@@ -2325,6 +2556,7 @@ function DichotomyView({
   onHoverNode,
   selectedNodeId,
   enabledCategories,
+  useSupersets,
 }: {
   figures: Node[];
   dichotomyDepth: number;
@@ -2333,6 +2565,7 @@ function DichotomyView({
   onHoverNode: (n: any) => void;
   selectedNodeId: number | null;
   enabledCategories?: Set<string>;
+  useSupersets?: Set<string>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const transformRef = useRef({ x: 0, y: 0, k: 1 });
@@ -2345,8 +2578,8 @@ function DichotomyView({
 
   const dichotomyResult = useMemo(() => {
     if (!figures || figures.length === 0) return [];
-    return findDichotomies(figures, dichotomyDepth, dichotomyThreshold, enabledCategories);
-  }, [figures, dichotomyDepth, dichotomyThreshold, enabledCategories]);
+    return findDichotomies(figures, dichotomyDepth, dichotomyThreshold, enabledCategories, useSupersets);
+  }, [figures, dichotomyDepth, dichotomyThreshold, enabledCategories, useSupersets]);
 
   const leafGroups = useMemo(() => {
     return flattenDichotomyGroups(dichotomyResult);
@@ -2791,8 +3024,9 @@ export default function GraphPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, Set<string>>>({
-    categories: new Set(Object.keys(CATEGORY_LABELS)),
+    categories: new Set(Object.keys(CATEGORY_LABELS).filter(k => k !== "animalType" && k !== "objectType")),
   });
+  const [activeSupersets, setActiveSupersets] = useState<Set<string>>(new Set());
   const [hoveredNode, setHoveredNode] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"network" | "direct" | "ca" | "dichotomy">("network");
   const [dichotomyDepth, setDichotomyDepth] = useState(1);
@@ -2826,7 +3060,11 @@ export default function GraphPage() {
 
   const enabledCategoriesSet = useMemo(() => {
     const catFilter = activeFilters["categories"];
-    return catFilter && catFilter.size > 0 ? catFilter : undefined;
+    if (!catFilter || catFilter.size === 0) return undefined;
+    const effective = new Set(catFilter);
+    if (effective.has("animalType")) effective.add("animals");
+    if (effective.has("objectType")) effective.add("object");
+    return effective;
   }, [activeFilters]);
 
   const connectionStats = useMemo(() => {
@@ -2836,7 +3074,7 @@ export default function GraphPage() {
     const figTraitSets = new Map<number, Set<string>>();
     const traitFigures = new Map<string, Set<number>>();
     for (const fig of effectiveFigures) {
-      const traits = getTraitsForFigure(fig, enabledCategoriesSet);
+      const traits = getTraitsForFigure(fig, enabledCategoriesSet, activeSupersets);
       figTraitSets.set(fig.id, new Set(traits));
       for (const t of traits) {
         if (!traitFigures.has(t)) traitFigures.set(t, new Set());
@@ -2871,22 +3109,22 @@ export default function GraphPage() {
     }
     if (max > steps[steps.length - 1]) steps.push(max);
     return { max, thresholds: steps };
-  }, [data?.nodes, selectedCharacterIds, enabledCategoriesSet]);
+  }, [data?.nodes, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
 
   const { graphNodes, graphLinks } = useMemo(() => {
     if (!data?.nodes) return { graphNodes: [], graphLinks: [] };
-    return buildGraph(data.nodes, minConnections, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet);
-  }, [data?.nodes, minConnections, selectedCharacterIds, enabledCategoriesSet]);
+    return buildGraph(data.nodes, minConnections, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets);
+  }, [data?.nodes, minConnections, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
 
   const { directNodes, directLinks } = useMemo(() => {
     if (!data?.nodes) return { directNodes: [], directLinks: [] };
-    const result = buildDirectGraph(data.nodes, minConnections, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet);
+    const result = buildDirectGraph(data.nodes, minConnections, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets);
     return { directNodes: result.nodes, directLinks: result.links };
-  }, [data?.nodes, minConnections, selectedCharacterIds, enabledCategoriesSet]);
+  }, [data?.nodes, minConnections, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
 
   const filters = useMemo(() => {
     const traditions: string[] = [];
-    const categories = Object.keys(CATEGORY_LABELS);
+    const categories = Object.keys(CATEGORY_LABELS).filter(k => k !== "animalType" && k !== "objectType");
     return { traditions, categories };
   }, []);
 
@@ -3075,7 +3313,13 @@ export default function GraphPage() {
             </div>
           </div>
         )}
-        {viewMode !== "direct" && Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+        {viewMode !== "direct" && Object.entries(CATEGORY_LABELS)
+          .filter(([key]) => {
+            if (key === "animalType") return activeSupersets.has("animalType");
+            if (key === "objectType") return activeSupersets.has("objectType");
+            return true;
+          })
+          .map(([key, label]) => (
           <div key={key} className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[key] }} />
             <span className="text-[10px] text-shadows-text/40">{label}</span>
@@ -3149,6 +3393,15 @@ export default function GraphPage() {
         onClearCharacters={clearCharacters}
         characterSearch={characterSearch}
         onCharacterSearchChange={setCharacterSearch}
+        activeSupersets={activeSupersets}
+        onToggleSuperset={(key: string) => {
+          setActiveSupersets(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+          });
+        }}
       />
 
       <div className="absolute inset-0 lg:left-72">
@@ -3176,6 +3429,7 @@ export default function GraphPage() {
             onSelectNode={(n) => handleGraphNodeSelect(n)}
             onHoverNode={setHoveredNode}
             selectedNodeId={selectedNode?.id ?? null}
+            useSupersets={activeSupersets}
           />
         ) : (
           <DichotomyView
@@ -3186,6 +3440,7 @@ export default function GraphPage() {
             onHoverNode={setHoveredNode}
             selectedNodeId={selectedNode?.id ?? null}
             enabledCategories={enabledCategoriesSet}
+            useSupersets={activeSupersets}
           />
         )}
       </div>
