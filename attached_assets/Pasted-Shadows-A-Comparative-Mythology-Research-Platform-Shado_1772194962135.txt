@@ -1,0 +1,43 @@
+Shadows — A Comparative Mythology Research Platform
+Shadows is a digital humanities research project dedicated to the comparative study of mythological figures, symbolic motifs, and narrative structures across cultures and historical periods. The project aims to create a dynamic research environment where mythological traditions can be explored relationally rather than in isolation, allowing meaningful connections and divergences to emerge through structured comparison.
+By combining rigorous scholarship with advanced digital tools, Shadows seeks to provide an innovative platform for researchers, students, and the wider public interested in the global history of myths, religions, and symbolic systems.
+Research Vision
+Human societies have always produced complex narrative worlds populated by gods, heroes, spirits, and symbolic beings. While these figures belong to specific linguistic, cultural, and historical contexts, they often share recurring narrative roles, attributes, or symbolic functions. Comparative mythology has long sought to identify and analyze these patterns, from early philological approaches to contemporary interdisciplinary research.
+Shadows builds upon this tradition by offering a research infrastructure designed to document, contextualize, and visualize relationships between mythological entities across cultures. Rather than proposing simplistic equivalences, the project emphasizes:
+Contextualized comparison grounded in primary sources
+Attention to historical transmission and transformation
+Documentation of symbolic parallels and divergences
+Exploration of narrative structures and myth cycles
+Cross-cultural circulation and reinterpretation of figures and motifs
+The objective is not to homogenize traditions, but to provide tools that make structured comparison possible at scale while preserving cultural specificity.
+A Graph-Based Knowledge Environment
+At the core of Shadows is an interactive graph-based platform that enables users to navigate mythological data through relational visualization.
+Each entity in the database—whether a deity, legendary figure, creature, symbolic object, or narrative motif—is described through structured attributes such as:
+Cultural and textual origin
+Domains, functions, and symbolic associations
+Physical descriptions and iconographic traits
+Narrative roles and major myth cycles
+Relationships with other figures (genealogical, adversarial, syncretic, etc.)
+Associated animals, objects, and symbols
+Key events, transformations, or episodes
+These entities are interconnected within a semantic graph that allows users to explore connections across traditions. For example, users may trace recurring narrative patterns, examine shared symbolic attributes, or analyze how a specific motif appears in different cultural contexts.
+This relational visualization supports new forms of comparative analysis by making large-scale patterns perceptible while preserving the complexity of individual traditions.
+Methodological Foundations
+Shadows is grounded in an interdisciplinary methodology combining:
+Comparative mythology and religious studies
+Philology and textual scholarship
+History of religions and cultural transmission
+Digital humanities and knowledge graph modeling
+Collaborative international research
+All entries are linked to identifiable textual, archaeological, or scholarly sources whenever possible. The platform is designed to support academically rigorous comparison rather than speculative or purely analogical associations.
+A Collaborative and Evolving Project
+Shadows is conceived as a living research infrastructure. The database and graph expand progressively through the integration of new corpora, traditions, and scholarly contributions. The project is open to collaboration with specialists in different cultural areas who wish to contribute structured data, expertise, or critical perspectives.
+Future developments include:
+Expansion of textual and iconographic corpora
+Advanced filtering and thematic exploration tools
+Comparative pathways focused on specific motifs or narrative structures
+Integration of multilingual sources and translations
+Development of pedagogical and research-oriented interfaces
+A Space for Comparative Exploration
+By combining structured scholarship with interactive visualization, Shadows provides a new way to explore mythological traditions across cultures and time. The platform enables users to identify patterns, examine transformations, and better understand how mythological figures and narratives circulate, evolve, and interact across the global history of human cultures.
+Shadows is both a research tool and a comparative observatory: a space where mythological knowledge can be mapped, connected, and explored in depth.
