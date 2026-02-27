@@ -973,11 +973,14 @@ function computeCorrespondenceAnalysis(figures: Node[], useSupersets?: Set<strin
     }
   }
 
+  let traceInertia = 0;
+  for (let i = 0; i < M.length; i++) traceInertia += M[i][i];
+
   const eigenPairs = powerIterationMultiple(M, numDims + 2);
   const dims = eigenPairs.filter(ep => ep.value > 1e-8).slice(0, numDims);
   if (dims.length < 2) return { points: [], dimensions: [], totalInertia: 0 };
 
-  const totalInertia = dims.reduce((s, d) => s + d.value, 0);
+  const totalInertia = traceInertia;
 
   const rowCoords: number[][] = [];
   const colCoords: number[][] = [];
@@ -1093,14 +1096,20 @@ function powerIterationMultiple(M: number[][], numVecs: number): { value: number
   const results: { value: number; vector: number[] }[] = [];
   const A = M.map(r => [...r]);
 
+  let seed = 42;
+  function seededRandom() {
+    seed = (seed * 1664525 + 1013904223) & 0x7fffffff;
+    return (seed / 0x7fffffff) - 0.5;
+  }
+
   for (let iter = 0; iter < numVecs; iter++) {
-    let v = new Array(n).fill(0).map(() => Math.random() - 0.5);
+    let v = new Array(n).fill(0).map(() => seededRandom());
     let norm = Math.sqrt(v.reduce((s, x) => s + x * x, 0));
     v = v.map(x => x / norm);
 
     let eigenvalue = 0;
 
-    for (let step = 0; step < 200; step++) {
+    for (let step = 0; step < 500; step++) {
       const Av = new Array(n).fill(0);
       for (let i = 0; i < n; i++) {
         for (let j = 0; j < n; j++) Av[i] += A[i][j] * v[j];
@@ -1111,7 +1120,7 @@ function powerIterationMultiple(M: number[][], numVecs: number): { value: number
       const newV = Av.map(x => x / norm);
       const diff = newV.reduce((s, x, i) => s + Math.abs(x - v[i]), 0);
       v = newV;
-      if (diff < 1e-10) break;
+      if (diff < 1e-12) break;
     }
 
     results.push({ value: eigenvalue, vector: v });
