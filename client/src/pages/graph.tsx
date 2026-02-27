@@ -331,9 +331,10 @@ const ARRAY_TRAIT_FIELDS: { key: keyof Node; category: string }[] = [
   { key: "familyRoles", category: "familyRoles" },
 ];
 
-function getTraitsForFigure(fig: Node): string[] {
+function getTraitsForFigure(fig: Node, enabledCategories?: Set<string>): string[] {
   const traits: string[] = [];
   for (const field of TRAIT_FIELDS) {
+    if (enabledCategories && !enabledCategories.has(field.category)) continue;
     const val = fig[field.key] as string | null;
     const tokens = tokenize(val);
     for (const token of tokens) {
@@ -341,6 +342,7 @@ function getTraitsForFigure(fig: Node): string[] {
     }
   }
   for (const field of ARRAY_TRAIT_FIELDS) {
+    if (enabledCategories && !enabledCategories.has(field.category)) continue;
     const arr = fig[field.key] as string[] | null;
     if (arr && Array.isArray(arr)) {
       for (const item of arr) {
@@ -536,13 +538,14 @@ interface DichotomyGroup {
 function findDichotomies(
   figures: Node[],
   depth: number,
-  threshold: number
+  threshold: number,
+  enabledCategories?: Set<string>
 ): DichotomyGroup[] {
   const figTraitSets = new Map<number, Set<string>>();
   const traitFigures = new Map<string, Set<number>>();
 
   for (const fig of figures) {
-    const traits = getTraitsForFigure(fig);
+    const traits = getTraitsForFigure(fig, enabledCategories);
     figTraitSets.set(fig.id, new Set(traits));
     for (const t of traits) {
       if (!traitFigures.has(t)) traitFigures.set(t, new Set());
@@ -2301,6 +2304,7 @@ function DichotomyView({
   onSelectNode,
   onHoverNode,
   selectedNodeId,
+  enabledCategories,
 }: {
   figures: Node[];
   dichotomyDepth: number;
@@ -2308,6 +2312,7 @@ function DichotomyView({
   onSelectNode: (n: Node) => void;
   onHoverNode: (n: any) => void;
   selectedNodeId: number | null;
+  enabledCategories?: Set<string>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const transformRef = useRef({ x: 0, y: 0, k: 1 });
@@ -2320,8 +2325,8 @@ function DichotomyView({
 
   const dichotomyResult = useMemo(() => {
     if (!figures || figures.length === 0) return [];
-    return findDichotomies(figures, dichotomyDepth, dichotomyThreshold);
-  }, [figures, dichotomyDepth, dichotomyThreshold]);
+    return findDichotomies(figures, dichotomyDepth, dichotomyThreshold, enabledCategories);
+  }, [figures, dichotomyDepth, dichotomyThreshold, enabledCategories]);
 
   const leafGroups = useMemo(() => {
     return flattenDichotomyGroups(dichotomyResult);
@@ -3011,7 +3016,7 @@ export default function GraphPage() {
             </div>
           </div>
         )}
-        {viewMode !== "direct" && viewMode !== "dichotomy" && Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+        {viewMode !== "direct" && Object.entries(CATEGORY_LABELS).map(([key, label]) => (
           <div key={key} className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[key] }} />
             <span className="text-[10px] text-shadows-text/40">{label}</span>
@@ -3120,6 +3125,7 @@ export default function GraphPage() {
             onSelectNode={(n) => handleGraphNodeSelect(n)}
             onHoverNode={setHoveredNode}
             selectedNodeId={selectedNode?.id ?? null}
+            enabledCategories={activeFilters["categories"]?.size > 0 ? activeFilters["categories"] : undefined}
           />
         )}
       </div>
