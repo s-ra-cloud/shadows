@@ -11,12 +11,12 @@ import {
 type Tab = "nodes" | "relations" | "suggestions" | "sources";
 type NodeCategory = "characters" | "gender" | "domain" | "object" | "animals" | "characterTrait" | "physicalCharacteristics" | "significantEvent" | "symbolism" | "neumannArchetype" | "eventTypes" | "birthTypes" | "deathTypes" | "familyRoles";
 
-const NODE_CATEGORIES: { key: NodeCategory; label: string; isArray?: boolean }[] = [
+const NODE_CATEGORIES: { key: NodeCategory; label: string; isArray?: boolean; commaSplit?: boolean }[] = [
   { key: "characters", label: "Characters" },
   { key: "gender", label: "Gender" },
   { key: "domain", label: "Domain" },
-  { key: "object", label: "Object" },
-  { key: "animals", label: "Animals" },
+  { key: "object", label: "Object", commaSplit: true },
+  { key: "animals", label: "Animals", commaSplit: true },
   { key: "characterTrait", label: "Character Trait" },
   { key: "physicalCharacteristics", label: "Physical Characteristics" },
   { key: "significantEvent", label: "Significant Event" },
@@ -388,19 +388,22 @@ function NodesTab({ isEditor, onSuggest }: {
     const catInfo = NODE_CATEGORIES.find((c) => c.key === category);
     if (!catInfo) return null;
     const valueMap = new Map<string, number[]>();
+    const addValue = (v: string, id: number) => {
+      const trimmed = v.trim();
+      if (!trimmed) return;
+      if (!valueMap.has(trimmed)) valueMap.set(trimmed, []);
+      valueMap.get(trimmed)!.push(id);
+    };
     nodes.forEach((n) => {
       if (catInfo.isArray) {
         const arr = (n as any)[category] as string[] | null;
-        if (arr) arr.forEach((v) => {
-          if (!valueMap.has(v)) valueMap.set(v, []);
-          valueMap.get(v)!.push(n.id);
-        });
+        if (arr) arr.forEach((v) => addValue(v, n.id));
+      } else if (catInfo.commaSplit) {
+        const val = (n as any)[category] as string | null;
+        if (val) val.split(",").forEach((v) => addValue(v, n.id));
       } else {
         const val = (n as any)[category] as string | null;
-        if (val) {
-          if (!valueMap.has(val)) valueMap.set(val, []);
-          valueMap.get(val)!.push(n.id);
-        }
+        if (val) addValue(val, n.id);
       }
     });
     let entries = Array.from(valueMap.entries()).map(([value, ids]) => ({ value, count: ids.length, nodeIds: ids }));
