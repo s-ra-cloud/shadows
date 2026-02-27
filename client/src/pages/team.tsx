@@ -1,5 +1,6 @@
 import lauraPhotoPath from "@assets/laura_duparc_photo.png";
 import amiPhotoPath from "@assets/Ami_1772197656940.jpeg";
+import camillePhotoPath from "@assets/Camille_1772199367888.jpeg";
 
 const teamMembers = [
   {
@@ -13,6 +14,7 @@ const teamMembers = [
     name: "Camille Bertrand",
     role: "Researcher",
     institution: "École des Hautes Études en Sciences Sociales",
+    image: camillePhotoPath,
     bio: "Camille Bertrand holds a Master's degree in political studies from the École des Hautes Études en Sciences Sociales (EHESS) and a law degree from Aix-Marseille Université, where she is currently pursuing a doctorate in law and political studies. She has worked as a research assistant at the Laboratory of Private Law and Criminal Sciences of Aix-Marseille Université on a SATT Sud-Est funded project, collaborating with a web developer to build a tool for substituting equivalent propositions in the work of Wittgenstein (Semantica.AI). Her experience bridges legal analysis, political theory, and digital tools for the humanities. Within SHADOWS, she contributes her skills in textual analysis and interdisciplinary research methodology.",
   },
   {
