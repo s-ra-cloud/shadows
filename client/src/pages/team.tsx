@@ -24,7 +24,7 @@ const teamMembers = [
     role: "Researcher",
     institution: "Aix-Marseille Université",
     image: amiPhotoPath,
-    imageStyle: { objectPosition: "55% 35%", transform: "scale(1.4)" },
+    imageStyle: { objectPosition: "50% 15%", transform: "scale(1.3)" },
     bio: "Ami Nagai is a doctoral candidate in history at Aix-Marseille Université, affiliated with the TELEMMe laboratory (CNRS). Born in Tokyo, she holds a bachelor's degree in international and Francophone studies from Sophia University (Tokyo) and a master's in modern and contemporary history from Aix-Marseille Université, where she was a recipient of the French Government Scholarship. She also holds a university diploma in criminal sciences and criminology. Her research fields include the history of criminality, law, gender, and medicine, with a doctoral thesis on castration in France from the 18th to 20th centuries. Fluent in Japanese, French, and English, she brings a cross-cultural perspective to SHADOWS, contributing to the atlas's coverage of Japanese and East Asian mythological traditions.",
   },
 ];
