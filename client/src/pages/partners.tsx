@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import machinaLogoPath from "@assets/Machin_logo_1772208429837.jpeg";
 function LegacyLogoSvg({ size = 112 }: { size?: number }) {
   const cx = 60, cy = 60;
   const r = 38;
@@ -116,6 +117,13 @@ export default function PartnersPage() {
                     <a href={partner.url} target="_blank" rel="noopener noreferrer" className="block opacity-80 hover:opacity-100 transition-opacity">
                       {partner.visual === "legacy" ? (
                         <LegacyLogoSvg size={112} />
+                      ) : partner.visual === "machina" ? (
+                        <img
+                          src={machinaLogoPath}
+                          alt="Machina Research Network logo"
+                          className="w-28 h-28 rounded-lg object-contain bg-white/90 p-1"
+                          data-testid="img-machina-logo"
+                        />
                       ) : (
                         <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#350A8C]/20 to-[#8F00FF]/10 border border-[#350A8C]/20 flex items-center justify-center">
                           <span className="font-serif text-3xl text-shadows-text/60">{partner.name.split(" ")[0][0]}</span>
