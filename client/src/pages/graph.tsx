@@ -353,7 +353,7 @@ function getTraitsForFigure(fig: Node, enabledCategories?: Set<string>): string[
   return traits;
 }
 
-function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: Set<number>) {
+function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>) {
   const traitCounts = new Map<string, { label: string; category: string; count: number }>();
   const figureTraits = new Map<number, string[]>();
 
@@ -362,7 +362,7 @@ function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: 
     : figures;
 
   for (const fig of effectiveFigures) {
-    const traits = getTraitsForFigure(fig);
+    const traits = getTraitsForFigure(fig, enabledCategories);
     figureTraits.set(fig.id, traits);
     for (const traitId of traits) {
       const parts = traitId.split("::");
@@ -466,14 +466,14 @@ function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: 
   return { graphNodes, graphLinks };
 }
 
-function buildDirectGraph(figures: Node[], minConnections: number, selectedCharacterIds?: Set<number>): { nodes: CharNode[]; links: DirectLink[] } {
+function buildDirectGraph(figures: Node[], minConnections: number, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>): { nodes: CharNode[]; links: DirectLink[] } {
   const effectiveFigures = selectedCharacterIds && selectedCharacterIds.size > 0
     ? figures.filter(f => selectedCharacterIds.has(f.id))
     : figures;
 
   const figureTraitSets = new Map<number, Set<string>>();
   for (const fig of effectiveFigures) {
-    figureTraitSets.set(fig.id, new Set(getTraitsForFigure(fig)));
+    figureTraitSets.set(fig.id, new Set(getTraitsForFigure(fig, enabledCategories)));
   }
 
   const charNodes: CharNode[] = [];
@@ -2802,22 +2802,27 @@ export default function GraphPage() {
     setSelectedCharacterIds(new Set());
   }, []);
 
+  const enabledCategoriesSet = useMemo(() => {
+    const catFilter = activeFilters["categories"];
+    return catFilter && catFilter.size > 0 ? catFilter : undefined;
+  }, [activeFilters]);
+
   const { graphNodes, graphLinks } = useMemo(() => {
     if (!data?.nodes) return { graphNodes: [], graphLinks: [] };
-    return buildGraph(data.nodes, minConnections, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined);
-  }, [data?.nodes, minConnections, selectedCharacterIds]);
+    return buildGraph(data.nodes, minConnections, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet);
+  }, [data?.nodes, minConnections, selectedCharacterIds, enabledCategoriesSet]);
 
   const { directNodes, directLinks } = useMemo(() => {
     if (!data?.nodes) return { directNodes: [], directLinks: [] };
-    const result = buildDirectGraph(data.nodes, minConnections, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined);
+    const result = buildDirectGraph(data.nodes, minConnections, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet);
     return { directNodes: result.nodes, directLinks: result.links };
-  }, [data?.nodes, minConnections, selectedCharacterIds]);
+  }, [data?.nodes, minConnections, selectedCharacterIds, enabledCategoriesSet]);
 
   const filters = useMemo(() => {
     const traditions: string[] = [];
-    const categories = [...new Set(graphNodes.filter(n => !n.isCharacter).map(n => (n as TraitNode).category))];
+    const categories = Object.keys(CATEGORY_LABELS);
     return { traditions, categories };
-  }, [graphNodes]);
+  }, []);
 
   const toggleFilter = useCallback((category: string, value: string) => {
     setActiveFilters((prev) => {
@@ -2833,25 +2838,13 @@ export default function GraphPage() {
 
   const filteredGraphNodes = useMemo(() => {
     return graphNodes.filter((n) => {
-      if (n.isCharacter) {
-        if (searchQuery) {
-          const q = searchQuery.toLowerCase();
-          if (!n.label.toLowerCase().includes(q)) return false;
-        }
-        return true;
-      } else {
-        const catFilter = activeFilters["categories"];
-        if (catFilter && catFilter.size > 0) {
-          if (!catFilter.has(n.category)) return false;
-        }
-        if (searchQuery) {
-          const q = searchQuery.toLowerCase();
-          if (!n.label.toLowerCase().includes(q)) return false;
-        }
-        return true;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        if (!n.label.toLowerCase().includes(q)) return false;
       }
+      return true;
     });
-  }, [graphNodes, activeFilters, searchQuery]);
+  }, [graphNodes, searchQuery]);
 
   const filteredNodeIds = useMemo(() => new Set(filteredGraphNodes.map(n => n.id)), [filteredGraphNodes]);
 
@@ -3125,7 +3118,7 @@ export default function GraphPage() {
             onSelectNode={(n) => handleGraphNodeSelect(n)}
             onHoverNode={setHoveredNode}
             selectedNodeId={selectedNode?.id ?? null}
-            enabledCategories={activeFilters["categories"]?.size > 0 ? activeFilters["categories"] : undefined}
+            enabledCategories={enabledCategoriesSet}
           />
         )}
       </div>
