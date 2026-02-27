@@ -1231,12 +1231,12 @@ function FilterSidebar({
                   value={[minConnections]}
                   onValueChange={(val) => onMinConnectionsChange(val[0])}
                   min={1}
-                  max={Math.max(10, maxConnectionCount)}
-                  step={maxConnectionCount > 100 ? 10 : maxConnectionCount > 50 ? 5 : 1}
+                  max={maxConnectionCount > 50 ? Math.ceil(maxConnectionCount / 10) * 10 : Math.max(10, maxConnectionCount)}
+                  step={1}
                   className="flex-1"
                   data-testid="slider-min-connections"
                 />
-                <span className="text-xs text-shadows-text/60 font-mono w-6 text-center" data-testid="text-min-connections">{minConnections}</span>
+                <span className="text-xs text-shadows-text/60 font-mono w-8 text-center" data-testid="text-min-connections">{minConnections}</span>
               </div>
             </div>
 
@@ -1312,7 +1312,25 @@ function FilterSidebar({
             {sections.map((section) =>
               section.values.length > 0 ? (
                 <div key={section.key}>
-                  <h4 className="text-xs uppercase tracking-wider text-shadows-text/40 mb-2">{section.label}</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-xs uppercase tracking-wider text-shadows-text/40">{section.label}</h4>
+                    <button
+                      className="text-[9px] text-[#8F00FF]/60 hover:text-[#8F00FF] transition-colors"
+                      onClick={() => {
+                        const allChecked = section.values.every(v => activeFilters[section.key]?.has(v));
+                        for (const v of section.values) {
+                          if (allChecked) {
+                            if (activeFilters[section.key]?.has(v)) onToggleFilter(section.key, v);
+                          } else {
+                            if (!activeFilters[section.key]?.has(v)) onToggleFilter(section.key, v);
+                          }
+                        }
+                      }}
+                      data-testid="button-toggle-all-categories"
+                    >
+                      {section.values.every(v => activeFilters[section.key]?.has(v)) ? "Clear all" : "Select all"}
+                    </button>
+                  </div>
                   <div className="space-y-1.5">
                     {section.values.map((val) => (
                       <div key={val} className="flex items-center gap-2">
@@ -2772,7 +2790,9 @@ export default function GraphPage() {
   const [selectedTrait, setSelectedTrait] = useState<TraitNode | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<Record<string, Set<string>>>({});
+  const [activeFilters, setActiveFilters] = useState<Record<string, Set<string>>>({
+    categories: new Set(Object.keys(CATEGORY_LABELS)),
+  });
   const [hoveredNode, setHoveredNode] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"network" | "direct" | "ca" | "dichotomy">("network");
   const [dichotomyDepth, setDichotomyDepth] = useState(1);
