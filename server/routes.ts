@@ -85,40 +85,42 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid import file: must contain nodes and edges" });
       }
 
+      const { sql } = await import("drizzle-orm");
       let nodesImported = 0;
       let edgesImported = 0;
       let sourcesImported = 0;
 
-      await db.delete(edges);
-      await db.delete(suggestions);
-      await db.delete(sources);
-      await db.delete(nodes);
+      await db.transaction(async (tx) => {
+        await tx.delete(edges);
+        await tx.delete(suggestions);
+        await tx.delete(sources);
+        await tx.delete(nodes);
 
-      if (data.nodes && Array.isArray(data.nodes)) {
-        for (const node of data.nodes) {
-          await db.insert(nodes).values(node).onConflictDoNothing();
-          nodesImported++;
+        if (data.nodes && Array.isArray(data.nodes)) {
+          for (const node of data.nodes) {
+            await tx.insert(nodes).values(node).onConflictDoNothing();
+            nodesImported++;
+          }
         }
-      }
 
-      if (data.edges && Array.isArray(data.edges)) {
-        for (const edge of data.edges) {
-          await db.insert(edges).values(edge).onConflictDoNothing();
-          edgesImported++;
+        if (data.edges && Array.isArray(data.edges)) {
+          for (const edge of data.edges) {
+            await tx.insert(edges).values(edge).onConflictDoNothing();
+            edgesImported++;
+          }
         }
-      }
 
-      if (data.sources && Array.isArray(data.sources)) {
-        for (const source of data.sources) {
-          await db.insert(sources).values(source).onConflictDoNothing();
-          sourcesImported++;
+        if (data.sources && Array.isArray(data.sources)) {
+          for (const source of data.sources) {
+            await tx.insert(sources).values(source).onConflictDoNothing();
+            sourcesImported++;
+          }
         }
-      }
 
-      const { sql } = await import("drizzle-orm");
-      await db.execute(sql`SELECT setval('nodes_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM nodes), 1))`);
-      await db.execute(sql`SELECT setval('edges_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM edges), 1))`);
-      await db.execute(sql`SELECT setval('sources_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM sources), 1))`);
+        await tx.execute(sql`SELECT setval('nodes_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM nodes), 1))`);
+        await tx.execute(sql`SELECT setval('edges_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM edges), 1))`);
+        await tx.execute(sql`SELECT setval('sources_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM sources), 1))`);
+      });
 
       res.json({
         success: true,
