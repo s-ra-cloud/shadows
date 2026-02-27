@@ -1,4 +1,5 @@
 import { BookOpen, GitBranch, Globe, Users, Layers, Search, Network, Compass } from "lucide-react";
+import logoPath from "@assets/logo(1)_1772195419087.png";
 
 const PRINCIPLES = [
   "Contextualized comparison grounded in primary sources",
@@ -40,12 +41,17 @@ export default function AboutPage() {
       <div className="max-w-4xl mx-auto px-6">
 
         <header className="mb-20">
-          <h1 className="font-serif text-4xl md:text-5xl text-shadows-text tracking-wide mb-4" data-testid="text-about-title">
-            The Project
-          </h1>
-          <p className="text-[#8F00FF]/70 text-sm uppercase tracking-widest mb-8" data-testid="text-about-subtitle">
-            A Comparative Mythology Research Platform
-          </p>
+          <div className="flex items-center gap-6 mb-6">
+            <img src={logoPath} alt="SHADOWS" className="h-24 w-auto" data-testid="img-project-logo" />
+            <div>
+              <h1 className="font-serif text-4xl md:text-5xl text-shadows-text tracking-wide mb-2" data-testid="text-about-title">
+                The Project
+              </h1>
+              <p className="text-[#8F00FF]/70 text-sm uppercase tracking-widest" data-testid="text-about-subtitle">
+                A Comparative Mythology Research Platform
+              </p>
+            </div>
+          </div>
           <div className="space-y-5 text-shadows-text/60 leading-relaxed text-justify">
             <p>
               Shadows is a digital humanities research project dedicated to the comparative study of mythological figures, symbolic motifs, and narrative structures across cultures and historical periods. The project aims to create a dynamic research environment where mythological traditions can be explored relationally rather than in isolation, allowing meaningful connections and divergences to emerge through structured comparison.
