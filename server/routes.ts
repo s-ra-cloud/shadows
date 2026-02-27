@@ -116,9 +116,9 @@ export async function registerRoutes(
       }
 
       const { sql } = await import("drizzle-orm");
-      await db.execute(sql`SELECT setval('nodes_id_seq', (SELECT COALESCE(MAX(id), 0) FROM nodes))`);
-      await db.execute(sql`SELECT setval('edges_id_seq', (SELECT COALESCE(MAX(id), 0) FROM edges))`);
-      await db.execute(sql`SELECT setval('sources_id_seq', (SELECT COALESCE(MAX(id), 0) FROM sources))`);
+      await db.execute(sql`SELECT setval('nodes_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM nodes), 1))`);
+      await db.execute(sql`SELECT setval('edges_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM edges), 1))`);
+      await db.execute(sql`SELECT setval('sources_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM sources), 1))`);
 
       res.json({
         success: true,
