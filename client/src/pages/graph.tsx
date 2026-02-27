@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as d3 from "d3";
-import { X, Search, Filter, ArrowLeft, Download, Network, ScatterChart, Users, SlidersHorizontal, Split } from "lucide-react";
+import { X, Search, Filter, ArrowLeft, Network, ScatterChart, Users, SlidersHorizontal, Split } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -3258,9 +3258,10 @@ export default function GraphPage() {
         </div>
       </div>
 
+      {viewMode !== "network" && (
       <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[80vh] overflow-y-auto">
         <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">
-          {viewMode === "network" ? "Attributes" : viewMode === "direct" ? "Direct Connections" : viewMode === "ca" ? "Correspondence Analysis" : "Dichotomies"}
+          {viewMode === "direct" ? "Direct Connections" : viewMode === "ca" ? "Correspondence Analysis" : "Dichotomies"}
         </span>
         {viewMode === "direct" && (
           <div className="mb-1 space-y-1">
@@ -3319,24 +3320,6 @@ export default function GraphPage() {
             </div>
           </div>
         )}
-        {viewMode !== "direct" && Object.entries(CATEGORY_LABELS)
-          .filter(([key]) => {
-            if (key === "animalType") return activeSupersets.has("animalType");
-            if (key === "objectType") return activeSupersets.has("objectType");
-            return true;
-          })
-          .map(([key, label]) => (
-          <div key={key} className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[key] }} />
-            <span className="text-[10px] text-shadows-text/40">{label}</span>
-          </div>
-        ))}
-        {viewMode !== "dichotomy" && (
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[#E0DCE6]" />
-            <span className="text-[10px] text-shadows-text/40">Character</span>
-          </div>
-        )}
         {viewMode === "direct" && (
           <>
             <div className="flex items-center gap-1.5 mt-1">
@@ -3349,16 +3332,7 @@ export default function GraphPage() {
             </div>
           </>
         )}
-        <a
-          href="/api/export"
-          download="shadows-database.json"
-          className="mt-2 flex items-center gap-1.5 text-[10px] text-[#03FF9B]/60 hover:text-[#03FF9B] transition-colors cursor-pointer"
-          data-testid="button-download-data"
-        >
-          <Download className="w-3 h-3" />
-          Download open data
-        </a>
-      </div>
+      </div>)}
 
       {hoveredNode && hoveredNode.isCharacter && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 bg-[#0B0626]/90 backdrop-blur-sm border border-[#350A8C]/30 rounded-lg px-4 py-2 pointer-events-none">

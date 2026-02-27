@@ -56,6 +56,18 @@ export async function registerRoutes(
     res.json({ project, nodes: projectNodes, edges: projectEdges });
   });
 
+  app.get("/api/download", async (_req, res) => {
+    const allNodes = await storage.getNodes();
+    const allEdges = await storage.getEdges();
+    res.setHeader("Content-Disposition", `attachment; filename=shadows-database.json`);
+    res.setHeader("Content-Type", "application/json");
+    res.json({
+      exportedAt: new Date().toISOString(),
+      nodes: allNodes,
+      edges: allEdges,
+    });
+  });
+
   app.get("/api/export", requireEditor, async (_req, res) => {
     const allProjects = await storage.getProjects();
     const allNodes = await storage.getNodes();

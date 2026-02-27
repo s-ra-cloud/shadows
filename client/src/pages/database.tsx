@@ -102,6 +102,15 @@ export default function DatabasePage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <a
+              href="/api/download"
+              download="shadows-database.json"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all bg-[#03FF9B]/10 text-[#03FF9B]/70 border border-[#03FF9B]/20 hover:border-[#03FF9B]/40 hover:text-[#03FF9B]"
+              data-testid="button-download-open-data"
+            >
+              <Download size={16} />
+              Download open data
+            </a>
             {editorMode && (
               <>
                 <button
