@@ -1,11 +1,23 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar } from "lucide-react";
+import { Calendar, ChevronDown, ChevronUp } from "lucide-react";
 import type { News } from "@shared/schema";
 
 export default function NewsPage() {
   const { data: newsItems, isLoading, error } = useQuery<News[]>({
     queryKey: ["/api/news"],
   });
+
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+
+  function toggleExpand(id: number) {
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   return (
     <div className="min-h-screen bg-[#0B0626] pt-24 pb-16">
@@ -34,30 +46,44 @@ export default function NewsPage() {
           </div>
         ) : newsItems && newsItems.length > 0 ? (
           <div className="space-y-6">
-            {newsItems.map((item) => (
-              <article
-                key={item.id}
-                className="rounded-md border border-[#350A8C]/15 bg-[#0C0042]/20 p-6 transition-all duration-300 hover:border-[#350A8C]/30"
-                data-testid={`card-news-${item.id}`}
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <Calendar className="w-3.5 h-3.5 text-[#8F00FF]/60" />
-                  <time className="text-shadows-text/40 text-xs">
-                    {new Date(item.date).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </time>
-                </div>
-                <h2 className="font-serif text-xl text-shadows-text mb-3 text-justify" data-testid={`text-news-title-${item.id}`}>
-                  {item.title}
-                </h2>
-                <p className="text-shadows-text/50 text-sm leading-relaxed text-justify">
-                  {item.content.length > 300 ? item.content.substring(0, 300) + "..." : item.content}
-                </p>
-              </article>
-            ))}
+            {newsItems.map((item) => {
+              const isLong = item.content.length > 300;
+              const expanded = expandedIds.has(item.id);
+              return (
+                <article
+                  key={item.id}
+                  className="rounded-md border border-[#350A8C]/15 bg-[#0C0042]/20 p-6 transition-all duration-300 hover:border-[#350A8C]/30"
+                  data-testid={`card-news-${item.id}`}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calendar className="w-3.5 h-3.5 text-[#8F00FF]/60" />
+                    <time className="text-shadows-text/40 text-xs">
+                      {new Date(item.date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </time>
+                  </div>
+                  <h2 className="font-serif text-xl text-shadows-text mb-3 text-justify" data-testid={`text-news-title-${item.id}`}>
+                    {item.title}
+                  </h2>
+                  <p className="text-shadows-text/50 text-sm leading-relaxed text-justify whitespace-pre-line">
+                    {isLong && !expanded ? item.content.substring(0, 300) + "..." : item.content}
+                  </p>
+                  {isLong && (
+                    <button
+                      onClick={() => toggleExpand(item.id)}
+                      className="mt-3 flex items-center gap-1 text-xs text-[#8F00FF]/70 hover:text-[#8F00FF] transition-colors"
+                      data-testid={`button-expand-news-${item.id}`}
+                    >
+                      {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      {expanded ? "Show less" : "Read more"}
+                    </button>
+                  )}
+                </article>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-16">

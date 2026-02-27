@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLink, FileText } from "lucide-react";
+import { ExternalLink, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Publication } from "@shared/schema";
 
@@ -7,6 +8,17 @@ export default function ResearchPage() {
   const { data: publications, isLoading, error } = useQuery<Publication[]>({
     queryKey: ["/api/publications"],
   });
+
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+
+  function toggleExpand(id: number) {
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   return (
     <div className="min-h-screen bg-[#0B0626] pt-24 pb-16">
@@ -48,11 +60,27 @@ export default function ResearchPage() {
                 {pub.venue && (
                   <p className="text-shadows-text/40 text-xs italic mb-3">{pub.venue}</p>
                 )}
-                {pub.abstract && (
-                  <p className="text-shadows-text/50 text-sm leading-relaxed mb-4 text-justify">
-                    {pub.abstract.length > 250 ? pub.abstract.substring(0, 250) + "..." : pub.abstract}
-                  </p>
-                )}
+                {pub.abstract && (() => {
+                  const isLong = pub.abstract.length > 250;
+                  const expanded = expandedIds.has(pub.id);
+                  return (
+                    <>
+                      <p className="text-shadows-text/50 text-sm leading-relaxed mb-2 text-justify">
+                        {isLong && !expanded ? pub.abstract.substring(0, 250) + "..." : pub.abstract}
+                      </p>
+                      {isLong && (
+                        <button
+                          onClick={() => toggleExpand(pub.id)}
+                          className="mb-4 flex items-center gap-1 text-xs text-[#8F00FF]/70 hover:text-[#8F00FF] transition-colors"
+                          data-testid={`button-expand-abstract-${pub.id}`}
+                        >
+                          {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          {expanded ? "Show less" : "Read full abstract"}
+                        </button>
+                      )}
+                    </>
+                  );
+                })()}
                 <div className="flex items-center gap-3 flex-wrap">
                   {pub.doi && (
                     <a
