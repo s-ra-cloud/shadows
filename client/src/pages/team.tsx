@@ -1,9 +1,12 @@
+import lauraPhotoPath from "@assets/laura_duparc_photo.png";
+
 const teamMembers = [
   {
     name: "Laura Duparc",
     role: "Lead Researcher",
     institution: "Université Mohammed VI Polytechnique",
     bio: "Laura Duparc holds a doctorate in law and is an affiliated researcher at Université Mohammed VI Polytechnique. She is the founder and lead designer of LEGACY, a platform for exploring classical academic texts through NLP, graph analysis, and AI, hosted at Université Mohammed VI Polytechnique. Her broader portfolio includes the co-creation of several digital humanities platforms — Knowledge Tree (University of Chicago), The Great Conversation, Future of Science Network, and Thesis Center. Her current research focuses on computational psychology and mythology. She leads the SHADOWS initiative, bringing her expertise in network-based analysis and interdisciplinary platform design to the comparative study of world mythologies.",
+    image: lauraPhotoPath,
   },
   {
     name: "Camille Bertrand",
@@ -39,11 +42,20 @@ export default function TeamPage() {
               data-testid={`card-team-${i}`}
             >
               <div className="flex items-center gap-4 mb-5">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#350A8C] to-[#8F00FF]/30 border border-[#8F00FF]/20 flex items-center justify-center flex-shrink-0">
-                  <span className="font-serif text-lg text-shadows-text/60">
-                    {member.name.split(" ").map(n => n[0]).join("")}
-                  </span>
-                </div>
+                {member.image ? (
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="w-14 h-14 rounded-full object-cover border border-[#8F00FF]/20 flex-shrink-0"
+                    data-testid={`img-member-${member.name.split(" ")[0].toLowerCase()}`}
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#350A8C] to-[#8F00FF]/30 border border-[#8F00FF]/20 flex items-center justify-center flex-shrink-0">
+                    <span className="font-serif text-lg text-shadows-text/60">
+                      {member.name.split(" ").map(n => n[0]).join("")}
+                    </span>
+                  </div>
+                )}
                 <div>
                   <h3 className="font-serif text-xl text-shadows-text mb-1" data-testid={`text-member-name-${i}`}>
                     {member.name}
