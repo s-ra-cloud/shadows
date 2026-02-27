@@ -4,8 +4,8 @@ const teamMembers = [
   {
     name: "Laura Duparc",
     role: "Lead Researcher",
-    institution: "Université Mohammed VI Polytechnique",
-    bio: "Laura Duparc holds a doctorate in law and is an affiliated researcher at Université Mohammed VI Polytechnique. She is the founder and lead designer of LEGACY, a platform for exploring classical academic texts through NLP, graph analysis, and AI, hosted at Université Mohammed VI Polytechnique. Her broader portfolio includes the co-creation of several digital humanities platforms — Knowledge Tree (University of Chicago), The Great Conversation, Future of Science Network, and Thesis Center. Her current research focuses on computational psychology and mythology. She leads the SHADOWS initiative, bringing her expertise in network-based analysis and interdisciplinary platform design to the comparative study of world mythologies.",
+    institution: "University Mohammed VI Polytechnic",
+    bio: "Laura Duparc holds a doctorate in law and is an affiliated researcher at University Mohammed VI Polytechnic. She is the founder and lead designer of LEGACY, a platform for exploring classical academic texts through NLP, graph analysis, and AI, hosted at University Mohammed VI Polytechnic. Her broader portfolio includes the co-creation of several digital humanities platforms — Knowledge Tree (University of Chicago), The Great Conversation, Future of Science Network, and Thesis Center. Her current research focuses on computational psychology and mythology. She leads the SHADOWS initiative, bringing her expertise in network-based analysis and interdisciplinary platform design to the comparative study of world mythologies.",
     image: lauraPhotoPath,
   },
   {
