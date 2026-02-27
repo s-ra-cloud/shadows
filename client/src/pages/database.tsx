@@ -142,13 +142,17 @@ export default function DatabasePage() {
                         toast({ title: "Invalid file: must contain nodes and edges", variant: "destructive" });
                         return;
                       }
-                      if (!confirm(`This will replace all current data with:\n• ${data.nodes.length} nodes\n• ${data.edges.length} edges\n${data.sources ? `• ${data.sources.length} sources\n` : ""}\nThis action cannot be undone. Continue?`)) return;
+                      if (!confirm(`This will replace all current data with:\n• ${(data.projects || []).length} projects\n• ${data.nodes.length} nodes\n• ${data.edges.length} edges\n${data.sources ? `• ${data.sources.length} sources\n` : ""}\nThis action cannot be undone. Continue?`)) return;
                       const res = await apiRequest("POST", "/api/import", data);
                       const result = await res.json();
+                      if (!res.ok) {
+                        toast({ title: result.error || "Import failed", variant: "destructive" });
+                        return;
+                      }
                       toast({ title: `Imported ${result.imported.nodes} nodes, ${result.imported.edges} edges` });
                       queryClient.invalidateQueries();
-                    } catch {
-                      toast({ title: "Import failed", variant: "destructive" });
+                    } catch (err) {
+                      toast({ title: "Import failed: " + (err instanceof Error ? err.message : "Unknown error"), variant: "destructive" });
                     }
                     if (importFileRef.current) importFileRef.current.value = "";
                   }}
