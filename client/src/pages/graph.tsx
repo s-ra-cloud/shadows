@@ -351,7 +351,7 @@ function getTraitsForFigure(fig: Node): string[] {
   return traits;
 }
 
-function buildGraph(figures: Node[], minShared = 3, selectedCharacterIds?: Set<number>) {
+function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: Set<number>) {
   const traitCounts = new Map<string, { label: string; category: string; count: number }>();
   const figureTraits = new Map<number, string[]>();
 
@@ -377,43 +377,62 @@ function buildGraph(figures: Node[], minShared = 3, selectedCharacterIds?: Set<n
 
   const sharedTraits = new Map<string, { label: string; category: string; count: number }>();
   for (const [id, data] of traitCounts) {
-    if (data.count >= minShared) {
+    if (data.count >= 2) {
       sharedTraits.set(id, data);
     }
+  }
+
+  const traitToFigures = new Map<string, Set<number>>();
+  for (const fig of effectiveFigures) {
+    const traits = figureTraits.get(fig.id) || [];
+    for (const traitId of traits) {
+      if (sharedTraits.has(traitId)) {
+        if (!traitToFigures.has(traitId)) traitToFigures.set(traitId, new Set());
+        traitToFigures.get(traitId)!.add(fig.id);
+      }
+    }
+  }
+
+  const figureConnections = new Map<number, Set<number>>();
+  for (const fig of effectiveFigures) {
+    figureConnections.set(fig.id, new Set());
+  }
+  for (const [, figIds] of traitToFigures) {
+    const ids = [...figIds];
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        figureConnections.get(ids[i])?.add(ids[j]);
+        figureConnections.get(ids[j])?.add(ids[i]);
+      }
+    }
+  }
+
+  const qualifiedFigureIds = new Set<number>();
+  for (const [figId, connections] of figureConnections) {
+    if (connections.size >= minConnections) qualifiedFigureIds.add(figId);
   }
 
   const graphNodes: GraphNode[] = [];
   const graphLinks: GraphLink[] = [];
 
-  const figureSharedTraitCount = new Map<number, number>();
-  const figureLinkData = new Map<number, { traitId: string; category: string }[]>();
-
-  for (const fig of effectiveFigures) {
-    const traits = figureTraits.get(fig.id) || [];
-    const links: { traitId: string; category: string }[] = [];
-    for (const traitId of traits) {
-      if (sharedTraits.has(traitId)) {
-        links.push({ traitId, category: sharedTraits.get(traitId)!.category });
-      }
-    }
-    figureSharedTraitCount.set(fig.id, links.length);
-    figureLinkData.set(fig.id, links);
-  }
-
-  const qualifiedFigureIds = new Set<number>();
-  for (const [figId, count] of figureSharedTraitCount) {
-    if (count >= 1) qualifiedFigureIds.add(figId);
-  }
+  const usedTraits = new Set<string>();
 
   for (const fig of effectiveFigures) {
     if (!qualifiedFigureIds.has(fig.id)) continue;
-    const links = figureLinkData.get(fig.id) || [];
-    for (const { traitId, category } of links) {
-      graphLinks.push({
-        source: `fig-${fig.id}`,
-        target: traitId,
-        category,
-      });
+    const traits = figureTraits.get(fig.id) || [];
+    for (const traitId of traits) {
+      if (sharedTraits.has(traitId)) {
+        const traitFigs = traitToFigures.get(traitId);
+        const hasOtherQualified = traitFigs && [...traitFigs].some(id => id !== fig.id && qualifiedFigureIds.has(id));
+        if (hasOtherQualified) {
+          graphLinks.push({
+            source: `fig-${fig.id}`,
+            target: traitId,
+            category: sharedTraits.get(traitId)!.category,
+          });
+          usedTraits.add(traitId);
+        }
+      }
     }
   }
 
@@ -430,12 +449,14 @@ function buildGraph(figures: Node[], minShared = 3, selectedCharacterIds?: Set<n
     }
   }
 
-  for (const [traitId, data] of sharedTraits) {
+  for (const traitId of usedTraits) {
+    const data = sharedTraits.get(traitId)!;
+    const qualifiedCount = [...(traitToFigures.get(traitId) || [])].filter(id => qualifiedFigureIds.has(id)).length;
     graphNodes.push({
       id: traitId,
       label: data.label,
       category: data.category,
-      count: data.count,
+      count: qualifiedCount,
       isCharacter: false,
     });
   }
