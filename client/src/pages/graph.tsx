@@ -531,7 +531,7 @@ function getTraitsForFigure(fig: Node, enabledCategories?: Set<string>, useSuper
   });
 }
 
-function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>, useSupersets?: Set<string>) {
+function buildGraph(figures: Node[], minTraits = 3, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>, useSupersets?: Set<string>) {
   const traitCounts = new Map<string, { label: string; category: string; count: number }>();
   const figureTraits = new Map<number, string[]>();
 
@@ -555,6 +555,12 @@ function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: 
     }
   }
 
+  const qualifiedFigureIds = new Set<number>();
+  for (const fig of effectiveFigures) {
+    const traits = figureTraits.get(fig.id) || [];
+    if (traits.length >= minTraits) qualifiedFigureIds.add(fig.id);
+  }
+
   const sharedTraits = new Map<string, { label: string; category: string; count: number }>();
   for (const [id, data] of traitCounts) {
     if (data.count >= 2) {
@@ -564,6 +570,7 @@ function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: 
 
   const traitToFigures = new Map<string, Set<number>>();
   for (const fig of effectiveFigures) {
+    if (!qualifiedFigureIds.has(fig.id)) continue;
     const traits = figureTraits.get(fig.id) || [];
     for (const traitId of traits) {
       if (sharedTraits.has(traitId)) {
@@ -571,25 +578,6 @@ function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: 
         traitToFigures.get(traitId)!.add(fig.id);
       }
     }
-  }
-
-  const figureConnections = new Map<number, Set<number>>();
-  for (const fig of effectiveFigures) {
-    figureConnections.set(fig.id, new Set());
-  }
-  for (const [, figIds] of traitToFigures) {
-    const ids = [...figIds];
-    for (let i = 0; i < ids.length; i++) {
-      for (let j = i + 1; j < ids.length; j++) {
-        figureConnections.get(ids[i])?.add(ids[j]);
-        figureConnections.get(ids[j])?.add(ids[i]);
-      }
-    }
-  }
-
-  const qualifiedFigureIds = new Set<number>();
-  for (const [figId, connections] of figureConnections) {
-    if (connections.size >= minConnections) qualifiedFigureIds.add(figId);
   }
 
   const graphNodes: GraphNode[] = [];
@@ -644,7 +632,7 @@ function buildGraph(figures: Node[], minConnections = 3, selectedCharacterIds?: 
   return { graphNodes, graphLinks };
 }
 
-function buildDirectGraph(figures: Node[], minConnections: number, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>, useSupersets?: Set<string>): { nodes: CharNode[]; links: DirectLink[] } {
+function buildDirectGraph(figures: Node[], minTraits: number, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>, useSupersets?: Set<string>): { nodes: CharNode[]; links: DirectLink[] } {
   const effectiveFigures = selectedCharacterIds && selectedCharacterIds.size > 0
     ? figures.filter(f => selectedCharacterIds.has(f.id))
     : figures;
@@ -654,14 +642,21 @@ function buildDirectGraph(figures: Node[], minConnections: number, selectedChara
     figureTraitSets.set(fig.id, new Set(getTraitsForFigure(fig, enabledCategories, useSupersets)));
   }
 
+  const qualifiedIds = new Set<number>();
+  for (const fig of effectiveFigures) {
+    const traits = figureTraitSets.get(fig.id);
+    if (traits && traits.size >= minTraits) qualifiedIds.add(fig.id);
+  }
+
+  const qualifiedFigures = effectiveFigures.filter(f => qualifiedIds.has(f.id));
+
   const charNodes: CharNode[] = [];
   const directLinks: DirectLink[] = [];
-  const connectionCounts = new Map<number, number>();
 
-  for (let i = 0; i < effectiveFigures.length; i++) {
-    for (let j = i + 1; j < effectiveFigures.length; j++) {
-      const a = effectiveFigures[i];
-      const b = effectiveFigures[j];
+  for (let i = 0; i < qualifiedFigures.length; i++) {
+    for (let j = i + 1; j < qualifiedFigures.length; j++) {
+      const a = qualifiedFigures[i];
+      const b = qualifiedFigures[j];
       const traitsA = figureTraitSets.get(a.id)!;
       const traitsB = figureTraitSets.get(b.id)!;
       const common: string[] = [];
@@ -675,28 +670,19 @@ function buildDirectGraph(figures: Node[], minConnections: number, selectedChara
           weight: common.length,
           commonTraits: common.map(t => t.split("::")[1]),
         });
-        connectionCounts.set(a.id, (connectionCounts.get(a.id) || 0) + 1);
-        connectionCounts.set(b.id, (connectionCounts.get(b.id) || 0) + 1);
       }
     }
   }
 
-  const qualifiedIds = new Set<number>();
-  for (const [id, count] of connectionCounts) {
-    if (count >= minConnections) qualifiedIds.add(id);
-  }
-
-  for (const fig of effectiveFigures) {
-    if (qualifiedIds.has(fig.id)) {
-      charNodes.push({
-        id: `fig-${fig.id}`,
-        nodeId: fig.id,
-        label: fig.name,
-        tradition: fig.tradition,
-        isCharacter: true,
-        original: fig,
-      });
-    }
+  for (const fig of qualifiedFigures) {
+    charNodes.push({
+      id: `fig-${fig.id}`,
+      nodeId: fig.id,
+      label: fig.name,
+      tradition: fig.tradition,
+      isCharacter: true,
+      original: fig,
+    });
   }
 
   const qualifiedNodeIds = new Set(charNodes.map(n => n.id));
@@ -1416,7 +1402,7 @@ function FilterSidebar({
             <div>
               <h4 className="text-xs uppercase tracking-wider text-shadows-text/40 mb-2 flex items-center gap-1.5">
                 <SlidersHorizontal size={12} />
-                Min. Connections
+                Min. Traits
               </h4>
               <div className="flex items-center gap-2">
                 <input
@@ -1429,7 +1415,7 @@ function FilterSidebar({
                   min={1}
                   max={maxConnectionCount}
                   className="w-16 h-7 px-2 text-xs font-mono text-center rounded border border-shadows-text/20 bg-shadows-bg text-shadows-text focus:outline-none focus:border-shadows-accent"
-                  data-testid="input-min-connections"
+                  data-testid="input-min-traits"
                 />
                 <span className="text-[10px] text-shadows-text/40">/ {maxConnectionCount} max</span>
               </div>
@@ -3046,7 +3032,7 @@ export default function GraphPage() {
   const [viewMode, setViewMode] = useState<"network" | "direct" | "ca" | "dichotomy">("network");
   const [dichotomyDepth, setDichotomyDepth] = useState(1);
   const [dichotomyThreshold, setDichotomyThreshold] = useState(0.9);
-  const [minConnections, setMinConnections] = useState(2);
+  const [minTraits, setMinTraits] = useState(2);
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<Set<number>>(new Set());
   const [characterSearch, setCharacterSearch] = useState("");
 
@@ -3082,60 +3068,28 @@ export default function GraphPage() {
     return effective;
   }, [activeFilters]);
 
-  const connectionStats = useMemo(() => {
-    if (!data?.nodes) return { max: 10, thresholds: [1, 2, 3, 5, 10] };
+  const traitStats = useMemo(() => {
+    if (!data?.nodes) return { max: 10 };
     const selIds = selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined;
     const effectiveFigures = selIds ? data.nodes.filter((f: Node) => selIds.has(f.id)) : data.nodes;
-    const figTraitSets = new Map<number, Set<string>>();
-    const traitFigures = new Map<string, Set<number>>();
+    let max = 0;
     for (const fig of effectiveFigures) {
       const traits = getTraitsForFigure(fig, enabledCategoriesSet, activeSupersets);
-      figTraitSets.set(fig.id, new Set(traits));
-      for (const t of traits) {
-        if (!traitFigures.has(t)) traitFigures.set(t, new Set());
-        traitFigures.get(t)!.add(fig.id);
-      }
+      if (traits.length > max) max = traits.length;
     }
-    const connCounts: number[] = [];
-    for (const fig of effectiveFigures) {
-      const connected = new Set<number>();
-      const traits = figTraitSets.get(fig.id) || new Set();
-      for (const t of traits) {
-        const figs = traitFigures.get(t);
-        if (figs) for (const fid of figs) if (fid !== fig.id) connected.add(fid);
-      }
-      connCounts.push(connected.size);
-    }
-    connCounts.sort((a, b) => a - b);
-    const max = connCounts.length > 0 ? connCounts[connCounts.length - 1] : 10;
-    const uniqueSorted = [...new Set(connCounts)].sort((a, b) => a - b);
-    const steps: number[] = [1];
-    const targetSteps = 20;
-    if (uniqueSorted.length > targetSteps) {
-      for (let i = 1; i < targetSteps; i++) {
-        const idx = Math.floor((i / targetSteps) * uniqueSorted.length);
-        const val = uniqueSorted[idx];
-        if (val > steps[steps.length - 1]) steps.push(val);
-      }
-    } else {
-      for (const v of uniqueSorted) {
-        if (v > 1) steps.push(v);
-      }
-    }
-    if (max > steps[steps.length - 1]) steps.push(max);
-    return { max, thresholds: steps };
+    return { max: max || 10 };
   }, [data?.nodes, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
 
   const { graphNodes, graphLinks } = useMemo(() => {
     if (!data?.nodes) return { graphNodes: [], graphLinks: [] };
-    return buildGraph(data.nodes, minConnections, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets);
-  }, [data?.nodes, minConnections, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
+    return buildGraph(data.nodes, minTraits, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets);
+  }, [data?.nodes, minTraits, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
 
   const { directNodes, directLinks } = useMemo(() => {
     if (!data?.nodes) return { directNodes: [], directLinks: [] };
-    const result = buildDirectGraph(data.nodes, minConnections, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets);
+    const result = buildDirectGraph(data.nodes, minTraits, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets);
     return { directNodes: result.nodes, directLinks: result.links };
-  }, [data?.nodes, minConnections, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
+  }, [data?.nodes, minTraits, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
 
   const filters = useMemo(() => {
     const traditions: string[] = [];
@@ -3360,9 +3314,9 @@ export default function GraphPage() {
         onToggle={() => setFiltersOpen(!filtersOpen)}
         nodeCount={charNodeCount}
         totalCount={data.nodes.length}
-        minConnections={minConnections}
-        onMinConnectionsChange={setMinConnections}
-        maxConnectionCount={connectionStats.max}
+        minConnections={minTraits}
+        onMinConnectionsChange={setMinTraits}
+        maxConnectionCount={traitStats.max}
         allNodes={data.nodes}
         selectedCharacterIds={selectedCharacterIds}
         onToggleCharacter={toggleCharacter}
