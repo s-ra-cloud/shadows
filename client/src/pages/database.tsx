@@ -14,7 +14,7 @@ type NodeCategory = "characters" | "gender" | "domain" | "object" | "animals" | 
 const NODE_CATEGORIES: { key: NodeCategory; label: string; isArray?: boolean; commaSplit?: boolean }[] = [
   { key: "characters", label: "Characters" },
   { key: "gender", label: "Gender" },
-  { key: "domain", label: "Domain" },
+  { key: "domain", label: "Domain", commaSplit: true },
   { key: "object", label: "Object", commaSplit: true },
   { key: "animals", label: "Animals", commaSplit: true },
   { key: "characterTrait", label: "Character Trait" },
