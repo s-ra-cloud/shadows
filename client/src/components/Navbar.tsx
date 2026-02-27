@@ -51,7 +51,7 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden bg-[#0B0626]/95 backdrop-blur-xl border-b border-[#350A8C]/20 px-6 pb-4">
+        <div className="md:hidden bg-[#0B0626] backdrop-blur-xl border-b border-[#350A8C]/20 px-6 pb-4">
           {navLinks.map((link) => (
             <Link key={link.href} href={link.href} data-testid={`link-mobile-${link.label.toLowerCase()}`}>
               <span
