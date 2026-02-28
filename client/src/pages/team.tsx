@@ -1,3 +1,4 @@
+import { SiLinkedin, SiOrcid } from "react-icons/si";
 import lauraPhotoPath from "@assets/laura_duparc_photo.png";
 import amiPhotoPath from "@assets/Ami_1772197656940.jpeg";
 import camillePhotoPath from "@assets/Camille_1772199367888.jpeg";
@@ -10,6 +11,8 @@ const teamMembers = [
     bio: "Laura Duparc holds a doctorate in law and is an affiliated researcher at University Mohammed VI Polytechnic. She is the founder and lead designer of LEGACY, a platform for exploring classical academic texts through NLP, graph analysis, and AI, hosted at University Mohammed VI Polytechnic. Her broader portfolio includes the co-creation of several digital humanities platforms — Knowledge Tree (University of Chicago), The Great Conversation, Future of Science Network, and Thesis Center. Her current research focuses on computational psychology and mythology. She leads the SHADOWS initiative, bringing her expertise in network-based analysis and interdisciplinary platform design to the comparative study of world mythologies.",
     image: lauraPhotoPath,
     imageStyle: { objectPosition: "50% 20%", transform: "scale(1.8)" },
+    linkedin: "https://www.linkedin.com/in/laura-duparc-52504b215/",
+    orcid: "https://orcid.org/0009-0006-2435-7989",
   },
   {
     name: "Camille Bertrand",
@@ -18,6 +21,7 @@ const teamMembers = [
     image: camillePhotoPath,
     imageStyle: { objectPosition: "50% 25%", transform: "scale(1.1)" },
     bio: "Camille Bertrand holds a Master's degree in political studies from the École des Hautes Études en Sciences Sociales (EHESS) and a law degree from Aix-Marseille Université, where she is currently pursuing a doctorate in law and political studies. She has worked as a research assistant at the Laboratory of Private Law and Criminal Sciences of Aix-Marseille Université on a SATT Sud-Est funded project, collaborating with a web developer to build a tool for substituting equivalent propositions in the work of Wittgenstein (Semantica.AI). Her experience bridges legal analysis, political theory, and digital tools for the humanities. Within SHADOWS, she contributes her skills in textual analysis and interdisciplinary research methodology.",
+    linkedin: "https://www.linkedin.com/in/camille-bertrand-60a8173b3/",
   },
   {
     name: "Ami Nagai",
@@ -26,6 +30,7 @@ const teamMembers = [
     image: amiPhotoPath,
     imageStyle: { objectPosition: "50% 0%", transform: "scale(1.3)" },
     bio: "Ami Nagai is a doctoral candidate in history at Aix-Marseille Université, affiliated with the TELEMMe laboratory (CNRS). Born in Tokyo, she holds a bachelor's degree in international and Francophone studies from Sophia University (Tokyo) and a master's in modern and contemporary history from Aix-Marseille Université, where she was a recipient of the French Government Scholarship. She also holds a university diploma in criminal sciences and criminology. Her research fields include the history of criminality, law, gender, and medicine, with a doctoral thesis on castration in France from the 18th to 20th centuries. Fluent in Japanese, French, and English, she brings a cross-cultural perspective to SHADOWS, contributing to the atlas's coverage of Japanese and East Asian mythological traditions.",
+    linkedin: "https://www.linkedin.com/in/ami-nagai-4b82a9290/",
   },
 ];
 
@@ -67,9 +72,21 @@ export default function TeamPage() {
                   </div>
                 )}
                 <div>
-                  <h3 className="font-serif text-xl text-shadows-text mb-1" data-testid={`text-member-name-${i}`}>
-                    {member.name}
-                  </h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-serif text-xl text-shadows-text" data-testid={`text-member-name-${i}`}>
+                      {member.name}
+                    </h3>
+                    {member.linkedin && (
+                      <a href={member.linkedin} target="_blank" rel="noopener noreferrer" className="text-shadows-text/40 hover:text-[#0A66C2] transition-colors" data-testid={`link-linkedin-${i}`}>
+                        <SiLinkedin size={16} />
+                      </a>
+                    )}
+                    {member.orcid && (
+                      <a href={member.orcid} target="_blank" rel="noopener noreferrer" className="text-shadows-text/40 hover:text-[#A6CE39] transition-colors" data-testid={`link-orcid-${i}`}>
+                        <SiOrcid size={16} />
+                      </a>
+                    )}
+                  </div>
                   <p className="text-[#8F00FF]/80 text-xs">{member.role}</p>
                   <p className="text-shadows-text/40 text-xs">{member.institution}</p>
                 </div>
