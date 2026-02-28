@@ -1958,6 +1958,8 @@ function DirectView({
 
     simulationRef.current = simulation;
     let currentHovered: any = null;
+    let hoveredEdge: (typeof simLinks[0]) | null = null;
+    let pinnedEdge: (typeof simLinks[0]) | null = null;
 
     function draw() {
       ctx.save();
@@ -2097,6 +2099,93 @@ function DirectView({
         }
       }
 
+      const activeEdge = pinnedEdge || hoveredEdge;
+      if (activeEdge && !currentHovered) {
+        const eColor = weightToColor(activeEdge.weight);
+        ctx.globalAlpha = 0.9;
+        ctx.beginPath();
+        ctx.moveTo(activeEdge.source.x, activeEdge.source.y);
+        ctx.lineTo(activeEdge.target.x, activeEdge.target.y);
+        ctx.strokeStyle = eColor;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.globalAlpha = 1;
+        ctx.restore();
+        ctx.save();
+
+        const t3 = transformRef.current;
+        const midSx = (activeEdge.source.x * t3.k + t3.x + activeEdge.target.x * t3.k + t3.x) / 2;
+        const midSy = (activeEdge.source.y * t3.k + t3.y + activeEdge.target.y * t3.k + t3.y) / 2;
+
+        const srcName = activeEdge.source.label || "?";
+        const tgtName = activeEdge.target.label || "?";
+        const traits: string[] = activeEdge.commonTraits || [];
+        const titleText = `${srcName}  ↔  ${tgtName}`;
+        const subtitleText = `${traits.length} shared trait${traits.length !== 1 ? "s" : ""}`;
+
+        ctx.font = "bold 11px 'Cinzel Decorative', serif";
+        const titleW = ctx.measureText(titleText).width;
+        ctx.font = "10px 'Sofia Pro Light', sans-serif";
+        const subtitleW = ctx.measureText(subtitleText).width;
+        const traitWidths = traits.map((tr: string) => ctx.measureText(`• ${tr}`).width);
+        const maxTraitW = traitWidths.length > 0 ? Math.max(...traitWidths) : 0;
+        const boxW = Math.max(titleW, subtitleW, maxTraitW) + 28;
+        const lineH = 15;
+        const displayCount = Math.min(traits.length, 15);
+        const boxH = 38 + lineH + displayCount * lineH + (traits.length > 15 ? lineH : 0);
+        let bx = midSx - boxW / 2;
+        let by = midSy - boxH - 12;
+        if (bx < 4) bx = 4;
+        if (bx + boxW > width - 4) bx = width - boxW - 4;
+        if (by < 4) by = midSy + 12;
+
+        ctx.globalAlpha = 0.93;
+        ctx.fillStyle = "#0B0626";
+        ctx.strokeStyle = "#350A8C";
+        ctx.lineWidth = 1;
+        const cr = 6;
+        ctx.beginPath();
+        ctx.moveTo(bx + cr, by);
+        ctx.lineTo(bx + boxW - cr, by);
+        ctx.quadraticCurveTo(bx + boxW, by, bx + boxW, by + cr);
+        ctx.lineTo(bx + boxW, by + boxH - cr);
+        ctx.quadraticCurveTo(bx + boxW, by + boxH, bx + boxW - cr, by + boxH);
+        ctx.lineTo(bx + cr, by + boxH);
+        ctx.quadraticCurveTo(bx, by + boxH, bx, by + boxH - cr);
+        ctx.lineTo(bx, by + cr);
+        ctx.quadraticCurveTo(bx, by, bx + cr, by);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.globalAlpha = 1;
+        let ty = by + 18;
+        ctx.font = "bold 11px 'Cinzel Decorative', serif";
+        ctx.fillStyle = "#FFD700";
+        ctx.textAlign = "center";
+        ctx.fillText(titleText, bx + boxW / 2, ty);
+        ty += 16;
+        ctx.font = "10px 'Sofia Pro Light', sans-serif";
+        ctx.fillStyle = eColor;
+        ctx.fillText(subtitleText, bx + boxW / 2, ty);
+        ty += 14;
+
+        ctx.textAlign = "left";
+        ctx.fillStyle = "#E0DCE6";
+        ctx.font = "9px 'Sofia Pro Light', sans-serif";
+        for (let i = 0; i < displayCount; i++) {
+          ty += lineH;
+          ctx.globalAlpha = 0.8;
+          ctx.fillText(`• ${traits[i]}`, bx + 12, ty);
+        }
+        if (traits.length > 15) {
+          ty += lineH;
+          ctx.globalAlpha = 0.5;
+          ctx.fillText(`  +${traits.length - 15} more...`, bx + 12, ty);
+        }
+      }
+
       ctx.globalAlpha = 1;
       ctx.restore();
     }
@@ -2127,25 +2216,74 @@ function DirectView({
       return null;
     }
 
+    function getEdgeAt(px: number, py: number): (typeof simLinks[0]) | null {
+      const t = transformRef.current;
+      const x = (px - t.x) / t.k;
+      const y = (py - t.y) / t.k;
+      const threshold = 6 / t.k;
+      let bestDist = threshold;
+      let bestEdge: (typeof simLinks[0]) | null = null;
+      for (const l of simLinks) {
+        const ax = l.source.x, ay = l.source.y;
+        const bx2 = l.target.x, by2 = l.target.y;
+        const dx = bx2 - ax, dy = by2 - ay;
+        const lenSq = dx * dx + dy * dy;
+        if (lenSq === 0) continue;
+        let t2 = ((x - ax) * dx + (y - ay) * dy) / lenSq;
+        t2 = Math.max(0, Math.min(1, t2));
+        const px2 = ax + t2 * dx;
+        const py2 = ay + t2 * dy;
+        const dist = Math.sqrt((x - px2) * (x - px2) + (y - py2) * (y - py2));
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestEdge = l;
+        }
+      }
+      return bestEdge;
+    }
+
     canvas.onmousemove = (e) => {
       const rect = canvas.getBoundingClientRect();
-      const node = getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
-      currentHovered = node;
-      onHoverNode(node);
-      canvas.style.cursor = node ? "pointer" : "default";
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      const node = getNodeAt(px, py);
+      if (node) {
+        currentHovered = node;
+        hoveredEdge = null;
+        onHoverNode(node);
+        canvas.style.cursor = "pointer";
+      } else {
+        currentHovered = null;
+        const edge = getEdgeAt(px, py);
+        hoveredEdge = edge;
+        onHoverNode(null);
+        canvas.style.cursor = edge ? "pointer" : "default";
+      }
       draw();
     };
 
     canvas.onclick = (e) => {
       const rect = canvas.getBoundingClientRect();
-      const node = getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      const node = getNodeAt(px, py);
       if (node?.original) {
+        pinnedEdge = null;
         onSelectNode(node.original);
+      } else {
+        const edge = getEdgeAt(px, py);
+        if (edge) {
+          pinnedEdge = pinnedEdge === edge ? null : edge;
+        } else {
+          pinnedEdge = null;
+        }
       }
+      draw();
     };
 
     canvas.onmouseleave = () => {
       currentHovered = null;
+      hoveredEdge = null;
       onHoverNode(null);
       draw();
     };
