@@ -1942,19 +1942,27 @@ function DirectView({
       .filter((l) => l.source && l.target);
 
     const nodeCount = simNodes.length;
-    const linkDist = nodeCount > 100 ? 80 : nodeCount > 50 ? 120 : 160;
-    const chargeStr = nodeCount > 100 ? -80 : nodeCount > 50 ? -150 : -300;
+    const baseDist = nodeCount > 100 ? 120 : nodeCount > 50 ? 180 : 250;
+    const chargeStr = nodeCount > 100 ? -120 : nodeCount > 50 ? -200 : -400;
 
     const simulation = d3.forceSimulation(simNodes)
-      .force("link", d3.forceLink(simLinks).id((d: any) => d.id).distance((d: any) => linkDist * (1 - d.weight / maxWeight * 0.5)).strength((d: any) => 0.1 + d.weight / maxWeight * 0.4))
+      .force("link", d3.forceLink(simLinks).id((d: any) => d.id)
+        .distance((d: any) => {
+          const norm = d.weight / maxWeight;
+          return baseDist * (1 - norm * 0.85);
+        })
+        .strength((d: any) => {
+          const norm = d.weight / maxWeight;
+          return 0.05 + norm * norm * 0.9;
+        }))
       .force("charge", d3.forceManyBody().strength(chargeStr))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius(12))
-      .alphaDecay(0.02)
-      .velocityDecay(0.4);
+      .force("collision", d3.forceCollide().radius(14))
+      .alphaDecay(0.015)
+      .velocityDecay(0.35);
 
     simulation.stop();
-    for (let i = 0; i < 300; i++) simulation.tick();
+    for (let i = 0; i < 400; i++) simulation.tick();
 
     simulationRef.current = simulation;
     let currentHovered: any = null;
