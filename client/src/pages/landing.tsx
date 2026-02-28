@@ -23,12 +23,16 @@ function useScrollReveal(threshold = 0.15) {
   return { ref, visible };
 }
 
-function RevealBlock({ children, delay = 0, direction = "up" }: { children: React.ReactNode; delay?: number; direction?: "up" | "left" | "right" }) {
+function RevealBlock({ children, delay = 0, effect = "fade-up" }: { children: React.ReactNode; delay?: number; effect?: "fade-up" | "fade-scale" | "fade" }) {
   const { ref, visible } = useScrollReveal(0.12);
-  const translate = direction === "up" ? "translateY(24px)" : direction === "left" ? "translateX(-24px)" : "translateX(24px)";
+  const hidden: CSSProperties = effect === "fade-up"
+    ? { opacity: 0, transform: "translateY(24px)" }
+    : effect === "fade-scale"
+    ? { opacity: 0, transform: "scale(0.96)" }
+    : { opacity: 0, transform: "none" };
+  const shown: CSSProperties = { opacity: 1, transform: "none" };
   const style: CSSProperties = {
-    opacity: visible ? 1 : 0,
-    transform: visible ? "translate(0)" : translate,
+    ...(visible ? shown : hidden),
     transition: `opacity 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) ${delay}s, transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) ${delay}s`,
   };
   return <div ref={ref} style={style}>{children}</div>;
@@ -97,7 +101,7 @@ function AboutSection() {
     <section className="py-24 bg-[#0B0626]" data-testid="section-about">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-          <RevealBlock direction="left">
+          <RevealBlock effect="fade" delay={0}>
             <h2 className="font-serif text-3xl md:text-4xl text-shadows-text tracking-wide mb-6">
               About the Project
             </h2>
@@ -122,7 +126,7 @@ function AboutSection() {
             </div>
           </RevealBlock>
 
-          <RevealBlock direction="right" delay={0.2}>
+          <RevealBlock effect="fade-scale" delay={0.2}>
             <div className="relative flex items-center justify-center overflow-hidden">
               <img
                 src={odinImgPath}
