@@ -3174,7 +3174,11 @@ export default function GraphPage() {
     return graphLinks.filter(l => filteredNodeIds.has(l.source) && filteredNodeIds.has(l.target));
   }, [graphLinks, filteredNodeIds]);
 
-  const selectedNodeIds = useMemo(() => new Set(selectedNodes.keys()), [selectedNodes]);
+  const selectedNodeIds = useMemo(() => {
+    const ids = new Set(selectedNodes.keys());
+    for (const id of selectedCharacterIds) ids.add(id);
+    return ids;
+  }, [selectedNodes, selectedCharacterIds]);
 
   useEffect(() => {
     if (selectedNodes.size > 0 && viewMode !== "ca") {
