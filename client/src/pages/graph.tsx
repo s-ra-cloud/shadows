@@ -2002,6 +2002,27 @@ function DirectView({
       }
       const anyActive = hoveredId || hasSelection;
 
+      let visibleMinW = Infinity, visibleMaxW = 0;
+      for (const l of simLinks) {
+        const isVis = !anyActive ||
+          (hoveredId && (l.source.id === hoveredId || l.target.id === hoveredId)) ||
+          (hasSelection && (selectedSimIds.has(l.source.id) || selectedSimIds.has(l.target.id)));
+        if (isVis) {
+          if (l.weight < visibleMinW) visibleMinW = l.weight;
+          if (l.weight > visibleMaxW) visibleMaxW = l.weight;
+        }
+      }
+      if (visibleMinW === Infinity) visibleMinW = 0;
+      const wRange = visibleMaxW - visibleMinW || 1;
+
+      function weightToColor(w: number): string {
+        const t2 = (w - visibleMinW) / wRange;
+        const r = Math.round(143 * (1 - t2) + 3 * t2);
+        const g = Math.round(0 * (1 - t2) + 255 * t2);
+        const b = Math.round(255 * (1 - t2) + 155 * t2);
+        return `rgb(${r},${g},${b})`;
+      }
+
       for (const l of simLinks) {
         const isHighlighted = (hoveredId && (l.source.id === hoveredId || l.target.id === hoveredId)) ||
           (hasSelection && (selectedSimIds.has(l.source.id) || selectedSimIds.has(l.target.id)));
@@ -2009,7 +2030,7 @@ function DirectView({
         ctx.beginPath();
         ctx.moveTo(l.source.x, l.source.y);
         ctx.lineTo(l.target.x, l.target.y);
-        ctx.strokeStyle = isHighlighted ? "#03FF9B" : "#8F00FF";
+        ctx.strokeStyle = isHighlighted ? weightToColor(l.weight) : weightToColor(l.weight);
         ctx.globalAlpha = isHighlighted ? 0.5 + normalizedWeight * 0.4 : anyActive ? 0.02 : 0.05 + normalizedWeight * 0.15;
         ctx.lineWidth = isHighlighted ? 1 + normalizedWeight * 3 : 0.3 + normalizedWeight * 1.5;
         ctx.stroke();
@@ -2069,10 +2090,10 @@ function DirectView({
           const midX = (currentHovered.x + other.x) / 2;
           const midY = (currentHovered.y + other.y) / 2;
           ctx.font = "7px 'Sofia Pro Light', sans-serif";
-          ctx.fillStyle = "#03FF9B";
-          ctx.globalAlpha = 0.6;
+          ctx.fillStyle = weightToColor(l.weight);
+          ctx.globalAlpha = 0.8;
           ctx.textAlign = "center";
-          ctx.fillText(`${l.weight} traits`, midX, midY - 5);
+          ctx.fillText(`${l.weight} shared`, midX, midY - 5);
         }
       }
 
@@ -3332,16 +3353,14 @@ export default function GraphPage() {
           </div>
         )}
         {viewMode === "direct" && (
-          <>
-            <div className="flex items-center gap-1.5 mt-1">
-              <div className="w-4 h-[2px] bg-[#8F00FF]" />
-              <span className="text-[10px] text-shadows-text/40">Fewer traits</span>
-            </div>
+          <div className="mt-1">
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-[3px] bg-[#03FF9B]" />
-              <span className="text-[10px] text-shadows-text/40">More traits</span>
+              <span className="text-[9px] text-shadows-text/40">fewer</span>
+              <div className="w-16 h-[3px] rounded-full" style={{ background: "linear-gradient(to right, #8F00FF, #03FF9B)" }} />
+              <span className="text-[9px] text-shadows-text/40">more</span>
             </div>
-          </>
+            <span className="text-[9px] text-shadows-text/30 block text-center">shared traits</span>
+          </div>
         )}
       </div>)}
 
