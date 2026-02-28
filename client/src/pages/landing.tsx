@@ -1,3 +1,4 @@
+import { useRef, useEffect, useState, type CSSProperties } from "react";
 import { Link } from "wouter";
 import { ArrowRight, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,33 @@ import heroVideo from "@assets/hero_1772053813686.mp4";
 import teamPhotoPath from "@assets/Team_1772115638559.jpeg";
 import odinImgPath from "@assets/Odin_1772207712816.png";
 import machinaLogoPath from "@assets/Machin_logo_1772208429837.jpeg";
+
+function useScrollReveal(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, visible };
+}
+
+function RevealBlock({ children, delay = 0, direction = "up" }: { children: React.ReactNode; delay?: number; direction?: "up" | "left" | "right" }) {
+  const { ref, visible } = useScrollReveal(0.12);
+  const translate = direction === "up" ? "translateY(40px)" : direction === "left" ? "translateX(-40px)" : "translateX(40px)";
+  const style: CSSProperties = {
+    opacity: visible ? 1 : 0,
+    transform: visible ? "translate(0)" : translate,
+    transition: `opacity 0.7s ease ${delay}s, transform 0.7s ease ${delay}s`,
+  };
+  return <div ref={ref} style={style}>{children}</div>;
+}
 
 function HeroSection() {
   return (
@@ -69,7 +97,7 @@ function AboutSection() {
     <section className="py-24 bg-[#0B0626]" data-testid="section-about">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-          <div>
+          <RevealBlock direction="left">
             <h2 className="font-serif text-3xl md:text-4xl text-shadows-text tracking-wide mb-6">
               About the Project
             </h2>
@@ -92,17 +120,19 @@ function AboutSection() {
                 and symbols that persist across civilizations and into contemporary culture.
               </p>
             </div>
-          </div>
+          </RevealBlock>
 
-          <div className="relative flex items-center justify-center overflow-hidden">
-            <img
-              src={odinImgPath}
-              alt="Odin node graph visualization"
-              className="w-full max-w-md scale-110"
-              data-testid="img-about-odin"
-              style={{ mask: "radial-gradient(ellipse 70% 70% at center, black 30%, rgba(0,0,0,0.6) 50%, transparent 80%)", WebkitMask: "radial-gradient(ellipse 70% 70% at center, black 30%, rgba(0,0,0,0.6) 50%, transparent 80%)" }}
-            />
-          </div>
+          <RevealBlock direction="right" delay={0.2}>
+            <div className="relative flex items-center justify-center overflow-hidden">
+              <img
+                src={odinImgPath}
+                alt="Odin node graph visualization"
+                className="w-full max-w-md scale-110"
+                data-testid="img-about-odin"
+                style={{ mask: "radial-gradient(ellipse 70% 70% at center, black 30%, rgba(0,0,0,0.6) 50%, transparent 80%)", WebkitMask: "radial-gradient(ellipse 70% 70% at center, black 30%, rgba(0,0,0,0.6) 50%, transparent 80%)" }}
+              />
+            </div>
+          </RevealBlock>
         </div>
       </div>
     </section>
@@ -157,25 +187,29 @@ function GraphPreviewSection() {
       </div>
 
       <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">
-        <Network className="w-10 h-10 text-[#8F00FF]/50 mx-auto mb-6" />
-        <h2 className="font-serif text-3xl md:text-4xl text-shadows-text tracking-wide mb-4">
-          Explore the Atlas
-        </h2>
-        <p className="text-shadows-text/50 max-w-xl mx-auto mb-10 leading-relaxed">
-          Navigate an interactive network graph mapping deities, mythological figures, and symbolic motifs
-          across cultures and traditions. Zoom, filter, and discover hidden connections.
-        </p>
-        <Link href="/graph">
-          <Button
-            variant="outline"
-            size="lg"
-            className="border-[#8F00FF] text-shadows-text hover:border-[#03FF9B] hover:text-[#03FF9B] transition-all duration-300 px-8 tracking-wider no-default-hover-elevate no-default-active-elevate"
-            data-testid="button-explore-graph"
-          >
-            Open Graph
-            <ArrowRight className="ml-2 w-4 h-4" />
-          </Button>
-        </Link>
+        <RevealBlock>
+          <Network className="w-10 h-10 text-[#8F00FF]/50 mx-auto mb-6" />
+          <h2 className="font-serif text-3xl md:text-4xl text-shadows-text tracking-wide mb-4">
+            Explore the Atlas
+          </h2>
+          <p className="text-shadows-text/50 max-w-xl mx-auto mb-10 leading-relaxed">
+            Navigate an interactive network graph mapping deities, mythological figures, and symbolic motifs
+            across cultures and traditions. Zoom, filter, and discover hidden connections.
+          </p>
+        </RevealBlock>
+        <RevealBlock delay={0.2}>
+          <Link href="/graph">
+            <Button
+              variant="outline"
+              size="lg"
+              className="border-[#8F00FF] text-shadows-text hover:border-[#03FF9B] hover:text-[#03FF9B] transition-all duration-300 px-8 tracking-wider no-default-hover-elevate no-default-active-elevate"
+              data-testid="button-explore-graph"
+            >
+              Open Graph
+              <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+          </Link>
+        </RevealBlock>
       </div>
     </section>
   );
@@ -185,50 +219,56 @@ function TeamPreview() {
   return (
     <section className="py-24 bg-[#0C0042]" data-testid="section-team-preview">
       <div className="max-w-7xl mx-auto px-6">
-        <h2 className="font-serif text-3xl md:text-4xl text-shadows-text tracking-wide text-center mb-4">
-          Research Team
-        </h2>
-        <p className="text-shadows-text/50 text-center max-w-xl mx-auto mb-12">
-          An interdisciplinary team of scholars bridging comparative mythology, religious studies, and computational analysis.
-        </p>
+        <RevealBlock>
+          <h2 className="font-serif text-3xl md:text-4xl text-shadows-text tracking-wide text-center mb-4">
+            Research Team
+          </h2>
+          <p className="text-shadows-text/50 text-center max-w-xl mx-auto mb-12">
+            An interdisciplinary team of scholars bridging comparative mythology, religious studies, and computational analysis.
+          </p>
+        </RevealBlock>
 
-        <div className="max-w-2xl mx-auto">
-          <div className="rounded-lg overflow-hidden border border-[#350A8C]/20">
-            <img
-              src={teamPhotoPath}
-              alt="Research team — Camille Bertrand, Laura Duparc, Ami Nagai"
-              className="w-full h-auto object-cover"
-              data-testid="img-team-photo"
-            />
+        <RevealBlock delay={0.15}>
+          <div className="max-w-2xl mx-auto">
+            <div className="rounded-lg overflow-hidden border border-[#350A8C]/20">
+              <img
+                src={teamPhotoPath}
+                alt="Research team — Camille Bertrand, Laura Duparc, Ami Nagai"
+                className="w-full h-auto object-cover"
+                data-testid="img-team-photo"
+              />
+            </div>
+            <div className="flex justify-center gap-12 mt-6">
+              <div className="text-center" data-testid="card-team-member-0">
+                <span className="font-serif text-sm text-shadows-text/70 block" data-testid="text-team-name-0">Camille Bertrand</span>
+                <span className="text-[#8F00FF]/80 text-xs">Researcher</span>
+              </div>
+              <div className="text-center" data-testid="card-team-member-1">
+                <span className="font-serif text-sm text-shadows-text/70 block" data-testid="text-team-name-1">Laura Duparc</span>
+                <span className="text-[#8F00FF]/80 text-xs">Lead Researcher</span>
+              </div>
+              <div className="text-center" data-testid="card-team-member-2">
+                <span className="font-serif text-sm text-shadows-text/70 block" data-testid="text-team-name-2">Ami Nagai</span>
+                <span className="text-[#8F00FF]/80 text-xs">Researcher</span>
+              </div>
+            </div>
           </div>
-          <div className="flex justify-center gap-12 mt-6">
-            <div className="text-center" data-testid="card-team-member-0">
-              <span className="font-serif text-sm text-shadows-text/70 block" data-testid="text-team-name-0">Camille Bertrand</span>
-              <span className="text-[#8F00FF]/80 text-xs">Researcher</span>
-            </div>
-            <div className="text-center" data-testid="card-team-member-1">
-              <span className="font-serif text-sm text-shadows-text/70 block" data-testid="text-team-name-1">Laura Duparc</span>
-              <span className="text-[#8F00FF]/80 text-xs">Lead Researcher</span>
-            </div>
-            <div className="text-center" data-testid="card-team-member-2">
-              <span className="font-serif text-sm text-shadows-text/70 block" data-testid="text-team-name-2">Ami Nagai</span>
-              <span className="text-[#8F00FF]/80 text-xs">Researcher</span>
-            </div>
-          </div>
-        </div>
+        </RevealBlock>
 
-        <div className="text-center mt-12">
-          <Link href="/team">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-[#350A8C]/40 text-shadows-text/60 hover:border-[#03FF9B] hover:text-[#03FF9B] no-default-hover-elevate no-default-active-elevate transition-all duration-300"
-              data-testid="button-view-team"
-            >
-              View Full Team
-            </Button>
-          </Link>
-        </div>
+        <RevealBlock delay={0.3}>
+          <div className="text-center mt-12">
+            <Link href="/team">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-[#350A8C]/40 text-shadows-text/60 hover:border-[#03FF9B] hover:text-[#03FF9B] no-default-hover-elevate no-default-active-elevate transition-all duration-300"
+                data-testid="button-view-team"
+              >
+                View Full Team
+              </Button>
+            </Link>
+          </div>
+        </RevealBlock>
       </div>
     </section>
   );
@@ -294,49 +334,55 @@ function PartnersPreview() {
   return (
     <section className="py-24 bg-gradient-to-b from-[#0C0042] to-[#0B0626]" data-testid="section-partners">
       <div className="max-w-7xl mx-auto px-6">
-        <h2 className="font-serif text-3xl md:text-4xl text-shadows-text tracking-wide text-center mb-4">
-          Partners
-        </h2>
-        <p className="text-shadows-text/50 text-center max-w-xl mx-auto mb-16">
-          SHADOWS is developed in collaboration with other projects in digital humanities and computational interdisciplinary research.
-        </p>
+        <RevealBlock>
+          <h2 className="font-serif text-3xl md:text-4xl text-shadows-text tracking-wide text-center mb-4">
+            Partners
+          </h2>
+          <p className="text-shadows-text/50 text-center max-w-xl mx-auto mb-16">
+            SHADOWS is developed in collaboration with other projects in digital humanities and computational interdisciplinary research.
+          </p>
+        </RevealBlock>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-2xl mx-auto">
-          {partners.map((partner, i) => (
-            <a
-              key={i}
-              href={partner.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex flex-col items-center gap-5 p-8 rounded-md border border-[#350A8C]/10 hover:border-[#8F00FF]/40 transition-all duration-300"
-              data-testid={`card-partner-${i}`}
-            >
-              <div className="opacity-60 group-hover:opacity-100 transition-opacity">
-                {partner.visual || (
-                  <div className="w-20 h-20 rounded-full bg-[#350A8C]/10 border border-[#350A8C]/20 flex items-center justify-center group-hover:border-[#8F00FF]/40">
-                    <span className="font-serif text-2xl text-shadows-text/60 group-hover:text-shadows-text transition-colors">{partner.name.split(" ")[0][0]}</span>
-                  </div>
-                )}
-              </div>
-              <span className="text-shadows-text/60 text-sm text-center group-hover:text-shadows-text transition-colors">
-                {partner.name}
-              </span>
-            </a>
-          ))}
-        </div>
+        <RevealBlock delay={0.15}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-2xl mx-auto">
+            {partners.map((partner, i) => (
+              <a
+                key={i}
+                href={partner.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col items-center gap-5 p-8 rounded-md border border-[#350A8C]/10 hover:border-[#8F00FF]/40 transition-all duration-300"
+                data-testid={`card-partner-${i}`}
+              >
+                <div className="opacity-60 group-hover:opacity-100 transition-opacity">
+                  {partner.visual || (
+                    <div className="w-20 h-20 rounded-full bg-[#350A8C]/10 border border-[#350A8C]/20 flex items-center justify-center group-hover:border-[#8F00FF]/40">
+                      <span className="font-serif text-2xl text-shadows-text/60 group-hover:text-shadows-text transition-colors">{partner.name.split(" ")[0][0]}</span>
+                    </div>
+                  )}
+                </div>
+                <span className="text-shadows-text/60 text-sm text-center group-hover:text-shadows-text transition-colors">
+                  {partner.name}
+                </span>
+              </a>
+            ))}
+          </div>
+        </RevealBlock>
 
-        <div className="text-center mt-12">
-          <Link href="/partners">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-[#350A8C]/40 text-shadows-text/60 hover:border-[#03FF9B] hover:text-[#03FF9B] no-default-hover-elevate no-default-active-elevate transition-all duration-300"
-              data-testid="button-view-partners"
-            >
-              Learn More
-            </Button>
-          </Link>
-        </div>
+        <RevealBlock delay={0.3}>
+          <div className="text-center mt-12">
+            <Link href="/partners">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-[#350A8C]/40 text-shadows-text/60 hover:border-[#03FF9B] hover:text-[#03FF9B] no-default-hover-elevate no-default-active-elevate transition-all duration-300"
+                data-testid="button-view-partners"
+              >
+                Learn More
+              </Button>
+            </Link>
+          </div>
+        </RevealBlock>
       </div>
     </section>
   );
