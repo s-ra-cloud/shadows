@@ -1595,7 +1595,7 @@ function NetworkView({
   onSelectTrait,
   onHoverNode,
   hoveredNode,
-  selectedNodeId,
+  selectedNodeIds,
 }: {
   filteredGraphNodes: GraphNode[];
   filteredLinks: GraphLink[];
@@ -1603,7 +1603,7 @@ function NetworkView({
   onSelectTrait: (trait: TraitNode | null) => void;
   onHoverNode: (node: any) => void;
   hoveredNode: any;
-  selectedNodeId: number | null;
+  selectedNodeIds: Set<number>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
@@ -1612,10 +1612,10 @@ function NetworkView({
   const simLinksRef = useRef<any[]>([]);
   const onSelectNodeRef = useRef(onSelectNode);
   const onSelectTraitRef = useRef(onSelectTrait);
-  const selectedNodeIdRef = useRef(selectedNodeId);
+  const selectedNodeIdsRef = useRef(selectedNodeIds);
   onSelectNodeRef.current = onSelectNode;
   onSelectTraitRef.current = onSelectTrait;
-  selectedNodeIdRef.current = selectedNodeId;
+  selectedNodeIdsRef.current = selectedNodeIds;
 
   useEffect(() => {
     if (!canvasRef.current || filteredGraphNodes.length === 0) return;
@@ -1709,9 +1709,15 @@ function NetworkView({
       ctx.scale(t.k, t.k);
 
       const hoveredId = currentHovered?.id;
-      const selId = selectedNodeIdRef.current;
-      const selectedSimNode = selId ? simNodes.find((n: any) => n.isCharacter && n.original?.id === selId) : null;
-      const activeId = hoveredId || selectedSimNode?.id;
+      const selIds = selectedNodeIdsRef.current;
+      const hasSelection = selIds.size > 0;
+      const selectedSimIds = new Set<string>();
+      if (hasSelection) {
+        for (const n of simNodes) {
+          if (n.isCharacter && n.original && selIds.has(n.original.id)) selectedSimIds.add(n.id);
+        }
+      }
+      const activeId = hoveredId;
       const connectedIds = new Set<string>();
       if (activeId) {
         for (const l of simLinks) {
@@ -1719,15 +1725,22 @@ function NetworkView({
           if (l.target.id === activeId) connectedIds.add(l.source.id);
         }
       }
+      if (hasSelection) {
+        for (const l of simLinks) {
+          if (selectedSimIds.has(l.source.id)) connectedIds.add(l.target.id);
+          if (selectedSimIds.has(l.target.id)) connectedIds.add(l.source.id);
+        }
+      }
 
       for (const l of simLinks) {
-        const isHighlighted = activeId && (l.source.id === activeId || l.target.id === activeId);
+        const isHighlighted = (activeId && (l.source.id === activeId || l.target.id === activeId)) ||
+          (hasSelection && (selectedSimIds.has(l.source.id) || selectedSimIds.has(l.target.id)));
         const color = CATEGORY_COLORS[l.category] || "#350A8C";
         ctx.beginPath();
         ctx.moveTo(l.source.x, l.source.y);
         ctx.lineTo(l.target.x, l.target.y);
         ctx.strokeStyle = color;
-        ctx.globalAlpha = isHighlighted ? 0.7 : activeId ? 0.03 : 0.15;
+        ctx.globalAlpha = isHighlighted ? 0.7 : (activeId || hasSelection) ? 0.03 : 0.15;
         ctx.lineWidth = isHighlighted ? 1.5 : 0.5;
         ctx.stroke();
       }
@@ -1735,11 +1748,12 @@ function NetworkView({
       ctx.globalAlpha = 1;
 
       const baseR = nodeR;
+      const anyActive = activeId || hasSelection;
       for (const n of simNodes) {
         const isHovered = n.id === hoveredId;
-        const isSelected = n.isCharacter && n.original?.id === selId;
+        const isSelected = n.isCharacter && n.original && selIds.has(n.original.id);
         const isConnected = connectedIds.has(n.id);
-        const dimmed = activeId && !isHovered && !isConnected && !(n.id === activeId);
+        const dimmed = anyActive && !isHovered && !isSelected && !isConnected && !selectedSimIds.has(n.id);
 
         if (n.isCharacter) {
           const r = isHovered ? baseR + 4 : isSelected ? baseR + 2 : baseR;
@@ -1772,14 +1786,14 @@ function NetworkView({
 
       ctx.globalAlpha = 1;
 
-      const showLabels = t.k > 0.6 || activeId;
+      const showLabels = t.k > 0.6 || anyActive;
       if (showLabels) {
         for (const n of simNodes) {
           const isHovered = n.id === hoveredId;
           const isActive = n.id === activeId;
-          const isSelected = n.isCharacter && n.original?.id === selId;
+          const isSelected = n.isCharacter && n.original && selIds.has(n.original.id);
           const isConnected = connectedIds.has(n.id);
-          const dimmed = activeId && !isHovered && !isActive && !isConnected;
+          const dimmed = anyActive && !isHovered && !isActive && !isSelected && !isConnected;
 
           if (n.isCharacter) {
             if (dimmed && !isConnected && !isSelected) continue;
@@ -1866,7 +1880,7 @@ function NetworkView({
     if (!canvasRef.current || simNodesRef.current.length === 0) return;
     const sim = simulationRef.current;
     if (sim) sim.alpha(0).restart();
-  }, [selectedNodeId]);
+  }, [selectedNodeIds]);
 
   return <canvas ref={canvasRef} className="w-full h-full" />;
 }
@@ -1876,19 +1890,19 @@ function DirectView({
   directLinks,
   onSelectNode,
   onHoverNode,
-  selectedNodeId,
+  selectedNodeIds,
 }: {
   charNodes: CharNode[];
   directLinks: DirectLink[];
   onSelectNode: (node: Node | null) => void;
   onHoverNode: (node: any) => void;
-  selectedNodeId: number | null;
+  selectedNodeIds: Set<number>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const transformRef = useRef(d3.zoomIdentity);
   const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
-  const selectedNodeIdRef = useRef(selectedNodeId);
-  selectedNodeIdRef.current = selectedNodeId;
+  const selectedNodeIdsRef = useRef(selectedNodeIds);
+  selectedNodeIdsRef.current = selectedNodeIds;
 
   useEffect(() => {
     if (!canvasRef.current || charNodes.length === 0) return;
@@ -1972,26 +1986,42 @@ function DirectView({
         }
       }
 
+      const selIds = selectedNodeIdsRef.current;
+      const hasSelection = selIds.size > 0;
+      const selectedSimIds = new Set<string>();
+      if (hasSelection) {
+        for (const n of simNodes) {
+          if (n.original && selIds.has(n.original.id)) selectedSimIds.add(n.id);
+        }
+      }
+      if (hasSelection) {
+        for (const l of simLinks) {
+          if (selectedSimIds.has(l.source.id)) connectedIds.add(l.target.id);
+          if (selectedSimIds.has(l.target.id)) connectedIds.add(l.source.id);
+        }
+      }
+      const anyActive = hoveredId || hasSelection;
+
       for (const l of simLinks) {
-        const isHighlighted = hoveredId && (l.source.id === hoveredId || l.target.id === hoveredId);
+        const isHighlighted = (hoveredId && (l.source.id === hoveredId || l.target.id === hoveredId)) ||
+          (hasSelection && (selectedSimIds.has(l.source.id) || selectedSimIds.has(l.target.id)));
         const normalizedWeight = l.weight / maxWeight;
         ctx.beginPath();
         ctx.moveTo(l.source.x, l.source.y);
         ctx.lineTo(l.target.x, l.target.y);
         ctx.strokeStyle = isHighlighted ? "#03FF9B" : "#8F00FF";
-        ctx.globalAlpha = isHighlighted ? 0.5 + normalizedWeight * 0.4 : hoveredId ? 0.02 : 0.05 + normalizedWeight * 0.15;
+        ctx.globalAlpha = isHighlighted ? 0.5 + normalizedWeight * 0.4 : anyActive ? 0.02 : 0.05 + normalizedWeight * 0.15;
         ctx.lineWidth = isHighlighted ? 1 + normalizedWeight * 3 : 0.3 + normalizedWeight * 1.5;
         ctx.stroke();
       }
 
       ctx.globalAlpha = 1;
 
-      const selId = selectedNodeIdRef.current;
       for (const n of simNodes) {
         const isHovered = n.id === hoveredId;
-        const isSelected = n.original?.id === selId;
+        const isSelected = n.original && selIds.has(n.original.id);
         const isConnected = connectedIds.has(n.id);
-        const dimmed = hoveredId && !isHovered && !isConnected;
+        const dimmed = anyActive && !isHovered && !isSelected && !isConnected;
 
         const r = isHovered ? 10 : isSelected ? 8 : 6;
         ctx.beginPath();
@@ -2018,9 +2048,9 @@ function DirectView({
       if (showLabels) {
         for (const n of simNodes) {
           const isHovered = n.id === hoveredId;
-          const isSelected = n.original?.id === selId;
+          const isSelected = n.original && selIds.has(n.original.id);
           const isConnected = connectedIds.has(n.id);
-          const dimmed = hoveredId && !isHovered && !isConnected;
+          const dimmed = anyActive && !isHovered && !isSelected && !isConnected;
 
           if (dimmed && !isSelected) continue;
           ctx.font = (isHovered || isSelected) ? "bold 11px 'Cinzel Decorative', serif" : "9px 'Cinzel Decorative', serif";
@@ -2110,7 +2140,7 @@ function DirectView({
   useEffect(() => {
     const sim = simulationRef.current;
     if (sim) sim.alpha(0).restart();
-  }, [selectedNodeId]);
+  }, [selectedNodeIds]);
 
   return <canvas ref={canvasRef} className="w-full h-full" />;
 }
@@ -2148,19 +2178,19 @@ function CorrespondenceView({
   figures,
   onSelectNode,
   onHoverNode,
-  selectedNodeId,
+  selectedNodeIds,
   useSupersets,
 }: {
   figures: Node[];
   onSelectNode: (node: Node | null) => void;
   onHoverNode: (node: any) => void;
-  selectedNodeId: number | null;
+  selectedNodeIds: Set<number>;
   useSupersets?: Set<string>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawRef = useRef<(() => void) | null>(null);
-  const selectedNodeIdRef = useRef(selectedNodeId);
-  selectedNodeIdRef.current = selectedNodeId;
+  const selectedNodeIdsRef = useRef(selectedNodeIds);
+  selectedNodeIdsRef.current = selectedNodeIds;
 
   const caResult = useMemo(() => computeCorrespondenceAnalysis(figures, useSupersets), [figures, useSupersets]);
   const { points: caPoints, dimensions: caDimensions } = caResult;
@@ -2310,11 +2340,12 @@ function CorrespondenceView({
 
       projected.sort((a, b) => b.z - a.z);
 
+      const caSelIds = selectedNodeIdsRef.current;
+      const caHasSelection = caSelIds.size > 0;
       for (const pp of projected) {
         const { sx, sy, point: p, color, r } = pp;
         const isHov = p.id === hoveredId;
-        const caSelId = selectedNodeIdRef.current;
-        const isSel = p.isCharacter && p.original?.id === caSelId;
+        const isSel = p.isCharacter && p.original && caSelIds.has(p.original.id);
         const drawR = isHov ? r + 3 : isSel ? r + 2 : r;
 
         ctx!.beginPath();
@@ -2323,8 +2354,10 @@ function CorrespondenceView({
 
         if (hoveredId) {
           ctx!.globalAlpha = isHov ? 0.95 : isSel ? 0.7 : 0.06;
+        } else if (caHasSelection) {
+          ctx!.globalAlpha = isSel ? 0.95 : 0.1;
         } else {
-          ctx!.globalAlpha = isSel ? 0.95 : p.isCharacter ? 0.6 : 0.3;
+          ctx!.globalAlpha = p.isCharacter ? 0.6 : 0.3;
         }
         ctx!.fill();
 
@@ -2501,7 +2534,7 @@ function CorrespondenceView({
 
   useEffect(() => {
     if (drawRef.current) drawRef.current();
-  }, [selectedNodeId]);
+  }, [selectedNodeIds]);
 
   if (caPoints.length === 0) {
     return (
@@ -2555,7 +2588,7 @@ function DichotomyView({
   dichotomyThreshold,
   onSelectNode,
   onHoverNode,
-  selectedNodeId,
+  selectedNodeIds,
   enabledCategories,
   useSupersets,
 }: {
@@ -2564,18 +2597,18 @@ function DichotomyView({
   dichotomyThreshold: number;
   onSelectNode: (n: Node) => void;
   onHoverNode: (n: any) => void;
-  selectedNodeId: number | null;
+  selectedNodeIds: Set<number>;
   enabledCategories?: Set<string>;
   useSupersets?: Set<string>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const transformRef = useRef({ x: 0, y: 0, k: 1 });
-  const selectedNodeIdRef = useRef(selectedNodeId);
+  const selectedNodeIdsRef = useRef(selectedNodeIds);
   const drawRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    selectedNodeIdRef.current = selectedNodeId;
-  }, [selectedNodeId]);
+    selectedNodeIdsRef.current = selectedNodeIds;
+  }, [selectedNodeIds]);
 
   const dichotomyResult = useMemo(() => {
     if (!figures || figures.length === 0) return [];
@@ -2867,22 +2900,24 @@ function DichotomyView({
       ctx.globalAlpha = 1;
 
       const hoveredId = currentHovered?.id;
-      const selId = selectedNodeIdRef.current;
+      const dicSelIds = selectedNodeIdsRef.current;
+      const dicHasSelection = dicSelIds.size > 0;
 
       for (const n of allSimNodes) {
         const nx = (n as any).x;
         const ny = (n as any).y;
         const isHovered = n.id === hoveredId;
-        const isSelected = n.nodeId === selId;
+        const isSelected = dicSelIds.has(n.nodeId);
         const leafBox = leafBoxes.find(b => b.leafIndex === n.leafIdx);
         const groupColor = leafBox?.color || "#8F00FF";
         const tradColor = getTraditionColor(n.original.tradition);
+        const dimmed = dicHasSelection && !isSelected && !isHovered;
 
         const r = isHovered ? nodeR + 3 : isSelected ? nodeR + 2 : nodeR;
         ctx.beginPath();
         ctx.arc(nx, ny, r, 0, Math.PI * 2);
         ctx.fillStyle = tradColor;
-        ctx.globalAlpha = isHovered || isSelected ? 1 : 0.7;
+        ctx.globalAlpha = dimmed ? 0.15 : isHovered || isSelected ? 1 : 0.7;
         ctx.fill();
 
         if (isSelected) {
@@ -2901,7 +2936,7 @@ function DichotomyView({
           if (isHovered || isSelected || t.k > 2) {
             ctx.font = (isHovered || isSelected) ? "bold 10px 'Cinzel Decorative', serif" : "8px 'Sofia Pro Light', sans-serif";
             ctx.fillStyle = isSelected ? "#FFD700" : tradColor;
-            ctx.globalAlpha = (isHovered || isSelected) ? 1 : 0.5;
+            ctx.globalAlpha = dimmed ? 0 : (isHovered || isSelected) ? 1 : 0.5;
             ctx.textAlign = "center";
             ctx.fillText(n.label, nx, ny - r - 4);
           }
@@ -2975,7 +3010,7 @@ function DichotomyView({
 
   useEffect(() => {
     if (drawRef.current) drawRef.current();
-  }, [selectedNodeId]);
+  }, [selectedNodeIds]);
 
   if (dichotomyResult.length === 0) {
     return (
@@ -3020,7 +3055,8 @@ export default function GraphPage() {
     queryKey: ["/api/graph"],
   });
 
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [selectedNodes, setSelectedNodes] = useState<Map<number, Node>>(new Map());
+  const [lastSelectedNode, setLastSelectedNode] = useState<Node | null>(null);
   const [selectedTrait, setSelectedTrait] = useState<TraitNode | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -3039,10 +3075,23 @@ export default function GraphPage() {
   const handleGraphNodeSelect = useCallback((node: Node | null, trait?: TraitNode | null) => {
     if (trait) {
       setSelectedTrait(trait);
-      setSelectedNode(null);
-    } else {
-      setSelectedNode(node);
+      setSelectedNodes(new Map());
+      setLastSelectedNode(null);
+    } else if (node) {
       setSelectedTrait(null);
+      setSelectedNodes(prev => {
+        const next = new Map(prev);
+        if (next.has(node.id)) {
+          next.delete(node.id);
+        } else {
+          next.set(node.id, node);
+        }
+        return next;
+      });
+      setLastSelectedNode(node);
+    } else {
+      setSelectedNodes(new Map());
+      setLastSelectedNode(null);
     }
   }, []);
 
@@ -3125,24 +3174,32 @@ export default function GraphPage() {
     return graphLinks.filter(l => filteredNodeIds.has(l.source) && filteredNodeIds.has(l.target));
   }, [graphLinks, filteredNodeIds]);
 
+  const selectedNodeIds = useMemo(() => new Set(selectedNodes.keys()), [selectedNodes]);
+
   useEffect(() => {
-    if (selectedNode && viewMode !== "ca") {
+    if (selectedNodes.size > 0 && viewMode !== "ca") {
       const charIds = viewMode === "direct"
-        ? new Set(directNodes.map(n => n.id))
+        ? new Set(directNodes.map(n => n.nodeId))
         : new Set(filteredGraphNodes.filter(n => n.isCharacter).map(n => n.original?.id));
-      if (!charIds.has(selectedNode.id)) {
-        setSelectedNode(null);
+      let changed = false;
+      const next = new Map(selectedNodes);
+      for (const id of next.keys()) {
+        if (!charIds.has(id)) { next.delete(id); changed = true; }
+      }
+      if (changed) {
+        setSelectedNodes(next);
+        if (lastSelectedNode && !next.has(lastSelectedNode.id)) setLastSelectedNode(null);
       }
     }
-  }, [filteredGraphNodes, directNodes, viewMode, selectedNode]);
+  }, [filteredGraphNodes, directNodes, viewMode, selectedNodes, lastSelectedNode]);
 
-  const relatedNodes = selectedNode
+  const relatedNodes = lastSelectedNode
     ? data?.nodes.filter((n) => {
-        if (n.id === selectedNode.id) return false;
+        if (n.id === lastSelectedNode.id) return false;
         return data?.edges.some(
           (e) =>
-            (e.sourceNodeId === selectedNode.id && e.targetNodeId === n.id) ||
-            (e.targetNodeId === selectedNode.id && e.sourceNodeId === n.id)
+            (e.sourceNodeId === lastSelectedNode.id && e.targetNodeId === n.id) ||
+            (e.targetNodeId === lastSelectedNode.id && e.sourceNodeId === n.id)
         );
       }) || []
     : [];
@@ -3343,7 +3400,7 @@ export default function GraphPage() {
             onSelectTrait={(t) => handleGraphNodeSelect(null, t)}
             onHoverNode={setHoveredNode}
             hoveredNode={hoveredNode}
-            selectedNodeId={selectedNode?.id ?? null}
+            selectedNodeIds={selectedNodeIds}
           />
         ) : viewMode === "direct" ? (
           <DirectView
@@ -3351,14 +3408,14 @@ export default function GraphPage() {
             directLinks={directLinks}
             onSelectNode={(n) => handleGraphNodeSelect(n)}
             onHoverNode={setHoveredNode}
-            selectedNodeId={selectedNode?.id ?? null}
+            selectedNodeIds={selectedNodeIds}
           />
         ) : viewMode === "ca" ? (
           <CorrespondenceView
             figures={data.nodes}
             onSelectNode={(n) => handleGraphNodeSelect(n)}
             onHoverNode={setHoveredNode}
-            selectedNodeId={selectedNode?.id ?? null}
+            selectedNodeIds={selectedNodeIds}
             useSupersets={activeSupersets}
           />
         ) : (
@@ -3368,19 +3425,19 @@ export default function GraphPage() {
             dichotomyThreshold={dichotomyThreshold}
             onSelectNode={(n) => handleGraphNodeSelect(n)}
             onHoverNode={setHoveredNode}
-            selectedNodeId={selectedNode?.id ?? null}
+            selectedNodeIds={selectedNodeIds}
             enabledCategories={enabledCategoriesSet}
             useSupersets={activeSupersets}
           />
         )}
       </div>
 
-      {selectedNode && (
+      {lastSelectedNode && (
         <NodePanel
-          node={selectedNode}
+          node={lastSelectedNode}
           relatedNodes={relatedNodes}
           edges={data.edges}
-          onClose={() => setSelectedNode(null)}
+          onClose={() => { setSelectedNodes(new Map()); setLastSelectedNode(null); }}
         />
       )}
 
