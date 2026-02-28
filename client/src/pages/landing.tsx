@@ -14,7 +14,7 @@ function useScrollReveal(threshold = 0.15) {
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      ([entry]) => { setVisible(entry.isIntersecting); },
       { threshold }
     );
     obs.observe(el);
@@ -25,11 +25,11 @@ function useScrollReveal(threshold = 0.15) {
 
 function RevealBlock({ children, delay = 0, direction = "up" }: { children: React.ReactNode; delay?: number; direction?: "up" | "left" | "right" }) {
   const { ref, visible } = useScrollReveal(0.12);
-  const translate = direction === "up" ? "translateY(40px)" : direction === "left" ? "translateX(-40px)" : "translateX(40px)";
+  const translate = direction === "up" ? "translateY(24px)" : direction === "left" ? "translateX(-24px)" : "translateX(24px)";
   const style: CSSProperties = {
     opacity: visible ? 1 : 0,
     transform: visible ? "translate(0)" : translate,
-    transition: `opacity 0.7s ease ${delay}s, transform 0.7s ease ${delay}s`,
+    transition: `opacity 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) ${delay}s, transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) ${delay}s`,
   };
   return <div ref={ref} style={style}>{children}</div>;
 }
