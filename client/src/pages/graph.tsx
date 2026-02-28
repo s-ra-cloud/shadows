@@ -1899,8 +1899,7 @@ function DirectView({
   selectedNodeIds: Set<number>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const transformRef = useRef(d3.zoomIdentity);
-  const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
+  const drawRef = useRef<(() => void) | null>(null);
   const selectedNodeIdsRef = useRef(selectedNodeIds);
   selectedNodeIdsRef.current = selectedNodeIds;
 
@@ -1923,10 +1922,12 @@ function DirectView({
     canvas.style.height = height + "px";
     ctx.scale(dpr, dpr);
 
+    const spread = Math.min(width, height) * 0.3;
     const simNodes = charNodes.map((n) => ({
       ...n,
-      x: width / 2 + (Math.random() - 0.5) * Math.min(width, 800),
-      y: height / 2 + (Math.random() - 0.5) * Math.min(height, 600),
+      x: (Math.random() - 0.5) * spread,
+      y: (Math.random() - 0.5) * spread,
+      z: (Math.random() - 0.5) * spread,
     }));
     const simNodeMap = new Map<string, any>();
     simNodes.forEach((n) => simNodeMap.set(n.id, n));
@@ -1942,32 +1943,64 @@ function DirectView({
       .filter((l) => l.source && l.target);
 
     const nodeCount = simNodes.length;
-    const baseDist = nodeCount > 100 ? 120 : nodeCount > 50 ? 180 : 250;
-    const chargeStr = nodeCount > 100 ? -120 : nodeCount > 50 ? -200 : -400;
+    const baseDist = nodeCount > 100 ? 60 : nodeCount > 50 ? 90 : 120;
 
-    const simulation = d3.forceSimulation(simNodes)
-      .force("link", d3.forceLink(simLinks).id((d: any) => d.id)
-        .distance((d: any) => {
-          const norm = d.weight / maxWeight;
-          return baseDist * (1 - norm * 0.85);
-        })
-        .strength((d: any) => {
-          const norm = d.weight / maxWeight;
-          return 0.05 + norm * norm * 0.9;
-        }))
-      .force("charge", d3.forceManyBody().strength(chargeStr))
-      .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius(14))
-      .alphaDecay(0.015)
-      .velocityDecay(0.35);
+    for (let iter = 0; iter < 500; iter++) {
+      const alpha = Math.max(0.001, 1 - iter / 500);
+      for (let i = 0; i < simNodes.length; i++) {
+        for (let j = i + 1; j < simNodes.length; j++) {
+          const a = simNodes[i], b = simNodes[j];
+          let dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+          let dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
+          const repulse = (nodeCount > 100 ? -80 : nodeCount > 50 ? -150 : -250) * alpha / (dist * dist);
+          const fx = dx / dist * repulse;
+          const fy = dy / dist * repulse;
+          const fz = dz / dist * repulse;
+          a.x += fx; a.y += fy; a.z += fz;
+          b.x -= fx; b.y -= fy; b.z -= fz;
+        }
+      }
+      for (const l of simLinks) {
+        const a = l.source, b = l.target;
+        let dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+        let dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
+        const norm = l.weight / maxWeight;
+        const targetDist = baseDist * (1 - norm * 0.85);
+        const strength = (0.05 + norm * norm * 0.9) * alpha;
+        const delta = (dist - targetDist) * strength * 0.5;
+        const ux = dx / dist, uy = dy / dist, uz = dz / dist;
+        a.x += ux * delta; a.y += uy * delta; a.z += uz * delta;
+        b.x -= ux * delta; b.y -= uy * delta; b.z -= uz * delta;
+      }
+      for (const n of simNodes) {
+        n.x *= 0.998; n.y *= 0.998; n.z *= 0.998;
+      }
+    }
 
-    simulation.stop();
-    for (let i = 0; i < 400; i++) simulation.tick();
+    let rotX = -0.3, rotY = 0.5;
+    let zoom = 1;
+    let isDragging = false;
+    let lastMx = 0, lastMy = 0;
+    let currentHovered: { node: any; sx: number; sy: number } | null = null;
+    let hoveredEdge: { link: any; sx: number; sy: number } | null = null;
+    let pinnedEdge: { link: any; sx: number; sy: number } | null = null;
 
-    simulationRef.current = simulation;
-    let currentHovered: any = null;
-    let hoveredEdge: (typeof simLinks[0]) | null = null;
-    let pinnedEdge: (typeof simLinks[0]) | null = null;
+    function project(x3: number, y3: number, z3: number) {
+      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+      let y1 = y3 * cosX - z3 * sinX;
+      let z1 = y3 * sinX + z3 * cosX;
+      let x1 = x3 * cosY + z1 * sinY;
+      let z2 = -x3 * sinY + z1 * cosY;
+      const perspective = 800;
+      const scale = perspective / (perspective + z2) * zoom;
+      return {
+        sx: width / 2 + x1 * scale,
+        sy: height / 2 + y1 * scale,
+        z: z2,
+        scale,
+      };
+    }
 
     function draw() {
       ctx.save();
@@ -1979,29 +2012,23 @@ function DirectView({
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
 
-      const t = transformRef.current;
-      ctx.translate(t.x, t.y);
-      ctx.scale(t.k, t.k);
-
-      const hoveredId = currentHovered?.id;
-      const connectedIds = new Set<string>();
-      const hoveredLinks: typeof simLinks = [];
-      if (hoveredId) {
-        for (const l of simLinks) {
-          if (l.source.id === hoveredId || l.target.id === hoveredId) {
-            connectedIds.add(l.source.id);
-            connectedIds.add(l.target.id);
-            hoveredLinks.push(l);
-          }
-        }
-      }
-
       const selIds = selectedNodeIdsRef.current;
       const hasSelection = selIds.size > 0;
       const selectedSimIds = new Set<string>();
       if (hasSelection) {
         for (const n of simNodes) {
           if (n.original && selIds.has(n.original.id)) selectedSimIds.add(n.id);
+        }
+      }
+
+      const hoveredId = currentHovered?.node?.id;
+      const connectedIds = new Set<string>();
+      if (hoveredId) {
+        for (const l of simLinks) {
+          if (l.source.id === hoveredId || l.target.id === hoveredId) {
+            connectedIds.add(l.source.id);
+            connectedIds.add(l.target.id);
+          }
         }
       }
       if (hasSelection) {
@@ -2033,32 +2060,52 @@ function DirectView({
         return `rgb(${r},${g},${b})`;
       }
 
+      const projectedNodes = simNodes.map(n => {
+        const p = project(n.x, n.y, n.z);
+        return { ...p, node: n };
+      });
+      const nodeScreenMap = new Map<string, { sx: number; sy: number; z: number; scale: number }>();
+      for (const pn of projectedNodes) {
+        nodeScreenMap.set(pn.node.id, pn);
+      }
+
       for (const l of simLinks) {
+        const sp = nodeScreenMap.get(l.source.id);
+        const tp = nodeScreenMap.get(l.target.id);
+        if (!sp || !tp) continue;
         const isHighlighted = (hoveredId && (l.source.id === hoveredId || l.target.id === hoveredId)) ||
           (hasSelection && (selectedSimIds.has(l.source.id) || selectedSimIds.has(l.target.id)));
+        const isEdgeActive = (hoveredEdge?.link === l || pinnedEdge?.link === l);
         const normalizedWeight = l.weight / maxWeight;
         ctx.beginPath();
-        ctx.moveTo(l.source.x, l.source.y);
-        ctx.lineTo(l.target.x, l.target.y);
-        ctx.strokeStyle = isHighlighted ? weightToColor(l.weight) : weightToColor(l.weight);
-        ctx.globalAlpha = isHighlighted ? 0.5 + normalizedWeight * 0.4 : anyActive ? 0.02 : 0.05 + normalizedWeight * 0.15;
-        ctx.lineWidth = isHighlighted ? 1 + normalizedWeight * 3 : 0.3 + normalizedWeight * 1.5;
+        ctx.moveTo(sp.sx, sp.sy);
+        ctx.lineTo(tp.sx, tp.sy);
+        ctx.strokeStyle = weightToColor(l.weight);
+        if (isEdgeActive) {
+          ctx.globalAlpha = 0.9;
+          ctx.lineWidth = 3;
+        } else {
+          ctx.globalAlpha = isHighlighted ? 0.4 + normalizedWeight * 0.4 : anyActive ? 0.02 : 0.04 + normalizedWeight * 0.12;
+          ctx.lineWidth = isHighlighted ? 0.8 + normalizedWeight * 2.5 : 0.2 + normalizedWeight * 1.2;
+        }
         ctx.stroke();
       }
 
-      ctx.globalAlpha = 1;
+      projectedNodes.sort((a, b) => b.z - a.z);
 
-      for (const n of simNodes) {
+      for (const pn of projectedNodes) {
+        const n = pn.node;
         const isHovered = n.id === hoveredId;
         const isSelected = n.original && selIds.has(n.original.id);
         const isConnected = connectedIds.has(n.id);
         const dimmed = anyActive && !isHovered && !isSelected && !isConnected;
 
-        const r = isHovered ? 10 : isSelected ? 8 : 6;
+        const baseR = 3 + pn.scale * 3;
+        const r = isHovered ? baseR + 3 : isSelected ? baseR + 2 : baseR;
         ctx.beginPath();
-        ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+        ctx.arc(pn.sx, pn.sy, r, 0, Math.PI * 2);
         ctx.fillStyle = "#E0DCE6";
-        ctx.globalAlpha = dimmed ? 0.08 : 0.85;
+        ctx.globalAlpha = dimmed ? 0.06 : 0.85;
         ctx.fill();
         if (isSelected) {
           ctx.strokeStyle = "#FFD700";
@@ -2071,126 +2118,91 @@ function DirectView({
           ctx.globalAlpha = 0.7;
           ctx.stroke();
         }
-      }
 
-      ctx.globalAlpha = 1;
-
-      const showLabels = t.k > 0.4;
-      if (showLabels) {
-        for (const n of simNodes) {
-          const isHovered = n.id === hoveredId;
-          const isSelected = n.original && selIds.has(n.original.id);
-          const isConnected = connectedIds.has(n.id);
-          const dimmed = anyActive && !isHovered && !isSelected && !isConnected;
-
-          if (dimmed && !isSelected) continue;
-          ctx.font = (isHovered || isSelected) ? "bold 11px 'Cinzel Decorative', serif" : "9px 'Cinzel Decorative', serif";
+        if (!dimmed || isSelected) {
+          ctx.font = (isHovered || isSelected) ? "bold 11px 'Cinzel Decorative', serif" : `${Math.max(7, 9 * pn.scale)}px 'Cinzel Decorative', serif`;
           ctx.fillStyle = isSelected ? "#FFD700" : "#E0DCE6";
-          ctx.globalAlpha = (isHovered || isSelected) ? 1 : isConnected ? 0.9 : (t.k > 1.5 ? 0.7 : 0.35);
+          ctx.globalAlpha = (isHovered || isSelected) ? 1 : isConnected ? 0.9 : 0.5 * pn.scale;
           ctx.textAlign = "center";
-          ctx.fillText(n.label, n.x, n.y - ((isHovered || isSelected) ? 14 : 10));
-        }
-      }
-
-      if (hoveredId && hoveredLinks.length > 0) {
-        const sortedLinks = [...hoveredLinks].sort((a, b) => b.weight - a.weight);
-        const topLinks = sortedLinks.slice(0, 8);
-        for (const l of topLinks) {
-          const other = l.source.id === hoveredId ? l.target : l.source;
-          const midX = (currentHovered.x + other.x) / 2;
-          const midY = (currentHovered.y + other.y) / 2;
-          ctx.font = "7px 'Sofia Pro Light', sans-serif";
-          ctx.fillStyle = weightToColor(l.weight);
-          ctx.globalAlpha = 0.8;
-          ctx.textAlign = "center";
-          ctx.fillText(`${l.weight} shared`, midX, midY - 5);
+          ctx.fillText(n.label, pn.sx, pn.sy - r - 4);
         }
       }
 
       const activeEdge = pinnedEdge || hoveredEdge;
       if (activeEdge && !currentHovered) {
-        const eColor = weightToColor(activeEdge.weight);
-        ctx.globalAlpha = 0.9;
-        ctx.beginPath();
-        ctx.moveTo(activeEdge.source.x, activeEdge.source.y);
-        ctx.lineTo(activeEdge.target.x, activeEdge.target.y);
-        ctx.strokeStyle = eColor;
-        ctx.lineWidth = 3;
-        ctx.stroke();
+        const al = activeEdge.link;
+        const sp2 = nodeScreenMap.get(al.source.id);
+        const tp2 = nodeScreenMap.get(al.target.id);
+        if (sp2 && tp2) {
+          const midSx = (sp2.sx + tp2.sx) / 2;
+          const midSy = (sp2.sy + tp2.sy) / 2;
+          const eColor = weightToColor(al.weight);
+          const srcName = al.source.label || "?";
+          const tgtName = al.target.label || "?";
+          const traits: string[] = al.commonTraits || [];
+          const titleText = `${srcName}  ↔  ${tgtName}`;
+          const subtitleText = `${traits.length} shared trait${traits.length !== 1 ? "s" : ""}`;
 
-        ctx.globalAlpha = 1;
-        ctx.restore();
-        ctx.save();
+          ctx.font = "bold 11px 'Cinzel Decorative', serif";
+          const titleW = ctx.measureText(titleText).width;
+          ctx.font = "10px 'Sofia Pro Light', sans-serif";
+          const subtitleW = ctx.measureText(subtitleText).width;
+          const traitWidths = traits.map((tr: string) => ctx.measureText(`• ${tr}`).width);
+          const maxTraitW = traitWidths.length > 0 ? Math.max(...traitWidths) : 0;
+          const boxW = Math.max(titleW, subtitleW, maxTraitW) + 28;
+          const lineH = 15;
+          const displayCount = Math.min(traits.length, 15);
+          const boxH = 38 + lineH + displayCount * lineH + (traits.length > 15 ? lineH : 0);
+          let bx = midSx - boxW / 2;
+          let by = midSy - boxH - 12;
+          if (bx < 4) bx = 4;
+          if (bx + boxW > width - 4) bx = width - boxW - 4;
+          if (by < 4) by = midSy + 12;
 
-        const t3 = transformRef.current;
-        const midSx = (activeEdge.source.x * t3.k + t3.x + activeEdge.target.x * t3.k + t3.x) / 2;
-        const midSy = (activeEdge.source.y * t3.k + t3.y + activeEdge.target.y * t3.k + t3.y) / 2;
+          ctx.globalAlpha = 0.93;
+          ctx.fillStyle = "#0B0626";
+          ctx.strokeStyle = "#350A8C";
+          ctx.lineWidth = 1;
+          const cr2 = 6;
+          ctx.beginPath();
+          ctx.moveTo(bx + cr2, by);
+          ctx.lineTo(bx + boxW - cr2, by);
+          ctx.quadraticCurveTo(bx + boxW, by, bx + boxW, by + cr2);
+          ctx.lineTo(bx + boxW, by + boxH - cr2);
+          ctx.quadraticCurveTo(bx + boxW, by + boxH, bx + boxW - cr2, by + boxH);
+          ctx.lineTo(bx + cr2, by + boxH);
+          ctx.quadraticCurveTo(bx, by + boxH, bx, by + boxH - cr2);
+          ctx.lineTo(bx, by + cr2);
+          ctx.quadraticCurveTo(bx, by, bx + cr2, by);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
 
-        const srcName = activeEdge.source.label || "?";
-        const tgtName = activeEdge.target.label || "?";
-        const traits: string[] = activeEdge.commonTraits || [];
-        const titleText = `${srcName}  ↔  ${tgtName}`;
-        const subtitleText = `${traits.length} shared trait${traits.length !== 1 ? "s" : ""}`;
+          ctx.globalAlpha = 1;
+          let ty = by + 18;
+          ctx.font = "bold 11px 'Cinzel Decorative', serif";
+          ctx.fillStyle = "#FFD700";
+          ctx.textAlign = "center";
+          ctx.fillText(titleText, bx + boxW / 2, ty);
+          ty += 16;
+          ctx.font = "10px 'Sofia Pro Light', sans-serif";
+          ctx.fillStyle = eColor;
+          ctx.fillText(subtitleText, bx + boxW / 2, ty);
+          ty += 14;
 
-        ctx.font = "bold 11px 'Cinzel Decorative', serif";
-        const titleW = ctx.measureText(titleText).width;
-        ctx.font = "10px 'Sofia Pro Light', sans-serif";
-        const subtitleW = ctx.measureText(subtitleText).width;
-        const traitWidths = traits.map((tr: string) => ctx.measureText(`• ${tr}`).width);
-        const maxTraitW = traitWidths.length > 0 ? Math.max(...traitWidths) : 0;
-        const boxW = Math.max(titleW, subtitleW, maxTraitW) + 28;
-        const lineH = 15;
-        const displayCount = Math.min(traits.length, 15);
-        const boxH = 38 + lineH + displayCount * lineH + (traits.length > 15 ? lineH : 0);
-        let bx = midSx - boxW / 2;
-        let by = midSy - boxH - 12;
-        if (bx < 4) bx = 4;
-        if (bx + boxW > width - 4) bx = width - boxW - 4;
-        if (by < 4) by = midSy + 12;
-
-        ctx.globalAlpha = 0.93;
-        ctx.fillStyle = "#0B0626";
-        ctx.strokeStyle = "#350A8C";
-        ctx.lineWidth = 1;
-        const cr = 6;
-        ctx.beginPath();
-        ctx.moveTo(bx + cr, by);
-        ctx.lineTo(bx + boxW - cr, by);
-        ctx.quadraticCurveTo(bx + boxW, by, bx + boxW, by + cr);
-        ctx.lineTo(bx + boxW, by + boxH - cr);
-        ctx.quadraticCurveTo(bx + boxW, by + boxH, bx + boxW - cr, by + boxH);
-        ctx.lineTo(bx + cr, by + boxH);
-        ctx.quadraticCurveTo(bx, by + boxH, bx, by + boxH - cr);
-        ctx.lineTo(bx, by + cr);
-        ctx.quadraticCurveTo(bx, by, bx + cr, by);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.globalAlpha = 1;
-        let ty = by + 18;
-        ctx.font = "bold 11px 'Cinzel Decorative', serif";
-        ctx.fillStyle = "#FFD700";
-        ctx.textAlign = "center";
-        ctx.fillText(titleText, bx + boxW / 2, ty);
-        ty += 16;
-        ctx.font = "10px 'Sofia Pro Light', sans-serif";
-        ctx.fillStyle = eColor;
-        ctx.fillText(subtitleText, bx + boxW / 2, ty);
-        ty += 14;
-
-        ctx.textAlign = "left";
-        ctx.fillStyle = "#E0DCE6";
-        ctx.font = "9px 'Sofia Pro Light', sans-serif";
-        for (let i = 0; i < displayCount; i++) {
-          ty += lineH;
-          ctx.globalAlpha = 0.8;
-          ctx.fillText(`• ${traits[i]}`, bx + 12, ty);
-        }
-        if (traits.length > 15) {
-          ty += lineH;
-          ctx.globalAlpha = 0.5;
-          ctx.fillText(`  +${traits.length - 15} more...`, bx + 12, ty);
+          ctx.textAlign = "left";
+          ctx.fillStyle = "#E0DCE6";
+          ctx.font = "9px 'Sofia Pro Light', sans-serif";
+          for (let i = 0; i < displayCount; i++) {
+            ty += lineH;
+            ctx.globalAlpha = 0.8;
+            ctx.fillText(`• ${traits[i]}`, bx + 12, ty);
+          }
+          if (traits.length > 15) {
+            ty += lineH;
+            ctx.globalAlpha = 0.5;
+            ctx.fillText(`  +${traits.length - 15} more...`, bx + 12, ty);
+          }
         }
       }
 
@@ -2198,90 +2210,110 @@ function DirectView({
       ctx.restore();
     }
 
+    drawRef.current = draw;
     draw();
-    simulation.on("tick", draw);
-    simulation.alpha(0.01).restart();
-
-    const zoomBehavior = d3.zoom<HTMLCanvasElement, unknown>()
-      .scaleExtent([0.1, 8])
-      .on("zoom", (event) => {
-        transformRef.current = event.transform;
-        draw();
-      });
-
-    d3.select(canvas).call(zoomBehavior);
 
     function getNodeAt(px: number, py: number) {
-      const t = transformRef.current;
-      const x = (px - t.x) / t.k;
-      const y = (py - t.y) / t.k;
-      for (let i = simNodes.length - 1; i >= 0; i--) {
-        const n = simNodes[i];
-        const dx = x - n.x;
-        const dy = y - n.y;
-        if (dx * dx + dy * dy < 100) return n;
+      const projectedNodes = simNodes.map(n => {
+        const p = project(n.x, n.y, n.z);
+        return { ...p, node: n };
+      });
+      projectedNodes.sort((a, b) => a.z - b.z);
+      for (const pn of projectedNodes) {
+        const dx = px - pn.sx;
+        const dy = py - pn.sy;
+        const r = 3 + pn.scale * 3 + 4;
+        if (dx * dx + dy * dy < r * r) return pn;
       }
       return null;
     }
 
-    function getEdgeAt(px: number, py: number): (typeof simLinks[0]) | null {
-      const t = transformRef.current;
-      const x = (px - t.x) / t.k;
-      const y = (py - t.y) / t.k;
-      const threshold = 6 / t.k;
+    function getEdgeAt(px2: number, py2: number) {
+      const threshold = 8;
       let bestDist = threshold;
-      let bestEdge: (typeof simLinks[0]) | null = null;
+      let bestLink: any = null;
+      let bestMidSx = 0, bestMidSy = 0;
       for (const l of simLinks) {
-        const ax = l.source.x, ay = l.source.y;
-        const bx2 = l.target.x, by2 = l.target.y;
+        const sp = project(l.source.x, l.source.y, l.source.z);
+        const tp = project(l.target.x, l.target.y, l.target.z);
+        const ax = sp.sx, ay = sp.sy;
+        const bx2 = tp.sx, by2 = tp.sy;
         const dx = bx2 - ax, dy = by2 - ay;
         const lenSq = dx * dx + dy * dy;
         if (lenSq === 0) continue;
-        let t2 = ((x - ax) * dx + (y - ay) * dy) / lenSq;
+        let t2 = ((px2 - ax) * dx + (py2 - ay) * dy) / lenSq;
         t2 = Math.max(0, Math.min(1, t2));
-        const px2 = ax + t2 * dx;
-        const py2 = ay + t2 * dy;
-        const dist = Math.sqrt((x - px2) * (x - px2) + (y - py2) * (y - py2));
+        const cx = ax + t2 * dx;
+        const cy = ay + t2 * dy;
+        const dist = Math.sqrt((px2 - cx) * (px2 - cx) + (py2 - cy) * (py2 - cy));
         if (dist < bestDist) {
           bestDist = dist;
-          bestEdge = l;
+          bestLink = l;
+          bestMidSx = (ax + bx2) / 2;
+          bestMidSy = (ay + by2) / 2;
         }
       }
-      return bestEdge;
+      return bestLink ? { link: bestLink, sx: bestMidSx, sy: bestMidSy } : null;
     }
 
+    canvas.onmousedown = (e) => {
+      if (e.button === 0) {
+        isDragging = true;
+        lastMx = e.clientX;
+        lastMy = e.clientY;
+        canvas.style.cursor = "grabbing";
+      }
+    };
+
     canvas.onmousemove = (e) => {
+      if (isDragging) {
+        const dx = e.clientX - lastMx;
+        const dy = e.clientY - lastMy;
+        rotY += dx * 0.005;
+        rotX += dy * 0.005;
+        rotX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotX));
+        lastMx = e.clientX;
+        lastMy = e.clientY;
+        draw();
+        return;
+      }
+
       const rect = canvas.getBoundingClientRect();
       const px = e.clientX - rect.left;
       const py = e.clientY - rect.top;
-      const node = getNodeAt(px, py);
-      if (node) {
-        currentHovered = node;
+      const nodeHit = getNodeAt(px, py);
+      if (nodeHit) {
+        currentHovered = nodeHit;
         hoveredEdge = null;
-        onHoverNode(node);
+        onHoverNode(nodeHit.node);
         canvas.style.cursor = "pointer";
       } else {
         currentHovered = null;
-        const edge = getEdgeAt(px, py);
-        hoveredEdge = edge;
+        const edgeHit = getEdgeAt(px, py);
+        hoveredEdge = edgeHit;
         onHoverNode(null);
-        canvas.style.cursor = edge ? "pointer" : "default";
+        canvas.style.cursor = edgeHit ? "pointer" : "grab";
       }
       draw();
+    };
+
+    canvas.onmouseup = () => {
+      isDragging = false;
+      canvas.style.cursor = "grab";
     };
 
     canvas.onclick = (e) => {
       const rect = canvas.getBoundingClientRect();
       const px = e.clientX - rect.left;
       const py = e.clientY - rect.top;
-      const node = getNodeAt(px, py);
-      if (node?.original) {
+      const nodeHit = getNodeAt(px, py);
+      if (nodeHit?.node?.original) {
         pinnedEdge = null;
-        onSelectNode(node.original);
+        onSelectNode(nodeHit.node.original);
       } else {
-        const edge = getEdgeAt(px, py);
-        if (edge) {
-          pinnedEdge = pinnedEdge === edge ? null : edge;
+        const edgeHit = getEdgeAt(px, py);
+        if (edgeHit) {
+          pinnedEdge = pinnedEdge?.link === edgeHit.link ? null : edgeHit;
         } else {
           pinnedEdge = null;
         }
@@ -2289,24 +2321,36 @@ function DirectView({
       draw();
     };
 
+    canvas.onwheel = (e) => {
+      e.preventDefault();
+      zoom *= e.deltaY > 0 ? 0.93 : 1.07;
+      zoom = Math.max(0.3, Math.min(5, zoom));
+      draw();
+    };
+
     canvas.onmouseleave = () => {
+      isDragging = false;
       currentHovered = null;
       hoveredEdge = null;
       onHoverNode(null);
       draw();
     };
 
+    canvas.style.cursor = "grab";
+
     return () => {
-      simulation.stop();
+      canvas.onmousedown = null;
       canvas.onmousemove = null;
+      canvas.onmouseup = null;
       canvas.onclick = null;
+      canvas.onwheel = null;
       canvas.onmouseleave = null;
+      drawRef.current = null;
     };
   }, [charNodes, directLinks]);
 
   useEffect(() => {
-    const sim = simulationRef.current;
-    if (sim) sim.alpha(0).restart();
+    if (drawRef.current) drawRef.current();
   }, [selectedNodeIds]);
 
   return <canvas ref={canvasRef} className="w-full h-full" />;
