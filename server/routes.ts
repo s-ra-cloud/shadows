@@ -93,44 +93,61 @@ export async function registerRoutes(
   app.post("/api/import", requireEditor, async (req, res) => {
     try {
       const data = req.body;
-      if (!data || !data.nodes || !data.edges) {
-        return res.status(400).json({ error: "Invalid import file: must contain nodes and edges" });
+      if (!data || !Array.isArray(data.nodes) || !Array.isArray(data.edges)) {
+        return res.status(400).json({ error: "Invalid import file: must contain nodes and edges arrays" });
       }
 
       const { sql } = await import("drizzle-orm");
       const counts = { projects: 0, nodes: 0, edges: 0, sources: 0, suggestions: 0, news: 0, publications: 0 };
 
-      await db.transaction(async (tx) => {
-        await tx.delete(edges);
-        await tx.delete(suggestions);
-        await tx.delete(sources);
-        await tx.delete(nodes);
-        await tx.delete(publications);
-        await tx.delete(news);
-        await tx.delete(projects);
+      const hasProjects = data.projects && Array.isArray(data.projects);
+      const hasNodes = data.nodes && Array.isArray(data.nodes);
+      const hasEdges = data.edges && Array.isArray(data.edges);
+      const hasSources = data.sources && Array.isArray(data.sources);
+      const hasSuggestions = data.suggestions && Array.isArray(data.suggestions);
+      const hasNews = data.news && Array.isArray(data.news);
+      const hasPublications = data.publications && Array.isArray(data.publications);
 
-        if (data.projects && Array.isArray(data.projects)) {
+      const needDropSuggestionFKs = (hasNodes || hasEdges) && !hasSuggestions;
+
+      await db.transaction(async (tx) => {
+        if (needDropSuggestionFKs) {
+          await tx.execute(sql`ALTER TABLE suggestions DROP CONSTRAINT IF EXISTS suggestions_node_id_nodes_id_fk`);
+          await tx.execute(sql`ALTER TABLE suggestions DROP CONSTRAINT IF EXISTS suggestions_suggestion_source_node_id_nodes_id_fk`);
+          await tx.execute(sql`ALTER TABLE suggestions DROP CONSTRAINT IF EXISTS suggestions_suggestion_target_node_id_nodes_id_fk`);
+          await tx.execute(sql`ALTER TABLE suggestions DROP CONSTRAINT IF EXISTS suggestions_edge_id_edges_id_fk`);
+        }
+
+        if (hasSuggestions) await tx.delete(suggestions);
+        if (hasEdges) await tx.delete(edges);
+        if (hasSources) await tx.delete(sources);
+        if (hasNodes) await tx.delete(nodes);
+        if (hasPublications) await tx.delete(publications);
+        if (hasNews) await tx.delete(news);
+        if (hasProjects) await tx.delete(projects);
+
+        if (hasProjects) {
           for (const project of data.projects) {
             await tx.insert(projects).values(project).onConflictDoNothing();
             counts.projects++;
           }
         }
 
-        if (data.nodes && Array.isArray(data.nodes)) {
+        if (hasNodes) {
           for (const node of data.nodes) {
             await tx.insert(nodes).values(node).onConflictDoNothing();
             counts.nodes++;
           }
         }
 
-        if (data.edges && Array.isArray(data.edges)) {
+        if (hasEdges) {
           for (const edge of data.edges) {
             await tx.insert(edges).values(edge).onConflictDoNothing();
             counts.edges++;
           }
         }
 
-        if (data.sources && Array.isArray(data.sources)) {
+        if (hasSources) {
           for (const source of data.sources) {
             if (source.createdAt && typeof source.createdAt === 'string') {
               source.createdAt = new Date(source.createdAt);
@@ -140,7 +157,7 @@ export async function registerRoutes(
           }
         }
 
-        if (data.suggestions && Array.isArray(data.suggestions)) {
+        if (hasSuggestions) {
           for (const suggestion of data.suggestions) {
             if (suggestion.createdAt && typeof suggestion.createdAt === 'string') {
               suggestion.createdAt = new Date(suggestion.createdAt);
@@ -150,7 +167,7 @@ export async function registerRoutes(
           }
         }
 
-        if (data.news && Array.isArray(data.news)) {
+        if (hasNews) {
           for (const item of data.news) {
             if (item.publishedAt && typeof item.publishedAt === 'string') {
               item.publishedAt = new Date(item.publishedAt);
@@ -163,25 +180,91 @@ export async function registerRoutes(
           }
         }
 
-        if (data.publications && Array.isArray(data.publications)) {
+        if (hasPublications) {
           for (const pub of data.publications) {
             await tx.insert(publications).values(pub).onConflictDoNothing();
             counts.publications++;
           }
         }
 
-        await tx.execute(sql`SELECT setval('projects_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM projects), 1))`);
-        await tx.execute(sql`SELECT setval('nodes_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM nodes), 1))`);
-        await tx.execute(sql`SELECT setval('edges_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM edges), 1))`);
-        await tx.execute(sql`SELECT setval('sources_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM sources), 1))`);
-        await tx.execute(sql`SELECT setval('suggestions_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM suggestions), 1))`);
-        await tx.execute(sql`SELECT setval('news_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM news), 1))`);
-        await tx.execute(sql`SELECT setval('publications_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM publications), 1))`);
+        if (needDropSuggestionFKs) {
+          await tx.execute(sql`UPDATE suggestions SET node_id = NULL WHERE node_id IS NOT NULL AND node_id NOT IN (SELECT id FROM nodes)`);
+          await tx.execute(sql`UPDATE suggestions SET suggestion_source_node_id = NULL WHERE suggestion_source_node_id IS NOT NULL AND suggestion_source_node_id NOT IN (SELECT id FROM nodes)`);
+          await tx.execute(sql`UPDATE suggestions SET suggestion_target_node_id = NULL WHERE suggestion_target_node_id IS NOT NULL AND suggestion_target_node_id NOT IN (SELECT id FROM nodes)`);
+          await tx.execute(sql`UPDATE suggestions SET edge_id = NULL WHERE edge_id IS NOT NULL AND edge_id NOT IN (SELECT id FROM edges)`);
+
+          await tx.execute(sql`ALTER TABLE suggestions ADD CONSTRAINT suggestions_node_id_nodes_id_fk FOREIGN KEY (node_id) REFERENCES nodes(id)`);
+          await tx.execute(sql`ALTER TABLE suggestions ADD CONSTRAINT suggestions_suggestion_source_node_id_nodes_id_fk FOREIGN KEY (suggestion_source_node_id) REFERENCES nodes(id)`);
+          await tx.execute(sql`ALTER TABLE suggestions ADD CONSTRAINT suggestions_suggestion_target_node_id_nodes_id_fk FOREIGN KEY (suggestion_target_node_id) REFERENCES nodes(id)`);
+          await tx.execute(sql`ALTER TABLE suggestions ADD CONSTRAINT suggestions_edge_id_edges_id_fk FOREIGN KEY (edge_id) REFERENCES edges(id)`);
+        }
+
+        if (hasProjects) await tx.execute(sql`SELECT setval('projects_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM projects), 1))`);
+        if (hasNodes) await tx.execute(sql`SELECT setval('nodes_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM nodes), 1))`);
+        if (hasEdges) await tx.execute(sql`SELECT setval('edges_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM edges), 1))`);
+        if (hasSources) await tx.execute(sql`SELECT setval('sources_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM sources), 1))`);
+        if (hasSuggestions) await tx.execute(sql`SELECT setval('suggestions_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM suggestions), 1))`);
+        if (hasNews) await tx.execute(sql`SELECT setval('news_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM news), 1))`);
+        if (hasPublications) await tx.execute(sql`SELECT setval('publications_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM publications), 1))`);
       });
 
       res.json({ success: true, imported: counts });
     } catch (err) {
       console.error("Import error:", err);
+      res.status(500).json({ error: "Import failed: " + (err instanceof Error ? err.message : "Unknown error") });
+    }
+  });
+
+  app.get("/api/suggestions/export", requireEditor, async (_req, res) => {
+    const allSuggestions = await storage.getSuggestions();
+    res.setHeader("Content-Disposition", `attachment; filename=shadows-suggestions-${new Date().toISOString().slice(0, 10)}.json`);
+    res.setHeader("Content-Type", "application/json");
+    res.json({
+      exportedAt: new Date().toISOString(),
+      suggestions: allSuggestions,
+    });
+  });
+
+  app.post("/api/suggestions/import", requireEditor, async (req, res) => {
+    try {
+      const data = req.body;
+      if (!data || !data.suggestions || !Array.isArray(data.suggestions)) {
+        return res.status(400).json({ error: "Invalid file: must contain a suggestions array" });
+      }
+
+      const allNodes = await storage.getNodes();
+      const allEdges = await storage.getEdges();
+      const nodeIds = new Set(allNodes.map(n => n.id));
+      const edgeIds = new Set(allEdges.map(e => e.id));
+
+      let imported = 0;
+      let skipped = 0;
+
+      for (const suggestion of data.suggestions) {
+        if (suggestion.createdAt && typeof suggestion.createdAt === 'string') {
+          suggestion.createdAt = new Date(suggestion.createdAt);
+        }
+
+        const nodeIdValid = !suggestion.nodeId || nodeIds.has(suggestion.nodeId);
+        const sourceNodeValid = !suggestion.sourceNodeId || nodeIds.has(suggestion.sourceNodeId);
+        const targetNodeValid = !suggestion.targetNodeId || nodeIds.has(suggestion.targetNodeId);
+        const edgeIdValid = !suggestion.edgeId || edgeIds.has(suggestion.edgeId);
+
+        if (nodeIdValid && sourceNodeValid && targetNodeValid && edgeIdValid) {
+          try {
+            await db.insert(suggestions).values(suggestion).onConflictDoNothing();
+            imported++;
+          } catch {
+            skipped++;
+          }
+        } else {
+          skipped++;
+        }
+      }
+
+      res.json({ success: true, imported, skipped });
+    } catch (err) {
+      console.error("Suggestions import error:", err);
       res.status(500).json({ error: "Import failed: " + (err instanceof Error ? err.message : "Unknown error") });
     }
   });

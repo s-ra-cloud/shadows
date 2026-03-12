@@ -66,6 +66,7 @@ export default function DatabasePage() {
   } | null>(null);
   const { toast } = useToast();
   const importFileRef = useRef<HTMLInputElement>(null);
+  const suggestionsImportRef = useRef<HTMLInputElement>(null);
 
   const { data: authStatus } = useQuery<{ isEditor: boolean }>({
     queryKey: ["/api/database/auth-status"],
@@ -147,11 +148,19 @@ export default function DatabasePage() {
                     try {
                       const text = await file.text();
                       const data = JSON.parse(text);
-                      if (!data.nodes || !data.edges) {
-                        toast({ title: "Invalid file: must contain nodes and edges", variant: "destructive" });
+                      if (!Array.isArray(data.nodes) || !Array.isArray(data.edges)) {
+                        toast({ title: "Invalid file: must contain nodes and edges arrays", variant: "destructive" });
                         return;
                       }
-                      if (!confirm(`This will replace all current data with:\n• ${(data.projects || []).length} projects\n• ${data.nodes.length} nodes\n• ${data.edges.length} edges\n${data.sources ? `• ${data.sources.length} sources\n` : ""}\nThis action cannot be undone. Continue?`)) return;
+                      const presentTables: string[] = [];
+                      if (data.projects) presentTables.push(`${data.projects.length} projects`);
+                      presentTables.push(`${data.nodes.length} nodes`);
+                      presentTables.push(`${data.edges.length} edges`);
+                      if (data.sources) presentTables.push(`${data.sources.length} sources`);
+                      if (data.suggestions) presentTables.push(`${data.suggestions.length} suggestions`);
+                      if (data.news) presentTables.push(`${data.news.length} news`);
+                      if (data.publications) presentTables.push(`${data.publications.length} publications`);
+                      if (!confirm(`This will replace the following tables:\n${presentTables.map(t => `• ${t}`).join("\n")}\n\nTables not present in the file will be left untouched.\nThis action cannot be undone. Continue?`)) return;
                       const res = await apiRequest("POST", "/api/import", data);
                       const result = await res.json();
                       if (!res.ok) {
@@ -174,6 +183,68 @@ export default function DatabasePage() {
                 >
                   <Upload size={16} />
                   Import
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch("/api/suggestions/export", { credentials: "include" });
+                      if (!res.ok) throw new Error("Export failed");
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `shadows-suggestions-${new Date().toISOString().slice(0, 10)}.json`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      toast({ title: "Suggestions exported" });
+                    } catch {
+                      toast({ title: "Export failed", variant: "destructive" });
+                    }
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all bg-[#350A8C]/30 text-[#E0DCE6]/70 border border-[#350A8C]/40 hover:border-[#8F00FF]/50"
+                  data-testid="button-export-suggestions"
+                >
+                  <Download size={16} />
+                  Export Suggestions
+                </button>
+                <input
+                  ref={suggestionsImportRef}
+                  type="file"
+                  accept=".json"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      const text = await file.text();
+                      const data = JSON.parse(text);
+                      if (!data.suggestions || !Array.isArray(data.suggestions)) {
+                        toast({ title: "Invalid file: must contain a suggestions array", variant: "destructive" });
+                        return;
+                      }
+                      if (!confirm(`This will import ${data.suggestions.length} suggestions.\nSuggestions referencing missing nodes or edges will be skipped.\nContinue?`)) return;
+                      const res = await apiRequest("POST", "/api/suggestions/import", data);
+                      const result = await res.json();
+                      if (!res.ok) {
+                        toast({ title: result.error || "Import failed", variant: "destructive" });
+                        return;
+                      }
+                      toast({ title: `Imported ${result.imported} suggestions, skipped ${result.skipped}` });
+                      queryClient.invalidateQueries();
+                    } catch (err) {
+                      toast({ title: "Import failed: " + (err instanceof Error ? err.message : "Unknown error"), variant: "destructive" });
+                    }
+                    if (suggestionsImportRef.current) suggestionsImportRef.current.value = "";
+                  }}
+                  data-testid="input-import-suggestions-file"
+                />
+                <button
+                  onClick={() => suggestionsImportRef.current?.click()}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all bg-[#350A8C]/30 text-[#E0DCE6]/70 border border-[#350A8C]/40 hover:border-[#8F00FF]/50"
+                  data-testid="button-import-suggestions"
+                >
+                  <Upload size={16} />
+                  Import Suggestions
                 </button>
               </>
             )}
