@@ -132,6 +132,9 @@ export async function registerRoutes(
 
         if (data.sources && Array.isArray(data.sources)) {
           for (const source of data.sources) {
+            if (source.createdAt && typeof source.createdAt === 'string') {
+              source.createdAt = new Date(source.createdAt);
+            }
             await tx.insert(sources).values(source).onConflictDoNothing();
             counts.sources++;
           }
@@ -139,6 +142,9 @@ export async function registerRoutes(
 
         if (data.suggestions && Array.isArray(data.suggestions)) {
           for (const suggestion of data.suggestions) {
+            if (suggestion.createdAt && typeof suggestion.createdAt === 'string') {
+              suggestion.createdAt = new Date(suggestion.createdAt);
+            }
             await tx.insert(suggestions).values(suggestion).onConflictDoNothing();
             counts.suggestions++;
           }
@@ -146,6 +152,12 @@ export async function registerRoutes(
 
         if (data.news && Array.isArray(data.news)) {
           for (const item of data.news) {
+            if (item.publishedAt && typeof item.publishedAt === 'string') {
+              item.publishedAt = new Date(item.publishedAt);
+            }
+            if (item.date && typeof item.date === 'string') {
+              item.date = new Date(item.date);
+            }
             await tx.insert(news).values(item).onConflictDoNothing();
             counts.news++;
           }
