@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "pJSieZ15WyYS1lrTiU44M"
+uri = "file://animal_trait_hierarchy_report.md"
+type = "text"
+title = "Animal Trait Hierarchy Proposal — Report for Review"
