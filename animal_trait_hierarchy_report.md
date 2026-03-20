@@ -30,6 +30,7 @@ snake/
   |     |-- snake leg       (1 node)
   |     |-- snake skirt     (1 node)
   |     |-- eight-headed snake (1 node)
+  |     |-- circular snake  (1 node)
   |
   |-- serpentine            (15 nodes)
   |     |-- serpent woman   (1 node)
@@ -40,7 +41,6 @@ snake/
   |-- cobra                 (5 nodes)
   |     |-- cobra-headed    (2 nodes)
   |     |-- uraeus          (2 nodes)
-  |     |-- circular snake  (1 node)
 ```
 
 **Merges (data changes):**
