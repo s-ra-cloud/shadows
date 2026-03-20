@@ -33,6 +33,7 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 - `publications` - Research publications (title, authors, venue, abstract, doi, pdf_url)
 - `suggestions` - Public suggestions for edits (type, status, submitterName, source, nodeId, field, currentValue, suggestedValue, sourceNodeId, targetNodeId, relationType, edgeId, createdAt)
 - `sources` - Reference sources (title, author, url, description, createdAt)
+- `trait_hierarchy` - Animal trait taxonomy (categoryField, traitName, parentId, isLeaf) — 27 metacategories, 95 leaf traits for physical_characteristics animal grouping
 - `users` - Admin users (username, password)
 
 ## Data Source

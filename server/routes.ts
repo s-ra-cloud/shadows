@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import session from "express-session";
 import { storage, db } from "./storage";
 import { seedDatabase } from "./seed";
-import { nodes, edges, sources, suggestions, news, publications, projects } from "@shared/schema";
+import { nodes, edges, sources, suggestions, news, publications, projects, traitHierarchy } from "@shared/schema";
 
 declare module "express-session" {
   interface SessionData {
@@ -76,6 +76,7 @@ export async function registerRoutes(
     const allPublications = await storage.getPublications();
     const allSources = await storage.getSources();
     const allSuggestions = await storage.getSuggestions();
+    const allTraitHierarchy = await db.select().from(traitHierarchy).orderBy(traitHierarchy.id);
     res.setHeader("Content-Disposition", `attachment; filename=shadows-export-${new Date().toISOString().slice(0, 10)}.json`);
     res.setHeader("Content-Type", "application/json");
     res.json({
@@ -87,6 +88,7 @@ export async function registerRoutes(
       publications: allPublications,
       sources: allSources,
       suggestions: allSuggestions,
+      traitHierarchy: allTraitHierarchy,
     });
   });
 
@@ -107,6 +109,7 @@ export async function registerRoutes(
       const hasSuggestions = data.suggestions && Array.isArray(data.suggestions);
       const hasNews = data.news && Array.isArray(data.news);
       const hasPublications = data.publications && Array.isArray(data.publications);
+      const hasTraitHierarchy = data.traitHierarchy && Array.isArray(data.traitHierarchy);
 
       const needDropSuggestionFKs = (hasNodes || hasEdges) && !hasSuggestions;
 
@@ -187,6 +190,14 @@ export async function registerRoutes(
           }
         }
 
+        if (hasTraitHierarchy) {
+          await tx.delete(traitHierarchy);
+          for (const item of data.traitHierarchy) {
+            await tx.insert(traitHierarchy).values(item).onConflictDoNothing();
+          }
+          (counts as any).traitHierarchy = data.traitHierarchy.length;
+        }
+
         if (needDropSuggestionFKs) {
           await tx.execute(sql`UPDATE suggestions SET node_id = NULL WHERE node_id IS NOT NULL AND node_id NOT IN (SELECT id FROM nodes)`);
           await tx.execute(sql`UPDATE suggestions SET suggestion_source_node_id = NULL WHERE suggestion_source_node_id IS NOT NULL AND suggestion_source_node_id NOT IN (SELECT id FROM nodes)`);
@@ -206,6 +217,7 @@ export async function registerRoutes(
         if (hasSuggestions) await tx.execute(sql`SELECT setval('suggestions_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM suggestions), 1))`);
         if (hasNews) await tx.execute(sql`SELECT setval('news_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM news), 1))`);
         if (hasPublications) await tx.execute(sql`SELECT setval('publications_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM publications), 1))`);
+        if (hasTraitHierarchy) await tx.execute(sql`SELECT setval('trait_hierarchy_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM trait_hierarchy), 1))`);
       });
 
       res.json({ success: true, imported: counts });
@@ -480,6 +492,11 @@ export async function registerRoutes(
   app.delete("/api/editor/suggestions/:id", requireEditor, async (req, res) => {
     await storage.deleteSuggestion(parseInt(req.params.id));
     res.json({ success: true });
+  });
+
+  app.get("/api/trait-hierarchy", async (_req, res) => {
+    const items = await db.select().from(traitHierarchy).orderBy(traitHierarchy.id);
+    res.json(items);
   });
 
   app.get("/api/sources", async (_req, res) => {
