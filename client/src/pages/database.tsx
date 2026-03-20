@@ -2,14 +2,14 @@ import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Node, Edge, Suggestion, Source } from "@shared/schema";
+import type { Node, Edge, Suggestion, Source, TraitHierarchy } from "@shared/schema";
 import {
   Search, Lock, Unlock, ChevronDown, ChevronRight, Plus, Pencil, Trash2,
   MessageSquarePlus, BookOpen, X, Check, AlertCircle, ArrowUpDown, ExternalLink,
-  Download, Upload
+  Download, Upload, FolderTree
 } from "lucide-react";
 
-type Tab = "nodes" | "relations" | "suggestions" | "sources";
+type Tab = "nodes" | "relations" | "suggestions" | "sources" | "hierarchies";
 type NodeCategory = "characters" | "gender" | "domain" | "object" | "animals" | "characterTrait" | "physicalCharacteristics" | "significantEvent" | "symbolism" | "neumannArchetype" | "eventTypes" | "birthTypes" | "deathTypes" | "familyRoles";
 
 const NODE_CATEGORIES: { key: NodeCategory; label: string; isArray?: boolean; commaSplit?: boolean }[] = [
@@ -79,6 +79,7 @@ export default function DatabasePage() {
     { key: "relations", label: "Relations" },
     { key: "suggestions", label: "Suggestions" },
     { key: "sources", label: "Sources" },
+    { key: "hierarchies", label: "Hierarchies" },
   ];
 
   function openSuggestion(target: typeof suggestionTarget) {
@@ -307,6 +308,9 @@ export default function DatabasePage() {
         {activeTab === "sources" && (
           <SourcesTab isEditor={!!editorMode} />
         )}
+        {activeTab === "hierarchies" && (
+          <HierarchiesTab />
+        )}
       </div>
 
       {showLoginModal && (
@@ -329,6 +333,164 @@ export default function DatabasePage() {
           }}
         />
       )}
+    </div>
+  );
+}
+
+interface HierarchyTreeNode {
+  id: number;
+  traitName: string;
+  isLeaf: boolean;
+  children: HierarchyTreeNode[];
+  nodeCount: number;
+}
+
+function buildHierarchyTree(items: TraitHierarchy[], nodes: Node[]): HierarchyTreeNode[] {
+  const traitCounts = new Map<string, number>();
+  nodes.forEach((n) => {
+    if (n.physicalCharacteristics) {
+      n.physicalCharacteristics.split(",").forEach((t) => {
+        const trimmed = t.trim();
+        if (trimmed) traitCounts.set(trimmed, (traitCounts.get(trimmed) || 0) + 1);
+      });
+    }
+  });
+
+  const byId = new Map<number, HierarchyTreeNode>();
+  const roots: HierarchyTreeNode[] = [];
+
+  for (const item of items) {
+    const node: HierarchyTreeNode = {
+      id: item.id,
+      traitName: item.traitName,
+      isLeaf: item.isLeaf === 1,
+      children: [],
+      nodeCount: item.isLeaf === 1 ? (traitCounts.get(item.traitName) || 0) : 0,
+    };
+    byId.set(item.id, node);
+  }
+
+  for (const item of items) {
+    const node = byId.get(item.id)!;
+    if (item.parentId === null) {
+      roots.push(node);
+    } else {
+      const parent = byId.get(item.parentId);
+      if (parent) parent.children.push(node);
+    }
+  }
+
+  function sumCounts(n: HierarchyTreeNode): number {
+    if (n.isLeaf) return n.nodeCount;
+    let total = 0;
+    for (const child of n.children) {
+      total += sumCounts(child);
+    }
+    n.nodeCount = total;
+    return total;
+  }
+  roots.forEach(sumCounts);
+  roots.sort((a, b) => b.nodeCount - a.nodeCount);
+
+  return roots;
+}
+
+function HierarchyTreeRow({ node, depth }: { node: HierarchyTreeNode; depth: number }) {
+  const [expanded, setExpanded] = useState(depth === 0);
+  const hasChildren = node.children.length > 0;
+
+  return (
+    <>
+      <div
+        className={`flex items-center gap-2 py-1.5 px-2 rounded transition-colors hover:bg-[#350A8C]/20 cursor-pointer ${depth === 0 ? "mt-1" : ""}`}
+        style={{ paddingLeft: `${depth * 20 + 8}px` }}
+        onClick={() => hasChildren && setExpanded(!expanded)}
+        data-testid={`hierarchy-row-${node.traitName}-${node.id}`}
+      >
+        {hasChildren ? (
+          expanded ? (
+            <ChevronDown size={14} className="text-[#8F00FF] shrink-0" />
+          ) : (
+            <ChevronRight size={14} className="text-[#E0DCE6]/40 shrink-0" />
+          )
+        ) : (
+          <span className="w-3.5 shrink-0" />
+        )}
+        <span className={`text-sm ${depth === 0 ? "font-semibold text-[#E0DCE6]" : node.isLeaf ? "text-[#E0DCE6]/70" : "text-[#E0DCE6]/90 font-medium"}`}>
+          {node.traitName}
+        </span>
+        {node.isLeaf && (
+          <span className="ml-1 text-xs px-1.5 py-0.5 rounded bg-[#8F00FF]/15 text-[#8F00FF]/80">
+            leaf
+          </span>
+        )}
+        <span className={`ml-auto text-xs tabular-nums ${node.nodeCount > 0 ? "text-[#03FF9B]/70" : "text-[#E0DCE6]/30"}`}>
+          {node.nodeCount} {node.nodeCount === 1 ? "figure" : "figures"}
+        </span>
+      </div>
+      {expanded && hasChildren && node.children.map((child) => (
+        <HierarchyTreeRow key={child.id} node={child} depth={depth + 1} />
+      ))}
+    </>
+  );
+}
+
+function HierarchiesTab() {
+  const { data: hierarchy = [], isLoading: loadingHierarchy } = useQuery<TraitHierarchy[]>({
+    queryKey: ["/api/trait-hierarchy"],
+  });
+  const { data: nodes = [], isLoading: loadingNodes } = useQuery<Node[]>({
+    queryKey: ["/api/nodes"],
+  });
+
+  const tree = useMemo(() => {
+    if (!hierarchy.length || !nodes.length) return [];
+    return buildHierarchyTree(hierarchy, nodes);
+  }, [hierarchy, nodes]);
+
+  const stats = useMemo(() => {
+    const metacategories = hierarchy.filter((h) => h.parentId === null).length;
+    const leaves = hierarchy.filter((h) => h.isLeaf === 1).length;
+    return { metacategories, leaves, total: hierarchy.length };
+  }, [hierarchy]);
+
+  if (loadingHierarchy || loadingNodes) {
+    return (
+      <div className="flex items-center justify-center py-20 text-[#E0DCE6]/50">
+        Loading hierarchy data...
+      </div>
+    );
+  }
+
+  if (!hierarchy.length) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-[#E0DCE6]/50 gap-3">
+        <FolderTree size={40} className="text-[#E0DCE6]/20" />
+        <p>No trait hierarchies defined yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div data-testid="hierarchies-tab">
+      <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-2 text-sm text-[#E0DCE6]/60">
+          <FolderTree size={16} className="text-[#8F00FF]" />
+          <span>{stats.metacategories} metacategories</span>
+          <span className="text-[#E0DCE6]/20">·</span>
+          <span>{stats.leaves} leaf traits</span>
+          <span className="text-[#E0DCE6]/20">·</span>
+          <span>{stats.total} total entries</span>
+        </div>
+      </div>
+      <p className="text-xs text-[#E0DCE6]/40 mb-4">
+        Animal trait taxonomy for Physical Characteristics. Each metacategory groups related animal traits into a hierarchical structure. Figure counts show how many mythological figures have that trait.
+      </p>
+      <div className="bg-[#0C0042]/50 border border-[#350A8C]/30 rounded-xl p-4">
+        {tree.map((root) => (
+          <HierarchyTreeRow key={root.id} node={root} depth={0} />
+        ))}
+      </div>
     </div>
   );
 }
