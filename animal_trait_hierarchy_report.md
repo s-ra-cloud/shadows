@@ -117,9 +117,11 @@ bird/                                     [grouping]
   |
   |-- bird/                               [grouping: generic bird]
   |     |-- bird               (1 node)   [leaf] = fully bird deities
-  |     |-- bird-headed        (3 nodes)  [leaf] MERGE: "bird head" (2) + "bird's beak" (1)
+  |     |-- part bird/                    [grouping: partly bird deities]
+  |     |     |-- part bird    (1 node)   [leaf]
+  |     |     |-- bird-headed  (2 nodes)  [leaf] MERGE: "bird head" (2)
+  |     |-- bird's beak        (1 node)   [leaf]
   |     |-- feathered          (6 nodes)  [leaf]
-  |     |-- part bird          (1 node)   [leaf]
   |
   |-- falcon/                             [grouping]
   |     |-- falcon             (4 nodes)  [leaf]
@@ -143,14 +145,15 @@ bird/                                     [grouping]
 ```
 
 **Merges:**
-- "bird head" -> "bird-headed" (2 nodes)
-- "bird's beak" -> "bird-headed" (1 node)
+- "bird head" -> "bird-headed" (2 nodes) — placed under "part bird", NOT merged with "bird's beak"
 - "falcon head" -> "falcon-headed" (1 node)
 - "vulture form" -> "vulture" (1 node)
 - "sparrowhawk head" -> "sparrowhawk" (1 node)
 - "rooster form" -> "rooster" (1 node)
 - "swan-like" -> "swan" (1 node)
 - "ostrich feathers" -> "ostrich" (1 node)
+
+**Note:** "bird's beak" is kept separate from "bird-headed" — having a beak is a different trait from having a full bird head.
 
 ---
 
@@ -254,13 +257,14 @@ fish/                                     [grouping]
   |-- fish tail                (1 node)   [leaf] MERGE: "fish's tail" (1)
   |-- half fish                (1 node)   [leaf]
   |-- part fish                (1 node)   [leaf]
-  |-- sea monster              (2 nodes)  [leaf]
   |-- seal                     (1 node)   [leaf] MERGE: "seal head" (1)
 ```
 
 **Merges:**
 - "fish's tail" -> "fish tail" (1 node)
 - "seal head" -> "seal" (1 node)
+
+**Note:** "sea monster" (2 nodes) removed from this category — it is better described as a variant of the non-animal trait "monstrous" rather than a fish/sea creature. It will remain outside of the animal hierarchy.
 
 ---
 
@@ -443,7 +447,6 @@ bat/                                      [grouping]
 | lioness head | lion-headed | 1 |
 | cow-horned | cow horns | 1 |
 | bird head | bird-headed | 2 |
-| bird's beak | bird-headed | 1 |
 | falcon head | falcon-headed | 1 |
 | vulture form | vulture | 1 |
 | sparrowhawk head | sparrowhawk | 1 |
@@ -460,7 +463,7 @@ bat/                                      [grouping]
 | scarab beetle | scarab | 1 |
 | hare's head | hare-headed | 1 |
 
-**Total: 25 merge rules affecting ~31 node-trait values**
+**Total: 24 merge rules affecting ~30 node-trait values**
 
 ---
 
@@ -472,7 +475,9 @@ bat/                                      [grouping]
 
 3. **"feline"/"feline-headed"** — currently leaves under lion. Should lion, cat, jaguar, and tiger instead all be grouped under a broader "feline" metacategory?
 
-4. **Laura's suggestions about misplaced traits** — "winged sandals", "winged helmet", "trumpet", "cornucopia", "armor" are objects (not physical traits), and "wrathful", "warrior maiden", "fierce", "matron" are character traits. Should those be moved to their correct fields? (Separate from this animal hierarchy work.)
+4. **"sea monster"** — removed from the fish/sea creature hierarchy and left as a standalone non-animal trait (linked to "monstrous"). Confirm this is the right approach.
+
+5. **Laura's suggestions about misplaced traits** — "winged sandals", "winged helmet", "trumpet", "cornucopia", "armor" are objects (not physical traits), and "wrathful", "warrior maiden", "fierce", "matron" are character traits. Should those be moved to their correct fields? (Separate from this animal hierarchy work.)
 
 ---
 
