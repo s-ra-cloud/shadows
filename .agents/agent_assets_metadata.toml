@@ -6,3 +6,9 @@ id = "pJSieZ15WyYS1lrTiU44M"
 uri = "file://animal_trait_hierarchy_report.md"
 type = "text"
 title = "Animal Trait Hierarchy v3.1 — Bird & Fish fixes"
+
+[[outputs]]
+id = "nlc7fIt0JM52XFyWcr7de"
+uri = "file://non_animal_trait_hierarchy_report.md"
+type = "text"
+title = "Non-Animal Physical Characteristics Hierarchy Proposal"
