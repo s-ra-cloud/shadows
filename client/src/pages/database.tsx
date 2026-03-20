@@ -9,7 +9,7 @@ import {
   Download, Upload, FolderTree
 } from "lucide-react";
 
-type Tab = "nodes" | "relations" | "suggestions" | "sources" | "hierarchies";
+type Tab = "nodes" | "relations" | "suggestions" | "sources";
 type NodeCategory = "characters" | "gender" | "domain" | "object" | "animals" | "characterTrait" | "physicalCharacteristics" | "significantEvent" | "symbolism" | "neumannArchetype" | "eventTypes" | "birthTypes" | "deathTypes" | "familyRoles";
 
 const NODE_CATEGORIES: { key: NodeCategory; label: string; isArray?: boolean; commaSplit?: boolean }[] = [
@@ -79,7 +79,6 @@ export default function DatabasePage() {
     { key: "relations", label: "Relations" },
     { key: "suggestions", label: "Suggestions" },
     { key: "sources", label: "Sources" },
-    { key: "hierarchies", label: "Hierarchies" },
   ];
 
   function openSuggestion(target: typeof suggestionTarget) {
@@ -308,9 +307,6 @@ export default function DatabasePage() {
         {activeTab === "sources" && (
           <SourcesTab isEditor={!!editorMode} />
         )}
-        {activeTab === "hierarchies" && (
-          <HierarchiesTab />
-        )}
       </div>
 
       {showLoginModal && (
@@ -337,160 +333,150 @@ export default function DatabasePage() {
   );
 }
 
-interface HierarchyTreeNode {
-  id: number;
-  traitName: string;
-  isLeaf: boolean;
-  children: HierarchyTreeNode[];
-  nodeCount: number;
-}
-
-function buildHierarchyTree(items: TraitHierarchy[], nodes: Node[]): HierarchyTreeNode[] {
-  const traitCounts = new Map<string, number>();
-  nodes.forEach((n) => {
-    if (n.physicalCharacteristics) {
-      n.physicalCharacteristics.split(",").forEach((t) => {
-        const trimmed = t.trim();
-        if (trimmed) traitCounts.set(trimmed, (traitCounts.get(trimmed) || 0) + 1);
-      });
-    }
-  });
-
-  const byId = new Map<number, HierarchyTreeNode>();
-  const roots: HierarchyTreeNode[] = [];
-
-  for (const item of items) {
-    const node: HierarchyTreeNode = {
-      id: item.id,
-      traitName: item.traitName,
-      isLeaf: item.isLeaf === 1,
-      children: [],
-      nodeCount: item.isLeaf === 1 ? (traitCounts.get(item.traitName) || 0) : 0,
-    };
-    byId.set(item.id, node);
-  }
-
-  for (const item of items) {
-    const node = byId.get(item.id)!;
-    if (item.parentId === null) {
-      roots.push(node);
-    } else {
-      const parent = byId.get(item.parentId);
-      if (parent) parent.children.push(node);
-    }
-  }
-
-  function sumCounts(n: HierarchyTreeNode): number {
-    if (n.isLeaf) return n.nodeCount;
-    let total = 0;
-    for (const child of n.children) {
-      total += sumCounts(child);
-    }
-    n.nodeCount = total;
-    return total;
-  }
-  roots.forEach(sumCounts);
-  roots.sort((a, b) => b.nodeCount - a.nodeCount);
-
-  return roots;
-}
-
-function HierarchyTreeRow({ node, depth }: { node: HierarchyTreeNode; depth: number }) {
-  const [expanded, setExpanded] = useState(depth === 0);
-  const hasChildren = node.children.length > 0;
-
+function TraitRow({ entry, nodes, expandedTrait, setExpandedTrait, isEditor, onSuggest, catLabel, depth }: {
+  entry: { value: string; count: number; nodeIds: number[] };
+  nodes: Node[];
+  expandedTrait: string | null;
+  setExpandedTrait: (t: string | null) => void;
+  isEditor: boolean;
+  onSuggest: (t: any) => void;
+  catLabel: string;
+  depth: number;
+}) {
+  const traitKey = `${entry.value}-d${depth}`;
   return (
-    <>
+    <div className="border-b border-[#350A8C]/10 last:border-0">
       <div
-        className={`flex items-center gap-2 py-1.5 px-2 rounded transition-colors hover:bg-[#350A8C]/20 cursor-pointer ${depth === 0 ? "mt-1" : ""}`}
-        style={{ paddingLeft: `${depth * 20 + 8}px` }}
-        onClick={() => hasChildren && setExpanded(!expanded)}
-        data-testid={`hierarchy-row-${node.traitName}-${node.id}`}
+        className="flex items-center gap-2 px-4 py-2 text-sm cursor-pointer hover:bg-[#130D30]/50 transition-colors"
+        style={{ paddingLeft: `${depth * 16 + 16}px` }}
+        onClick={() => setExpandedTrait(expandedTrait === traitKey ? null : traitKey)}
+        data-testid={`row-trait-${entry.value.replace(/\s+/g, "-").toLowerCase()}`}
       >
-        {hasChildren ? (
-          expanded ? (
-            <ChevronDown size={14} className="text-[#8F00FF] shrink-0" />
-          ) : (
-            <ChevronRight size={14} className="text-[#E0DCE6]/40 shrink-0" />
-          )
-        ) : (
-          <span className="w-3.5 shrink-0" />
-        )}
-        <span className={`text-sm ${depth === 0 ? "font-semibold text-[#E0DCE6]" : node.isLeaf ? "text-[#E0DCE6]/70" : "text-[#E0DCE6]/90 font-medium"}`}>
-          {node.traitName}
-        </span>
-        {node.isLeaf && (
-          <span className="ml-1 text-xs px-1.5 py-0.5 rounded bg-[#8F00FF]/15 text-[#8F00FF]/80">
-            leaf
-          </span>
-        )}
-        <span className={`ml-auto text-xs tabular-nums ${node.nodeCount > 0 ? "text-[#03FF9B]/70" : "text-[#E0DCE6]/30"}`}>
-          {node.nodeCount} {node.nodeCount === 1 ? "figure" : "figures"}
-        </span>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          {expandedTrait === traitKey
+            ? <ChevronDown size={14} className="text-[#8F00FF] shrink-0" />
+            : <ChevronRight size={14} className="text-[#E0DCE6]/30 shrink-0" />}
+          <span className="text-[#E0DCE6]/80">{entry.value}</span>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <span className="text-[#03FF9B]/60 text-xs tabular-nums">{entry.count}</span>
+          {!isEditor && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onSuggest({ type: "edit_trait", field: catLabel, currentValue: entry.value });
+              }}
+              className="p-1 rounded hover:bg-[#350A8C]/40 text-[#E0DCE6]/20 hover:text-[#8F00FF] transition-colors"
+              title="Suggest feedback"
+              data-testid={`button-suggest-trait-${entry.value.replace(/\s+/g, "-").toLowerCase()}`}
+            >
+              <MessageSquarePlus size={13} />
+            </button>
+          )}
+        </div>
       </div>
-      {expanded && hasChildren && node.children.map((child) => (
-        <HierarchyTreeRow key={child.id} node={child} depth={depth + 1} />
-      ))}
-    </>
+
+      {expandedTrait === traitKey && (
+        <div className="px-4 pb-3 bg-[#0B0626]/50" style={{ paddingLeft: `${depth * 16 + 40}px` }}>
+          <div className="flex flex-wrap gap-1.5 mt-1">
+            {entry.nodeIds.map((nid) => {
+              const n = nodes.find((nd) => nd.id === nid);
+              return n ? (
+                <span
+                  key={nid}
+                  className="inline-flex items-center px-2 py-0.5 rounded bg-[#130D30] border border-[#350A8C]/20 text-xs text-[#E0DCE6]/70"
+                  data-testid={`trait-character-${nid}`}
+                >
+                  {n.name}
+                  {n.tradition && <span className="text-[#E0DCE6]/30 ml-1">({n.tradition})</span>}
+                </span>
+              ) : null;
+            })}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
-function HierarchiesTab() {
-  const { data: hierarchy = [], isLoading: loadingHierarchy } = useQuery<TraitHierarchy[]>({
-    queryKey: ["/api/trait-hierarchy"],
-  });
-  const { data: nodes = [], isLoading: loadingNodes } = useQuery<Node[]>({
-    queryKey: ["/api/nodes"],
-  });
+function HierarchyGroupRow({ group, depth, nodes, expandedHierarchy, setExpandedHierarchy, expandedTrait, setExpandedTrait, isEditor, onSuggest, catLabel }: {
+  group: any;
+  depth: number;
+  nodes: Node[];
+  expandedHierarchy: Set<number>;
+  setExpandedHierarchy: (s: Set<number>) => void;
+  expandedTrait: string | null;
+  setExpandedTrait: (t: string | null) => void;
+  isEditor: boolean;
+  onSuggest: (t: any) => void;
+  catLabel: string;
+}) {
+  const isExpanded = expandedHierarchy.has(group.id);
+  const hasContent = group.children.length > 0 || group.leafTraits.length > 0;
 
-  const tree = useMemo(() => {
-    if (!hierarchy.length || !nodes.length) return [];
-    return buildHierarchyTree(hierarchy, nodes);
-  }, [hierarchy, nodes]);
-
-  const stats = useMemo(() => {
-    const metacategories = hierarchy.filter((h) => h.parentId === null).length;
-    const leaves = hierarchy.filter((h) => h.isLeaf === 1).length;
-    return { metacategories, leaves, total: hierarchy.length };
-  }, [hierarchy]);
-
-  if (loadingHierarchy || loadingNodes) {
+  if (group.isLeaf && group.leafTraits.length > 0) {
     return (
-      <div className="flex items-center justify-center py-20 text-[#E0DCE6]/50">
-        Loading hierarchy data...
-      </div>
+      <TraitRow
+        entry={group.leafTraits[0]}
+        nodes={nodes}
+        expandedTrait={expandedTrait}
+        setExpandedTrait={setExpandedTrait}
+        isEditor={isEditor}
+        onSuggest={onSuggest}
+        catLabel={catLabel}
+        depth={depth}
+      />
     );
   }
 
-  if (!hierarchy.length) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-[#E0DCE6]/50 gap-3">
-        <FolderTree size={40} className="text-[#E0DCE6]/20" />
-        <p>No trait hierarchies defined yet.</p>
-      </div>
-    );
+  if (group.isLeaf) return null;
+
+  function toggle() {
+    const next = new Set(expandedHierarchy);
+    if (next.has(group.id)) next.delete(group.id);
+    else next.add(group.id);
+    setExpandedHierarchy(next);
   }
 
   return (
-    <div data-testid="hierarchies-tab">
-      <div className="flex items-center gap-4 mb-4">
-        <div className="flex items-center gap-2 text-sm text-[#E0DCE6]/60">
-          <FolderTree size={16} className="text-[#8F00FF]" />
-          <span>{stats.metacategories} metacategories</span>
-          <span className="text-[#E0DCE6]/20">·</span>
-          <span>{stats.leaves} leaf traits</span>
-          <span className="text-[#E0DCE6]/20">·</span>
-          <span>{stats.total} total entries</span>
+    <div className={depth === 0 ? "border-b border-[#350A8C]/15 last:border-0" : ""}>
+      <div
+        className={`flex items-center gap-2 py-2 cursor-pointer transition-colors hover:bg-[#130D30]/40 ${depth === 0 ? "px-4 bg-[#130D30]/20" : "px-4"}`}
+        style={{ paddingLeft: `${depth * 16 + 16}px` }}
+        onClick={toggle}
+        data-testid={`hierarchy-group-${group.traitName}-${group.id}`}
+      >
+        {isExpanded
+          ? <ChevronDown size={14} className="text-[#8F00FF] shrink-0" />
+          : <ChevronRight size={14} className="text-[#E0DCE6]/40 shrink-0" />}
+        <FolderTree size={13} className={`shrink-0 ${depth === 0 ? "text-[#8F00FF]" : "text-[#8F00FF]/60"}`} />
+        <span className={`text-sm ${depth === 0 ? "font-semibold text-[#E0DCE6]" : "font-medium text-[#E0DCE6]/90"}`}>
+          {group.traitName}
+        </span>
+        <span className="ml-auto text-xs tabular-nums text-[#03FF9B]/50">
+          {group.totalCount} {group.totalCount === 1 ? "figure" : "figures"}
+        </span>
+      </div>
+
+      {isExpanded && hasContent && (
+        <div>
+          {group.children.map((child: any) => (
+            <HierarchyGroupRow
+              key={child.id}
+              group={child}
+              depth={depth + 1}
+              nodes={nodes}
+              expandedHierarchy={expandedHierarchy}
+              setExpandedHierarchy={setExpandedHierarchy}
+              expandedTrait={expandedTrait}
+              setExpandedTrait={setExpandedTrait}
+              isEditor={isEditor}
+              onSuggest={onSuggest}
+              catLabel={catLabel}
+            />
+          ))}
         </div>
-      </div>
-      <p className="text-xs text-[#E0DCE6]/40 mb-4">
-        Animal trait taxonomy for Physical Characteristics. Each metacategory groups related animal traits into a hierarchical structure. Figure counts show how many mythological figures have that trait.
-      </p>
-      <div className="bg-[#0C0042]/50 border border-[#350A8C]/30 rounded-xl p-4">
-        {tree.map((root) => (
-          <HierarchyTreeRow key={root.id} node={root} depth={0} />
-        ))}
-      </div>
+      )}
     </div>
   );
 }
@@ -656,6 +642,8 @@ function NodesTab({ isEditor, onSuggest }: {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [expandedTrait, setExpandedTrait] = useState<string | null>(null);
+  const [expandedHierarchy, setExpandedHierarchy] = useState<Set<number>>(new Set());
+  const [hierarchyView, setHierarchyView] = useState(true);
   const [editingNode, setEditingNode] = useState<{ id: number; field: string; value: string } | null>(null);
   const [sortField, setSortField] = useState<string>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -664,6 +652,10 @@ function NodesTab({ isEditor, onSuggest }: {
 
   const { data: nodes = [], isLoading } = useQuery<Node[]>({
     queryKey: ["/api/nodes"],
+  });
+
+  const { data: hierarchyData = [] } = useQuery<TraitHierarchy[]>({
+    queryKey: ["/api/trait-hierarchy"],
   });
 
   const traditions = useMemo(() => {
@@ -732,6 +724,100 @@ function NodesTab({ isEditor, onSuggest }: {
     });
     return entries;
   }, [nodes, category, search, sortField, sortDir]);
+
+  const categoryHierarchy = useMemo(() => {
+    if (!hierarchyData.length) return null;
+    const fieldMap: Record<string, string> = { physicalCharacteristics: "physical_characteristics" };
+    const dbField = fieldMap[category];
+    if (!dbField) return null;
+    const relevant = hierarchyData.filter((h) => h.categoryField === dbField);
+    if (!relevant.length) return null;
+    return relevant;
+  }, [hierarchyData, category]);
+
+  interface HierarchyGroup {
+    id: number;
+    traitName: string;
+    isLeaf: boolean;
+    parentId: number | null;
+    children: HierarchyGroup[];
+    leafTraits: { value: string; count: number; nodeIds: number[] }[];
+    totalCount: number;
+  }
+
+  const hierarchyTree = useMemo(() => {
+    if (!categoryHierarchy || !traitData) return null;
+    const traitMap = new Map<string, { value: string; count: number; nodeIds: number[] }>();
+    traitData.forEach((t) => traitMap.set(t.value, t));
+
+    const byId = new Map<number, HierarchyGroup>();
+    const roots: HierarchyGroup[] = [];
+
+    for (const item of categoryHierarchy) {
+      const group: HierarchyGroup = {
+        id: item.id,
+        traitName: item.traitName,
+        isLeaf: item.isLeaf === 1,
+        parentId: item.parentId,
+        children: [],
+        leafTraits: [],
+        totalCount: 0,
+      };
+      if (item.isLeaf === 1) {
+        const t = traitMap.get(item.traitName);
+        if (t) group.leafTraits = [t];
+      }
+      byId.set(item.id, group);
+    }
+
+    for (const item of categoryHierarchy) {
+      const group = byId.get(item.id)!;
+      if (item.parentId === null) {
+        roots.push(group);
+      } else {
+        const parent = byId.get(item.parentId);
+        if (parent) parent.children.push(group);
+      }
+    }
+
+    function collectLeafTraits(g: HierarchyGroup): { value: string; count: number; nodeIds: number[] }[] {
+      if (g.isLeaf) return g.leafTraits;
+      const all: { value: string; count: number; nodeIds: number[] }[] = [];
+      for (const child of g.children) {
+        all.push(...collectLeafTraits(child));
+      }
+      return all;
+    }
+
+    function computeTotal(g: HierarchyGroup): number {
+      if (g.isLeaf) {
+        g.totalCount = g.leafTraits.reduce((s, t) => s + t.count, 0);
+        return g.totalCount;
+      }
+      let total = 0;
+      for (const child of g.children) {
+        total += computeTotal(child);
+      }
+      g.totalCount = total;
+      return total;
+    }
+    roots.forEach(computeTotal);
+
+    const traitsCoveredByHierarchy = new Set<string>();
+    function collectNames(g: HierarchyGroup) {
+      if (g.isLeaf) {
+        g.leafTraits.forEach((t) => traitsCoveredByHierarchy.add(t.value));
+      }
+      g.children.forEach(collectNames);
+    }
+    roots.forEach(collectNames);
+
+    const uncategorized = traitData.filter((t) => !traitsCoveredByHierarchy.has(t.value));
+
+    roots.sort((a, b) => b.totalCount - a.totalCount);
+
+    return { roots, uncategorized };
+  }, [categoryHierarchy, traitData]);
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) =>
@@ -976,10 +1062,78 @@ function NodesTab({ isEditor, onSuggest }: {
             </div>
           </div>
         </>
+      ) : hierarchyTree && hierarchyView ? (
+        <>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2 text-xs text-[#E0DCE6]/40">
+              <FolderTree size={14} className="text-[#8F00FF]" />
+              <span>{hierarchyTree.roots.length} metacategories · {traitData?.length || 0} trait values</span>
+            </div>
+            <button
+              onClick={() => setHierarchyView(false)}
+              className="text-xs text-[#E0DCE6]/40 hover:text-[#E0DCE6]/70 transition-colors px-2 py-1 rounded border border-[#350A8C]/20 hover:border-[#350A8C]/40"
+              data-testid="button-toggle-flat-view"
+            >
+              Flat view
+            </button>
+          </div>
+
+          <div className="border border-[#350A8C]/20 rounded-xl overflow-hidden">
+            <div className="max-h-[60vh] overflow-y-auto">
+              {hierarchyTree.roots.map((root) => (
+                <HierarchyGroupRow
+                  key={root.id}
+                  group={root}
+                  depth={0}
+                  nodes={nodes}
+                  expandedHierarchy={expandedHierarchy}
+                  setExpandedHierarchy={setExpandedHierarchy}
+                  expandedTrait={expandedTrait}
+                  setExpandedTrait={setExpandedTrait}
+                  isEditor={isEditor}
+                  onSuggest={onSuggest}
+                  catLabel={catLabel}
+                />
+              ))}
+              {hierarchyTree.uncategorized.length > 0 && (
+                <>
+                  <div className="px-4 py-2 bg-[#130D30]/40 border-t border-[#350A8C]/20">
+                    <span className="text-xs font-medium text-[#E0DCE6]/40 uppercase tracking-wider">Other traits</span>
+                  </div>
+                  {hierarchyTree.uncategorized.map((entry) => (
+                    <TraitRow
+                      key={entry.value}
+                      entry={entry}
+                      nodes={nodes}
+                      expandedTrait={expandedTrait}
+                      setExpandedTrait={setExpandedTrait}
+                      isEditor={isEditor}
+                      onSuggest={onSuggest}
+                      catLabel={catLabel}
+                      depth={0}
+                    />
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
+        </>
       ) : (
         <>
-          <div className="text-xs text-[#E0DCE6]/40 mb-3">
-            {traitData?.length || 0} unique {catLabel.toLowerCase()} value{(traitData?.length || 0) !== 1 ? "s" : ""}
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-xs text-[#E0DCE6]/40">
+              {traitData?.length || 0} unique {catLabel.toLowerCase()} value{(traitData?.length || 0) !== 1 ? "s" : ""}
+            </div>
+            {hierarchyTree && (
+              <button
+                onClick={() => setHierarchyView(true)}
+                className="flex items-center gap-1.5 text-xs text-[#E0DCE6]/40 hover:text-[#E0DCE6]/70 transition-colors px-2 py-1 rounded border border-[#350A8C]/20 hover:border-[#350A8C]/40"
+                data-testid="button-toggle-hierarchy-view"
+              >
+                <FolderTree size={12} />
+                Hierarchy view
+              </button>
+            )}
           </div>
 
           <div className="border border-[#350A8C]/20 rounded-xl overflow-hidden">
@@ -994,56 +1148,17 @@ function NodesTab({ isEditor, onSuggest }: {
 
             <div className="max-h-[60vh] overflow-y-auto">
               {traitData?.map((entry) => (
-                <div key={entry.value} className="border-b border-[#350A8C]/10 last:border-0">
-                  <div
-                    className="grid grid-cols-[1fr_100px] gap-0 px-4 py-2.5 text-sm cursor-pointer hover:bg-[#130D30]/50 transition-colors"
-                    onClick={() => setExpandedTrait(expandedTrait === entry.value ? null : entry.value)}
-                    data-testid={`row-trait-${entry.value.replace(/\s+/g, "-").toLowerCase()}`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {expandedTrait === entry.value
-                        ? <ChevronDown size={14} className="text-[#8F00FF]" />
-                        : <ChevronRight size={14} className="text-[#E0DCE6]/30" />}
-                      <span className="font-medium">{entry.value}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-[#E0DCE6]/60">{entry.count}</span>
-                      {!isEditor && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSuggest({ type: "edit_trait", field: catLabel, currentValue: entry.value });
-                          }}
-                          className="p-1 rounded hover:bg-[#350A8C]/40 text-[#E0DCE6]/20 hover:text-[#8F00FF] transition-colors"
-                          title="Suggest feedback"
-                          data-testid={`button-suggest-trait-${entry.value.replace(/\s+/g, "-").toLowerCase()}`}
-                        >
-                          <MessageSquarePlus size={13} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {expandedTrait === entry.value && (
-                    <div className="px-4 pb-3 pl-10 bg-[#0B0626]/50">
-                      <div className="flex flex-wrap gap-1.5 mt-1">
-                        {entry.nodeIds.map((nid) => {
-                          const n = nodes.find((nd) => nd.id === nid);
-                          return n ? (
-                            <span
-                              key={nid}
-                              className="inline-flex items-center px-2 py-0.5 rounded bg-[#130D30] border border-[#350A8C]/20 text-xs text-[#E0DCE6]/70"
-                              data-testid={`trait-character-${nid}`}
-                            >
-                              {n.name}
-                              {n.tradition && <span className="text-[#E0DCE6]/30 ml-1">({n.tradition})</span>}
-                            </span>
-                          ) : null;
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <TraitRow
+                  key={entry.value}
+                  entry={entry}
+                  nodes={nodes}
+                  expandedTrait={expandedTrait}
+                  setExpandedTrait={setExpandedTrait}
+                  isEditor={isEditor}
+                  onSuggest={onSuggest}
+                  catLabel={catLabel}
+                  depth={0}
+                />
               ))}
             </div>
           </div>
