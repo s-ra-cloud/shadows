@@ -1,163 +1,148 @@
-# Physical Characteristics — Animal Trait Hierarchy v2
+# Physical Characteristics — Animal Trait Hierarchy v3
 
-## Principles
+## Structural Principles
 
-1. **Multi-level hierarchy**: metacategory > subcategory > sub-subcategory (up to 3 levels deep)
-2. **Merge duplicates**: synonymous traits (e.g. "snake head" / "snake-headed" / "serpent-headed") are merged into a single canonical name
-3. **No data loss**: the original raw values on each node are preserved; the hierarchy is an overlay for grouping/filtering
-4. **Merges change the stored value**: when two traits are synonyms, all nodes using the non-canonical form will be updated to use the canonical form (e.g. "snakes" -> "snake", "dog head" -> "dog-headed")
+1. **Nodes only at leaf level**: intermediate levels (metacategory, subcategory) are grouping containers — no node should be tagged with a non-leaf value
+2. **Multi-level hierarchy**: up to 3+ levels deep where needed
+3. **Merge duplicates**: synonymous traits are merged into a single canonical leaf name
+4. **Full-form vs partial-form distinction**: at the subcategory level, the animal name itself (e.g. "bull") represents deities that are fully that animal, while "bull-headed", "bull horns" etc. represent deities with partial animal features. Both sit at the same level as siblings.
+
+### Reading the trees below
+
+```
+metacategory/                      <-- level 0: grouping only, never on a node
+  |-- subcategory                  <-- level 1: grouping only (or leaf if no children)
+  |     |-- leaf (N nodes)         <-- level 2: actual value stored on nodes
+```
+
+Where a subcategory has no children, it IS the leaf and nodes can have that value.
 
 ---
 
 ## Proposed Hierarchies
-
-Legend:
-- **MERGE**: these raw values will be renamed to the canonical form shown
-- Indentation shows parent-child relationship
-- `(N nodes)` = how many nodes currently have this trait
 
 ---
 
 ### SNAKE (metacategory)
 
 ```
-snake/
-  |-- snake                (7 nodes)
-  |     MERGE: "snakes" (1) -> "snake"
-  |     |-- snake-headed   (5 nodes total after merge)
-  |     |     MERGE: "snake head" (1) + "snake-headed" (2) + "serpent-headed" (2) -> "snake-headed"
-  |     |-- snake-haired   (2 nodes)
-  |     |-- snake leg       (1 node)
-  |     |-- snake skirt     (1 node)
-  |     |-- eight-headed snake (1 node)
-  |     |-- circular snake  (1 node)
+snake/                                    [grouping]
   |
-  |-- serpentine            (15 nodes)
-  |     |-- serpent woman   (1 node)
-  |     |-- serpent's tail  (1 node)
-  |     |-- plumed serpent  (1 node)
-  |     MERGE: "serpent" (3) -> "serpentine"
+  |-- snake/                              [grouping]
+  |     |-- snake              (8 nodes)  [leaf] MERGE: + "snakes" (1)
+  |     |-- snake-headed       (5 nodes)  [leaf] MERGE: "snake head" (1) + "snake-headed" (2) + "serpent-headed" (2)
+  |     |-- snake-haired       (2 nodes)  [leaf]
+  |     |-- snake leg          (1 node)   [leaf]
+  |     |-- snake skirt        (1 node)   [leaf]
+  |     |-- eight-headed snake (1 node)   [leaf]
+  |     |-- circular snake     (1 node)   [leaf]
   |
-  |-- cobra                 (5 nodes)
-  |     |-- cobra-headed    (2 nodes)
-  |     |-- uraeus          (2 nodes)
+  |-- serpentine/                         [grouping]
+  |     |-- serpentine        (18 nodes)  [leaf] MERGE: + "serpent" (3)
+  |     |-- serpent woman      (1 node)   [leaf]
+  |     |-- serpent's tail     (1 node)   [leaf]
+  |     |-- plumed serpent     (1 node)   [leaf]
+  |
+  |-- cobra/                              [grouping]
+        |-- cobra              (5 nodes)  [leaf]
+        |-- cobra-headed       (2 nodes)  [leaf]
+        |-- uraeus             (2 nodes)  [leaf]
 ```
 
-**Merges (data changes):**
-- "snakes" -> "snake" (1 node affected)
-- "snake head" -> "snake-headed" (1 node affected)
-- "serpent-headed" -> "snake-headed" (2 nodes affected)
-- "serpent" -> "serpentine" (3 nodes affected)
+**Merges:**
+- "snakes" -> "snake" (1 node)
+- "snake head" -> "snake-headed" (1 node)
+- "serpent-headed" -> "snake-headed" (2 nodes)
+- "serpent" -> "serpentine" (3 nodes)
 
 ---
 
 ### BULL (metacategory)
 
 ```
-bull/
-  |-- bull                  (4 nodes)
-  |     |-- bull-headed     (1 node)
-  |     |     MERGE: "bull head" -> "bull-headed" (if any exist)
-  |     |-- bull horns      (1 node)
-  |     |-- black bull      (1 node)
+bull/                                     [grouping]
+  |-- bull                     (4 nodes)  [leaf] = fully bull deities
+  |-- bull-headed              (1 node)   [leaf]
+  |-- bull horns               (1 node)   [leaf]
+  |-- black bull               (1 node)   [leaf]
 ```
 
-**Merges:** none needed
+**Merges:** none
 
 ---
 
 ### LION (metacategory)
 
 ```
-lion/
-  |-- lion                  (4 nodes)
-  |     |-- lion-headed     (14 nodes total after merge)
-  |     |     MERGE: "lion heads" (1) + "lion's head" (4) + "lioness head" (1) -> "lion-headed"
-  |     |-- lion body       (1 node)
-  |
-  |-- lioness               (5 nodes)
-  |
-  |-- feline                (2 nodes)
-  |     |-- feline-headed   (1 node)
+lion/                                     [grouping]
+  |-- lion                     (4 nodes)  [leaf] = fully lion deities
+  |-- lion-headed             (14 nodes)  [leaf] MERGE: + "lion heads" (1) + "lion's head" (4) + "lioness head" (1)
+  |-- lion body                (1 node)   [leaf]
+  |-- lioness                  (5 nodes)  [leaf]
+  |-- feline                   (2 nodes)  [leaf]
+  |-- feline-headed            (1 node)   [leaf]
 ```
 
-**Merges (data changes):**
-- "lion heads" -> "lion-headed" (1 node affected)
-- "lion's head" -> "lion-headed" (4 nodes affected)
-- "lioness head" -> "lion-headed" (1 node affected)
-
-**Note:** "feline" is kept as a separate subcategory under lion for gods described generically as feline without specifying lion/lioness.
+**Merges:**
+- "lion heads" -> "lion-headed" (1 node)
+- "lion's head" -> "lion-headed" (4 nodes)
+- "lioness head" -> "lion-headed" (1 node)
 
 ---
 
 ### COW (metacategory)
 
 ```
-cow/
-  |-- cow                   (kept as parent, no standalone occurrences)
-  |     |-- cow-headed      (3 nodes total after merge)
-  |     |     MERGE: "cow-horned" (1) -> "cow-headed" (since cow-horned describes a cow-headed deity)
-  |     |-- cow-bodied      (1 node)
-  |     |-- cow-eyed        (1 node)
-  |     |-- cow ears        (1 node)
-  |     |-- cow horns       (2 nodes)
-  |     |-- cow form        (3 nodes)
-  |     |-- white cow       (1 node)
+cow/                                      [grouping]
+  |-- cow form                 (3 nodes)  [leaf] = fully cow deities
+  |-- cow-headed               (2 nodes)  [leaf]
+  |-- cow-bodied               (1 node)   [leaf]
+  |-- cow-eyed                 (1 node)   [leaf]
+  |-- cow ears                 (1 node)   [leaf]
+  |-- cow horns                (3 nodes)  [leaf] MERGE: + "cow-horned" (1)
+  |-- white cow                (1 node)   [leaf]
 ```
 
-**Merges (data changes):**
-- "cow-horned" -> "cow-headed" (1 node affected)
+**Merges:**
+- "cow-horned" -> "cow horns" (1 node)
 
-**Open question:** Is merging "cow-horned" into "cow-headed" acceptable? A god described as "cow-horned" has cow horns but not necessarily a full cow head. Alternatively, merge "cow-horned" into "cow horns" instead?
+**Note:** "cow-horned" merged into "cow horns" (not "cow-headed"), since having cow horns is distinct from having a full cow head.
 
 ---
 
 ### BIRD (metacategory)
 
 ```
-bird/
-  |-- bird                  (1 node)
-  |     |-- bird-headed     (3 nodes total after merge)
-  |     |     MERGE: "bird head" (2) + "bird's beak" (1) -> "bird-headed"
-  |     |-- feathered       (6 nodes)
+bird/                                     [grouping]
   |
-  |-- falcon                (4 nodes)
-  |     |-- falcon-headed   (4 nodes total after merge)
-  |     |     MERGE: "falcon head" (1) -> "falcon-headed"
+  |-- bird/                               [grouping: generic bird]
+  |     |-- bird               (1 node)   [leaf] = fully bird deities
+  |     |-- bird-headed        (3 nodes)  [leaf] MERGE: "bird head" (2) + "bird's beak" (1)
+  |     |-- feathered          (6 nodes)  [leaf]
+  |     |-- part bird          (1 node)   [leaf]
   |
-  |-- vulture               (1 node, was "vulture form")
-  |     MERGE: "vulture form" (1) -> "vulture"
-  |     |-- vulture-headed  (1 node)
-  |     |-- vulture cap     (1 node)
-  |     |-- griffon vulture (1 node)
+  |-- falcon/                             [grouping]
+  |     |-- falcon             (4 nodes)  [leaf]
+  |     |-- falcon-headed      (4 nodes)  [leaf] MERGE: + "falcon head" (1)
   |
-  |-- owl                   (2 nodes)
+  |-- vulture/                            [grouping]
+  |     |-- vulture            (1 node)   [leaf] MERGE: "vulture form" (1)
+  |     |-- vulture-headed     (1 node)   [leaf]
+  |     |-- vulture cap        (1 node)   [leaf]
+  |     |-- griffon vulture    (1 node)   [leaf]
   |
-  |-- ibis                  (1 node, was "ibis-headed")
-  |     MERGE: "ibis-headed" -> keep as-is (only form)
-  |
-  |-- sparrowhawk           (1 node, was "sparrowhawk head")
-  |     MERGE: "sparrowhawk head" (1) -> "sparrowhawk"
-  |
-  |-- rooster               (1 node, was "rooster form")
-  |     MERGE: "rooster form" (1) -> "rooster"
-  |
-  |-- swan                  (1 node, was "swan-like")
-  |     MERGE: "swan-like" (1) -> "swan"
-  |
-  |-- peacock               (1 node, was "white peacock")
-  |
-  |-- kite                  (1 node)
-  |
-  |-- turkey                (1 node)
-  |
-  |-- ostrich               (1 node, was "ostrich feathers")
-  |     MERGE: "ostrich feathers" (1) -> "ostrich"
-  |
-  |-- part bird             (1 node)
+  |-- owl                      (2 nodes)  [leaf]
+  |-- ibis-headed              (1 node)   [leaf]
+  |-- sparrowhawk              (1 node)   [leaf] MERGE: "sparrowhawk head" (1)
+  |-- rooster                  (1 node)   [leaf] MERGE: "rooster form" (1)
+  |-- swan                     (1 node)   [leaf] MERGE: "swan-like" (1)
+  |-- white peacock            (1 node)   [leaf]
+  |-- kite                     (1 node)   [leaf]
+  |-- turkey                   (1 node)   [leaf]
+  |-- ostrich                  (1 node)   [leaf] MERGE: "ostrich feathers" (1)
 ```
 
-**Merges (data changes):**
+**Merges:**
 - "bird head" -> "bird-headed" (2 nodes)
 - "bird's beak" -> "bird-headed" (1 node)
 - "falcon head" -> "falcon-headed" (1 node)
@@ -172,33 +157,28 @@ bird/
 ### HORSE (metacategory)
 
 ```
-horse/
-  |-- horse                 (1 node)
-  |     |-- horse-headed    (1 node)
-  |     |-- horse ears      (1 node)
-  |     |-- horse legs      (1 node)
-  |     |-- horse tail      (1 node)
-  |
-  |-- mare                  (1 node)
-  |     |-- foal            (1 node)
+horse/                                    [grouping]
+  |-- horse                    (1 node)   [leaf] = fully horse deities
+  |-- horse-headed             (1 node)   [leaf]
+  |-- horse ears               (1 node)   [leaf]
+  |-- horse legs               (1 node)   [leaf]
+  |-- horse tail               (1 node)   [leaf]
+  |-- mare                     (1 node)   [leaf]
+  |-- foal                     (1 node)   [leaf]
 ```
 
-**Merges:** none needed
-
-**Note:** "horsemen" (1 node) is arguably a character trait rather than a physical characteristic. Left out of hierarchy for now (see Open Questions).
+**Merges:** none
 
 ---
 
 ### DOG (metacategory)
 
 ```
-dog/
-  |-- dog                   (no standalone occurrences)
-  |     |-- dog-headed      (2 nodes total after merge)
-  |           MERGE: "dog head" (1) -> "dog-headed"
+dog/                                      [grouping]
+  |-- dog-headed               (2 nodes)  [leaf] MERGE: + "dog head" (1)
 ```
 
-**Merges (data changes):**
+**Merges:**
 - "dog head" -> "dog-headed" (1 node)
 
 ---
@@ -206,26 +186,25 @@ dog/
 ### CROCODILE (metacategory)
 
 ```
-crocodile/
-  |-- crocodile             (3 nodes)
-  |     |-- crocodile-headed (2 nodes)
+crocodile/                                [grouping]
+  |-- crocodile                (3 nodes)  [leaf]
+  |-- crocodile-headed         (2 nodes)  [leaf]
 ```
 
-**Merges:** none needed
+**Merges:** none
 
 ---
 
 ### RAM (metacategory)
 
 ```
-ram/
-  |-- ram                   (2 nodes)
-  |     |-- ram-headed      (5 nodes total after merge)
-  |     |     MERGE: "ram's head" (1) + "four rams' heads" (1) -> "ram-headed"
-  |     |-- ram-horned      (1 node)
+ram/                                      [grouping]
+  |-- ram                      (2 nodes)  [leaf]
+  |-- ram-headed               (5 nodes)  [leaf] MERGE: + "ram's head" (1) + "four rams' heads" (1)
+  |-- ram-horned               (1 node)   [leaf]
 ```
 
-**Merges (data changes):**
+**Merges:**
 - "ram's head" -> "ram-headed" (1 node)
 - "four rams' heads" -> "ram-headed" (1 node)
 
@@ -234,37 +213,36 @@ ram/
 ### FROG (metacategory)
 
 ```
-frog/
-  |-- frog                  (1 node)
-  |     |-- frog-headed     (3 nodes)
+frog/                                     [grouping]
+  |-- frog                     (1 node)   [leaf]
+  |-- frog-headed              (3 nodes)  [leaf]
 ```
 
-**Merges:** none needed
+**Merges:** none
 
 ---
 
 ### CAT (metacategory)
 
 ```
-cat/
-  |-- cat                   (1 node)
-  |     |-- cat-headed      (1 node)
+cat/                                      [grouping]
+  |-- cat                      (1 node)   [leaf]
+  |-- cat-headed               (1 node)   [leaf]
 ```
 
-**Merges:** none needed
+**Merges:** none
 
 ---
 
 ### TURTLE (metacategory)
 
 ```
-turtle/
-  |-- turtle                (1 node)
-  |     |-- turtle-headed   (1 node)
-  |           MERGE: "turtle head" (1) -> "turtle-headed"
+turtle/                                   [grouping]
+  |-- turtle                   (1 node)   [leaf]
+  |-- turtle-headed            (1 node)   [leaf] MERGE: "turtle head" (1)
 ```
 
-**Merges (data changes):**
+**Merges:**
 - "turtle head" -> "turtle-headed" (1 node)
 
 ---
@@ -272,50 +250,41 @@ turtle/
 ### FISH / SEA CREATURE (metacategory)
 
 ```
-fish/
-  |-- fish                  (no standalone)
-  |     |-- fish tail       (1 node)
-  |     |     MERGE: "fish's tail" (1) -> "fish tail"
-  |     |-- half fish       (1 node)
-  |     |-- part fish       (1 node)
-  |
-  |-- sea monster           (2 nodes)
-  |
-  |-- seal                  (1 node, was "seal head")
-  |     MERGE: "seal head" (1) -> "seal"
+fish/                                     [grouping]
+  |-- fish tail                (1 node)   [leaf] MERGE: "fish's tail" (1)
+  |-- half fish                (1 node)   [leaf]
+  |-- part fish                (1 node)   [leaf]
+  |-- sea monster              (2 nodes)  [leaf]
+  |-- seal                     (1 node)   [leaf] MERGE: "seal head" (1)
 ```
 
-**Merges (data changes):**
+**Merges:**
 - "fish's tail" -> "fish tail" (1 node)
 - "seal head" -> "seal" (1 node)
-
-**Note:** "sea goat" is a hybrid (goat + fish). See Open Questions.
 
 ---
 
 ### DRAGON (metacategory)
 
 ```
-dragon/
-  |-- dragon                (3 nodes)
+dragon/                                   [grouping]
+  |-- dragon                   (3 nodes)  [leaf]
 ```
 
-**Merges:** none needed
+**Merges:** none
 
 ---
 
 ### GOAT (metacategory)
 
 ```
-goat/
-  |-- goat                  (no standalone)
-  |     |-- goat body       (1 node)
-  |     |     MERGE: "goat's body" (1) -> "goat body"
-  |     |-- half goat       (1 node)
-  |     |-- sea goat        (1 node)
+goat/                                     [grouping]
+  |-- goat body                (1 node)   [leaf] MERGE: "goat's body" (1)
+  |-- half goat                (1 node)   [leaf]
+  |-- sea goat                 (1 node)   [leaf]
 ```
 
-**Merges (data changes):**
+**Merges:**
 - "goat's body" -> "goat body" (1 node)
 
 ---
@@ -323,97 +292,85 @@ goat/
 ### DEER (metacategory)
 
 ```
-deer/
-  |-- deer                  (no standalone)
-  |     |-- deer body       (1 node)
-  |     |-- winged deer     (1 node)
+deer/                                     [grouping]
+  |-- deer body                (1 node)   [leaf]
+  |-- winged deer              (1 node)   [leaf]
 ```
 
-**Merges:** none needed
+**Merges:** none
 
 ---
 
 ### FOX (metacategory)
 
 ```
-fox/
-  |-- fox                   (1 node, was "white fox")
-  |     MERGE: "white fox" (1) -> "fox"
-  |     |-- nine-tailed     (1 node)
+fox/                                      [grouping]
+  |-- white fox                (1 node)   [leaf]
+  |-- nine-tailed              (1 node)   [leaf]
 ```
 
-**Merges (data changes):**
-- "white fox" -> "fox" (1 node)
-
-**Open question:** "white fox" -> "fox" loses the color info. Keep as "white fox" instead?
+**Merges:** none (keeping "white fox" to preserve color info)
 
 ---
 
 ### JAGUAR (metacategory)
 
 ```
-jaguar/
-  |-- jaguar                (1 node)
+jaguar/                                   [grouping]
+  |-- jaguar                   (1 node)   [leaf]
 ```
 
-**Merges:** none needed
+**Merges:** none
 
 ---
 
 ### TIGER (metacategory)
 
 ```
-tiger/
-  |-- tiger                 (no standalone)
-  |     |-- tiger-headed    (1 node)
+tiger/                                    [grouping]
+  |-- tiger-headed             (1 node)   [leaf]
 ```
 
-**Merges:** none needed
+**Merges:** none
 
 ---
 
 ### INSECT (metacategory)
 
 ```
-insect/
-  |-- scarab                (3 nodes total after merge)
-  |     MERGE: "scarab beetle" (1) -> "scarab"
-  |
-  |-- butterfly             (2 nodes, was "butterfly wings")
-  |     MERGE: "butterfly wings" (2) -> "butterfly"
-  |
-  |-- scorpion              (1 node)
-  |     |-- scorpion sting  (1 node)
+insect/                                   [grouping]
+  |-- scarab                   (3 nodes)  [leaf] MERGE: + "scarab beetle" (1)
+  |-- butterfly wings          (2 nodes)  [leaf]
+  |-- scorpion                 (1 node)   [leaf]
+  |-- scorpion sting           (1 node)   [leaf]
 ```
 
-**Merges (data changes):**
+**Merges:**
 - "scarab beetle" -> "scarab" (1 node)
-- "butterfly wings" -> "butterfly" (2 nodes)
 
-**Open question:** "butterfly wings" -> "butterfly" loses the "wings" info. Keep as "butterfly wings"?
+**Note:** keeping "butterfly wings" as-is to preserve the "wings" detail.
 
 ---
 
 ### HIPPOPOTAMUS (metacategory)
 
 ```
-hippopotamus/
-  |-- hippopotamus          (2 nodes)
+hippopotamus/                             [grouping]
+  |-- hippopotamus             (2 nodes)  [leaf]
 ```
 
-**Merges:** none needed
+**Merges:** none
 
 ---
 
 ### HARE (metacategory)
 
 ```
-hare/
-  |-- hare                  (1 node, was "hare's head")
-  |     MERGE: "hare's head" (1) -> "hare-headed"
+hare/                                     [grouping]
+  |-- hare-headed              (1 node)   [leaf] MERGE: "hare's head" (1)
 ```
 
-**Merges (data changes):**
+**Merges:**
 - "hare's head" -> "hare-headed" (1 node)
 
 ---
@@ -421,54 +378,59 @@ hare/
 ### DONKEY (metacategory)
 
 ```
-donkey/
-  |-- donkey                (no standalone)
-  |     |-- donkey-headed   (1 node)
+donkey/                                   [grouping]
+  |-- donkey-headed            (1 node)   [leaf]
 ```
 
-**Merges:** none needed
+**Merges:** none
 
 ---
 
 ### JACKAL (metacategory)
 
 ```
-jackal/
-  |-- jackal                (no standalone)
-  |     |-- jackal-headed   (2 nodes)
+jackal/                                   [grouping]
+  |-- jackal-headed            (2 nodes)  [leaf]
 ```
 
-**Merges:** none needed
+**Merges:** none
 
 ---
 
 ### GAZELLE (metacategory)
 
 ```
-gazelle/
-  |-- gazelle               (no standalone)
-  |     |-- gazelle-headed  (1 node)
+gazelle/                                  [grouping]
+  |-- gazelle-headed           (1 node)   [leaf]
 ```
 
-**Merges:** none needed
+**Merges:** none
 
 ---
 
 ### BABOON (metacategory)
 
 ```
-baboon/
-  |-- baboon                (no standalone)
-  |     |-- baboon-headed   (1 node)
+baboon/                                   [grouping]
+  |-- baboon-headed            (1 node)   [leaf]
 ```
 
-**Merges:** none needed
+**Merges:** none
+
+---
+
+### BAT (metacategory)
+
+```
+bat/                                      [grouping]
+  |-- bat wings                (1 node)   [leaf]
+```
+
+**Merges:** none
 
 ---
 
 ## Summary of all merges (data changes on nodes)
-
-These are the actual value renames that will be applied to nodes' `physical_characteristics` field:
 
 | Old value | New (canonical) value | Nodes affected |
 |---|---|---|
@@ -479,7 +441,7 @@ These are the actual value renames that will be applied to nodes' `physical_char
 | lion heads | lion-headed | 1 |
 | lion's head | lion-headed | 4 |
 | lioness head | lion-headed | 1 |
-| cow-horned | cow-headed | 1 |
+| cow-horned | cow horns | 1 |
 | bird head | bird-headed | 2 |
 | bird's beak | bird-headed | 1 |
 | falcon head | falcon-headed | 1 |
@@ -495,45 +457,39 @@ These are the actual value renames that will be applied to nodes' `physical_char
 | fish's tail | fish tail | 1 |
 | seal head | seal | 1 |
 | goat's body | goat body | 1 |
-| white fox | fox | 1 |
 | scarab beetle | scarab | 1 |
-| butterfly wings | butterfly | 2 |
 | hare's head | hare-headed | 1 |
 
-**Total: 27 merge rules affecting ~34 node-trait values**
+**Total: 25 merge rules affecting ~31 node-trait values**
 
 ---
 
 ## Open Questions
 
-1. **"cow-horned" -> "cow-headed"?** Or should "cow-horned" merge into "cow horns" instead? (A cow-horned god has horns but not necessarily a cow head.)
+1. **"horsemen"** — is this a physical characteristic or a character trait? Should it be moved to the `character_trait` field?
 
-2. **"white fox" -> "fox"?** This loses the color information. Should it stay as "white fox" under the fox metacategory instead?
+2. **"sea goat"** — hybrid creature (goat + fish). Currently placed under goat only. Should it also appear under fish?
 
-3. **"butterfly wings" -> "butterfly"?** This loses the "wings" detail. Should it stay as "butterfly wings"?
+3. **"feline"/"feline-headed"** — currently leaves under lion. Should lion, cat, jaguar, and tiger instead all be grouped under a broader "feline" metacategory?
 
-4. **"horsemen"** — is this a physical characteristic or a character trait? Should it be moved to the `character_trait` field?
-
-5. **"sea goat"** — hybrid creature (goat + fish). Should it appear under goat only, fish only, or both hierarchies?
-
-6. **"bat wings"** — only 1 occurrence. Should "bat" be a separate metacategory, or should "bat wings" go under a broader "wings" group outside the animal hierarchy?
-
-7. **"feline"/"feline-headed"** — currently under lion. Should lion, cat, jaguar, and tiger all be grouped under a broader "feline" metacategory instead?
+4. **Laura's suggestions about misplaced traits** — "winged sandals", "winged helmet", "trumpet", "cornucopia", "armor" are objects (not physical traits), and "wrathful", "warrior maiden", "fierce", "matron" are character traits. Should those be moved to their correct fields? (Separate from this animal hierarchy work.)
 
 ---
 
 ## Implementation approach
 
-A new `trait_hierarchy` table with a `parent_id` self-referencing column to support multiple levels:
+A new `trait_hierarchy` table with a `parent_id` self-referencing column:
 
 ```
 trait_hierarchy:
-  id          | category_field            | trait_name   | parent_id
-  1           | physical_characteristics  | snake        | NULL        (root metacategory)
-  2           | physical_characteristics  | snake        | 1           (subcategory "snake" under "snake")
-  3           | physical_characteristics  | snake-headed | 2           (sub-sub under "snake")
-  4           | physical_characteristics  | cobra        | 1           (subcategory "cobra" under "snake")
-  5           | physical_characteristics  | cobra-headed | 4           (sub-sub under "cobra")
+  id  | category_field           | trait_name       | parent_id | is_leaf
+  1   | physical_characteristics | snake            | NULL      | false   (metacategory)
+  2   | physical_characteristics | snake            | 1         | false   (subcategory grouping)
+  3   | physical_characteristics | snake            | 2         | true    (leaf — nodes tagged here)
+  4   | physical_characteristics | snake-headed     | 2         | true    (leaf)
+  5   | physical_characteristics | cobra            | 1         | false   (subcategory grouping)
+  6   | physical_characteristics | cobra            | 5         | true    (leaf)
+  7   | physical_characteristics | cobra-headed     | 5         | true    (leaf)
 ```
 
-The merge renames are applied directly to nodes' `physical_characteristics` values so the raw data uses canonical names that match the hierarchy.
+The merge renames are applied directly to nodes' `physical_characteristics` values so the raw data uses canonical leaf names that match the hierarchy.
