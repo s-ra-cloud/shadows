@@ -371,6 +371,15 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/admin/nodes/:id", requireAdmin, async (req, res) => {
+    try {
+      const node = await storage.updateNode(parseInt(req.params.id), req.body);
+      res.json(node);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
   app.delete("/api/admin/nodes/:id", requireAdmin, async (req, res) => {
     await storage.deleteNode(parseInt(req.params.id));
     res.json({ success: true });

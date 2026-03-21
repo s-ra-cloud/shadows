@@ -1,8 +1,57 @@
 import { storage } from "./storage";
 import { db } from "./storage";
-import { nodes, edges } from "@shared/schema";
+import { nodes, edges, suggestions } from "@shared/schema";
+import { eq, sql } from "drizzle-orm";
 import * as fs from "fs";
 import * as path from "path";
+
+const TRAIT_MERGES: Array<{ from: string; to: string; suggestionIds: number[] }> = [
+  { from: "fangs", to: "fanged", suggestionIds: [69, 105] },
+  { from: "four arms", to: "four-armed", suggestionIds: [71, 106] },
+  { from: "half-female", to: "half female", suggestionIds: [72, 107] },
+  { from: "half-male", to: "half male", suggestionIds: [73, 108] },
+  { from: "horns", to: "horned", suggestionIds: [74, 109] },
+  { from: "many arms", to: "many-armed", suggestionIds: [76, 112] },
+  { from: "beard", to: "bearded", suggestionIds: [65, 93] },
+  { from: "beast", to: "beastly", suggestionIds: [94] },
+  { from: "multi-headed", to: "multiple heads", suggestionIds: [114] },
+  { from: "three-headed", to: "three heads", suggestionIds: [121] },
+  { from: "six arms", to: "six-armed", suggestionIds: [118] },
+];
+
+async function applyTraitMerges() {
+  let totalUpdated = 0;
+  for (const merge of TRAIT_MERGES) {
+    const matchingNodes = await db.select().from(nodes).where(
+      sql`physical_characteristics = ${merge.from}
+        OR physical_characteristics LIKE ${merge.from + ", %"}
+        OR physical_characteristics LIKE ${"%, " + merge.from}
+        OR physical_characteristics LIKE ${"%, " + merge.from + ", %"}`
+    );
+
+    for (const node of matchingNodes) {
+      const traits = node.physicalCharacteristics!.split(",").map((t: string) => t.trim());
+      const idx = traits.indexOf(merge.from);
+      if (idx === -1) continue;
+
+      if (traits.includes(merge.to)) {
+        traits.splice(idx, 1);
+      } else {
+        traits[idx] = merge.to;
+      }
+
+      await db.update(nodes).set({ physicalCharacteristics: traits.join(", ") }).where(eq(nodes.id, node.id));
+      totalUpdated++;
+    }
+
+    for (const sid of merge.suggestionIds) {
+      await db.update(suggestions).set({ status: "approved" }).where(eq(suggestions.id, sid)).catch(() => {});
+    }
+  }
+  if (totalUpdated > 0) {
+    console.log(`Applied trait merges: ${totalUpdated} nodes updated.`);
+  }
+}
 
 export async function seedDatabase() {
   try {
@@ -28,6 +77,7 @@ export async function seedDatabase() {
       );
       if (hasNewFields) {
         console.log(`Database already has ${existingNodes.length} nodes with full data, skipping seed.`);
+        await applyTraitMerges();
         return;
       }
       console.log(`Database has ${existingNodes.length} nodes but missing new trait fields. Re-seeding...`);
