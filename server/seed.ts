@@ -112,6 +112,13 @@ const DIRECT_FIXES: Array<{ nodeId: number; updates: Record<string, string | nul
   { nodeId: 3809, updates: { domain: "earth, fire, home, hearth" }, suggestionIds: [52] },
   { nodeId: 4255, updates: { domain: "war, crafts, fertility, agriculture, grain supply" }, suggestionIds: [53, 55] },
   { nodeId: 3432, updates: { domain: "sun, prophecy, music, order, art" }, suggestionIds: [57] },
+  { nodeId: 4020, updates: { domain: "wine" }, suggestionIds: [13] },
+  { nodeId: 3941, updates: { domain: "creation" }, suggestionIds: [16, 61] },
+  { nodeId: 3412, updates: { characterTrait: "fertile, abundant, primal, beautiful" }, suggestionIds: [38] },
+  { nodeId: 4352, updates: { domain: "excess, pleasure" }, suggestionIds: [51] },
+  { nodeId: 3407, updates: { domain: "wisdom, storm, rebirth, light, sacrifice, souls, creation" }, suggestionIds: [5] },
+  { nodeId: 3421, updates: { domain: "war, sun, sacrifice, creation" }, suggestionIds: [5] },
+  { nodeId: 4378, updates: { domain: "kingship, night, creation" }, suggestionIds: [5] },
 ];
 
 const NODES_TO_DELETE = [
@@ -217,6 +224,58 @@ async function applyDomainAdditions() {
   }
 }
 
+async function applyDeathTypeCleanup() {
+  const underscoreMappings = [
+    ['betrayed_and_killed', 'betrayed and killed'],
+    ['immortality_denied', 'immortality denied'],
+    ['killed_by_god', 'killed by god'],
+    ['killed_by_hero', 'killed by hero'],
+    ['killed_by_kin', 'killed by kin'],
+    ['killed_in_battle', 'killed in battle'],
+    ['natural_death', 'natural death'],
+    ['prophesied_death', 'prophesied death'],
+    ['sacrificed_ritually', 'sacrificed ritually'],
+    ['transformation_at_death', 'transformation at death'],
+  ];
+  let totalFixed = 0;
+  for (const [old, newVal] of underscoreMappings) {
+    const result = await db.execute(sql`UPDATE nodes SET death_types = array_replace(death_types, ${old}, ${newVal}) WHERE ${old} = ANY(death_types)`);
+    if (result.rowCount && result.rowCount > 0) totalFixed += result.rowCount;
+  }
+
+  const reclassifications = [
+    { nodeId: 3910, deathTypes: ['suicide'], suggestionIds: [87] },
+    { nodeId: 4013, deathTypes: ['killed by hero', 'prophesied death'], suggestionIds: [87] },
+    { nodeId: 3403, deathTypes: ['killed by kin'], suggestionIds: [88] },
+    { nodeId: 3758, deathTypes: ['transformation at death'], suggestionIds: [89] },
+    { nodeId: 3952, deathTypes: ['killed in battle'], suggestionIds: [90] },
+  ];
+  for (const rc of reclassifications) {
+    const [node] = await db.select().from(nodes).where(eq(nodes.id, rc.nodeId));
+    if (!node) continue;
+    const currentTypes = node.deathTypes || [];
+    if (JSON.stringify(currentTypes.sort()) !== JSON.stringify(rc.deathTypes.sort())) {
+      await db.update(nodes).set({ deathTypes: rc.deathTypes }).where(eq(nodes.id, rc.nodeId));
+      totalFixed++;
+    }
+    for (const sid of rc.suggestionIds) {
+      await db.update(suggestions).set({ status: "approved" }).where(eq(suggestions.id, sid)).catch(() => {});
+    }
+  }
+
+  await db.update(edges).set({ relationType: "sibling of" }).where(eq(edges.relationType, "sibling_of")).catch(() => {});
+
+  const rejectIds = [11, 14, 39, 40, 44, 47];
+  for (const sid of rejectIds) {
+    await db.update(suggestions).set({ status: "rejected" }).where(eq(suggestions.id, sid)).catch(() => {});
+  }
+  await db.update(suggestions).set({ status: "approved" }).where(eq(suggestions.id, 64)).catch(() => {});
+
+  if (totalFixed > 0) {
+    console.log(`Applied death type cleanup: ${totalFixed} updates.`);
+  }
+}
+
 async function applyDirectFixes() {
   let totalFixed = 0;
   for (const fix of DIRECT_FIXES) {
@@ -270,6 +329,7 @@ export async function seedDatabase() {
         await applyNodeCreations();
         await applyGenderFixes();
         await applyDomainAdditions();
+        await applyDeathTypeCleanup();
         return;
       }
       console.log(`Database has ${existingNodes.length} nodes but missing new trait fields. Re-seeding...`);
