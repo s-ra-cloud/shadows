@@ -735,7 +735,7 @@ function NodesTab({ isEditor, onSuggest }: {
 
   const categoryHierarchy = useMemo(() => {
     if (!hierarchyData.length) return null;
-    const fieldMap: Record<string, string> = { physicalCharacteristics: "physical_characteristics", object: "object", animals: "animals" };
+    const fieldMap: Record<string, string> = { physicalCharacteristics: "physical_characteristics", object: "object", animals: "animals", domain: "domain" };
     const dbField = fieldMap[category];
     if (!dbField) return null;
     const relevant = hierarchyData.filter((h) => h.categoryField === dbField);
@@ -745,7 +745,7 @@ function NodesTab({ isEditor, onSuggest }: {
 
   const categoryCrossCuts = useMemo(() => {
     if (!crossCutData.length || !traitData) return null;
-    const fieldMap: Record<string, string> = { physicalCharacteristics: "physical_characteristics", object: "object", animals: "animals" };
+    const fieldMap: Record<string, string> = { physicalCharacteristics: "physical_characteristics", object: "object", animals: "animals", domain: "domain" };
     const dbField = fieldMap[category];
     if (!dbField) return null;
     const relevant = crossCutData.filter((cc) => cc.categoryField === dbField);

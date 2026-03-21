@@ -471,6 +471,76 @@ async function seedAnimalHierarchy() {
   console.log(`Seeded animal hierarchy: ${count} hierarchy entries, ${ccCount} cross-cut entries.`);
 }
 
+async function seedDomainHierarchy() {
+  const existing = await db.select().from(traitHierarchy).where(eq(traitHierarchy.categoryField, "domain"));
+  if (existing.length > 0) return;
+
+  console.log("Seeding domain hierarchy...");
+
+  const DOMAIN_TAXONOMY: Record<string, Record<string, string[]>> = {
+    "cosmic / cosmological": {
+      "celestial": ["sun", "moon", "sky", "night", "astronomy", "astrology", "day", "hour of noon", "hour of dusk", "hour of prayer"],
+      "elemental": ["fire", "water", "earth", "storm", "wind", "light", "frost"],
+      "primordial": ["creation", "chaos", "cosmos", "time", "eternity", "fate", "destruction", "primordial deity"],
+    },
+    "nature / environment": {
+      "land / terrain": ["nature", "mountains", "land", "countryside", "island", "spring"],
+      "water bodies": ["sea", "floods", "nile flood", "ferry", "navigation"],
+      "flora / agriculture": ["agriculture", "fertility", "grain supply", "maize", "food", "nourishment", "herding"],
+      "fauna": ["animals", "dragons"],
+    },
+    "war / conflict": {
+      "martial": ["war", "victory", "strength", "terror"],
+      "strife / discord": ["vengeance", "strife", "discord", "punishment", "plague", "disease", "madness", "fevers"],
+    },
+    "life / death cycle": {
+      "birth / growth": ["birth", "childbirth", "motherhood", "youth", "childhood"],
+      "death / afterlife": ["death", "death-rebirth", "rebirth", "souls", "underworld", "mortality"],
+      "vitality": ["healing", "immortality", "longevity", "preservation"],
+    },
+    "social / civic order": {
+      "governance": ["kingship", "royalty", "justice", "order", "liberty", "state", "civic affairs"],
+      "community / place": ["city", "community", "rome", "latium", "city ferentinum", "fortification", "sewers", "doors"],
+      "commerce / labor": ["commerce", "crafts", "labor", "competition", "sports", "games", "gold"],
+      "domestic": ["home", "hearth", "marriage", "protection", "peace"],
+    },
+    "religion / ritual": {
+      "sacred practice": ["sacrifice", "purification", "asceticism", "festivals", "celebration", "salvation"],
+      "magic / divination": ["magic", "prophecy", "trickery", "cunning", "delusion"],
+      "mythic role": ["first pair of humans", "first man", "culture", "myth", "civilization"],
+    },
+    "arts / intellect": {
+      "performance": ["music", "wine", "satire"],
+      "knowledge": ["wisdom", "knowledge", "literature", "art", "memory", "prudence"],
+    },
+    "emotion / moral quality": {
+      "positive": ["love", "joy", "happiness", "beauty", "harmony", "trust", "mercy", "compassion", "generosity", "comfort", "modesty", "duty", "service", "determination"],
+      "negative": ["grief", "shame", "envy", "hubris", "impiety", "folly", "vice", "suffering"],
+      "liminal": ["sleep", "silence", "transitions", "balance", "direction", "area of libra"],
+    },
+    "sovereignty / power": {
+      "authority": ["luck", "travel", "hunt"],
+      "excess / indulgence": ["excess", "pleasure", "poverty", "need"],
+    },
+  };
+
+  let count = 0;
+  for (const [topName, subcats] of Object.entries(DOMAIN_TAXONOMY)) {
+    const [topRow] = await db.insert(traitHierarchy).values({ categoryField: "domain", traitName: topName, parentId: null, isLeaf: 0 }).returning();
+    count++;
+    for (const [subName, traits] of Object.entries(subcats)) {
+      const [subRow] = await db.insert(traitHierarchy).values({ categoryField: "domain", traitName: subName, parentId: topRow.id, isLeaf: 0 }).returning();
+      count++;
+      for (const trait of traits) {
+        await db.insert(traitHierarchy).values({ categoryField: "domain", traitName: trait, parentId: subRow.id, isLeaf: 1 });
+        count++;
+      }
+    }
+  }
+
+  console.log(`Seeded domain hierarchy: ${count} entries.`);
+}
+
 export async function seedDatabase() {
   try {
     const existingProjects = await storage.getProjects();
@@ -503,6 +573,7 @@ export async function seedDatabase() {
         await applyDomainAdditions();
         await applyDeathTypeCleanup();
         await seedAnimalHierarchy();
+        await seedDomainHierarchy();
         return;
       }
       console.log(`Database has ${existingNodes.length} nodes but missing new trait fields. Re-seeding...`);
