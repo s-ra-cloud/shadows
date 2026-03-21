@@ -104,6 +104,14 @@ const DIRECT_FIXES: Array<{ nodeId: number; updates: Record<string, string | nul
   { nodeId: 4378, updates: { object: "jaguar, arrow, spear, mirror, shield, smoking knife, obsidian knife" }, suggestionIds: [] },
   { nodeId: 4141, updates: { name: "Rekhyt" }, suggestionIds: [63] },
   { nodeId: 4415, updates: { physicalCharacteristics: "bandaged mouth, finger on lips" }, suggestionIds: [] },
+  { nodeId: 4402, updates: { domain: "hearth" }, suggestionIds: [3, 10, 33] },
+  { nodeId: 3872, updates: { domain: "agriculture, fertility" }, suggestionIds: [19] },
+  { nodeId: 4066, updates: { domain: null }, suggestionIds: [23] },
+  { nodeId: 3704, updates: { domain: "poverty, need" }, suggestionIds: [28] },
+  { nodeId: 3726, updates: { domain: "nature" }, suggestionIds: [29] },
+  { nodeId: 3809, updates: { domain: "earth, fire, home, hearth" }, suggestionIds: [52] },
+  { nodeId: 4255, updates: { domain: "war, crafts, fertility, agriculture, grain supply" }, suggestionIds: [53, 55] },
+  { nodeId: 3432, updates: { domain: "sun, prophecy, music, order, art" }, suggestionIds: [57] },
 ];
 
 async function applyDirectFixes() {
