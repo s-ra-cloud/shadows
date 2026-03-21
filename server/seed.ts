@@ -541,6 +541,77 @@ async function seedDomainHierarchy() {
   console.log(`Seeded domain hierarchy: ${count} entries.`);
 }
 
+async function seedCharacterTraitHierarchy() {
+  const existing = await db.select().from(traitHierarchy).where(eq(traitHierarchy.categoryField, "character_trait"));
+  if (existing.length > 0) return;
+
+  console.log("Seeding character trait hierarchy...");
+
+  const CT_TAXONOMY: Record<string, Record<string, string[]>> = {
+    "moral virtue": {
+      "justice / order": ["just", "righteous", "orderly", "world-ordering", "rational"],
+      "compassion / mercy": ["compassionate", "merciful", "kind", "kindly", "gentle", "benevolent", "selfless", "generous"],
+      "devotion / loyalty": ["loyal", "faithful", "devoted", "dedicated", "obedient", "stalwart", "enduring", "patient", "respectful", "self-sacrificing"],
+      "modesty / purity": ["virginal", "modest", "holy", "spiritual", "purifying", "innocent", "truthful"],
+    },
+    "intellectual / wisdom": {
+      "wisdom": ["wise", "intelligent", "knowledgeable", "wisdom-seeking", "wisdom-bestowing", "eloquent", "curious"],
+      "prophecy / fate": ["prophetic", "fate-weaving", "fate-determining", "fate-spinning"],
+      "cunning / strategy": ["cunning", "trickster", "deceitful", "illusory", "enigmatic"],
+    },
+    "creative / generative": {
+      "artistic / creative": ["creative", "skilled", "creator", "dynamic"],
+      "life-giving": ["fertile", "life-giving", "life-affirming", "birth-bringing", "all-generating", "all-originating", "self-generating", "agricultural"],
+      "nourishing": ["nourishing", "nurturing", "abundant", "all-giving", "all-encompassing"],
+    },
+    "warrior / martial": {
+      "bravery / heroism": ["brave", "heroic", "intrepid", "conquering", "warrior", "warrior maiden", "strong", "huntress"],
+      "aggression / ferocity": ["fierce", "warlike", "wrathful", "bloodthirsty", "terrifying", "terrible", "dangerous", "deadly", "perilous"],
+      "death-dealing": ["death-dealing", "death-bringing", "death-ruling", "fatal", "devouring", "all-devouring", "earth-devouring", "destructive", "self-destroying"],
+    },
+    "dark / dangerous": {
+      "malevolence": ["malevolent", "evil", "dark", "nocturnal", "petrifying", "unapproachable"],
+      "chaos / disorder": ["chaotic", "wild", "demanding", "obscene humor", "intoxicating"],
+    },
+    "beauty / allure": {
+      "beauty": ["beautiful", "youthful", "luminous", "light-bringing", "illuminating"],
+      "seduction / enchantment": ["seductive", "enchanting", "enchantress", "alluring", "sensual", "lustful", "passionate", "witch", "magical"],
+    },
+    "sovereignty / authority": {
+      "rulership": ["powerful", "sovereign", "king", "queen", "noble", "patriarchal", "patriotic", "matron", "maiden", "horsemen"],
+      "cosmic scope": ["cosmic", "primordial", "primal", "celestial", "divine", "all-pervading", "transcendent"],
+    },
+    "transformative / cyclical": {
+      "transformation": ["transformative", "changeable", "containing opposites", "containing", "mediating", "liminal"],
+      "death-and-rebirth": ["dying-and-rising", "death-and-rebirth", "life-death-rebirth", "cyclical", "descending", "half-living/half-dead"],
+    },
+    "protective / nurturing": {
+      "protection": ["protective", "saving", "guiding", "watchful", "embracing"],
+      "maternal / healing": ["maternal", "healing", "hopeful", "earth-connected"],
+    },
+    "emotional / temperamental": {
+      "positive emotion": ["joyful", "ecstatic", "calm", "imperturbable", "proud"],
+      "negative emotion": ["jealous", "vengeful", "retributive", "grieving", "doomed", "endangered", "humbled", "repentant"],
+    },
+  };
+
+  let count = 0;
+  for (const [topName, subcats] of Object.entries(CT_TAXONOMY)) {
+    const [topRow] = await db.insert(traitHierarchy).values({ categoryField: "character_trait", traitName: topName, parentId: null, isLeaf: 0 }).returning();
+    count++;
+    for (const [subName, traits] of Object.entries(subcats)) {
+      const [subRow] = await db.insert(traitHierarchy).values({ categoryField: "character_trait", traitName: subName, parentId: topRow.id, isLeaf: 0 }).returning();
+      count++;
+      for (const trait of traits) {
+        await db.insert(traitHierarchy).values({ categoryField: "character_trait", traitName: trait, parentId: subRow.id, isLeaf: 1 });
+        count++;
+      }
+    }
+  }
+
+  console.log(`Seeded character trait hierarchy: ${count} entries.`);
+}
+
 export async function seedDatabase() {
   try {
     const existingProjects = await storage.getProjects();
@@ -574,6 +645,7 @@ export async function seedDatabase() {
         await applyDeathTypeCleanup();
         await seedAnimalHierarchy();
         await seedDomainHierarchy();
+        await seedCharacterTraitHierarchy();
         return;
       }
       console.log(`Database has ${existingNodes.length} nodes but missing new trait fields. Re-seeding...`);
