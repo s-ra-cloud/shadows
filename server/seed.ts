@@ -99,7 +99,7 @@ async function applyTraitMoves() {
   await applyDirectFixes();
 }
 
-const DIRECT_FIXES: Array<{ nodeId: number; updates: Record<string, string | null>; suggestionIds: number[] }> = [
+const DIRECT_FIXES: Array<{ nodeId: number; updates: Record<string, string | string[] | null>; suggestionIds: number[] }> = [
   { nodeId: 3636, updates: { physicalCharacteristics: "bull, human" }, suggestionIds: [95] },
   { nodeId: 4378, updates: { object: "jaguar, arrow, spear, mirror, shield, smoking knife, obsidian knife" }, suggestionIds: [] },
   { nodeId: 4141, updates: { name: "Rekhyt" }, suggestionIds: [63] },
@@ -122,6 +122,26 @@ const DIRECT_FIXES: Array<{ nodeId: number; updates: Record<string, string | nul
   { nodeId: 3648, updates: { animals: "cicada, horse, bear, dragon" }, suggestionIds: [] },
   { nodeId: 3518, updates: { animals: "horse, rooster, wolf, cattle, serpent, bull, lion, stag, dog, bear, cock, crane, cow, dragon" }, suggestionIds: [] },
   { nodeId: 3656, updates: { animals: "dog, horse, bull, snake" }, suggestionIds: [] },
+  { nodeId: 3430, updates: { animals: null }, suggestionIds: [] },
+  { nodeId: 3476, updates: { animals: null, physicalCharacteristics: "winged, bird body" }, suggestionIds: [] },
+  { nodeId: 3428, updates: { animals: null, deathTypes: ["killed by boar"] }, suggestionIds: [] },
+  { nodeId: 3442, updates: { animals: "bull, snake" }, suggestionIds: [] },
+  { nodeId: 3472, updates: { animals: null }, suggestionIds: [] },
+  { nodeId: 3443, updates: { animals: "serpent tails", physicalCharacteristics: "multiple heads, sea monster, dog heads" }, suggestionIds: [] },
+  { nodeId: 4008, updates: { animals: "serpent, horse" }, suggestionIds: [] },
+  { nodeId: 3422, updates: { animals: "wings" }, suggestionIds: [] },
+  { nodeId: 3411, updates: { animals: "lion" }, suggestionIds: [] },
+  { nodeId: 3447, updates: { animals: "lion, tiger" }, suggestionIds: [] },
+  { nodeId: 3465, updates: { animals: null, object: "wheel, rudder, cornucopia, chariot, lion" }, suggestionIds: [] },
+  { nodeId: 3405, updates: { animals: null }, suggestionIds: [] },
+  { nodeId: 4205, updates: { animals: "serpent, snake, bull, deer, bear, cow, tiger, lion" }, suggestionIds: [] },
+  { nodeId: 3448, updates: { animals: "owl", physicalCharacteristics: "winged" }, suggestionIds: [] },
+  { nodeId: 4233, updates: { animals: "owl" }, suggestionIds: [] },
+  { nodeId: 3395, updates: { animals: "pig, sow, snake, dove" }, suggestionIds: [] },
+  { nodeId: 3435, updates: { animals: null, object: "magic wand, potions, pigs" }, suggestionIds: [] },
+  { nodeId: 3407, updates: { animals: "feathered serpent" }, suggestionIds: [] },
+  { nodeId: 4525, updates: { animals: "serpent" }, suggestionIds: [] },
+  { nodeId: 3420, updates: { animals: "serpent" }, suggestionIds: [] },
 ];
 
 const NODES_TO_DELETE = [
@@ -328,7 +348,10 @@ async function applyDirectFixes() {
 
     let needsUpdate = false;
     for (const [key, val] of Object.entries(fix.updates)) {
-      if ((node as any)[key] !== val) needsUpdate = true;
+      const current = (node as any)[key];
+      if (Array.isArray(val)) {
+        if (!Array.isArray(current) || JSON.stringify(current.sort()) !== JSON.stringify([...val].sort())) needsUpdate = true;
+      } else if (current !== val) needsUpdate = true;
     }
     if (!needsUpdate) continue;
 
