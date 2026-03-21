@@ -102,6 +102,8 @@ async function applyTraitMoves() {
 const DIRECT_FIXES: Array<{ nodeId: number; updates: Record<string, string | null>; suggestionIds: number[] }> = [
   { nodeId: 3636, updates: { physicalCharacteristics: "bull, human" }, suggestionIds: [95] },
   { nodeId: 4378, updates: { object: "jaguar, arrow, spear, mirror, shield, smoking knife, obsidian knife" }, suggestionIds: [] },
+  { nodeId: 4141, updates: { name: "Rekhyt" }, suggestionIds: [63] },
+  { nodeId: 4415, updates: { physicalCharacteristics: "bandaged mouth, finger on lips" }, suggestionIds: [] },
 ];
 
 async function applyDirectFixes() {
