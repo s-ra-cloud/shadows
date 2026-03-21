@@ -33,7 +33,13 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 - `publications` - Research publications (title, authors, venue, abstract, doi, pdf_url)
 - `suggestions` - Public suggestions for edits (type, status, submitterName, source, nodeId, field, currentValue, suggestedValue, sourceNodeId, targetNodeId, relationType, edgeId, createdAt)
 - `sources` - Reference sources (title, author, url, description, createdAt)
-- `trait_hierarchy` - Animal trait taxonomy (categoryField, traitName, parentId, isLeaf) — 27 metacategories, 95 leaf traits for physical_characteristics animal grouping
+- `trait_hierarchy` - Physical characteristics taxonomy (categoryField, traitName, parentId, isLeaf) — 236 entries organized in a three-level top structure:
+  - **human** (appearance, stature, age, bearded, skin color, face, eyes, hair, body state, hybridity)
+  - **animal** → mammal (feline, bovine, canine, equine, caprine, cervid, cetacean, chiropteran, lagomorph, primate) / bird / reptile (snake, crocodile, turtle, tortoise) / amphibian / fish / insect
+  - **monstrous / chimeric** (dragon)
+- `trait_habitat` - Habitat classification for animal metacategories (terrestrial, aquatic, aerial, chthonic) — 33 entries, allows multi-habitat membership
+- `trait_cross_cut` - Cross-cutting trait groupings that span across categories (crossCutName, traitHierarchyId, standaloneTrait) — 65 entries in 6 groups:
+  - animal-headed (25), animal-bodied (12), multiple-heads (9), winged (8), horned (7), tailed (4)
 - `users` - Admin users (username, password)
 
 ## Data Source
