@@ -105,7 +105,7 @@ These are noted for future implementation, not part of this batch:
 - "multi-headed" view: groups all head-count traits including eight-headed snake
 - "winged" view: groups winged + four wings + bird traits with wings
 
-**Phylogenetic-style animal super-hierarchy** — a higher-level classification above the current 27 animal metacategories:
+**Phylogenetic-style animal super-hierarchy** — a higher-level classification above the current 27 animal metacategories, following actual taxonomy:
 
 ```
 Physical form
@@ -118,14 +118,31 @@ Physical form
 │   │   ├── Equines (horse, donkey)
 │   │   ├── Ursines (bear)
 │   │   ├── Cervids (deer, elk, stag)
-│   │   ├── Other mammals (boar, pig, monkey, elephant, bat, rabbit, etc.)
-│   │   └── ...
+│   │   ├── Suines (boar, pig)
+│   │   ├── Primates (monkey, ape)
+│   │   ├── Proboscideans (elephant)
+│   │   ├── Chiropterans (bat)
+│   │   ├── Lagomorphs (rabbit, hare)
+│   │   ├── Cetaceans (dolphin, whale)
+│   │   └── Rodents (mouse, rat)
 │   ├── Reptiles (snake, crocodile, lizard, turtle)
 │   ├── Birds (eagle, falcon, vulture, owl, crow, etc.)
-│   ├── Fish / Aquatic (fish, dolphin, whale, shark)
+│   ├── Fish (fish, shark, eel)
 │   ├── Amphibians (frog, toad, salamander)
 │   └── Insects / Arachnids (spider, scorpion, beetle, bee)
 └── Monstrous / Chimeric (dragon, sphinx, chimera, griffin)
 ```
 
-This structure will be stored in the database to allow proper classification and filtering, without changing the current graph behavior.
+**Habitat-based cross-cutting hierarchy** — a second classification axis based on where animals live, cutting across the phylogenetic tree:
+
+```
+Habitat
+├── Terrestrial (lion, bull, dog, horse, snake, elephant, etc.)
+├── Aquatic / Marine (fish, shark, dolphin, whale, crocodile, frog, turtle)
+├── Aerial (eagle, falcon, vulture, owl, bat, bee)
+└── Chthonic / Subterranean (snake, worm, mole, scarab)
+```
+
+Some animals naturally appear in multiple habitats (e.g. crocodile is both terrestrial and aquatic, snake is both terrestrial and chthonic). This is expected — the cross-cutting system allows multi-membership.
+
+Both structures will be stored in the database to allow proper classification and filtering, without changing the current graph behavior.
