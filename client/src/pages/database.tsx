@@ -2,11 +2,11 @@ import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Node, Edge, Suggestion, Source, TraitHierarchy } from "@shared/schema";
+import type { Node, Edge, Suggestion, Source, TraitHierarchy, TraitCrossCut } from "@shared/schema";
 import {
   Search, Lock, Unlock, ChevronDown, ChevronRight, Plus, Pencil, Trash2,
   MessageSquarePlus, BookOpen, X, Check, AlertCircle, ArrowUpDown, ExternalLink,
-  Download, Upload, FolderTree
+  Download, Upload, FolderTree, Layers
 } from "lucide-react";
 
 type Tab = "nodes" | "relations" | "suggestions" | "sources";
@@ -659,6 +659,13 @@ function NodesTab({ isEditor, onSuggest }: {
     queryKey: ["/api/trait-hierarchy"],
   });
 
+  const { data: crossCutData = [] } = useQuery<TraitCrossCut[]>({
+    queryKey: ["/api/trait-cross-cut"],
+  });
+
+  const [crossCutView, setCrossCutView] = useState(false);
+  const [expandedCrossCut, setExpandedCrossCut] = useState<string | null>(null);
+
   const traditions = useMemo(() => {
     const set = new Set<string>();
     nodes.forEach((n) => n.tradition && set.add(n.tradition));
@@ -728,13 +735,48 @@ function NodesTab({ isEditor, onSuggest }: {
 
   const categoryHierarchy = useMemo(() => {
     if (!hierarchyData.length) return null;
-    const fieldMap: Record<string, string> = { physicalCharacteristics: "physical_characteristics" };
+    const fieldMap: Record<string, string> = { physicalCharacteristics: "physical_characteristics", object: "object" };
     const dbField = fieldMap[category];
     if (!dbField) return null;
     const relevant = hierarchyData.filter((h) => h.categoryField === dbField);
     if (!relevant.length) return null;
     return relevant;
   }, [hierarchyData, category]);
+
+  const categoryCrossCuts = useMemo(() => {
+    if (!crossCutData.length || !traitData) return null;
+    const fieldMap: Record<string, string> = { physicalCharacteristics: "physical_characteristics", object: "object" };
+    const dbField = fieldMap[category];
+    if (!dbField) return null;
+    const relevant = crossCutData.filter((cc) => cc.categoryField === dbField);
+    if (!relevant.length) return null;
+
+    const traitMap = new Map<string, { value: string; count: number; nodeIds: number[] }>();
+    traitData.forEach((t) => traitMap.set(t.value, t));
+
+    const groups = new Map<string, { traits: Set<string>; uniqueNodeIds: Set<number>; entries: { value: string; count: number; nodeIds: number[] }[] }>();
+    for (const cc of relevant) {
+      const name = cc.crossCutName;
+      if (!groups.has(name)) groups.set(name, { traits: new Set(), uniqueNodeIds: new Set(), entries: [] });
+      const g = groups.get(name)!;
+      const traitName = cc.standaloneTrait || (cc.traitHierarchyId ? hierarchyData.find(h => h.id === cc.traitHierarchyId)?.traitName : null);
+      if (traitName && !g.traits.has(traitName)) {
+        g.traits.add(traitName);
+        const t = traitMap.get(traitName);
+        if (t) {
+          g.entries.push(t);
+          t.nodeIds.forEach(id => g.uniqueNodeIds.add(id));
+        } else {
+          g.entries.push({ value: traitName, count: 0, nodeIds: [] });
+        }
+      }
+    }
+
+    return Array.from(groups.entries())
+      .map(([name, g]) => ({ name, entries: g.entries.sort((a, b) => b.count - a.count), totalCount: g.uniqueNodeIds.size }))
+      .filter(g => g.entries.length > 0)
+      .sort((a, b) => b.totalCount - a.totalCount);
+  }, [crossCutData, hierarchyData, traitData, category]);
 
   interface HierarchyGroup {
     id: number;
@@ -1071,14 +1113,76 @@ function NodesTab({ isEditor, onSuggest }: {
               <FolderTree size={14} className="text-[#8F00FF]" />
               <span>{hierarchyTree.roots.length} metacategories · {traitData?.length || 0} trait values</span>
             </div>
-            <button
-              onClick={() => setHierarchyView(false)}
-              className="text-xs text-[#E0DCE6]/40 hover:text-[#E0DCE6]/70 transition-colors px-2 py-1 rounded border border-[#350A8C]/20 hover:border-[#350A8C]/40"
-              data-testid="button-toggle-flat-view"
-            >
-              Flat view
-            </button>
+            <div className="flex items-center gap-2">
+              {categoryCrossCuts && categoryCrossCuts.length > 0 && (
+                <button
+                  onClick={() => setCrossCutView(!crossCutView)}
+                  className={`flex items-center gap-1.5 text-xs transition-colors px-2 py-1 rounded border ${crossCutView ? "text-[#03FF9B] border-[#03FF9B]/30 bg-[#03FF9B]/10" : "text-[#E0DCE6]/40 hover:text-[#E0DCE6]/70 border-[#350A8C]/20 hover:border-[#350A8C]/40"}`}
+                  data-testid="button-toggle-crosscut-view"
+                >
+                  <Layers size={12} />
+                  Cross-cutting ({categoryCrossCuts.length})
+                </button>
+              )}
+              <button
+                onClick={() => setHierarchyView(false)}
+                className="text-xs text-[#E0DCE6]/40 hover:text-[#E0DCE6]/70 transition-colors px-2 py-1 rounded border border-[#350A8C]/20 hover:border-[#350A8C]/40"
+                data-testid="button-toggle-flat-view"
+              >
+                Flat view
+              </button>
+            </div>
           </div>
+
+          {crossCutView && categoryCrossCuts && (
+            <div className="mb-4 border border-[#03FF9B]/20 rounded-xl overflow-hidden bg-[#0B0626]/80">
+              <div className="px-4 py-2.5 bg-[#03FF9B]/5 border-b border-[#03FF9B]/15 flex items-center gap-2">
+                <Layers size={14} className="text-[#03FF9B]" />
+                <span className="text-xs font-semibold text-[#03FF9B]/80 uppercase tracking-wider">Cross-cutting classifications</span>
+                <span className="ml-auto text-xs text-[#E0DCE6]/30">Traits spanning multiple hierarchy branches</span>
+              </div>
+              <div className="max-h-[40vh] overflow-y-auto">
+                {categoryCrossCuts.map((group) => {
+                  const isOpen = expandedCrossCut === group.name;
+                  return (
+                    <div key={group.name} className="border-b border-[#03FF9B]/10 last:border-0">
+                      <div
+                        className="flex items-center gap-2 py-2 px-4 cursor-pointer transition-colors hover:bg-[#03FF9B]/5"
+                        onClick={() => setExpandedCrossCut(isOpen ? null : group.name)}
+                        data-testid={`crosscut-group-${group.name}`}
+                      >
+                        {isOpen
+                          ? <ChevronDown size={14} className="text-[#03FF9B] shrink-0" />
+                          : <ChevronRight size={14} className="text-[#E0DCE6]/30 shrink-0" />}
+                        <Layers size={13} className="text-[#03FF9B]/60 shrink-0" />
+                        <span className="text-sm font-medium text-[#E0DCE6]/90">{group.name}</span>
+                        <span className="ml-auto text-xs tabular-nums text-[#03FF9B]/50">
+                          {group.entries.length} trait{group.entries.length !== 1 ? "s" : ""} · {group.totalCount} figure{group.totalCount !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                      {isOpen && (
+                        <div className="pb-1">
+                          {group.entries.map((entry) => (
+                            <TraitRow
+                              key={`cc-${group.name}-${entry.value}`}
+                              entry={entry}
+                              nodes={nodes}
+                              expandedTrait={expandedTrait}
+                              setExpandedTrait={setExpandedTrait}
+                              isEditor={isEditor}
+                              onSuggest={onSuggest}
+                              catLabel={catLabel}
+                              depth={1}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="border border-[#350A8C]/20 rounded-xl overflow-hidden">
             <div className="max-h-[60vh] overflow-y-auto">
