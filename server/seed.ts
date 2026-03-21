@@ -59,6 +59,7 @@ const TRAIT_MOVES: Array<{ nodeId: number; trait: string; fromField: "physicalCh
   { nodeId: 4438, trait: "armor", fromField: "physicalCharacteristics", toField: "object", suggestionIds: [91] },
   { nodeId: 4288, trait: "fierce", fromField: "physicalCharacteristics", toField: "characterTrait", suggestionIds: [110] },
   { nodeId: 3977, trait: "fierce", fromField: "physicalCharacteristics", toField: "characterTrait", suggestionIds: [] },
+  { nodeId: 4378, trait: "smoking knife", fromField: "physicalCharacteristics", toField: "object", suggestionIds: [119] },
 ];
 
 async function applyTraitMoves() {
@@ -93,6 +94,37 @@ async function applyTraitMoves() {
   }
   if (totalMoved > 0) {
     console.log(`Applied trait moves: ${totalMoved} nodes updated.`);
+  }
+
+  await applyDirectFixes();
+}
+
+const DIRECT_FIXES: Array<{ nodeId: number; updates: Record<string, string | null>; suggestionIds: number[] }> = [
+  { nodeId: 3636, updates: { physicalCharacteristics: "bull, human" }, suggestionIds: [95] },
+  { nodeId: 4378, updates: { object: "jaguar, arrow, spear, mirror, shield, smoking knife, obsidian knife" }, suggestionIds: [] },
+];
+
+async function applyDirectFixes() {
+  let totalFixed = 0;
+  for (const fix of DIRECT_FIXES) {
+    const [node] = await db.select().from(nodes).where(eq(nodes.id, fix.nodeId));
+    if (!node) continue;
+
+    let needsUpdate = false;
+    for (const [key, val] of Object.entries(fix.updates)) {
+      if ((node as any)[key] !== val) needsUpdate = true;
+    }
+    if (!needsUpdate) continue;
+
+    await db.update(nodes).set(fix.updates as any).where(eq(nodes.id, fix.nodeId));
+    totalFixed++;
+
+    for (const sid of fix.suggestionIds) {
+      await db.update(suggestions).set({ status: "approved" }).where(eq(suggestions.id, sid)).catch(() => {});
+    }
+  }
+  if (totalFixed > 0) {
+    console.log(`Applied direct fixes: ${totalFixed} nodes updated.`);
   }
 }
 
