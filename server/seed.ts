@@ -51,6 +51,49 @@ async function applyTraitMerges() {
   if (totalUpdated > 0) {
     console.log(`Applied trait merges: ${totalUpdated} nodes updated.`);
   }
+
+  await applyTraitMoves();
+}
+
+const TRAIT_MOVES: Array<{ nodeId: number; trait: string; fromField: "physicalCharacteristics"; toField: "object" | "characterTrait"; suggestionIds: number[] }> = [
+  { nodeId: 4438, trait: "armor", fromField: "physicalCharacteristics", toField: "object", suggestionIds: [91] },
+  { nodeId: 4288, trait: "fierce", fromField: "physicalCharacteristics", toField: "characterTrait", suggestionIds: [110] },
+  { nodeId: 3977, trait: "fierce", fromField: "physicalCharacteristics", toField: "characterTrait", suggestionIds: [] },
+];
+
+async function applyTraitMoves() {
+  let totalMoved = 0;
+  for (const move of TRAIT_MOVES) {
+    const [node] = await db.select().from(nodes).where(eq(nodes.id, move.nodeId));
+    if (!node) continue;
+
+    const pcVal = node.physicalCharacteristics || "";
+    const pcTraits = pcVal.split(",").map((t: string) => t.trim()).filter(Boolean);
+    if (!pcTraits.includes(move.trait)) continue;
+
+    const newPc = pcTraits.filter((t: string) => t !== move.trait).join(", ") || null;
+
+    const toVal = (move.toField === "object" ? node.object : node.characterTrait) || "";
+    const toTraits = toVal.split(",").map((t: string) => t.trim()).filter(Boolean);
+    if (!toTraits.includes(move.trait)) {
+      toTraits.push(move.trait);
+    }
+    const newTo = toTraits.join(", ");
+
+    const updates: any = { physicalCharacteristics: newPc };
+    if (move.toField === "object") updates.object = newTo;
+    else updates.characterTrait = newTo;
+
+    await db.update(nodes).set(updates).where(eq(nodes.id, move.nodeId));
+    totalMoved++;
+
+    for (const sid of move.suggestionIds) {
+      await db.update(suggestions).set({ status: "approved" }).where(eq(suggestions.id, sid)).catch(() => {});
+    }
+  }
+  if (totalMoved > 0) {
+    console.log(`Applied trait moves: ${totalMoved} nodes updated.`);
+  }
 }
 
 export async function seedDatabase() {
