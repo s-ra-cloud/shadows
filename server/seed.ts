@@ -139,6 +139,16 @@ const NODES_TO_CREATE = [
     siblingIds: [3407, 4378, 3421],
     suggestionIds: [5],
   },
+  {
+    node: {
+      projectId: 6, name: "Freyja", tradition: "Norse", gender: "Female",
+      domain: "love, beauty, fertility, war, magic, death",
+      physicalCharacteristics: "beautiful", animals: "cat, boar, falcon",
+      object: "necklace, cloak, chariot", characterTrait: "enchanting, seductive", mentionCount: 0,
+    },
+    siblingIds: [3699],
+    suggestionIds: [],
+  },
 ];
 
 const GENDER_FIXES = [
