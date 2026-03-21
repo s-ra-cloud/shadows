@@ -1,6 +1,6 @@
 import { storage } from "./storage";
 import { db } from "./storage";
-import { nodes, edges, suggestions } from "@shared/schema";
+import { nodes, edges, suggestions, traitHierarchy, traitCrossCut } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 import * as fs from "fs";
 import * as path from "path";
@@ -143,6 +143,15 @@ const DIRECT_FIXES: Array<{ nodeId: number; updates: Record<string, string | str
   { nodeId: 4525, updates: { animals: "serpent" }, suggestionIds: [] },
   { nodeId: 3420, updates: { animals: "serpent" }, suggestionIds: [] },
   { nodeId: 3403, updates: { animals: "cow" }, suggestionIds: [] },
+  { nodeId: 3400, updates: { animals: "serpent, dragon" }, suggestionIds: [] },
+  { nodeId: 3398, updates: { animals: "serpent, snake" }, suggestionIds: [] },
+  { nodeId: 3496, updates: { animals: "bull, panther, tiger, lion, goat, snake, leopard, fox, serpent, horse, deer, dolphin, pig, dog, bear, cow, donkey, centaur, cerberus" }, suggestionIds: [] },
+  { nodeId: 3446, updates: { animals: "snake", physicalCharacteristics: "snakes for hair" }, suggestionIds: [] },
+  { nodeId: 3433, updates: { animals: "mushussu, dragon" }, suggestionIds: [] },
+  { nodeId: 4235, updates: { animals: "snake, dragon, serpent, horse, crow, bear" }, suggestionIds: [] },
+  { nodeId: 3583, updates: { animals: "lion, eagle, chimera" }, suggestionIds: [] },
+  { nodeId: 3394, updates: { animals: "cow, kite, scorpion" }, suggestionIds: [] },
+  { nodeId: 3422, updates: { animals: null }, suggestionIds: [] },
 ];
 
 const NODES_TO_DELETE = [
@@ -368,6 +377,95 @@ async function applyDirectFixes() {
   }
 }
 
+async function seedAnimalHierarchy() {
+  const existing = await db.select().from(traitHierarchy).where(eq(traitHierarchy.categoryField, "animals"));
+  if (existing.length > 0) return;
+
+  console.log("Seeding animal hierarchy...");
+
+  const ANIMAL_TAXONOMY: Record<string, Record<string, string[]>> = {
+    "mammal": {
+      "large cat": ["lion", "tiger", "leopard", "panther", "jaguar"],
+      "canine": ["dog", "wolf", "fox", "jackal"],
+      "equine": ["horse", "donkey"],
+      "bovine": ["bull", "cow", "cattle", "ox", "gazelle"],
+      "cervid": ["deer", "stag"],
+      "ursid": ["bear"],
+      "swine": ["pig", "sow", "boar"],
+      "caprine": ["goat", "ram"],
+      "lagomorph": ["hare", "rabbit"],
+      "primate": ["monkey", "hamadryas baboon"],
+      "pachyderm": ["elephant", "hippopotamus"],
+      "feline": ["cat"],
+      "cetacean": ["dolphin", "whale"],
+    },
+    "bird": {
+      "raptor": ["eagle", "falcon", "hawk", "vulture", "kite"],
+      "corvid": ["crow", "raven"],
+      "waterfowl": ["swan", "crane", "heron"],
+      "gallinaceous": ["rooster", "cock", "hen", "peacock", "quail"],
+      "columbid": ["dove", "turtle dove", "sparrow"],
+      "nocturnal bird": ["owl"],
+      "exotic / tropical bird": ["quetzal", "hummingbird", "phoenix", "ibis"],
+      "cuckoo": ["cuckoo"],
+    },
+    "reptile / amphibian": {
+      "serpent-type": ["serpent", "snake", "feathered serpent"],
+      "crocodilian": ["crocodile"],
+      "chelonian": ["tortoise", "turtle"],
+      "dragon-type": ["dragon", "mushussu", "hydra"],
+      "amphibian": ["frog"],
+    },
+    "arthropod": {
+      "insect": ["ant", "bee", "butterfly", "cicada", "scarab"],
+      "arachnid": ["scorpion", "spider"],
+    },
+    "aquatic": {
+      "fish-type": ["fish"],
+    },
+    "mythological / composite creature": {
+      "hybrid beast": ["centaur", "chimera", "griffin", "minotaur", "sphinx", "pegasus", "cerberus"],
+    },
+  };
+
+  let count = 0;
+  for (const [topName, subcats] of Object.entries(ANIMAL_TAXONOMY)) {
+    const [topRow] = await db.insert(traitHierarchy).values({ categoryField: "animals", traitName: topName, parentId: null, isLeaf: 0 }).returning();
+    count++;
+    for (const [subName, traits] of Object.entries(subcats)) {
+      const [subRow] = await db.insert(traitHierarchy).values({ categoryField: "animals", traitName: subName, parentId: topRow.id, isLeaf: traits.length === 0 ? 1 : 0 }).returning();
+      count++;
+      for (const trait of traits) {
+        await db.insert(traitHierarchy).values({ categoryField: "animals", traitName: trait, parentId: subRow.id, isLeaf: 1 });
+        count++;
+      }
+    }
+  }
+
+  const ANIMAL_CROSS_CUTS: Record<string, string[]> = {
+    "aquatic / marine": ["fish", "dolphin", "whale", "crocodile", "turtle", "tortoise", "frog", "crane", "heron", "swan", "hippopotamus"],
+    "aerial / flying": ["eagle", "falcon", "hawk", "vulture", "kite", "crow", "raven", "owl", "dove", "swan", "crane", "heron", "rooster", "cock", "hen", "peacock", "quail", "quetzal", "hummingbird", "ibis", "cuckoo", "phoenix", "butterfly", "bee", "pegasus", "griffin", "dragon", "sparrow", "turtle dove"],
+    "nocturnal": ["owl", "wolf", "spider", "scorpion", "jackal", "fox", "cat", "panther", "leopard", "snake", "serpent"],
+    "chthonic / underworld": ["serpent", "snake", "dog", "cerberus", "scorpion", "jackal", "crow", "raven", "vulture", "frog", "hydra", "spider"],
+    "solar / sky": ["eagle", "falcon", "hawk", "phoenix", "scarab", "rooster", "cock", "dragon", "griffin", "quetzal", "hummingbird"],
+    "draft / mount": ["horse", "donkey", "ox", "bull", "elephant", "deer", "stag", "lion", "tiger", "boar", "ram", "goat", "dolphin", "pegasus"],
+    "fertility / abundance": ["bull", "cow", "pig", "sow", "boar", "ram", "goat", "fish", "frog", "hare", "rabbit", "bee", "dove", "swan", "dolphin", "snake", "serpent"],
+    "death / psychopomp": ["crow", "raven", "vulture", "owl", "jackal", "dog", "cerberus", "serpent", "snake", "scorpion", "wolf", "eagle", "falcon"],
+    "venomous / dangerous": ["serpent", "snake", "scorpion", "spider", "crocodile", "hydra", "feathered serpent", "lion", "tiger", "wolf", "boar", "jaguar", "panther", "leopard"],
+    "domestic / pastoral": ["dog", "cat", "horse", "donkey", "cow", "bull", "ox", "goat", "ram", "pig", "sow", "hen", "rooster", "cock", "dove", "bee"],
+  };
+
+  let ccCount = 0;
+  for (const [ccName, traits] of Object.entries(ANIMAL_CROSS_CUTS)) {
+    for (const trait of traits) {
+      await db.insert(traitCrossCut).values({ categoryField: "animals", crossCutName: ccName, traitHierarchyId: null, standaloneTrait: trait });
+      ccCount++;
+    }
+  }
+
+  console.log(`Seeded animal hierarchy: ${count} hierarchy entries, ${ccCount} cross-cut entries.`);
+}
+
 export async function seedDatabase() {
   try {
     const existingProjects = await storage.getProjects();
@@ -399,6 +497,7 @@ export async function seedDatabase() {
         await applyGenderFixes();
         await applyDomainAdditions();
         await applyDeathTypeCleanup();
+        await seedAnimalHierarchy();
         return;
       }
       console.log(`Database has ${existingNodes.length} nodes but missing new trait fields. Re-seeding...`);
