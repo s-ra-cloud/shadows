@@ -96,6 +96,14 @@ export const traitHabitat = pgTable("trait_habitat", {
   habitat: text("habitat").notNull(),
 });
 
+export const traitCrossCut = pgTable("trait_cross_cut", {
+  id: serial("id").primaryKey(),
+  crossCutName: text("cross_cut_name").notNull(),
+  traitHierarchyId: integer("trait_hierarchy_id"),
+  standaloneTrait: text("standalone_trait"),
+  categoryField: text("category_field").notNull().default("physical_characteristics"),
+});
+
 export const sources = pgTable("sources", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -118,6 +126,7 @@ export const insertPublicationSchema = createInsertSchema(publications).omit({ i
 export const insertSuggestionSchema = createInsertSchema(suggestions).omit({ id: true, createdAt: true });
 export const insertTraitHierarchySchema = createInsertSchema(traitHierarchy).omit({ id: true });
 export const insertTraitHabitatSchema = createInsertSchema(traitHabitat).omit({ id: true });
+export const insertTraitCrossCutSchema = createInsertSchema(traitCrossCut).omit({ id: true });
 export const insertSourceSchema = createInsertSchema(sources).omit({ id: true, createdAt: true });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -138,5 +147,7 @@ export type TraitHierarchy = typeof traitHierarchy.$inferSelect;
 export type InsertTraitHierarchy = z.infer<typeof insertTraitHierarchySchema>;
 export type TraitHabitatEntry = typeof traitHabitat.$inferSelect;
 export type InsertTraitHabitat = z.infer<typeof insertTraitHabitatSchema>;
+export type TraitCrossCut = typeof traitCrossCut.$inferSelect;
+export type InsertTraitCrossCut = z.infer<typeof insertTraitCrossCutSchema>;
 export type Source = typeof sources.$inferSelect;
 export type InsertSource = z.infer<typeof insertSourceSchema>;

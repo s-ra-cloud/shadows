@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import session from "express-session";
 import { storage, db } from "./storage";
 import { seedDatabase } from "./seed";
-import { nodes, edges, sources, suggestions, news, publications, projects, traitHierarchy, traitHabitat } from "@shared/schema";
+import { nodes, edges, sources, suggestions, news, publications, projects, traitHierarchy, traitHabitat, traitCrossCut } from "@shared/schema";
 
 declare module "express-session" {
   interface SessionData {
@@ -78,6 +78,7 @@ export async function registerRoutes(
     const allSuggestions = await storage.getSuggestions();
     const allTraitHierarchy = await db.select().from(traitHierarchy).orderBy(traitHierarchy.id);
     const allTraitHabitat = await db.select().from(traitHabitat).orderBy(traitHabitat.id);
+    const allTraitCrossCut = await db.select().from(traitCrossCut).orderBy(traitCrossCut.id);
     res.setHeader("Content-Disposition", `attachment; filename=shadows-export-${new Date().toISOString().slice(0, 10)}.json`);
     res.setHeader("Content-Type", "application/json");
     res.json({
@@ -91,6 +92,7 @@ export async function registerRoutes(
       suggestions: allSuggestions,
       traitHierarchy: allTraitHierarchy,
       traitHabitat: allTraitHabitat,
+      traitCrossCut: allTraitCrossCut,
     });
   });
 
@@ -113,6 +115,7 @@ export async function registerRoutes(
       const hasPublications = data.publications && Array.isArray(data.publications);
       const hasTraitHierarchy = data.traitHierarchy && Array.isArray(data.traitHierarchy);
       const hasTraitHabitat = data.traitHabitat && Array.isArray(data.traitHabitat);
+      const hasTraitCrossCut = data.traitCrossCut && Array.isArray(data.traitCrossCut);
 
       const needDropSuggestionFKs = (hasNodes || hasEdges) && !hasSuggestions;
 
@@ -208,6 +211,14 @@ export async function registerRoutes(
             await tx.insert(traitHabitat).values(item).onConflictDoNothing();
           }
           (counts as any).traitHabitat = data.traitHabitat.length;
+        }
+
+        if (hasTraitCrossCut) {
+          await tx.delete(traitCrossCut);
+          for (const item of data.traitCrossCut) {
+            await tx.insert(traitCrossCut).values(item).onConflictDoNothing();
+          }
+          (counts as any).traitCrossCut = data.traitCrossCut.length;
         }
 
         if (needDropSuggestionFKs) {
@@ -513,6 +524,11 @@ export async function registerRoutes(
 
   app.get("/api/trait-habitat", async (_req, res) => {
     const items = await db.select().from(traitHabitat).orderBy(traitHabitat.id);
+    res.json(items);
+  });
+
+  app.get("/api/trait-cross-cut", async (_req, res) => {
+    const items = await db.select().from(traitCrossCut).orderBy(traitCrossCut.id);
     res.json(items);
   });
 
