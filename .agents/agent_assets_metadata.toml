@@ -18,3 +18,9 @@ id = "UcmSiXd2RzYU48hD5OSh7"
 uri = "file://turtle_tortoise_report.md"
 type = "text"
 title = "Turtle vs Tortoise — Verification Report"
+
+[[outputs]]
+id = "6-3K_z5oBOxrHfBG8My5q"
+uri = "file://cross_cutting_hierarchy_report.md"
+type = "text"
+title = "Cross-Cutting Hierarchy Report"

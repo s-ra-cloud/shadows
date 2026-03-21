@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import session from "express-session";
 import { storage, db } from "./storage";
 import { seedDatabase } from "./seed";
-import { nodes, edges, sources, suggestions, news, publications, projects, traitHierarchy } from "@shared/schema";
+import { nodes, edges, sources, suggestions, news, publications, projects, traitHierarchy, traitHabitat } from "@shared/schema";
 
 declare module "express-session" {
   interface SessionData {
@@ -77,6 +77,7 @@ export async function registerRoutes(
     const allSources = await storage.getSources();
     const allSuggestions = await storage.getSuggestions();
     const allTraitHierarchy = await db.select().from(traitHierarchy).orderBy(traitHierarchy.id);
+    const allTraitHabitat = await db.select().from(traitHabitat).orderBy(traitHabitat.id);
     res.setHeader("Content-Disposition", `attachment; filename=shadows-export-${new Date().toISOString().slice(0, 10)}.json`);
     res.setHeader("Content-Type", "application/json");
     res.json({
@@ -89,6 +90,7 @@ export async function registerRoutes(
       sources: allSources,
       suggestions: allSuggestions,
       traitHierarchy: allTraitHierarchy,
+      traitHabitat: allTraitHabitat,
     });
   });
 
@@ -110,6 +112,7 @@ export async function registerRoutes(
       const hasNews = data.news && Array.isArray(data.news);
       const hasPublications = data.publications && Array.isArray(data.publications);
       const hasTraitHierarchy = data.traitHierarchy && Array.isArray(data.traitHierarchy);
+      const hasTraitHabitat = data.traitHabitat && Array.isArray(data.traitHabitat);
 
       const needDropSuggestionFKs = (hasNodes || hasEdges) && !hasSuggestions;
 
@@ -191,11 +194,20 @@ export async function registerRoutes(
         }
 
         if (hasTraitHierarchy) {
+          if (hasTraitHabitat) await tx.delete(traitHabitat);
           await tx.delete(traitHierarchy);
           for (const item of data.traitHierarchy) {
             await tx.insert(traitHierarchy).values(item).onConflictDoNothing();
           }
           (counts as any).traitHierarchy = data.traitHierarchy.length;
+        }
+
+        if (hasTraitHabitat) {
+          if (!hasTraitHierarchy) await tx.delete(traitHabitat);
+          for (const item of data.traitHabitat) {
+            await tx.insert(traitHabitat).values(item).onConflictDoNothing();
+          }
+          (counts as any).traitHabitat = data.traitHabitat.length;
         }
 
         if (needDropSuggestionFKs) {
@@ -496,6 +508,11 @@ export async function registerRoutes(
 
   app.get("/api/trait-hierarchy", async (_req, res) => {
     const items = await db.select().from(traitHierarchy).orderBy(traitHierarchy.id);
+    res.json(items);
+  });
+
+  app.get("/api/trait-habitat", async (_req, res) => {
+    const items = await db.select().from(traitHabitat).orderBy(traitHabitat.id);
     res.json(items);
   });
 

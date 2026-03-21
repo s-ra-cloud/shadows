@@ -90,6 +90,12 @@ export const traitHierarchy = pgTable("trait_hierarchy", {
   isLeaf: integer("is_leaf").notNull().default(0),
 });
 
+export const traitHabitat = pgTable("trait_habitat", {
+  id: serial("id").primaryKey(),
+  traitHierarchyId: integer("trait_hierarchy_id").notNull(),
+  habitat: text("habitat").notNull(),
+});
+
 export const sources = pgTable("sources", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -111,6 +117,7 @@ export const insertNewsSchema = createInsertSchema(news).omit({ id: true });
 export const insertPublicationSchema = createInsertSchema(publications).omit({ id: true });
 export const insertSuggestionSchema = createInsertSchema(suggestions).omit({ id: true, createdAt: true });
 export const insertTraitHierarchySchema = createInsertSchema(traitHierarchy).omit({ id: true });
+export const insertTraitHabitatSchema = createInsertSchema(traitHabitat).omit({ id: true });
 export const insertSourceSchema = createInsertSchema(sources).omit({ id: true, createdAt: true });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -129,5 +136,7 @@ export type Suggestion = typeof suggestions.$inferSelect;
 export type InsertSuggestion = z.infer<typeof insertSuggestionSchema>;
 export type TraitHierarchy = typeof traitHierarchy.$inferSelect;
 export type InsertTraitHierarchy = z.infer<typeof insertTraitHierarchySchema>;
+export type TraitHabitatEntry = typeof traitHabitat.$inferSelect;
+export type InsertTraitHabitat = z.infer<typeof insertTraitHabitatSchema>;
 export type Source = typeof sources.$inferSelect;
 export type InsertSource = z.infer<typeof insertSourceSchema>;
