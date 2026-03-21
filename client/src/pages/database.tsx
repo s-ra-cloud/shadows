@@ -414,10 +414,13 @@ function HierarchyGroupRow({ group, depth, nodes, expandedHierarchy, setExpanded
   const isExpanded = expandedHierarchy.has(group.id);
   const hasContent = group.children.length > 0 || group.leafTraits.length > 0;
 
-  if (group.isLeaf && group.leafTraits.length > 0) {
+  if (group.isLeaf) {
+    const entry = group.leafTraits.length > 0
+      ? group.leafTraits[0]
+      : { value: group.traitName, count: 0, nodeIds: [] };
     return (
       <TraitRow
-        entry={group.leafTraits[0]}
+        entry={entry}
         nodes={nodes}
         expandedTrait={expandedTrait}
         setExpandedTrait={setExpandedTrait}
@@ -428,8 +431,6 @@ function HierarchyGroupRow({ group, depth, nodes, expandedHierarchy, setExpanded
       />
     );
   }
-
-  if (group.isLeaf) return null;
 
   function toggle() {
     const next = new Set(expandedHierarchy);
@@ -806,6 +807,7 @@ function NodesTab({ isEditor, onSuggest }: {
     const traitsCoveredByHierarchy = new Set<string>();
     function collectNames(g: HierarchyGroup) {
       if (g.isLeaf) {
+        traitsCoveredByHierarchy.add(g.traitName);
         g.leafTraits.forEach((t) => traitsCoveredByHierarchy.add(t.value));
       }
       g.children.forEach(collectNames);
