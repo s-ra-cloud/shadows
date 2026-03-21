@@ -114,6 +114,109 @@ const DIRECT_FIXES: Array<{ nodeId: number; updates: Record<string, string | nul
   { nodeId: 3432, updates: { domain: "sun, prophecy, music, order, art" }, suggestionIds: [57] },
 ];
 
+const NODES_TO_DELETE = [
+  { nodeId: 3840, name: "Chinese gods and immortals", suggestionIds: [4] },
+  { nodeId: 4357, name: "Aztec creator gods", suggestionIds: [5] },
+  { nodeId: 4407, name: "Dii Consentes", suggestionIds: [6] },
+  { nodeId: 4090, name: "Customs of ancient Egypt", suggestionIds: [7] },
+];
+
+const NODES_TO_CREATE = [
+  {
+    node: {
+      projectId: 6, name: "Xipe Totec", tradition: "Aztec", gender: "Male",
+      domain: "agriculture, fertility, spring, crafts, creation, death-rebirth",
+      physicalCharacteristics: "flayed skin, red-skinned", animals: "quail",
+      object: "rattlestick, shield", characterTrait: "life-death-rebirth", mentionCount: 0,
+    },
+    siblingIds: [3407, 4378, 3421],
+    suggestionIds: [5],
+  },
+];
+
+const GENDER_FIXES = [
+  { nodeId: 4419, oldGender: "Non-binary", newGender: "Unspecified", suggestionIds: [9] },
+];
+
+async function applyNodeDeletions() {
+  let totalDeleted = 0;
+  for (const del of NODES_TO_DELETE) {
+    const [node] = await db.select().from(nodes).where(eq(nodes.id, del.nodeId));
+    if (!node) continue;
+    await db.delete(edges).where(
+      sql`source_node_id = ${del.nodeId} OR target_node_id = ${del.nodeId}`
+    );
+    await db.delete(nodes).where(eq(nodes.id, del.nodeId));
+    totalDeleted++;
+    for (const sid of del.suggestionIds) {
+      await db.update(suggestions).set({ status: "approved" }).where(eq(suggestions.id, sid)).catch(() => {});
+    }
+  }
+  if (totalDeleted > 0) {
+    console.log(`Deleted ${totalDeleted} group/invalid nodes.`);
+  }
+}
+
+async function applyNodeCreations() {
+  for (const entry of NODES_TO_CREATE) {
+    const existing = await db.select().from(nodes).where(eq(nodes.name, entry.node.name));
+    if (existing.length > 0) continue;
+
+    const [created] = await db.insert(nodes).values(entry.node as any).returning();
+    console.log(`Created node: ${created.name} (id ${created.id})`);
+
+    for (const sibId of entry.siblingIds) {
+      const existingEdge = await db.select().from(edges).where(
+        sql`(source_node_id = ${created.id} AND target_node_id = ${sibId}) OR (source_node_id = ${sibId} AND target_node_id = ${created.id})`
+      );
+      if (existingEdge.length === 0) {
+        await db.insert(edges).values({ projectId: 6, sourceNodeId: created.id, targetNodeId: sibId, relationType: "sibling_of", weight: 1 });
+      }
+    }
+
+    for (const sid of entry.suggestionIds) {
+      await db.update(suggestions).set({ status: "approved" }).where(eq(suggestions.id, sid)).catch(() => {});
+    }
+  }
+}
+
+async function applyGenderFixes() {
+  let totalFixed = 0;
+  for (const fix of GENDER_FIXES) {
+    const [node] = await db.select().from(nodes).where(eq(nodes.id, fix.nodeId));
+    if (!node || node.gender !== fix.oldGender) continue;
+    await db.update(nodes).set({ gender: fix.newGender }).where(eq(nodes.id, fix.nodeId));
+    totalFixed++;
+    for (const sid of fix.suggestionIds) {
+      await db.update(suggestions).set({ status: "approved" }).where(eq(suggestions.id, sid)).catch(() => {});
+    }
+  }
+  if (totalFixed > 0) {
+    console.log(`Applied gender fixes: ${totalFixed} nodes updated.`);
+  }
+}
+
+async function applyDomainAdditions() {
+  const domainUpdates = [
+    { nodeId: 3407, domain: "wisdom, storm, rebirth, light, sacrifice, souls, creation", suggestionIds: [5] },
+    { nodeId: 3421, domain: "war, sun, sacrifice, creation", suggestionIds: [5] },
+    { nodeId: 4378, domain: "kingship, night, creation", suggestionIds: [5] },
+  ];
+  let totalUpdated = 0;
+  for (const upd of domainUpdates) {
+    const [node] = await db.select().from(nodes).where(eq(nodes.id, upd.nodeId));
+    if (!node || node.domain === upd.domain) continue;
+    await db.update(nodes).set({ domain: upd.domain }).where(eq(nodes.id, upd.nodeId));
+    totalUpdated++;
+    for (const sid of upd.suggestionIds) {
+      await db.update(suggestions).set({ status: "approved" }).where(eq(suggestions.id, sid)).catch(() => {});
+    }
+  }
+  if (totalUpdated > 0) {
+    console.log(`Applied domain additions: ${totalUpdated} nodes updated.`);
+  }
+}
+
 async function applyDirectFixes() {
   let totalFixed = 0;
   for (const fix of DIRECT_FIXES) {
@@ -163,6 +266,10 @@ export async function seedDatabase() {
       if (hasNewFields) {
         console.log(`Database already has ${existingNodes.length} nodes with full data, skipping seed.`);
         await applyTraitMerges();
+        await applyNodeDeletions();
+        await applyNodeCreations();
+        await applyGenderFixes();
+        await applyDomainAdditions();
         return;
       }
       console.log(`Database has ${existingNodes.length} nodes but missing new trait fields. Re-seeding...`);
