@@ -612,6 +612,33 @@ async function seedCharacterTraitHierarchy() {
   console.log(`Seeded character trait hierarchy: ${count} entries.`);
 }
 
+async function seedEventTypesHierarchy() {
+  const existing = await db.select().from(traitHierarchy).where(eq(traitHierarchy.categoryField, "event_types"));
+  if (existing.length > 0) return;
+
+  console.log("Seeding event types hierarchy...");
+
+  const ET_TAXONOMY: Record<string, string[]> = {
+    "creation / cosmogony": ["world_creation", "humanity_creation", "invention", "gift_to_humanity", "founding"],
+    "combat / violence": ["slays_kin", "slays_monster", "contest", "vengeance"],
+    "transgression / downfall": ["punishment", "curse", "betrayal", "loss_of_power", "exile"],
+    "sacred / ritual": ["sacrifice", "apotheosis", "divine_marriage", "descent_to_underworld"],
+    "power / agency": ["overthrows_ruler", "quest", "rescue", "abduction", "seduction"],
+  };
+
+  let count = 0;
+  for (const [topName, traits] of Object.entries(ET_TAXONOMY)) {
+    const [topRow] = await db.insert(traitHierarchy).values({ categoryField: "event_types", traitName: topName, parentId: null, isLeaf: 0 }).returning();
+    count++;
+    for (const trait of traits) {
+      await db.insert(traitHierarchy).values({ categoryField: "event_types", traitName: trait, parentId: topRow.id, isLeaf: 1 });
+      count++;
+    }
+  }
+
+  console.log(`Seeded event types hierarchy: ${count} entries.`);
+}
+
 export async function seedDatabase() {
   try {
     const existingProjects = await storage.getProjects();
@@ -646,6 +673,7 @@ export async function seedDatabase() {
         await seedAnimalHierarchy();
         await seedDomainHierarchy();
         await seedCharacterTraitHierarchy();
+        await seedEventTypesHierarchy();
         return;
       }
       console.log(`Database has ${existingNodes.length} nodes but missing new trait fields. Re-seeding...`);
