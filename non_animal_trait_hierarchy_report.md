@@ -1,190 +1,131 @@
-# Non-Animal Physical Characteristics Hierarchy Proposal
+# Non-Animal Physical Characteristics — Hierarchy & Merge Proposal
 
-Based on pending suggestions (IDs 65, 69, 71–76, 93–97, 105–109, 112, 114–116, 118, 121), here is a proposed hierarchy for non-animal physical characteristics traits.
+Based on pending suggestions (IDs 65, 69, 71–76, 93–97, 105–109, 112, 114–116, 118, 121).
 
 ---
 
-## 1. BEARD hierarchy (suggestions #65, #93, #96)
+## PART A: HIERARCHIES (4 proposed)
 
-Merge "beard" → "bearded", then group with sub-variants.
+These traits have enough sub-variants to justify a proper hierarchy in `trait_hierarchy`.
 
-| Metacategory | Sub-trait (leaf) | Current count |
+### 1. BEARDED (suggestions #65, #93, #96)
+
+| Metacategory | Leaf trait | Count |
 |---|---|---|
-| **bearded** | bearded | 13+1 = 14 |
+| **bearded** | bearded | 14 (after merge) |
 | | black beard | 1 |
 | | red beard | 1 |
 
-**Merge rule:** `beard` → `bearded`
-**Total figures affected:** 16
+Merge: `beard` → `bearded`
 
 ---
 
-## 2. FANGS hierarchy (suggestions #69, #105)
+### 2. MULTIPLE ARMS (suggestions #71, #76, #106, #112, #118)
 
-Merge into a single canonical value.
-
-| Metacategory | Sub-trait (leaf) | Current count |
+| Metacategory | Leaf trait | Count |
 |---|---|---|
-| **fanged** | fanged | 1+1 = 2 |
+| **multiple arms** | four-armed | 3 (after merge) |
+| | six-armed | 6 (after merge) |
+| | many-armed | 2 (after merge) |
 
-**Merge rule:** `fangs` → `fanged`
-**Total figures affected:** 2
+Merges: `four arms` → `four-armed`, `six arms` → `six-armed`, `many arms` → `many-armed`
 
 ---
 
-## 3. MULTI-ARMED hierarchy (suggestions #71, #76, #106, #112, #118)
+### 3. MULTIPLE HEADS (suggestions #114, #115, #121)
 
-Group all arm-count variants under one metacategory.
-
-| Metacategory | Sub-trait (leaf) | Current count |
+| Metacategory | Leaf trait | Count |
 |---|---|---|
-| **multiple arms** | four-armed | 2+1 = 3 |
-| | six-armed | 4+2 = 6 |
-| | many-armed | 1+1 = 2 |
-
-**Merge rules:**
-- `four arms` → `four-armed`
-- `six arms` → `six-armed`
-- `many arms` → `many-armed`
-
-**Total figures affected:** 11
-
----
-
-## 4. HALF-GENDERED hierarchy (suggestions #72, #73, #107, #108)
-
-Merge hyphenated/spaced variants.
-
-| Trait | Merge | Current count |
-|---|---|---|
-| **half female** | `half-female` → `half female` | 1+1 = 2 |
-| **half male** | `half-male` → `half male` | 1+1 = 2 |
-
-No metacategory needed — just 2 standalone merge rules.
-
-**Total figures affected:** 4
-
----
-
-## 5. HORNED hierarchy (suggestions #74, #109)
-
-Merge "horns" → "horned". Note: bull horns and ram-horned already live under their animal metacategories (bull, ram) so they stay there.
-
-| Trait | Merge | Current count |
-|---|---|---|
-| **horned** | `horns` → `horned` | 7+2 = 9 |
-
-Standalone merge, no hierarchy needed.
-
-**Total figures affected:** 9
-
----
-
-## 6. BEAST hierarchy (suggestion #94)
-
-Merge into one value.
-
-| Trait | Merge | Current count |
-|---|---|---|
-| **beastly** | `beast` → `beastly` | 1+1 = 2 |
-
-**Note:** Suggestion #95 says Despoina is incorrectly tagged as "beastly" — the Wikipedia source says Poseidon appeared as a beastly horse, not Despoina herself. This is a separate data correction.
-
-**Total figures affected:** 2
-
----
-
-## 7. MULTIPLE HEADS hierarchy (suggestions #114, #115, #121)
-
-Group all head-count variants under one metacategory.
-
-| Metacategory | Sub-trait (leaf) | Current count |
-|---|---|---|
-| **multiple heads** | multiple heads | 1 |
-| | multi-headed | 1 |
-| | three-headed | 3 |
-| | three heads | 2 |
+| **multiple heads** | three-headed | 5 (after merge) |
 | | two heads | 1 |
 | | seven heads | 1 |
 | | nine heads | 1 |
-| | eight-headed snake* | 1 |
 
-**Merge rules:**
-- `multi-headed` → `multiple heads`
-- `three heads` → `three-headed`
+Merges: `multi-headed` → `multiple heads`, `three heads` → `three-headed`
 
-*Note: "eight-headed snake" is already under the snake hierarchy. It could appear in both, or stay only under snake. Recommend keeping it under snake only since the animal aspect is primary.
-
-**Total figures affected:** ~10
+Note: `eight-headed snake` stays under the snake animal hierarchy for now. It will naturally appear in both "multiple heads" and "snake" once cross-cutting hierarchies are implemented.
 
 ---
 
-## 8. OLD / AGE hierarchy (suggestion #116)
+### 4. COLORED FACE (suggestion #97)
 
-| Metacategory | Sub-trait (leaf) | Current count |
-|---|---|---|
-| **old** | old | 1 |
-| | old man | 1 |
-
-Very small category. Could just merge `old man` → `old`, or keep as a simple hierarchy.
-
-**Total figures affected:** 2
-
----
-
-## 9. COLORED FACE hierarchy (suggestion #97)
-
-Group face-color variants under a metacategory.
-
-| Metacategory | Sub-trait (leaf) | Current count |
+| Metacategory | Leaf trait | Count |
 |---|---|---|
 | **colored face** | blue face | 1 |
 | | black face | 1 |
 | | red face | 1 |
 
-**Total figures affected:** 3
+No merges needed.
 
 ---
 
-## RECLASSIFICATIONS (not hierarchies)
+## PART B: SIMPLE MERGES (no hierarchy needed)
 
-These are traits that should move to a different field entirely:
+These are duplicate/variant values that should be merged into one canonical form. No hierarchy needed because there's only one resulting value.
 
-| Suggestion | Trait | Move to | Status |
-|---|---|---|---|
-| #91 | armor | → `object` field | Pending |
-| #110 | fierce | → `characterTrait` field | Pending |
-| #119 | smoking knife | → `object` field (as "obsidian knife") | Pending |
-
----
-
-## OTHER (no hierarchy needed)
-
-| Suggestion | Trait | Recommendation |
+| Merge rule | Affected suggestions | Resulting count |
 |---|---|---|
-| #63 | bird | Investigate — Ami says "bird" is not a god's name, may be a data entry error |
-| #70 | finger pressed | Unclear — may relate to "mouth bandaged", needs research decision |
-| #120 | snakes → "snake hair" | Already merged `snakes` → `snake` in animal hierarchy. Gorgon's entry may need manual review to specify "snake-haired" instead of "snake" |
+| `fangs` → `fanged` | #69, #105 | 2 |
+| `half-female` → `half female` | #72, #107 | 2 |
+| `half-male` → `half male` | #73, #108 | 2 |
+| `horns` → `horned` | #74, #109 | 9 |
+| `beast` → `beastly` | #94 | 2 |
+| `old man` → `old` | #116 | 2 |
+
+Note on #95 (beastly / Despoina): The Wikipedia source says Poseidon appeared as a beastly horse, not Despoina. This is a separate data correction to review.
 
 ---
 
-## Summary of merge rules (17 total)
+## PART C: RECLASSIFICATIONS (move to different field)
 
-1. `beard` → `bearded`
-2. `fangs` → `fanged`
-3. `four arms` → `four-armed`
-4. `six arms` → `six-armed`
-5. `many arms` → `many-armed`
-6. `half-female` → `half female`
-7. `half-male` → `half male`
-8. `horns` → `horned`
-9. `beast` → `beastly`
-10. `multi-headed` → `multiple heads`
-11. `three heads` → `three-headed`
+| Suggestion | Trait | Move to |
+|---|---|---|
+| #91 | armor | → `object` |
+| #110 | fierce | → `characterTrait` |
+| #119 | smoking knife | → `object` (as "obsidian knife") |
 
-## Summary of new hierarchies (4 total)
+---
 
-1. **bearded** — 3 leaves (bearded, black beard, red beard)
-2. **multiple arms** — 3 leaves (four-armed, six-armed, many-armed)
-3. **multiple heads** — 5 leaves (multiple heads, three-headed, two heads, seven heads, nine heads)
-4. **colored face** — 3 leaves (blue face, black face, red face)
+## PART D: OTHER (needs your input)
+
+| Suggestion | Trait | Question |
+|---|---|---|
+| #63 | bird | "This is not a god's name" — likely a data entry error, needs investigation |
+| #70 | finger pressed | Unclear relation to "mouth bandaged" — needs research decision |
+| #120 | snakes | Already merged to `snake` in animal hierarchy. Gorgon may need "snake-haired" as a distinct trait |
+
+---
+
+## FUTURE: Cross-cutting hierarchies & phylogenetic tree
+
+These are noted for future implementation, not part of this batch:
+
+**Cross-cutting hierarchies** — trait groupings that cut across categories, enabling filtered views on both the database page and the graph. Examples:
+- "horned" view: groups bull horns + ram-horned + horned + any future horn traits regardless of animal
+- "multi-headed" view: groups all head-count traits including eight-headed snake
+- "winged" view: groups winged + four wings + bird traits with wings
+
+**Phylogenetic-style animal super-hierarchy** — a higher-level classification above the current 27 animal metacategories:
+
+```
+Physical form
+├── Human / Anthropomorphic
+├── Animal
+│   ├── Mammals
+│   │   ├── Felines (lion, cat, leopard, jaguar, panther, lynx)
+│   │   ├── Bovines (bull, cow, bison)
+│   │   ├── Canines (dog, wolf, jackal, fox)
+│   │   ├── Equines (horse, donkey)
+│   │   ├── Ursines (bear)
+│   │   ├── Cervids (deer, elk, stag)
+│   │   ├── Other mammals (boar, pig, monkey, elephant, bat, rabbit, etc.)
+│   │   └── ...
+│   ├── Reptiles (snake, crocodile, lizard, turtle)
+│   ├── Birds (eagle, falcon, vulture, owl, crow, etc.)
+│   ├── Fish / Aquatic (fish, dolphin, whale, shark)
+│   ├── Amphibians (frog, toad, salamander)
+│   └── Insects / Arachnids (spider, scorpion, beetle, bee)
+└── Monstrous / Chimeric (dragon, sphinx, chimera, griffin)
+```
+
+This structure will be stored in the database to allow proper classification and filtering, without changing the current graph behavior.
