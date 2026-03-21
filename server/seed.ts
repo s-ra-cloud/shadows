@@ -152,6 +152,10 @@ const DIRECT_FIXES: Array<{ nodeId: number; updates: Record<string, string | str
   { nodeId: 3583, updates: { animals: "lion, eagle, chimera" }, suggestionIds: [] },
   { nodeId: 3394, updates: { animals: "cow, kite, scorpion" }, suggestionIds: [] },
   { nodeId: 3422, updates: { animals: null }, suggestionIds: [] },
+  { nodeId: 3406, updates: { animals: null }, suggestionIds: [] },
+  { nodeId: 3451, updates: { animals: "butterfly, quetzal" }, suggestionIds: [] },
+  { nodeId: 3443, updates: { animals: null, physicalCharacteristics: "multiple heads, sea monster, dog heads, serpent tails" }, suggestionIds: [] },
+  { nodeId: 3404, updates: { animals: "deer, bear" }, suggestionIds: [] },
 ];
 
 const NODES_TO_DELETE = [
@@ -387,7 +391,7 @@ async function seedAnimalHierarchy() {
     "mammal": {
       "large cat": ["lion", "tiger", "leopard", "panther", "jaguar"],
       "canine": ["dog", "wolf", "fox", "jackal"],
-      "equine": ["horse", "donkey"],
+      "equine": ["horse", "donkey", "eight-legged horse"],
       "bovine": ["bull", "cow", "cattle", "ox", "gazelle"],
       "cervid": ["deer", "stag"],
       "ursid": ["bear"],
@@ -398,6 +402,7 @@ async function seedAnimalHierarchy() {
       "pachyderm": ["elephant", "hippopotamus"],
       "feline": ["cat"],
       "cetacean": ["dolphin", "whale"],
+      "small mammal": ["ichneumon"],
     },
     "bird": {
       "raptor": ["eagle", "falcon", "hawk", "vulture", "kite"],
