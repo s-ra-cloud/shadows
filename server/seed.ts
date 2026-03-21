@@ -142,6 +142,7 @@ const DIRECT_FIXES: Array<{ nodeId: number; updates: Record<string, string | str
   { nodeId: 3407, updates: { animals: "feathered serpent" }, suggestionIds: [] },
   { nodeId: 4525, updates: { animals: "serpent" }, suggestionIds: [] },
   { nodeId: 3420, updates: { animals: "serpent" }, suggestionIds: [] },
+  { nodeId: 3403, updates: { animals: "cow" }, suggestionIds: [] },
 ];
 
 const NODES_TO_DELETE = [
