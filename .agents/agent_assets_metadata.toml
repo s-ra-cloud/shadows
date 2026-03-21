@@ -12,3 +12,9 @@ id = "nlc7fIt0JM52XFyWcr7de"
 uri = "file://non_animal_trait_hierarchy_report.md"
 type = "text"
 title = "Updated Hierarchy & Merge Proposal (v3)"
+
+[[outputs]]
+id = "UcmSiXd2RzYU48hD5OSh7"
+uri = "file://turtle_tortoise_report.md"
+type = "text"
+title = "Turtle vs Tortoise — Verification Report"
