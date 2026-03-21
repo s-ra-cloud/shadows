@@ -119,6 +119,9 @@ const DIRECT_FIXES: Array<{ nodeId: number; updates: Record<string, string | nul
   { nodeId: 3407, updates: { domain: "wisdom, storm, rebirth, light, sacrifice, souls, creation" }, suggestionIds: [5] },
   { nodeId: 3421, updates: { domain: "war, sun, sacrifice, creation" }, suggestionIds: [5] },
   { nodeId: 4378, updates: { domain: "kingship, night, creation" }, suggestionIds: [5] },
+  { nodeId: 3648, updates: { animals: "cicada, horse, bear, dragon" }, suggestionIds: [] },
+  { nodeId: 3518, updates: { animals: "horse, rooster, wolf, cattle, serpent, bull, lion, stag, dog, bear, cock, crane, cow, dragon" }, suggestionIds: [] },
+  { nodeId: 3656, updates: { animals: "dog, horse, bull, snake" }, suggestionIds: [] },
 ];
 
 const NODES_TO_DELETE = [
