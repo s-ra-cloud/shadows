@@ -126,6 +126,25 @@ const NODES_TO_DELETE = [
   { nodeId: 4357, name: "Aztec creator gods", suggestionIds: [5] },
   { nodeId: 4407, name: "Dii Consentes", suggestionIds: [6] },
   { nodeId: 4090, name: "Customs of ancient Egypt", suggestionIds: [7] },
+  { nodeId: 3397, name: "Kore", suggestionIds: [12] },
+];
+
+const NODE_MERGES = [
+  {
+    targetId: 3425,
+    updates: {
+      name: "Persephone (Kore)",
+      physicalCharacteristics: "young",
+      object: "pomegranate, flower",
+      characterTrait: "innocent, transformative, maiden, queen",
+      significantEvent: "Abduction to underworld; Demeter-Kore mysteries of Eleusis",
+      symbolism: "Daughter and partial figure of Demeter; mother-daughter genealogy; relation to corn mother as seed to earth; maiden becoming queen of death",
+      neumannArchetype: "Daughter and partial figure of Demeter. The Demeter-Kore relationship represents the mother-daughter unity.",
+      birthTypes: ["demigod_birth"],
+      familyRoles: ["sister"],
+    },
+    suggestionIds: [12],
+  },
 ];
 
 const NODES_TO_CREATE = [
@@ -171,6 +190,18 @@ async function applyNodeDeletions() {
   }
   if (totalDeleted > 0) {
     console.log(`Deleted ${totalDeleted} group/invalid nodes.`);
+  }
+}
+
+async function applyNodeMerges() {
+  for (const merge of NODE_MERGES) {
+    const [node] = await db.select().from(nodes).where(eq(nodes.id, merge.targetId));
+    if (!node || node.name === merge.updates.name) continue;
+    await db.update(nodes).set(merge.updates as any).where(eq(nodes.id, merge.targetId));
+    console.log(`Merged node: ${node.name} → ${merge.updates.name}`);
+    for (const sid of merge.suggestionIds) {
+      await db.update(suggestions).set({ status: "approved" }).where(eq(suggestions.id, sid)).catch(() => {});
+    }
   }
 }
 
@@ -336,6 +367,7 @@ export async function seedDatabase() {
         console.log(`Database already has ${existingNodes.length} nodes with full data, skipping seed.`);
         await applyTraitMerges();
         await applyNodeDeletions();
+        await applyNodeMerges();
         await applyNodeCreations();
         await applyGenderFixes();
         await applyDomainAdditions();
