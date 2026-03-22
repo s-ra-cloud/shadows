@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as d3 from "d3";
-import { X, Search, Filter, ArrowLeft, Network, ScatterChart, Users, SlidersHorizontal, Split } from "lucide-react";
+import { X, Search, Filter, ArrowLeft, Network, ScatterChart, Users, SlidersHorizontal, Split, ChevronRight, ChevronDown, TreePine } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1310,6 +1310,201 @@ function TraitPanel({ trait, allNodes, graphLinks, onClose, onSelectCharacter }:
   );
 }
 
+interface HierarchyItem {
+  id: number;
+  categoryField: string;
+  traitName: string;
+  parentId: number | null;
+  isLeaf: number;
+}
+
+interface HierarchyTreeNode {
+  id: number;
+  name: string;
+  children: HierarchyTreeNode[];
+  isLeaf: boolean;
+  leafTraits: string[];
+}
+
+const HIERARCHY_CATEGORY_MAP: Record<string, string> = {
+  physical_characteristics: "physicalCharacteristics",
+  object: "object",
+  animals: "animals",
+  domain: "domain",
+  character_trait: "characterTrait",
+  event_types: "eventTypes",
+  death_types: "deathTypes",
+};
+
+const HIERARCHY_CATEGORY_LABELS: Record<string, string> = {
+  physical_characteristics: "Physical Characteristics",
+  object: "Objects",
+  animals: "Animals",
+  domain: "Domain",
+  character_trait: "Character Traits",
+  event_types: "Event Types",
+  death_types: "Death Types",
+};
+
+function buildHierarchyTrees(items: HierarchyItem[]): Map<string, HierarchyTreeNode[]> {
+  const byCategory = new Map<string, HierarchyItem[]>();
+  for (const item of items) {
+    if (!byCategory.has(item.categoryField)) byCategory.set(item.categoryField, []);
+    byCategory.get(item.categoryField)!.push(item);
+  }
+  const result = new Map<string, HierarchyTreeNode[]>();
+  for (const [cat, catItems] of byCategory) {
+    const byId = new Map<number, HierarchyItem>();
+    for (const item of catItems) byId.set(item.id, item);
+    const nodeMap = new Map<number, HierarchyTreeNode>();
+    for (const item of catItems) {
+      nodeMap.set(item.id, { id: item.id, name: item.traitName, children: [], isLeaf: item.isLeaf === 1, leafTraits: [] });
+    }
+    const roots: HierarchyTreeNode[] = [];
+    for (const item of catItems) {
+      const node = nodeMap.get(item.id)!;
+      if (item.parentId === null) {
+        roots.push(node);
+      } else {
+        const parent = nodeMap.get(item.parentId);
+        if (parent) parent.children.push(node);
+      }
+    }
+    function collectLeafs(n: HierarchyTreeNode): string[] {
+      if (n.isLeaf) return [n.name];
+      const leafs: string[] = [];
+      for (const c of n.children) leafs.push(...collectLeafs(c));
+      return leafs;
+    }
+    for (const node of nodeMap.values()) {
+      node.leafTraits = collectLeafs(node);
+    }
+    result.set(cat, roots);
+  }
+  return result;
+}
+
+function HierarchyTreePicker({
+  categoryField,
+  roots,
+  selectedLeafs,
+  onToggleNode,
+  categoryColor,
+}: {
+  categoryField: string;
+  roots: HierarchyTreeNode[];
+  selectedLeafs: Set<string>;
+  onToggleNode: (categoryField: string, leafTraits: string[], checked: boolean) => void;
+  categoryColor: string;
+}) {
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const [sectionOpen, setSectionOpen] = useState(false);
+
+  const toggleExpand = useCallback((id: number) => {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const totalLeafs = useMemo(() => {
+    const all: string[] = [];
+    for (const r of roots) all.push(...r.leafTraits);
+    return all;
+  }, [roots]);
+
+  const selectedCount = useMemo(() => {
+    return totalLeafs.filter(l => selectedLeafs.has(l)).length;
+  }, [totalLeafs, selectedLeafs]);
+
+  const renderNode = (node: HierarchyTreeNode, depth: number) => {
+    const isChecked = node.leafTraits.length > 0 && node.leafTraits.every(l => selectedLeafs.has(l));
+    const isPartial = !isChecked && node.leafTraits.some(l => selectedLeafs.has(l));
+    const hasChildren = node.children.length > 0;
+    const isExpanded = expanded.has(node.id);
+
+    return (
+      <div key={node.id}>
+        <div
+          className="flex items-center gap-1 py-0.5 group"
+          style={{ paddingLeft: `${depth * 12}px` }}
+        >
+          {hasChildren ? (
+            <button
+              onClick={() => toggleExpand(node.id)}
+              className="w-3.5 h-3.5 flex items-center justify-center text-shadows-text/30 hover:text-shadows-text/60 flex-shrink-0"
+              data-testid={`btn-expand-${categoryField}-${node.id}`}
+            >
+              {isExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+            </button>
+          ) : (
+            <span className="w-3.5 flex-shrink-0" />
+          )}
+          <Checkbox
+            id={`hier-${categoryField}-${node.id}`}
+            checked={isChecked}
+            className={`border-[#350A8C]/40 h-3 w-3 ${isPartial ? "opacity-60" : ""} data-[state=checked]:bg-[#03FF9B] data-[state=checked]:border-[#03FF9B]`}
+            onCheckedChange={() => onToggleNode(categoryField, node.leafTraits, !isChecked)}
+            data-testid={`checkbox-hier-${categoryField}-${node.id}`}
+          />
+          <label
+            htmlFor={`hier-${categoryField}-${node.id}`}
+            className={`text-[10px] cursor-pointer truncate ${
+              node.isLeaf ? "text-shadows-text/50" : "text-shadows-text/70 font-medium"
+            }`}
+          >
+            {node.name}
+          </label>
+          {!node.isLeaf && (
+            <span className="text-[8px] text-shadows-text/25 ml-auto pr-1">{node.leafTraits.length}</span>
+          )}
+        </div>
+        {hasChildren && isExpanded && node.children.map(c => renderNode(c, depth + 1))}
+      </div>
+    );
+  };
+
+  const label = HIERARCHY_CATEGORY_LABELS[categoryField] || categoryField;
+
+  return (
+    <div>
+      <button
+        onClick={() => setSectionOpen(!sectionOpen)}
+        className="flex items-center gap-1.5 w-full text-left py-1"
+        data-testid={`btn-hier-section-${categoryField}`}
+      >
+        {sectionOpen ? <ChevronDown size={10} className="text-shadows-text/40" /> : <ChevronRight size={10} className="text-shadows-text/40" />}
+        <span className="inline-block w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: categoryColor }} />
+        <span className="text-[10px] text-shadows-text/60 uppercase tracking-wider">{label}</span>
+        {selectedCount > 0 && (
+          <span className="text-[9px] ml-auto px-1.5 py-0 rounded-full bg-[#03FF9B]/15 text-[#03FF9B] border border-[#03FF9B]/30">
+            {selectedCount}
+          </span>
+        )}
+      </button>
+      {sectionOpen && (
+        <div className="mt-0.5 mb-1">
+          <div className="flex items-center justify-end mb-0.5">
+            <button
+              className="text-[8px] text-[#8F00FF]/50 hover:text-[#8F00FF] transition-colors"
+              onClick={() => {
+                const allSelected = totalLeafs.every(l => selectedLeafs.has(l));
+                onToggleNode(categoryField, totalLeafs, !allSelected);
+              }}
+              data-testid={`btn-hier-toggle-all-${categoryField}`}
+            >
+              {totalLeafs.every(l => selectedLeafs.has(l)) ? "Clear all" : "Select all"}
+            </button>
+          </div>
+          {roots.map(r => renderNode(r, 0))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FilterSidebar({
   filters,
   activeFilters,
@@ -1329,6 +1524,10 @@ function FilterSidebar({
   onCharacterSearchChange,
   activeSupersets,
   onToggleSuperset,
+  hierarchyTrees,
+  hierarchySelections,
+  onToggleHierarchyNode,
+  onClearHierarchyFilter,
 }: {
   filters: { traditions: string[]; categories: string[] };
   activeFilters: Record<string, Set<string>>;
@@ -1348,6 +1547,10 @@ function FilterSidebar({
   onCharacterSearchChange: (val: string) => void;
   activeSupersets: Set<string>;
   onToggleSuperset: (key: string) => void;
+  hierarchyTrees: Map<string, HierarchyTreeNode[]>;
+  hierarchySelections: Map<string, Set<string>>;
+  onToggleHierarchyNode: (categoryField: string, leafTraits: string[], checked: boolean) => void;
+  onClearHierarchyFilter: () => void;
 }) {
   const filteredCharacters = useMemo(() => {
     if (!characterSearch.trim()) return [];
@@ -1489,6 +1692,42 @@ function FilterSidebar({
                 </div>
               )}
             </div>
+
+            {hierarchyTrees.size > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs uppercase tracking-wider text-shadows-text/40 flex items-center gap-1.5">
+                    <TreePine size={12} />
+                    Filter by Hierarchy
+                  </h4>
+                  {Array.from(hierarchySelections.values()).some(s => s.size > 0) && (
+                    <button
+                      className="text-[9px] text-[#E53935]/60 hover:text-[#E53935] transition-colors"
+                      onClick={onClearHierarchyFilter}
+                      data-testid="btn-clear-hierarchy-filters"
+                    >
+                      Clear all
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-0.5">
+                  {Array.from(hierarchyTrees.entries()).map(([catField, roots]) => {
+                    const frontendCat = HIERARCHY_CATEGORY_MAP[catField];
+                    const color = frontendCat ? CATEGORY_COLORS[frontendCat] || "#8F00FF" : "#8F00FF";
+                    return (
+                      <HierarchyTreePicker
+                        key={catField}
+                        categoryField={catField}
+                        roots={roots}
+                        selectedLeafs={hierarchySelections.get(catField) || new Set()}
+                        onToggleNode={onToggleHierarchyNode}
+                        categoryColor={color}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {sections.map((section) =>
               section.values.length > 0 ? (
@@ -3266,6 +3505,10 @@ export default function GraphPage() {
     queryKey: ["/api/graph"],
   });
 
+  const { data: hierarchyData } = useQuery<HierarchyItem[]>({
+    queryKey: ["/api/trait-hierarchy"],
+  });
+
   const [selectedNodes, setSelectedNodes] = useState<Map<number, Node>>(new Map());
   const [lastSelectedNode, setLastSelectedNode] = useState<Node | null>(null);
   const [selectedTrait, setSelectedTrait] = useState<TraitNode | null>(null);
@@ -3275,6 +3518,7 @@ export default function GraphPage() {
     categories: new Set(Object.keys(CATEGORY_LABELS).filter(k => k !== "animalType" && k !== "objectType")),
   });
   const [activeSupersets, setActiveSupersets] = useState<Set<string>>(new Set());
+  const [hierarchySelections, setHierarchySelections] = useState<Map<string, Set<string>>>(new Map());
   const [hoveredNode, setHoveredNode] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"network" | "direct" | "ca" | "dichotomy">("network");
   const [dichotomyDepth, setDichotomyDepth] = useState(1);
@@ -3319,6 +3563,77 @@ export default function GraphPage() {
     setSelectedCharacterIds(new Set());
   }, []);
 
+  const hierarchyTrees = useMemo(() => {
+    if (!hierarchyData || hierarchyData.length === 0) return new Map<string, HierarchyTreeNode[]>();
+    return buildHierarchyTrees(hierarchyData);
+  }, [hierarchyData]);
+
+  const toggleHierarchyNode = useCallback((categoryField: string, leafTraits: string[], checked: boolean) => {
+    setHierarchySelections(prev => {
+      const next = new Map(prev);
+      const current = new Set(next.get(categoryField) || []);
+      for (const trait of leafTraits) {
+        if (checked) current.add(trait);
+        else current.delete(trait);
+      }
+      if (current.size === 0) next.delete(categoryField);
+      else next.set(categoryField, current);
+      return next;
+    });
+  }, []);
+
+  const clearHierarchyFilter = useCallback(() => {
+    setHierarchySelections(new Map());
+  }, []);
+
+  const hierarchyFilteredNodeIds = useMemo(() => {
+    if (hierarchySelections.size === 0 || !data?.nodes) return null;
+
+    const CATEGORY_FIELD_TO_NODE_KEY: Record<string, { key: keyof Node; isArray: boolean }> = {
+      physical_characteristics: { key: "physicalCharacteristics", isArray: false },
+      object: { key: "object", isArray: false },
+      animals: { key: "animals", isArray: false },
+      domain: { key: "domain", isArray: false },
+      character_trait: { key: "characterTrait", isArray: false },
+      event_types: { key: "eventTypes", isArray: true },
+      death_types: { key: "deathTypes", isArray: true },
+    };
+
+    let matchingIds: Set<number> | null = null;
+
+    for (const [catField, selectedLeafs] of hierarchySelections) {
+      if (selectedLeafs.size === 0) continue;
+      const mapping = CATEGORY_FIELD_TO_NODE_KEY[catField];
+      if (!mapping) continue;
+
+      const catMatchIds = new Set<number>();
+      for (const node of data.nodes) {
+        let nodeTraits: string[] = [];
+        if (mapping.isArray) {
+          const arr = node[mapping.key] as string[] | null;
+          if (arr && Array.isArray(arr)) {
+            nodeTraits = arr.map(t => t.trim().toLowerCase());
+          }
+        } else {
+          const val = node[mapping.key] as string | null;
+          if (val) {
+            nodeTraits = val.split(/[,;]+/).map(t => t.trim().toLowerCase()).filter(t => t.length > 0);
+          }
+        }
+        const hasMatch = nodeTraits.some(t => selectedLeafs.has(t));
+        if (hasMatch) catMatchIds.add(node.id);
+      }
+
+      if (matchingIds === null) {
+        matchingIds = catMatchIds;
+      } else {
+        matchingIds = new Set([...matchingIds].filter(id => catMatchIds.has(id)));
+      }
+    }
+
+    return matchingIds;
+  }, [hierarchySelections, data?.nodes]);
+
   const enabledCategoriesSet = useMemo(() => {
     const catFilter = activeFilters["categories"];
     if (!catFilter || catFilter.size === 0) return undefined;
@@ -3340,16 +3655,22 @@ export default function GraphPage() {
     return { max: max || 10 };
   }, [data?.nodes, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
 
+  const effectiveNodes = useMemo(() => {
+    if (!data?.nodes) return [];
+    if (!hierarchyFilteredNodeIds) return data.nodes;
+    return data.nodes.filter(n => hierarchyFilteredNodeIds.has(n.id));
+  }, [data?.nodes, hierarchyFilteredNodeIds]);
+
   const { graphNodes, graphLinks } = useMemo(() => {
-    if (!data?.nodes) return { graphNodes: [], graphLinks: [] };
-    return buildGraph(data.nodes, minTraits, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets);
-  }, [data?.nodes, minTraits, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
+    if (!effectiveNodes.length) return { graphNodes: [], graphLinks: [] };
+    return buildGraph(effectiveNodes, minTraits, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets);
+  }, [effectiveNodes, minTraits, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
 
   const { directNodes, directLinks } = useMemo(() => {
-    if (!data?.nodes) return { directNodes: [], directLinks: [] };
-    const result = buildDirectGraph(data.nodes, minTraits, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets);
+    if (!effectiveNodes.length) return { directNodes: [], directLinks: [] };
+    const result = buildDirectGraph(effectiveNodes, minTraits, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets);
     return { directNodes: result.nodes, directLinks: result.links };
-  }, [data?.nodes, minTraits, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
+  }, [effectiveNodes, minTraits, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
 
   const filters = useMemo(() => {
     const traditions: string[] = [];
@@ -3583,11 +3904,11 @@ export default function GraphPage() {
         isOpen={filtersOpen}
         onToggle={() => setFiltersOpen(!filtersOpen)}
         nodeCount={charNodeCount}
-        totalCount={data.nodes.length}
+        totalCount={effectiveNodes.length}
         minConnections={minTraits}
         onMinConnectionsChange={setMinTraits}
         maxConnectionCount={traitStats.max}
-        allNodes={data.nodes}
+        allNodes={effectiveNodes}
         selectedCharacterIds={selectedCharacterIds}
         onToggleCharacter={toggleCharacter}
         onClearCharacters={clearCharacters}
@@ -3602,6 +3923,10 @@ export default function GraphPage() {
             return next;
           });
         }}
+        hierarchyTrees={hierarchyTrees}
+        hierarchySelections={hierarchySelections}
+        onToggleHierarchyNode={toggleHierarchyNode}
+        onClearHierarchyFilter={clearHierarchyFilter}
       />
 
       <div className="absolute inset-0 lg:left-72">
@@ -3625,7 +3950,7 @@ export default function GraphPage() {
           />
         ) : viewMode === "ca" ? (
           <CorrespondenceView
-            figures={data.nodes}
+            figures={effectiveNodes}
             onSelectNode={(n) => handleGraphNodeSelect(n)}
             onHoverNode={setHoveredNode}
             selectedNodeIds={selectedNodeIds}
@@ -3633,7 +3958,7 @@ export default function GraphPage() {
           />
         ) : (
           <DichotomyView
-            figures={data.nodes}
+            figures={effectiveNodes}
             dichotomyDepth={dichotomyDepth}
             dichotomyThreshold={dichotomyThreshold}
             onSelectNode={(n) => handleGraphNodeSelect(n)}
