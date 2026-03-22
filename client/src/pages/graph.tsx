@@ -1700,7 +1700,7 @@ function FilterSidebar({
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-xs uppercase tracking-wider text-shadows-text/40 flex items-center gap-1.5">
                     <TreePine size={12} />
-                    Filter by Hierarchy
+                    Include Figures
                   </h4>
                   {Array.from(hierarchySelections.values()).some(s => s.size > 0) && (
                     <button
