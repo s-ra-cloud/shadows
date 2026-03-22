@@ -549,6 +549,7 @@ async function cleanPhysicalCharacteristics() {
     { traitName: 'blooming plants', parentTraitName: 'body state' },
     { traitName: 'seaweed', parentTraitName: 'body state' },
     { traitName: 'knife', parentTraitName: 'body state' },
+    { traitName: 'human', parentTraitName: 'human' },
   ];
 
   const allNodes = await db.select().from(nodes);
@@ -585,13 +586,20 @@ async function cleanPhysicalCharacteristics() {
 
   const existingHier = await db.select().from(traitHierarchy).where(eq(traitHierarchy.categoryField, 'physical_characteristics'));
   const traitNameToId = new Map<string, number>();
+  const existingLeafNames = new Set<string>();
   for (const h of existingHier) {
     traitNameToId.set(h.traitName, h.id);
+    if (h.isLeaf === 1) existingLeafNames.add(h.traitName);
   }
 
   let added = 0;
   for (const entry of NEW_HIERARCHY_ENTRIES) {
-    if (traitNameToId.has(entry.traitName)) continue;
+    const isSelfRef = entry.traitName === entry.parentTraitName;
+    if (isSelfRef) {
+      if (existingLeafNames.has(entry.traitName)) continue;
+    } else {
+      if (traitNameToId.has(entry.traitName)) continue;
+    }
     const parentId = traitNameToId.get(entry.parentTraitName);
     if (!parentId) {
       console.warn(`Parent '${entry.parentTraitName}' not found for '${entry.traitName}', skipping.`);
