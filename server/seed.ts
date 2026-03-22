@@ -279,6 +279,13 @@ async function applyGenderFixes() {
   if (totalFixed > 0) {
     console.log(`Applied gender fixes: ${totalFixed} nodes updated.`);
   }
+
+  const nbResult = await db.update(nodes).set({ gender: "Unspecified" }).where(
+    sql`${nodes.gender} IN ('Non-binary', 'Unknown')`
+  ).returning();
+  if (nbResult.length > 0) {
+    console.log(`Merged ${nbResult.length} Non-binary/Unknown gender entries to Unspecified.`);
+  }
 }
 
 async function applyDomainAdditions() {
