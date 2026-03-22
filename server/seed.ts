@@ -98,6 +98,7 @@ async function applyTraitMoves() {
 
   await applyDirectFixes();
   await applySpouseRoles();
+  await cleanPhysicalCharacteristics();
 }
 
 const DIRECT_FIXES: Array<{ nodeId: number; updates: Record<string, string | string[] | null>; suggestionIds: number[] }> = [
@@ -428,6 +429,188 @@ async function applySpouseRoles() {
   }
   if (tagged > 0) {
     console.log(`Applied spouse roles: ${tagged} figures tagged.`);
+  }
+}
+
+async function cleanPhysicalCharacteristics() {
+  let totalFixed = 0;
+
+  const QUOTE_FIXES: Record<string, string> = {
+    '"flaming hair"': 'flaming hair',
+    '""flaming hair"': 'flaming hair',
+    '"""flaming hair"': 'flaming hair',
+    '"lion-headed"': 'lion-headed',
+    '""lion-headed"': 'lion-headed',
+    '"""lion-headed"': 'lion-headed',
+    'contorted face"': 'contorted face',
+    'contorted face""': 'contorted face',
+    'contorted face"""': 'contorted face',
+    '"contorted face"""': 'contorted face',
+    'four-armed"': 'four-armed',
+    'four-armed""': 'four-armed',
+    '"four-armed"': 'four-armed',
+    '"four-armed"""': 'four-armed',
+  };
+
+  const TRAIT_RENAMES: Record<string, string> = {
+    'snakes for hair': 'snake-haired',
+    'bird body': 'part bird',
+    'dog heads': 'dog-headed',
+    'serpent tails': "serpent's tail",
+    'flayed skin': 'flayed',
+    'ash-covered': 'ash-colored',
+    'nine heads': 'multiple heads',
+    'seven heads': 'multiple heads',
+    'six-headed': 'multiple heads',
+    'three heads': 'multiple heads',
+    'two heads': 'multiple heads',
+    'sun disk': 'solar disk',
+    'moon disk': 'lunar disk',
+    'eight arms': 'many-armed',
+    'rosy fingers': 'red-skinned',
+    'ruddy': 'red-skinned',
+    'red': 'red-skinned',
+    'black': 'dark-skinned',
+    'yellow': 'golden',
+    'bright': 'luminous',
+    'shining': 'luminous',
+    'glowing': 'luminous',
+    'young man': 'young',
+    'middle-aged': 'aged',
+    'boys': 'child-like',
+    'children': 'child-like',
+    'woman': 'half female',
+    "woman's body": 'half female',
+    "woman's head": 'human-headed',
+    "woman's face": 'human-headed',
+    'two young men': 'young',
+    'three women': 'triple-formed',
+    'beastly': 'monstrous',
+    'frightening': 'demonic',
+    'primitive': 'monstrous',
+    'sea monster': 'monstrous',
+    'folded wings': 'winged',
+    'black-winged': 'winged',
+    'curved horns': 'horned',
+    'two-horned': 'horned',
+    'olive wreath': 'crowned',
+    'two-feathered crown': 'crowned',
+    'throne headdress': 'crowned',
+    'golden band': 'crowned',
+    'moon-crowned': 'crowned',
+    'cowl hood': 'veiled',
+    'splayed arms': 'naked',
+    'splayed legs': 'naked',
+  };
+
+  const NEW_HIERARCHY_ENTRIES: Array<{
+    traitName: string;
+    parentTraitName: string;
+    parentId?: number;
+  }> = [
+    { traitName: 'winged', parentTraitName: 'body state' },
+    { traitName: 'horned', parentTraitName: 'body state' },
+    { traitName: 'fanged', parentTraitName: 'face' },
+    { traitName: 'sharp teeth', parentTraitName: 'face' },
+    { traitName: 'beak-nosed', parentTraitName: 'face' },
+    { traitName: 'bandaged mouth', parentTraitName: 'face' },
+    { traitName: 'dirty face', parentTraitName: 'face' },
+    { traitName: 'open gullet', parentTraitName: 'face' },
+    { traitName: 'finger on lips', parentTraitName: 'face' },
+    { traitName: 'beardless', parentTraitName: 'bearded' },
+    { traitName: 'skulls', parentTraitName: 'body state' },
+    { traitName: 'scales', parentTraitName: 'body state' },
+    { traitName: 'claws', parentTraitName: 'body state' },
+    { traitName: 'hairy', parentTraitName: 'hair' },
+    { traitName: 'armed', parentTraitName: 'body state' },
+    { traitName: 'many-armed', parentTraitName: 'body state' },
+    { traitName: 'six-armed', parentTraitName: 'body state' },
+    { traitName: 'four-armed', parentTraitName: 'body state' },
+    { traitName: 'human-headed', parentTraitName: 'hybridity' },
+    { traitName: 'human arms', parentTraitName: 'hybridity' },
+    { traitName: 'multiple heads', parentTraitName: 'monstrous / chimeric' },
+    { traitName: 'solar disk', parentTraitName: 'body state' },
+    { traitName: 'lunar disk', parentTraitName: 'body state' },
+    { traitName: 'eight-pointed sun ray', parentTraitName: 'body state' },
+    { traitName: 'seven-pointed emblem', parentTraitName: 'body state' },
+    { traitName: 'red-skinned', parentTraitName: 'skin color' },
+    { traitName: 'red lips', parentTraitName: 'face' },
+    { traitName: 'white teeth', parentTraitName: 'face' },
+    { traitName: 'blind', parentTraitName: 'eyes' },
+    { traitName: 'hobbling', parentTraitName: 'stature' },
+    { traitName: 'one-legged', parentTraitName: 'stature' },
+    { traitName: 'curved feet', parentTraitName: 'stature' },
+    { traitName: 'bronze head', parentTraitName: 'appearance' },
+    { traitName: 'iron forehead', parentTraitName: 'appearance' },
+    { traitName: 'egg form', parentTraitName: 'monstrous / chimeric' },
+    { traitName: 'maggots', parentTraitName: 'body state' },
+    { traitName: 'ravaged body', parentTraitName: 'body state' },
+    { traitName: 'shriveled', parentTraitName: 'body state' },
+    { traitName: 'blooming plants', parentTraitName: 'body state' },
+    { traitName: 'seaweed', parentTraitName: 'body state' },
+    { traitName: 'knife', parentTraitName: 'body state' },
+  ];
+
+  const allNodes = await db.select().from(nodes);
+  for (const node of allNodes) {
+    if (!node.physicalCharacteristics) continue;
+    let pc = node.physicalCharacteristics;
+    let changed = false;
+
+    if (pc.includes('"')) {
+      pc = pc.replace(/"+/g, '');
+      changed = true;
+    }
+
+    const traits = pc.split(',').map(t => t.trim()).filter(Boolean);
+    const newTraits: string[] = [];
+    for (const t of traits) {
+      const renamed = TRAIT_RENAMES[t];
+      if (renamed) {
+        if (!newTraits.includes(renamed)) newTraits.push(renamed);
+        changed = true;
+      } else {
+        if (!newTraits.includes(t)) newTraits.push(t);
+      }
+    }
+
+    if (changed) {
+      const newPc = newTraits.join(', ');
+      if (newPc !== node.physicalCharacteristics) {
+        await db.update(nodes).set({ physicalCharacteristics: newPc }).where(eq(nodes.id, node.id));
+        totalFixed++;
+      }
+    }
+  }
+
+  const existingHier = await db.select().from(traitHierarchy).where(eq(traitHierarchy.categoryField, 'physical_characteristics'));
+  const traitNameToId = new Map<string, number>();
+  for (const h of existingHier) {
+    traitNameToId.set(h.traitName, h.id);
+  }
+
+  let added = 0;
+  for (const entry of NEW_HIERARCHY_ENTRIES) {
+    if (traitNameToId.has(entry.traitName)) continue;
+    const parentId = traitNameToId.get(entry.parentTraitName);
+    if (!parentId) {
+      console.warn(`Parent '${entry.parentTraitName}' not found for '${entry.traitName}', skipping.`);
+      continue;
+    }
+    const [inserted] = await db.insert(traitHierarchy).values({
+      traitName: entry.traitName,
+      parentId: parentId,
+      isLeaf: 1,
+      categoryField: 'physical_characteristics',
+    }).onConflictDoNothing().returning();
+    if (inserted) {
+      traitNameToId.set(entry.traitName, inserted.id);
+      added++;
+    }
+  }
+
+  if (totalFixed > 0 || added > 0) {
+    console.log(`Cleaned physical characteristics: ${totalFixed} nodes fixed, ${added} hierarchy entries added.`);
   }
 }
 
