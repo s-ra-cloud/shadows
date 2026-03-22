@@ -62,6 +62,7 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 - **Superset grouping** — "Group" toggle buttons on Animals and Object categories replace individual trait nodes (e.g. snake, eagle, sword) with superset categories (Mammals, Birds, Reptiles, Weapons, Armor & Protection, etc.). Unmapped items fall into "Other Animals"/"Other Objects". Supersets are defined in ANIMAL_SUPERSETS and OBJECT_SUPERSETS mappings. Works across all four view modes.
 - **Character selection** — Search and pick specific characters to display
 - **Min. connections slider** (1-10, default 2) — Controls minimum shared traits for trait nodes to appear in network view, and minimum connections for characters to appear in direct view
+- **Relationship edges** — Toggle-able color-coded lines showing family relationships between mythological figures across all 4 view modes. Types: Married To (#FF69B4 pink), Parent Of (#FFD700 gold), Child Of (#00CED1 teal), Sibling Of (#4DA6FF blue). Sidebar checkboxes with "Hide all / Show all" toggle. Canvas legend overlay shows active types. Uses refs for lightweight redraws (no simulation reset on toggle).
 - Hover highlights connections, click opens detail panel
 - Zoom/pan with mouse, labels appear at zoom > 0.6x
 - Filters: attribute category checkboxes, search, character picker

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as d3 from "d3";
-import { X, Search, Filter, ArrowLeft, Network, ScatterChart, Users, SlidersHorizontal, Split, ChevronRight, ChevronDown, TreePine } from "lucide-react";
+import { X, Search, Filter, ArrowLeft, Network, ScatterChart, Users, SlidersHorizontal, Split, ChevronRight, ChevronDown, TreePine, Link2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -75,6 +75,29 @@ const CATEGORY_LABELS: Record<string, string> = {
   deathTypes: "Death Type",
   familyRoles: "Family Role",
 };
+
+const RELATION_TYPES = ["married to", "parent of", "child of", "sibling of"] as const;
+type RelationType = typeof RELATION_TYPES[number];
+
+const RELATION_COLORS: Record<RelationType, string> = {
+  "married to": "#FF69B4",
+  "parent of": "#FFD700",
+  "child of": "#00CED1",
+  "sibling of": "#4DA6FF",
+};
+
+const RELATION_LABELS: Record<RelationType, string> = {
+  "married to": "Married To",
+  "parent of": "Parent Of",
+  "child of": "Child Of",
+  "sibling of": "Sibling Of",
+};
+
+interface RelationEdge {
+  sourceId: string;
+  targetId: string;
+  relationType: RelationType;
+}
 
 function getTraditionColor(tradition: string | null) {
   if (!tradition) return "#8F00FF";
@@ -1542,6 +1565,8 @@ function FilterSidebar({
   hierarchySelections,
   onToggleHierarchyNode,
   onClearHierarchyFilter,
+  enabledRelationTypes,
+  onToggleRelationType,
 }: {
   filters: { traditions: string[]; categories: string[] };
   activeFilters: Record<string, Set<string>>;
@@ -1565,6 +1590,8 @@ function FilterSidebar({
   hierarchySelections: Map<string, Set<string>>;
   onToggleHierarchyNode: (categoryField: string, leafTraits: string[], checked: boolean) => void;
   onClearHierarchyFilter: () => void;
+  enabledRelationTypes: Set<RelationType>;
+  onToggleRelationType: (rt: RelationType) => void;
 }) {
   const filteredCharacters = useMemo(() => {
     if (!characterSearch.trim()) return [];
@@ -1744,6 +1771,51 @@ function FilterSidebar({
               </div>
             )}
 
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs uppercase tracking-wider text-shadows-text/40 flex items-center gap-1.5">
+                  <Link2 size={12} />
+                  Relationship Edges
+                </h4>
+                <button
+                  className="text-[9px] text-[#8F00FF]/60 hover:text-[#8F00FF] transition-colors"
+                  onClick={() => {
+                    const allEnabled = RELATION_TYPES.every(rt => enabledRelationTypes.has(rt));
+                    for (const rt of RELATION_TYPES) {
+                      if (allEnabled) {
+                        if (enabledRelationTypes.has(rt)) onToggleRelationType(rt);
+                      } else {
+                        if (!enabledRelationTypes.has(rt)) onToggleRelationType(rt);
+                      }
+                    }
+                  }}
+                  data-testid="button-toggle-all-relations"
+                >
+                  {RELATION_TYPES.every(rt => enabledRelationTypes.has(rt)) ? "Hide all" : "Show all"}
+                </button>
+              </div>
+              <div className="space-y-1.5">
+                {RELATION_TYPES.map(rt => (
+                  <div key={rt} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`rel-${rt}`}
+                      checked={enabledRelationTypes.has(rt)}
+                      onCheckedChange={() => onToggleRelationType(rt)}
+                      className="border-[#350A8C]/40 data-[state=checked]:bg-[#8F00FF] data-[state=checked]:border-[#8F00FF]"
+                      data-testid={`checkbox-relation-${rt.replace(/\s/g, "-")}`}
+                    />
+                    <Label
+                      htmlFor={`rel-${rt}`}
+                      className="text-xs text-shadows-text/60 cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span className="inline-block w-4 h-[3px] rounded-full" style={{ backgroundColor: RELATION_COLORS[rt] }} />
+                      {RELATION_LABELS[rt]}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {sections.map((section) =>
               section.values.length > 0 ? (
                 <div key={section.key}>
@@ -1850,6 +1922,7 @@ function NetworkView({
   onHoverNode,
   hoveredNode,
   selectedNodeIds,
+  relationEdges,
 }: {
   filteredGraphNodes: GraphNode[];
   filteredLinks: GraphLink[];
@@ -1858,6 +1931,7 @@ function NetworkView({
   onHoverNode: (node: any) => void;
   hoveredNode: any;
   selectedNodeIds: Set<number>;
+  relationEdges: RelationEdge[];
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
@@ -1999,6 +2073,23 @@ function NetworkView({
         ctx.stroke();
       }
 
+      const nodeMap = new Map<string, any>();
+      for (const n of simNodes) nodeMap.set(n.id, n);
+      for (const re of relationEdgesRef.current) {
+        const sn = nodeMap.get(re.sourceId);
+        const tn = nodeMap.get(re.targetId);
+        if (!sn || !tn || sn.x == null || tn.x == null) continue;
+        const relHighlighted = (activeId && (sn.id === activeId || tn.id === activeId)) ||
+          (hasSelection && (selectedSimIds.has(sn.id) || selectedSimIds.has(tn.id)));
+        ctx.beginPath();
+        ctx.moveTo(sn.x, sn.y);
+        ctx.lineTo(tn.x, tn.y);
+        ctx.strokeStyle = RELATION_COLORS[re.relationType];
+        ctx.globalAlpha = relHighlighted ? 0.85 : (activeId || hasSelection) ? 0.08 : 0.35;
+        ctx.lineWidth = relHighlighted ? 3 : 1.5;
+        ctx.stroke();
+      }
+
       ctx.globalAlpha = 1;
 
       const baseR = nodeR;
@@ -2134,7 +2225,7 @@ function NetworkView({
     if (!canvasRef.current || simNodesRef.current.length === 0) return;
     const sim = simulationRef.current;
     if (sim) sim.alpha(0).restart();
-  }, [selectedNodeIds]);
+  }, [selectedNodeIds, relationEdges]);
 
   return <canvas ref={canvasRef} className="w-full h-full" />;
 }
@@ -2145,12 +2236,14 @@ function DirectView({
   onSelectNode,
   onHoverNode,
   selectedNodeIds,
+  relationEdges,
 }: {
   charNodes: CharNode[];
   directLinks: DirectLink[];
   onSelectNode: (node: Node | null) => void;
   onHoverNode: (node: any) => void;
   selectedNodeIds: Set<number>;
+  relationEdges: RelationEdge[];
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawRef = useRef<(() => void) | null>(null);
@@ -2342,6 +2435,21 @@ function DirectView({
           ctx.globalAlpha = isHighlighted ? 0.4 + normalizedWeight * 0.4 : anyActive ? 0.02 : 0.04 + normalizedWeight * 0.12;
           ctx.lineWidth = isHighlighted ? 0.8 + normalizedWeight * 2.5 : 0.2 + normalizedWeight * 1.2;
         }
+        ctx.stroke();
+      }
+
+      for (const re of relationEdgesRef.current) {
+        const sp = nodeScreenMap.get(re.sourceId);
+        const tp = nodeScreenMap.get(re.targetId);
+        if (!sp || !tp) continue;
+        const relHighlighted = (hoveredId && (re.sourceId === hoveredId || re.targetId === hoveredId)) ||
+          (hasSelection && (selectedSimIds.has(re.sourceId) || selectedSimIds.has(re.targetId)));
+        ctx.beginPath();
+        ctx.moveTo(sp.sx, sp.sy);
+        ctx.lineTo(tp.sx, tp.sy);
+        ctx.strokeStyle = RELATION_COLORS[re.relationType];
+        ctx.globalAlpha = relHighlighted ? 0.85 : anyActive ? 0.08 : 0.35;
+        ctx.lineWidth = relHighlighted ? 3.5 : 2;
         ctx.stroke();
       }
 
@@ -2605,7 +2713,7 @@ function DirectView({
 
   useEffect(() => {
     if (drawRef.current) drawRef.current();
-  }, [selectedNodeIds]);
+  }, [selectedNodeIds, relationEdges]);
 
   return <canvas ref={canvasRef} className="w-full h-full" />;
 }
@@ -2645,12 +2753,14 @@ function CorrespondenceView({
   onHoverNode,
   selectedNodeIds,
   useSupersets,
+  relationEdges,
 }: {
   figures: Node[];
   onSelectNode: (node: Node | null) => void;
   onHoverNode: (node: any) => void;
   selectedNodeIds: Set<number>;
   useSupersets?: Set<string>;
+  relationEdges: RelationEdge[];
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawRef = useRef<(() => void) | null>(null);
@@ -2804,6 +2914,23 @@ function CorrespondenceView({
       }
 
       projected.sort((a, b) => b.z - a.z);
+
+      const projMap = new Map<string, Projected>();
+      for (const pp of projected) projMap.set(pp.point.id, pp);
+      for (const re of relationEdgesRef.current) {
+        const figSrcId = re.sourceId;
+        const figTgtId = re.targetId;
+        const sp = projMap.get(figSrcId);
+        const tp = projMap.get(figTgtId);
+        if (!sp || !tp) continue;
+        ctx!.beginPath();
+        ctx!.moveTo(sp.sx, sp.sy);
+        ctx!.lineTo(tp.sx, tp.sy);
+        ctx!.strokeStyle = RELATION_COLORS[re.relationType];
+        ctx!.globalAlpha = 0.35;
+        ctx!.lineWidth = 1.5;
+        ctx!.stroke();
+      }
 
       const caSelIds = selectedNodeIdsRef.current;
       const caHasSelection = caSelIds.size > 0;
@@ -2999,7 +3126,7 @@ function CorrespondenceView({
 
   useEffect(() => {
     if (drawRef.current) drawRef.current();
-  }, [selectedNodeIds]);
+  }, [selectedNodeIds, relationEdges]);
 
   if (caPoints.length === 0) {
     return (
@@ -3056,6 +3183,7 @@ function DichotomyView({
   selectedNodeIds,
   enabledCategories,
   useSupersets,
+  relationEdges,
 }: {
   figures: Node[];
   dichotomyDepth: number;
@@ -3065,6 +3193,7 @@ function DichotomyView({
   selectedNodeIds: Set<number>;
   enabledCategories?: Set<string>;
   useSupersets?: Set<string>;
+  relationEdges: RelationEdge[];
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const transformRef = useRef({ x: 0, y: 0, k: 1 });
@@ -3364,6 +3493,26 @@ function DichotomyView({
 
       ctx.globalAlpha = 1;
 
+      const dicNodeMap = new Map<string, SimNode>();
+      for (const n of allSimNodes) dicNodeMap.set(n.id, n);
+      for (const re of relationEdgesRef.current) {
+        const sn = dicNodeMap.get(re.sourceId);
+        const tn = dicNodeMap.get(re.targetId);
+        if (!sn || !tn) continue;
+        const sx2 = (sn as any).x, sy2 = (sn as any).y;
+        const tx2 = (tn as any).x, ty2 = (tn as any).y;
+        if (sx2 == null || tx2 == null) continue;
+        ctx.beginPath();
+        ctx.moveTo(sx2, sy2);
+        ctx.lineTo(tx2, ty2);
+        ctx.strokeStyle = RELATION_COLORS[re.relationType];
+        ctx.globalAlpha = 0.3;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      ctx.globalAlpha = 1;
+
       const hoveredId = currentHovered?.id;
       const dicSelIds = selectedNodeIdsRef.current;
       const dicHasSelection = dicSelIds.size > 0;
@@ -3475,7 +3624,7 @@ function DichotomyView({
 
   useEffect(() => {
     if (drawRef.current) drawRef.current();
-  }, [selectedNodeIds]);
+  }, [selectedNodeIds, relationEdges]);
 
   if (dichotomyResult.length === 0) {
     return (
@@ -3541,6 +3690,7 @@ export default function GraphPage() {
   const [minTraits, setMinTraits] = useState(2);
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<Set<number>>(new Set());
   const [characterSearch, setCharacterSearch] = useState("");
+  const [enabledRelationTypes, setEnabledRelationTypes] = useState<Set<RelationType>>(new Set(RELATION_TYPES));
 
   const handleGraphNodeSelect = useCallback((node: Node | null, trait?: TraitNode | null) => {
     if (trait) {
@@ -3576,6 +3726,15 @@ export default function GraphPage() {
 
   const clearCharacters = useCallback(() => {
     setSelectedCharacterIds(new Set());
+  }, []);
+
+  const toggleRelationType = useCallback((rt: RelationType) => {
+    setEnabledRelationTypes(prev => {
+      const next = new Set(prev);
+      if (next.has(rt)) next.delete(rt);
+      else next.add(rt);
+      return next;
+    });
   }, []);
 
   const hierarchyTrees = useMemo(() => {
@@ -3698,6 +3857,17 @@ export default function GraphPage() {
     if (!hierarchyFilteredNodeIds) return data.nodes;
     return data.nodes.filter(n => hierarchyFilteredNodeIds.has(n.id));
   }, [data?.nodes, hierarchyFilteredNodeIds]);
+
+  const relationEdges = useMemo((): RelationEdge[] => {
+    if (!data?.edges || enabledRelationTypes.size === 0) return [];
+    const visibleIds = new Set(effectiveNodes.map(n => n.id));
+    return data.edges
+      .filter(e => RELATION_TYPES.includes(e.relationType as RelationType) && enabledRelationTypes.has(e.relationType as RelationType) && visibleIds.has(e.sourceNodeId) && visibleIds.has(e.targetNodeId))
+      .map(e => ({ sourceId: `fig-${e.sourceNodeId}`, targetId: `fig-${e.targetNodeId}`, relationType: e.relationType as RelationType }));
+  }, [data?.edges, effectiveNodes, enabledRelationTypes]);
+
+  const relationEdgesRef = useRef(relationEdges);
+  useEffect(() => { relationEdgesRef.current = relationEdges; }, [relationEdges]);
 
   const { graphNodes, graphLinks } = useMemo(() => {
     if (!effectiveNodes.length) return { graphNodes: [], graphLinks: [] };
@@ -3965,6 +4135,8 @@ export default function GraphPage() {
         hierarchySelections={hierarchySelections}
         onToggleHierarchyNode={toggleHierarchyNode}
         onClearHierarchyFilter={clearHierarchyFilter}
+        enabledRelationTypes={enabledRelationTypes}
+        onToggleRelationType={toggleRelationType}
       />
 
       <div className="absolute inset-0 lg:left-72">
@@ -3977,6 +4149,7 @@ export default function GraphPage() {
             onHoverNode={setHoveredNode}
             hoveredNode={hoveredNode}
             selectedNodeIds={selectedNodeIds}
+            relationEdges={relationEdges}
           />
         ) : viewMode === "direct" ? (
           <DirectView
@@ -3985,6 +4158,7 @@ export default function GraphPage() {
             onSelectNode={(n) => handleGraphNodeSelect(n)}
             onHoverNode={setHoveredNode}
             selectedNodeIds={selectedNodeIds}
+            relationEdges={relationEdges}
           />
         ) : viewMode === "ca" ? (
           <CorrespondenceView
@@ -3993,6 +4167,7 @@ export default function GraphPage() {
             onHoverNode={setHoveredNode}
             selectedNodeIds={selectedNodeIds}
             useSupersets={activeSupersets}
+            relationEdges={relationEdges}
           />
         ) : (
           <DichotomyView
@@ -4004,7 +4179,20 @@ export default function GraphPage() {
             selectedNodeIds={selectedNodeIds}
             enabledCategories={enabledCategoriesSet}
             useSupersets={activeSupersets}
+            relationEdges={relationEdges}
           />
+        )}
+
+        {relationEdges.length > 0 && (
+          <div className="absolute bottom-4 right-4 bg-[#0B0626]/90 border border-white/10 rounded-lg px-3 py-2 pointer-events-none" data-testid="relation-legend">
+            <div className="text-[10px] text-white/50 uppercase tracking-wider mb-1">Relationships</div>
+            {RELATION_TYPES.filter(rt => enabledRelationTypes.has(rt)).map(rt => (
+              <div key={rt} className="flex items-center gap-2 py-0.5">
+                <span className="w-4 h-[2px] inline-block rounded" style={{ backgroundColor: RELATION_COLORS[rt] }} />
+                <span className="text-[11px] text-white/70">{RELATION_LABELS[rt]}</span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
