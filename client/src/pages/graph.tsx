@@ -3698,7 +3698,7 @@ export default function GraphPage() {
   const [minTraits, setMinTraits] = useState(2);
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<Set<number>>(new Set());
   const [characterSearch, setCharacterSearch] = useState("");
-  const [enabledRelationTypes, setEnabledRelationTypes] = useState<Set<RelationType>>(new Set(RELATION_TYPES));
+  const [enabledRelationTypes, setEnabledRelationTypes] = useState<Set<RelationType>>(new Set());
 
   const handleGraphNodeSelect = useCallback((node: Node | null, trait?: TraitNode | null) => {
     if (trait) {
