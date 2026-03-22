@@ -64,13 +64,12 @@ const CATEGORY_COLORS: Record<string, string> = {
 const CATEGORY_LABELS: Record<string, string> = {
   gender: "Gender",
   domain: "Domain",
-  object: "Object",
+  object: "Objects",
   animals: "Animals",
-  characterTrait: "Trait",
-  physicalCharacteristics: "Physical",
+  characterTrait: "Character Traits",
+  physicalCharacteristics: "Physical Characteristics",
   animalType: "Animal Type",
   objectType: "Object Type",
-  significantEvent: "Event",
   eventTypes: "Event Type",
   birthTypes: "Birth Type",
   deathTypes: "Death Type",
@@ -1346,7 +1345,20 @@ const HIERARCHY_CATEGORY_LABELS: Record<string, string> = {
   event_types: "Event Types",
   death_types: "Death Types",
   birth_types: "Birth Types",
+  gender: "Gender",
 };
+
+const HIERARCHY_CATEGORY_ORDER = [
+  "gender",
+  "domain",
+  "character_trait",
+  "animals",
+  "physical_characteristics",
+  "object",
+  "event_types",
+  "birth_types",
+  "death_types",
+];
 
 function buildHierarchyTrees(items: HierarchyItem[]): Map<string, HierarchyTreeNode[]> {
   const byCategory = new Map<string, HierarchyItem[]>();
@@ -1700,7 +1712,7 @@ function FilterSidebar({
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-xs uppercase tracking-wider text-shadows-text/40 flex items-center gap-1.5">
                     <TreePine size={12} />
-                    Include Figures
+                    Filter Figures
                   </h4>
                   {Array.from(hierarchySelections.values()).some(s => s.size > 0) && (
                     <button
@@ -1713,7 +1725,8 @@ function FilterSidebar({
                   )}
                 </div>
                 <div className="space-y-0.5">
-                  {Array.from(hierarchyTrees.entries()).map(([catField, roots]) => {
+                  {HIERARCHY_CATEGORY_ORDER.filter(cat => hierarchyTrees.has(cat)).map(catField => {
+                    const roots = hierarchyTrees.get(catField)!;
                     const frontendCat = HIERARCHY_CATEGORY_MAP[catField];
                     const color = frontendCat ? CATEGORY_COLORS[frontendCat] || "#8F00FF" : "#8F00FF";
                     return (
@@ -3566,9 +3579,27 @@ export default function GraphPage() {
   }, []);
 
   const hierarchyTrees = useMemo(() => {
-    if (!hierarchyData || hierarchyData.length === 0) return new Map<string, HierarchyTreeNode[]>();
-    return buildHierarchyTrees(hierarchyData);
-  }, [hierarchyData]);
+    const trees = (!hierarchyData || hierarchyData.length === 0)
+      ? new Map<string, HierarchyTreeNode[]>()
+      : buildHierarchyTrees(hierarchyData);
+
+    if (data?.nodes) {
+      const genderValues = new Set<string>();
+      for (const n of data.nodes) {
+        if (n.gender) genderValues.add(n.gender.toLowerCase());
+      }
+      const genderLeafs: HierarchyTreeNode[] = Array.from(genderValues).sort().map((g, i) => ({
+        id: -1000 - i,
+        name: g,
+        children: [],
+        isLeaf: true,
+        leafTraits: [g],
+      }));
+      trees.set("gender", genderLeafs);
+    }
+
+    return trees;
+  }, [hierarchyData, data?.nodes]);
 
   const toggleHierarchyNode = useCallback((categoryField: string, leafTraits: string[], checked: boolean) => {
     setHierarchySelections(prev => {
@@ -3591,7 +3622,7 @@ export default function GraphPage() {
   const hierarchyFilteredNodeIds = useMemo(() => {
     if (hierarchySelections.size === 0 || !data?.nodes) return null;
 
-    const CATEGORY_FIELD_TO_NODE_KEY: Record<string, { key: keyof Node; isArray: boolean }> = {
+    const CATEGORY_FIELD_TO_NODE_KEY: Record<string, { key: keyof Node; isArray: boolean; isSingle?: boolean }> = {
       physical_characteristics: { key: "physicalCharacteristics", isArray: false },
       object: { key: "object", isArray: false },
       animals: { key: "animals", isArray: false },
@@ -3600,6 +3631,7 @@ export default function GraphPage() {
       event_types: { key: "eventTypes", isArray: true },
       death_types: { key: "deathTypes", isArray: true },
       birth_types: { key: "birthTypes", isArray: true },
+      gender: { key: "gender", isArray: false, isSingle: true },
     };
 
     let matchingIds: Set<number> | null = null;
@@ -3612,7 +3644,10 @@ export default function GraphPage() {
       const catMatchIds = new Set<number>();
       for (const node of data.nodes) {
         let nodeTraits: string[] = [];
-        if (mapping.isArray) {
+        if (mapping.isSingle) {
+          const val = node[mapping.key] as string | null;
+          if (val) nodeTraits = [val.trim().toLowerCase()];
+        } else if (mapping.isArray) {
           const arr = node[mapping.key] as string[] | null;
           if (arr && Array.isArray(arr)) {
             nodeTraits = arr.map(t => t.trim().toLowerCase());
