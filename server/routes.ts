@@ -119,6 +119,14 @@ export async function registerRoutes(
 
       const needDropSuggestionFKs = (hasNodes || hasEdges) && !hasSuggestions;
 
+      const BATCH = 100;
+      async function insertBatched(tx: any, table: any, rows: any[]) {
+        for (let i = 0; i < rows.length; i += BATCH) {
+          await tx.insert(table).values(rows.slice(i, i + BATCH)).onConflictDoNothing();
+        }
+        return rows.length;
+      }
+
       await db.transaction(async (tx) => {
         if (needDropSuggestionFKs) {
           await tx.execute(sql`ALTER TABLE suggestions DROP CONSTRAINT IF EXISTS suggestions_node_id_nodes_id_fk`);
@@ -136,24 +144,15 @@ export async function registerRoutes(
         if (hasProjects) await tx.delete(projects);
 
         if (hasProjects) {
-          for (const project of data.projects) {
-            await tx.insert(projects).values(project).onConflictDoNothing();
-            counts.projects++;
-          }
+          counts.projects = await insertBatched(tx, projects, data.projects);
         }
 
         if (hasNodes) {
-          for (const node of data.nodes) {
-            await tx.insert(nodes).values(node).onConflictDoNothing();
-            counts.nodes++;
-          }
+          counts.nodes = await insertBatched(tx, nodes, data.nodes);
         }
 
         if (hasEdges) {
-          for (const edge of data.edges) {
-            await tx.insert(edges).values(edge).onConflictDoNothing();
-            counts.edges++;
-          }
+          counts.edges = await insertBatched(tx, edges, data.edges);
         }
 
         if (hasSources) {
@@ -161,9 +160,8 @@ export async function registerRoutes(
             if (source.createdAt && typeof source.createdAt === 'string') {
               source.createdAt = new Date(source.createdAt);
             }
-            await tx.insert(sources).values(source).onConflictDoNothing();
-            counts.sources++;
           }
+          counts.sources = await insertBatched(tx, sources, data.sources);
         }
 
         if (hasSuggestions) {
@@ -171,9 +169,8 @@ export async function registerRoutes(
             if (suggestion.createdAt && typeof suggestion.createdAt === 'string') {
               suggestion.createdAt = new Date(suggestion.createdAt);
             }
-            await tx.insert(suggestions).values(suggestion).onConflictDoNothing();
-            counts.suggestions++;
           }
+          counts.suggestions = await insertBatched(tx, suggestions, data.suggestions);
         }
 
         if (hasNews) {
@@ -184,41 +181,28 @@ export async function registerRoutes(
             if (item.date && typeof item.date === 'string') {
               item.date = new Date(item.date);
             }
-            await tx.insert(news).values(item).onConflictDoNothing();
-            counts.news++;
           }
+          counts.news = await insertBatched(tx, news, data.news);
         }
 
         if (hasPublications) {
-          for (const pub of data.publications) {
-            await tx.insert(publications).values(pub).onConflictDoNothing();
-            counts.publications++;
-          }
+          counts.publications = await insertBatched(tx, publications, data.publications);
         }
 
         if (hasTraitHierarchy) {
           if (hasTraitHabitat) await tx.delete(traitHabitat);
           await tx.delete(traitHierarchy);
-          for (const item of data.traitHierarchy) {
-            await tx.insert(traitHierarchy).values(item).onConflictDoNothing();
-          }
-          (counts as any).traitHierarchy = data.traitHierarchy.length;
+          (counts as any).traitHierarchy = await insertBatched(tx, traitHierarchy, data.traitHierarchy);
         }
 
         if (hasTraitHabitat) {
           if (!hasTraitHierarchy) await tx.delete(traitHabitat);
-          for (const item of data.traitHabitat) {
-            await tx.insert(traitHabitat).values(item).onConflictDoNothing();
-          }
-          (counts as any).traitHabitat = data.traitHabitat.length;
+          (counts as any).traitHabitat = await insertBatched(tx, traitHabitat, data.traitHabitat);
         }
 
         if (hasTraitCrossCut) {
           await tx.delete(traitCrossCut);
-          for (const item of data.traitCrossCut) {
-            await tx.insert(traitCrossCut).values(item).onConflictDoNothing();
-          }
-          (counts as any).traitCrossCut = data.traitCrossCut.length;
+          (counts as any).traitCrossCut = await insertBatched(tx, traitCrossCut, data.traitCrossCut);
         }
 
         if (needDropSuggestionFKs) {
