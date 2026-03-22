@@ -667,6 +667,32 @@ async function seedEventTypesHierarchy() {
   console.log(`Seeded event types hierarchy: ${count} entries.`);
 }
 
+async function seedDeathTypesHierarchy() {
+  const existing = await db.select().from(traitHierarchy).where(eq(traitHierarchy.categoryField, "death_types"));
+  if (existing.length > 0) return;
+
+  console.log("Seeding death types hierarchy...");
+
+  const DT_TAXONOMY: Record<string, string[]> = {
+    "violence by others": ["killed by hero", "killed in battle", "killed by kin", "killed by god", "killed by boar", "betrayed and killed"],
+    "ritual / self-inflicted": ["sacrificed ritually", "suicide"],
+    "fated / natural": ["natural death", "prophesied death", "immortality denied"],
+    "transcendent": ["transformation at death", "resurrection"],
+  };
+
+  let count = 0;
+  for (const [topName, traits] of Object.entries(DT_TAXONOMY)) {
+    const [topRow] = await db.insert(traitHierarchy).values({ categoryField: "death_types", traitName: topName, parentId: null, isLeaf: 0 }).returning();
+    count++;
+    for (const trait of traits) {
+      await db.insert(traitHierarchy).values({ categoryField: "death_types", traitName: trait, parentId: topRow.id, isLeaf: 1 });
+      count++;
+    }
+  }
+
+  console.log(`Seeded death types hierarchy: ${count} entries.`);
+}
+
 export async function seedDatabase() {
   try {
     const existingProjects = await storage.getProjects();
@@ -703,6 +729,7 @@ export async function seedDatabase() {
         await seedDomainHierarchy();
         await seedCharacterTraitHierarchy();
         await seedEventTypesHierarchy();
+        await seedDeathTypesHierarchy();
         return;
       }
       console.log(`Database has ${existingNodes.length} nodes but missing new trait fields. Re-seeding...`);
