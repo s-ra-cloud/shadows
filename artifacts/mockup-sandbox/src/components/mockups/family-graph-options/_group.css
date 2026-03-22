@@ -1,0 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Sofia+Sans:wght@300;400&display=swap');
+
+:root {
+  --bg-dark: #0B0626;
+  --accent-purple: #8F00FF;
+  --accent-green: #03FF9B;
+  --text-light: #E0D8F0;
+  --text-muted: #8B7FA8;
+}
