@@ -1941,9 +1941,11 @@ function NetworkView({
   const onSelectNodeRef = useRef(onSelectNode);
   const onSelectTraitRef = useRef(onSelectTrait);
   const selectedNodeIdsRef = useRef(selectedNodeIds);
+  const relationEdgesRef = useRef(relationEdges);
   onSelectNodeRef.current = onSelectNode;
   onSelectTraitRef.current = onSelectTrait;
   selectedNodeIdsRef.current = selectedNodeIds;
+  relationEdgesRef.current = relationEdges;
 
   useEffect(() => {
     if (!canvasRef.current || filteredGraphNodes.length === 0) return;
@@ -2248,7 +2250,9 @@ function DirectView({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawRef = useRef<(() => void) | null>(null);
   const selectedNodeIdsRef = useRef(selectedNodeIds);
+  const relationEdgesRef = useRef(relationEdges);
   selectedNodeIdsRef.current = selectedNodeIds;
+  relationEdgesRef.current = relationEdges;
 
   useEffect(() => {
     if (!canvasRef.current || charNodes.length === 0) return;
@@ -2765,7 +2769,9 @@ function CorrespondenceView({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawRef = useRef<(() => void) | null>(null);
   const selectedNodeIdsRef = useRef(selectedNodeIds);
+  const relationEdgesRef = useRef(relationEdges);
   selectedNodeIdsRef.current = selectedNodeIds;
+  relationEdgesRef.current = relationEdges;
 
   const caResult = useMemo(() => computeCorrespondenceAnalysis(figures, useSupersets), [figures, useSupersets]);
   const { points: caPoints, dimensions: caDimensions } = caResult;
@@ -3198,11 +3204,13 @@ function DichotomyView({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const transformRef = useRef({ x: 0, y: 0, k: 1 });
   const selectedNodeIdsRef = useRef(selectedNodeIds);
+  const relationEdgesRef = useRef(relationEdges);
   const drawRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     selectedNodeIdsRef.current = selectedNodeIds;
   }, [selectedNodeIds]);
+  relationEdgesRef.current = relationEdges;
 
   const dichotomyResult = useMemo(() => {
     if (!figures || figures.length === 0) return [];
@@ -3865,9 +3873,6 @@ export default function GraphPage() {
       .filter(e => RELATION_TYPES.includes(e.relationType as RelationType) && enabledRelationTypes.has(e.relationType as RelationType) && visibleIds.has(e.sourceNodeId) && visibleIds.has(e.targetNodeId))
       .map(e => ({ sourceId: `fig-${e.sourceNodeId}`, targetId: `fig-${e.targetNodeId}`, relationType: e.relationType as RelationType }));
   }, [data?.edges, effectiveNodes, enabledRelationTypes]);
-
-  const relationEdgesRef = useRef(relationEdges);
-  useEffect(() => { relationEdgesRef.current = relationEdges; }, [relationEdges]);
 
   const { graphNodes, graphLinks } = useMemo(() => {
     if (!effectiveNodes.length) return { graphNodes: [], graphLinks: [] };
