@@ -1334,6 +1334,7 @@ const HIERARCHY_CATEGORY_MAP: Record<string, string> = {
   character_trait: "characterTrait",
   event_types: "eventTypes",
   death_types: "deathTypes",
+  birth_types: "birthTypes",
 };
 
 const HIERARCHY_CATEGORY_LABELS: Record<string, string> = {
@@ -1344,6 +1345,7 @@ const HIERARCHY_CATEGORY_LABELS: Record<string, string> = {
   character_trait: "Character Traits",
   event_types: "Event Types",
   death_types: "Death Types",
+  birth_types: "Birth Types",
 };
 
 function buildHierarchyTrees(items: HierarchyItem[]): Map<string, HierarchyTreeNode[]> {
@@ -3597,6 +3599,7 @@ export default function GraphPage() {
       character_trait: { key: "characterTrait", isArray: false },
       event_types: { key: "eventTypes", isArray: true },
       death_types: { key: "deathTypes", isArray: true },
+      birth_types: { key: "birthTypes", isArray: true },
     };
 
     let matchingIds: Set<number> | null = null;

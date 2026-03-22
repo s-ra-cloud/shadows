@@ -667,6 +667,31 @@ async function seedEventTypesHierarchy() {
   console.log(`Seeded event types hierarchy: ${count} entries.`);
 }
 
+async function seedBirthTypesHierarchy() {
+  const existing = await db.select().from(traitHierarchy).where(eq(traitHierarchy.categoryField, "birth_types"));
+  if (existing.length > 0) return;
+
+  console.log("Seeding birth types hierarchy...");
+
+  const BT_TAXONOMY: Record<string, string[]> = {
+    "parentage": ["divine parentage", "mortal parentage", "demigod birth", "royal lineage"],
+    "unusual origin": ["born from body", "born from element", "primordial emergence", "parthenogenesis"],
+    "supernatural": ["miraculous conception", "incestuous union"],
+  };
+
+  let count = 0;
+  for (const [topName, traits] of Object.entries(BT_TAXONOMY)) {
+    const [topRow] = await db.insert(traitHierarchy).values({ categoryField: "birth_types", traitName: topName, parentId: null, isLeaf: 0 }).returning();
+    count++;
+    for (const trait of traits) {
+      await db.insert(traitHierarchy).values({ categoryField: "birth_types", traitName: trait, parentId: topRow.id, isLeaf: 1 });
+      count++;
+    }
+  }
+
+  console.log(`Seeded birth types hierarchy: ${count} entries.`);
+}
+
 async function seedDeathTypesHierarchy() {
   const existing = await db.select().from(traitHierarchy).where(eq(traitHierarchy.categoryField, "death_types"));
   if (existing.length > 0) return;
@@ -730,6 +755,7 @@ export async function seedDatabase() {
         await seedCharacterTraitHierarchy();
         await seedEventTypesHierarchy();
         await seedDeathTypesHierarchy();
+        await seedBirthTypesHierarchy();
         return;
       }
       console.log(`Database has ${existingNodes.length} nodes but missing new trait fields. Re-seeding...`);
