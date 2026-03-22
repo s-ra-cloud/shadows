@@ -97,6 +97,7 @@ async function applyTraitMoves() {
   }
 
   await applyDirectFixes();
+  await applySpouseRoles();
 }
 
 const DIRECT_FIXES: Array<{ nodeId: number; updates: Record<string, string | string[] | null>; suggestionIds: number[] }> = [
@@ -406,6 +407,27 @@ async function applyDirectFixes() {
   }
   if (totalFixed > 0) {
     console.log(`Applied direct fixes: ${totalFixed} nodes updated.`);
+  }
+}
+
+async function applySpouseRoles() {
+  const marriedEdges = await db.select().from(edges).where(eq(edges.relationType, "married to"));
+  const spouseIds = new Set<number>();
+  for (const e of marriedEdges) {
+    spouseIds.add(e.sourceNodeId);
+    spouseIds.add(e.targetNodeId);
+  }
+  let tagged = 0;
+  for (const id of spouseIds) {
+    const [node] = await db.select().from(nodes).where(eq(nodes.id, id));
+    if (!node) continue;
+    const roles = node.familyRoles ?? [];
+    if (roles.includes("spouse")) continue;
+    await db.update(nodes).set({ familyRoles: [...roles, "spouse"] }).where(eq(nodes.id, id));
+    tagged++;
+  }
+  if (tagged > 0) {
+    console.log(`Applied spouse roles: ${tagged} figures tagged.`);
   }
 }
 
