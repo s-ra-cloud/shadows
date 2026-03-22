@@ -361,6 +361,27 @@ async function applyDeathTypeCleanup() {
   }
 }
 
+async function applyUnderscoreCleanup() {
+  const allNodes = await db.select({ id: nodes.id, eventTypes: nodes.eventTypes, birthTypes: nodes.birthTypes }).from(nodes);
+  let updated = 0;
+  for (const node of allNodes) {
+    const updates: any = {};
+    if (node.eventTypes?.some((e: string) => e.includes("_"))) {
+      updates.eventTypes = node.eventTypes.map((e: string) => e.replace(/_/g, " "));
+    }
+    if (node.birthTypes?.some((b: string) => b.includes("_"))) {
+      updates.birthTypes = node.birthTypes.map((b: string) => b.replace(/_/g, " "));
+    }
+    if (Object.keys(updates).length > 0) {
+      await db.update(nodes).set(updates).where(eq(nodes.id, node.id));
+      updated++;
+    }
+  }
+  if (updated > 0) {
+    console.log(`Underscore cleanup: updated ${updated} nodes (event_types/birth_types).`);
+  }
+}
+
 async function applyDirectFixes() {
   let totalFixed = 0;
   for (const fix of DIRECT_FIXES) {
@@ -626,11 +647,11 @@ async function seedEventTypesHierarchy() {
   console.log("Seeding event types hierarchy...");
 
   const ET_TAXONOMY: Record<string, string[]> = {
-    "creation / cosmogony": ["world_creation", "humanity_creation", "invention", "gift_to_humanity", "founding"],
-    "combat / violence": ["slays_kin", "slays_monster", "contest", "vengeance"],
-    "transgression / downfall": ["punishment", "curse", "betrayal", "loss_of_power", "exile"],
-    "sacred / ritual": ["sacrifice", "apotheosis", "divine_marriage", "descent_to_underworld"],
-    "power / agency": ["overthrows_ruler", "quest", "rescue", "abduction", "seduction"],
+    "creation / cosmogony": ["world creation", "humanity creation", "invention", "gift to humanity", "founding"],
+    "combat / violence": ["slays kin", "slays monster", "contest", "vengeance"],
+    "transgression / downfall": ["punishment", "curse", "betrayal", "loss of power", "exile"],
+    "sacred / ritual": ["sacrifice", "apotheosis", "divine marriage", "descent to underworld"],
+    "power / agency": ["overthrows ruler", "quest", "rescue", "abduction", "seduction"],
   };
 
   let count = 0;
@@ -677,6 +698,7 @@ export async function seedDatabase() {
         await applyGenderFixes();
         await applyDomainAdditions();
         await applyDeathTypeCleanup();
+        await applyUnderscoreCleanup();
         await seedAnimalHierarchy();
         await seedDomainHierarchy();
         await seedCharacterTraitHierarchy();
