@@ -1,7 +1,7 @@
 import { storage } from "./storage";
 import { db } from "./storage";
 import { nodes, edges, suggestions, traitHierarchy, traitCrossCut } from "@shared/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -99,6 +99,26 @@ async function applyTraitMoves() {
   await applyDirectFixes();
   await applySpouseRoles();
   await cleanPhysicalCharacteristics();
+  await applyHierarchyReparents();
+}
+
+const HIERARCHY_REPARENTS: Array<{ traitName: string; categoryField: string; newParentName: string }> = [
+  { traitName: 'fertility', categoryField: 'domain', newParentName: 'birth / growth' },
+];
+
+async function applyHierarchyReparents() {
+  let total = 0;
+  for (const r of HIERARCHY_REPARENTS) {
+    const [leaf] = await db.select().from(traitHierarchy)
+      .where(and(eq(traitHierarchy.traitName, r.traitName), eq(traitHierarchy.categoryField, r.categoryField), eq(traitHierarchy.isLeaf, 1)));
+    if (!leaf) continue;
+    const [newParent] = await db.select().from(traitHierarchy)
+      .where(and(eq(traitHierarchy.traitName, r.newParentName), eq(traitHierarchy.categoryField, r.categoryField)));
+    if (!newParent || leaf.parentId === newParent.id) continue;
+    await db.update(traitHierarchy).set({ parentId: newParent.id }).where(eq(traitHierarchy.id, leaf.id));
+    total++;
+  }
+  if (total > 0) console.log(`Applied hierarchy reparents: ${total} entries moved.`);
 }
 
 const DIRECT_FIXES: Array<{ nodeId: number; updates: Record<string, string | string[] | null>; suggestionIds: number[] }> = [
