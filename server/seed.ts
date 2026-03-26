@@ -102,36 +102,15 @@ async function applyTraitMoves() {
   await applyHierarchyReparents();
 }
 
-const HIERARCHY_REPARENTS: Array<{ traitName: string; categoryField: string; newParentName: string; isCategory?: boolean }> = [
+const HIERARCHY_REPARENTS: Array<{ traitName: string; categoryField: string; newParentName: string }> = [
   { traitName: 'fertility', categoryField: 'domain', newParentName: 'birth / growth' },
-  { traitName: 'large cat', categoryField: 'animals', newParentName: 'feline', isCategory: true },
-  { traitName: 'hamadryas baboon', categoryField: 'animals', newParentName: 'monkey' },
-];
-
-const LEAF_TO_CATEGORY_CONVERSIONS: Array<{ traitName: string; categoryField: string }> = [
-  { traitName: 'monkey', categoryField: 'animals' },
 ];
 
 async function applyHierarchyReparents() {
   let total = 0;
-
-  for (const c of LEAF_TO_CATEGORY_CONVERSIONS) {
-    const [entry] = await db.select().from(traitHierarchy)
-      .where(and(eq(traitHierarchy.traitName, c.traitName), eq(traitHierarchy.categoryField, c.categoryField), eq(traitHierarchy.isLeaf, 1)));
-    if (!entry) continue;
-    await db.update(traitHierarchy).set({ isLeaf: 0 }).where(eq(traitHierarchy.id, entry.id));
-    const [existingLeaf] = await db.select().from(traitHierarchy)
-      .where(and(eq(traitHierarchy.traitName, c.traitName), eq(traitHierarchy.categoryField, c.categoryField), eq(traitHierarchy.isLeaf, 1)));
-    if (!existingLeaf) {
-      await db.insert(traitHierarchy).values({ traitName: c.traitName, parentId: entry.id, isLeaf: 1, categoryField: c.categoryField }).onConflictDoNothing();
-    }
-    total++;
-  }
-
   for (const r of HIERARCHY_REPARENTS) {
-    const isLeaf = r.isCategory ? 0 : 1;
     const [entry] = await db.select().from(traitHierarchy)
-      .where(and(eq(traitHierarchy.traitName, r.traitName), eq(traitHierarchy.categoryField, r.categoryField), eq(traitHierarchy.isLeaf, isLeaf)));
+      .where(and(eq(traitHierarchy.traitName, r.traitName), eq(traitHierarchy.categoryField, r.categoryField), eq(traitHierarchy.isLeaf, 1)));
     if (!entry) continue;
     const [newParent] = await db.select().from(traitHierarchy)
       .where(and(eq(traitHierarchy.traitName, r.newParentName), eq(traitHierarchy.categoryField, r.categoryField)));
@@ -139,7 +118,6 @@ async function applyHierarchyReparents() {
     await db.update(traitHierarchy).set({ parentId: newParent.id }).where(eq(traitHierarchy.id, entry.id));
     total++;
   }
-
   if (total > 0) console.log(`Applied hierarchy reparents: ${total} entries moved.`);
 }
 
