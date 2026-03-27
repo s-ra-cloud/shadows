@@ -3747,14 +3747,13 @@ function RelationsView({
     canvas.style.height = height + "px";
     ctx.scale(dpr, dpr);
 
-    const spread = Math.min(width, height) * 0.4;
     const simNodes = relNodes.map(n => ({
       id: `fig-${n.id}`,
       label: n.name,
       original: n,
       tradition: n.tradition,
-      x: (Math.random() - 0.5) * spread,
-      y: (Math.random() - 0.5) * spread,
+      x: 0,
+      y: 0,
     }));
     const simNodeMap = new Map<string, any>();
     simNodes.forEach(n => simNodeMap.set(n.id, n));
@@ -3772,35 +3771,139 @@ function RelationsView({
     }
     const allUniqueEdges = Array.from(deduped.values());
 
-    const nodeCount = simNodes.length;
-    const baseDist = nodeCount > 200 ? 120 : nodeCount > 100 ? 160 : nodeCount > 50 ? 200 : 250;
+    const parentMap = new Map<string, string>();
+    for (const n of simNodes) parentMap.set(n.id, n.id);
+    function find(x: string): string {
+      while (parentMap.get(x) !== x) {
+        parentMap.set(x, parentMap.get(parentMap.get(x)!)!);
+        x = parentMap.get(x)!;
+      }
+      return x;
+    }
+    function union(a: string, b: string) {
+      const ra = find(a), rb = find(b);
+      if (ra !== rb) parentMap.set(ra, rb);
+    }
+    for (const e of allUniqueEdges) {
+      union(e.source.id, e.target.id);
+    }
 
-    for (let iter = 0; iter < 800; iter++) {
-      const alpha = Math.max(0.001, 1 - iter / 800);
-      for (let i = 0; i < simNodes.length; i++) {
-        for (let j = i + 1; j < simNodes.length; j++) {
-          const a = simNodes[i], b = simNodes[j];
+    const components = new Map<string, typeof simNodes>();
+    for (const n of simNodes) {
+      const root = find(n.id);
+      if (!components.has(root)) components.set(root, []);
+      components.get(root)!.push(n);
+    }
+    const componentEdges = new Map<string, typeof allUniqueEdges>();
+    for (const e of allUniqueEdges) {
+      const root = find(e.source.id);
+      if (!componentEdges.has(root)) componentEdges.set(root, []);
+      componentEdges.get(root)!.push(e);
+    }
+
+    const componentList = Array.from(components.entries())
+      .map(([root, cNodes]) => ({ root, nodes: cNodes, edges: componentEdges.get(root) || [] }))
+      .sort((a, b) => b.nodes.length - a.nodes.length);
+
+    for (const comp of componentList) {
+      const cn = comp.nodes;
+      const ce = comp.edges;
+      const count = cn.length;
+      const spread = Math.max(80, Math.sqrt(count) * 60);
+
+      for (const n of cn) {
+        n.x = (Math.random() - 0.5) * spread;
+        n.y = (Math.random() - 0.5) * spread;
+      }
+
+      const baseDist = count > 20 ? 50 : count > 10 ? 65 : count > 4 ? 80 : 100;
+      const iters = Math.min(600, 200 + count * 10);
+
+      for (let iter = 0; iter < iters; iter++) {
+        const alpha = Math.max(0.001, 1 - iter / iters);
+        for (let i = 0; i < cn.length; i++) {
+          for (let j = i + 1; j < cn.length; j++) {
+            const a = cn[i], b = cn[j];
+            let dx = b.x - a.x, dy = b.y - a.y;
+            let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            const repulse = (count > 20 ? -400 : count > 10 ? -600 : -900) * alpha / (dist * dist);
+            const fx = dx / dist * repulse, fy = dy / dist * repulse;
+            a.x += fx; a.y += fy;
+            b.x -= fx; b.y -= fy;
+          }
+        }
+        for (const e of ce) {
+          const a = e.source, b = e.target;
           let dx = b.x - a.x, dy = b.y - a.y;
           let dist = Math.sqrt(dx * dx + dy * dy) || 1;
-          const repulse = (nodeCount > 200 ? -300 : nodeCount > 100 ? -500 : nodeCount > 50 ? -800 : -1200) * alpha / (dist * dist);
-          const fx = dx / dist * repulse, fy = dy / dist * repulse;
-          a.x += fx; a.y += fy;
-          b.x -= fx; b.y -= fy;
+          const strength = 0.12 * alpha;
+          const delta = (dist - baseDist) * strength * 0.5;
+          const ux = dx / dist, uy = dy / dist;
+          a.x += ux * delta; a.y += uy * delta;
+          b.x -= ux * delta; b.y -= uy * delta;
+        }
+        for (const n of cn) {
+          n.x *= 0.998; n.y *= 0.998;
         }
       }
-      for (const e of allUniqueEdges) {
-        const a = e.source, b = e.target;
-        let dx = b.x - a.x, dy = b.y - a.y;
-        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        const strength = 0.08 * alpha;
-        const delta = (dist - baseDist) * strength * 0.5;
-        const ux = dx / dist, uy = dy / dist;
-        a.x += ux * delta; a.y += uy * delta;
-        b.x -= ux * delta; b.y -= uy * delta;
+    }
+
+    const compBounds = componentList.map(comp => {
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const n of comp.nodes) {
+        minX = Math.min(minX, n.x);
+        minY = Math.min(minY, n.y);
+        maxX = Math.max(maxX, n.x);
+        maxY = Math.max(maxY, n.y);
       }
-      for (const n of simNodes) {
-        n.x *= 0.999; n.y *= 0.999;
+      const pad = 30;
+      return { comp, w: maxX - minX + pad * 2, h: maxY - minY + pad * 2, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+    });
+
+    const gap = 60;
+    const placed: { x: number; y: number; w: number; h: number }[] = [];
+
+    for (const cb of compBounds) {
+      let bestX = 0, bestY = 0, bestDist = Infinity;
+      const spiralStep = Math.max(40, cb.w * 0.3);
+
+      if (placed.length === 0) {
+        bestX = 0; bestY = 0;
+      } else {
+        let found = false;
+        for (let radius = 0; radius < 8000 && !found; radius += spiralStep) {
+          const steps = Math.max(8, Math.floor(2 * Math.PI * radius / spiralStep));
+          for (let s = 0; s < steps; s++) {
+            const angle = (2 * Math.PI * s) / steps;
+            const tx = Math.cos(angle) * radius;
+            const ty = Math.sin(angle) * radius;
+            let overlaps = false;
+            for (const p of placed) {
+              if (Math.abs(tx - p.x) < (cb.w + p.w) / 2 + gap &&
+                  Math.abs(ty - p.y) < (cb.h + p.h) / 2 + gap) {
+                overlaps = true;
+                break;
+              }
+            }
+            if (!overlaps) {
+              const d = tx * tx + ty * ty;
+              if (d < bestDist) {
+                bestDist = d;
+                bestX = tx; bestY = ty;
+                found = true;
+              }
+            }
+          }
+        }
       }
+
+      const offsetX = bestX - cb.cx;
+      const offsetY = bestY - cb.cy;
+      for (const n of cb.comp.nodes) {
+        n.x += offsetX;
+        n.y += offsetY;
+      }
+      placed.push({ x: bestX, y: bestY, w: cb.w, h: cb.h });
     }
 
     let panX = 0, panY = 0;
