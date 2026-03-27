@@ -3711,10 +3711,31 @@ function RelationsView({
   const relFiltersRef = useRef(relFilters);
   relFiltersRef.current = relFilters;
 
+  const allTraditions = useMemo(() => {
+    const s = new Set<string>();
+    nodes.forEach(n => { if (n.tradition) s.add(n.tradition); });
+    return Array.from(s).sort();
+  }, [nodes]);
+  const [tradFilters, setTradFilters] = useState<Set<string>>(() => new Set(allTraditions));
+  const tradFiltersRef = useRef(tradFilters);
+  tradFiltersRef.current = tradFilters;
+
+  useEffect(() => {
+    setTradFilters(new Set(allTraditions));
+  }, [allTraditions]);
+
   const toggleRelFilter = useCallback((rt: RelationType) => {
     setRelFilters(prev => {
       const next = new Set(prev);
       if (next.has(rt)) next.delete(rt); else next.add(rt);
+      return next;
+    });
+  }, []);
+
+  const toggleTradFilter = useCallback((t: string) => {
+    setTradFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t); else next.add(t);
       return next;
     });
   }, []);
@@ -3931,7 +3952,12 @@ function RelationsView({
       ctx.fillRect(0, 0, width, height);
 
       const activeFilters = relFiltersRef.current;
-      const visibleEdges = allUniqueEdges.filter(e => activeFilters.has(e.relationType));
+      const activeTraditions = tradFiltersRef.current;
+      const visibleEdges = allUniqueEdges.filter(e =>
+        activeFilters.has(e.relationType) &&
+        activeTraditions.has(e.source.tradition) &&
+        activeTraditions.has(e.target.tradition)
+      );
 
       const visibleNodeIds = new Set<string>();
       for (const e of visibleEdges) {
@@ -4282,12 +4308,12 @@ function RelationsView({
 
   useEffect(() => {
     if (drawRef.current) drawRef.current();
-  }, [selectedNodeIds, relFilters]);
+  }, [selectedNodeIds, relFilters, tradFilters]);
 
   return (
     <div className="w-full h-full relative">
       <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-relations-view" />
-      <div className="absolute top-4 right-4 z-20 bg-[#0B0626]/80 backdrop-blur-xl border border-[#350A8C]/30 rounded-md p-3 space-y-2" data-testid="relations-filter-panel">
+      <div className="absolute top-4 right-4 z-20 bg-[#0B0626]/80 backdrop-blur-xl border border-[#350A8C]/30 rounded-md p-3 space-y-2 max-h-[85vh] overflow-y-auto scrollbar-thin" data-testid="relations-filter-panel">
         <div className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-1">Filter Relations</div>
         <div className="flex items-center gap-1 mb-1">
           <button
@@ -4318,6 +4344,35 @@ function RelationsView({
             ))}
           </div>
         ))}
+        <div className="border-t border-white/10 pt-2 mt-2">
+          <div className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-1">Filter Traditions</div>
+          <div className="flex items-center gap-1 mb-1">
+            <button
+              className="text-[9px] text-shadows-text/40 hover:text-shadows-text/70 transition-colors"
+              onClick={() => {
+                const allEnabled = allTraditions.every(t => tradFilters.has(t));
+                setTradFilters(allEnabled ? new Set() : new Set(allTraditions));
+              }}
+              data-testid="button-traditions-toggle-all"
+            >
+              {allTraditions.every(t => tradFilters.has(t)) ? "Hide all" : "Show all"}
+            </button>
+          </div>
+          <div className="space-y-0.5">
+            {allTraditions.map(t => (
+              <label key={t} className="flex items-center gap-2 cursor-pointer py-0.5">
+                <Checkbox
+                  checked={tradFilters.has(t)}
+                  onCheckedChange={() => toggleTradFilter(t)}
+                  className="h-3 w-3 border-white/20"
+                  data-testid={`checkbox-trad-${t.toLowerCase().replace(/\s/g, "-")}`}
+                />
+                <span className="w-2 h-2 inline-block rounded-full" style={{ backgroundColor: TRADITION_COLORS[t] || "#E0DCE6" }} />
+                <span className="text-[10px] text-white/60">{t}</span>
+              </label>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
