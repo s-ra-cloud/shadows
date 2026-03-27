@@ -43,11 +43,12 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 - `users` - Admin users (username, password)
 
 ## Data Source
-- 1,190+ mythological figures from curated database (JSON seed file + direct DB inserts)
+- 1,208 mythological figures from curated database — ALL 100% ENRICHED across 19 traditions:
+  - Greek (364), Chinese (183), Egyptian (152), Roman (148), Shinto (96), Norse (61), Aztec (54), Hindu (33), Celtic (21), Mesopotamian (20), Canaanite (14), Abrahamic (12), Cross-cultural (12), Germanic (9), Buddhist (8), Balinese (8), Gnostic (6), Phrygian (5), Christian (2)
+  - All figures have: domain, character_trait, physical_characteristics, symbolism, neumann_archetype
   - 258 with normalized eventTypes, 387 with birthTypes, 60 with deathTypes
-  - 83 with symbolism and archetype analysis
   - 450+ relationship edges (parent_of, child_of, sibling_of, married_to, trinity, adversary_of)
-  - Traditions: Greek, Egyptian, Norse, Hindu, Celtic (21 figures), Abrahamic, Canaanite, Gnostic, Phrygian, Balinese, Buddhist, and more
+  - Data quality: No parenthetical notes, Wikipedia-sourced, no underscores in array entries
 - Seed runs automatically on startup if database is empty
 - Data file: data/mythology-database.json
 
