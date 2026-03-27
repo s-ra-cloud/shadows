@@ -76,7 +76,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   familyRoles: "Family Role",
 };
 
-const RELATION_TYPES = ["married to", "parent of", "child of", "sibling of"] as const;
+const RELATION_TYPES = ["married to", "parent of", "child of", "sibling of", "trinity"] as const;
 type RelationType = typeof RELATION_TYPES[number];
 
 const RELATION_COLORS: Record<RelationType, string> = {
@@ -84,6 +84,7 @@ const RELATION_COLORS: Record<RelationType, string> = {
   "parent of": "#FFD700",
   "child of": "#00CED1",
   "sibling of": "#4DA6FF",
+  "trinity": "#9B59B6",
 };
 
 const RELATION_LABELS: Record<RelationType, string> = {
@@ -91,6 +92,7 @@ const RELATION_LABELS: Record<RelationType, string> = {
   "parent of": "Parent Of",
   "child of": "Child Of",
   "sibling of": "Sibling Of",
+  "trinity": "Trinity",
 };
 
 interface RelationEdge {
