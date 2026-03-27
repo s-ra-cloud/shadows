@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as d3 from "d3";
-import { X, Search, Filter, ArrowLeft, Network, ScatterChart, Users, SlidersHorizontal, Split, ChevronRight, ChevronDown, TreePine, Link2 } from "lucide-react";
+import { X, Search, Filter, ArrowLeft, Network, ScatterChart, Users, SlidersHorizontal, Split, ChevronRight, ChevronDown, TreePine, Link2, Globe } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1585,6 +1585,10 @@ function FilterSidebar({
   onClearHierarchyFilter,
   enabledRelationTypes,
   onToggleRelationType,
+  allTraditions,
+  selectedTraditions,
+  onToggleTradition,
+  onClearTraditionFilter,
 }: {
   filters: { traditions: string[]; categories: string[] };
   activeFilters: Record<string, Set<string>>;
@@ -1610,6 +1614,10 @@ function FilterSidebar({
   onClearHierarchyFilter: () => void;
   enabledRelationTypes: Set<RelationType>;
   onToggleRelationType: (rt: RelationType) => void;
+  allTraditions: string[];
+  selectedTraditions: Set<string> | null;
+  onToggleTradition: (t: string) => void;
+  onClearTraditionFilter: () => void;
 }) {
   const filteredCharacters = useMemo(() => {
     if (!characterSearch.trim()) return [];
@@ -1785,6 +1793,62 @@ function FilterSidebar({
                       />
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {allTraditions.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs uppercase tracking-wider text-shadows-text/40 flex items-center gap-1.5">
+                    <Globe size={12} />
+                    Traditions
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    {selectedTraditions && (
+                      <button
+                        className="text-[9px] text-[#E53935]/60 hover:text-[#E53935] transition-colors"
+                        onClick={onClearTraditionFilter}
+                        data-testid="button-clear-tradition-filter"
+                      >
+                        Reset
+                      </button>
+                    )}
+                    <button
+                      className="text-[9px] text-[#8F00FF]/60 hover:text-[#8F00FF] transition-colors"
+                      onClick={() => {
+                        const allEnabled = !selectedTraditions || allTraditions.every(t => selectedTraditions.has(t));
+                        if (allEnabled) {
+                          for (const t of allTraditions) onToggleTradition(t);
+                        } else {
+                          onClearTraditionFilter();
+                        }
+                      }}
+                      data-testid="button-toggle-all-traditions"
+                    >
+                      {!selectedTraditions || allTraditions.every(t => selectedTraditions.has(t)) ? "Hide all" : "Show all"}
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-1 max-h-60 overflow-y-auto scrollbar-thin pr-1">
+                  {allTraditions.map(t => (
+                    <div key={t} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`trad-main-${t}`}
+                        checked={!selectedTraditions || selectedTraditions.has(t)}
+                        onCheckedChange={() => onToggleTradition(t)}
+                        className="border-[#350A8C]/40 data-[state=checked]:bg-[#8F00FF] data-[state=checked]:border-[#8F00FF]"
+                        data-testid={`checkbox-tradition-${t.replace(/\s/g, "-")}`}
+                      />
+                      <Label
+                        htmlFor={`trad-main-${t}`}
+                        className="text-xs text-shadows-text/60 cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span className="w-2 h-2 inline-block rounded-full flex-shrink-0" style={{ backgroundColor: TRADITION_COLORS[t] || "#E0DCE6" }} />
+                        {t}
+                      </Label>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -4398,6 +4462,7 @@ export default function GraphPage() {
   const [activeSupersets, setActiveSupersets] = useState<Set<string>>(new Set());
   const [hierarchySelections, setHierarchySelections] = useState<Map<string, Set<string>>>(new Map());
   const [hoveredNode, setHoveredNode] = useState<any>(null);
+  const [selectedTraditions, setSelectedTraditions] = useState<Set<string> | null>(null);
   const [viewMode, setViewMode] = useState<"network" | "direct" | "ca" | "dichotomy" | "relations">("network");
   const [dichotomyDepth, setDichotomyDepth] = useState(1);
   const [dichotomyThreshold, setDichotomyThreshold] = useState(0.9);
@@ -4449,6 +4514,29 @@ export default function GraphPage() {
       else next.add(rt);
       return next;
     });
+  }, []);
+
+  const allTraditions = useMemo(() => {
+    if (!data?.nodes) return [];
+    const set = new Set<string>();
+    for (const n of data.nodes) {
+      if (n.tradition) set.add(n.tradition);
+    }
+    return Array.from(set).sort();
+  }, [data?.nodes]);
+
+  const toggleTradition = useCallback((t: string) => {
+    setSelectedTraditions(prev => {
+      const current = prev || new Set(allTraditions);
+      const next = new Set(current);
+      if (next.has(t)) next.delete(t);
+      else next.add(t);
+      return next;
+    });
+  }, [allTraditions]);
+
+  const clearTraditionFilter = useCallback(() => {
+    setSelectedTraditions(null);
   }, []);
 
   const hierarchyTrees = useMemo(() => {
@@ -4568,9 +4656,15 @@ export default function GraphPage() {
 
   const effectiveNodes = useMemo(() => {
     if (!data?.nodes) return [];
-    if (!hierarchyFilteredNodeIds) return data.nodes;
-    return data.nodes.filter(n => hierarchyFilteredNodeIds.has(n.id));
-  }, [data?.nodes, hierarchyFilteredNodeIds]);
+    let nodes = data.nodes;
+    if (selectedTraditions) {
+      nodes = nodes.filter(n => n.tradition && selectedTraditions.has(n.tradition));
+    }
+    if (hierarchyFilteredNodeIds) {
+      nodes = nodes.filter(n => hierarchyFilteredNodeIds.has(n.id));
+    }
+    return nodes;
+  }, [data?.nodes, hierarchyFilteredNodeIds, selectedTraditions]);
 
   const relationEdges = useMemo((): RelationEdge[] => {
     if (!data?.edges || enabledRelationTypes.size === 0) return [];
@@ -4856,6 +4950,10 @@ export default function GraphPage() {
         onClearHierarchyFilter={clearHierarchyFilter}
         enabledRelationTypes={enabledRelationTypes}
         onToggleRelationType={toggleRelationType}
+        allTraditions={allTraditions}
+        selectedTraditions={selectedTraditions}
+        onToggleTradition={toggleTradition}
+        onClearTraditionFilter={clearTraditionFilter}
       />
 
       <div className="absolute inset-0 lg:left-72">
