@@ -2860,6 +2860,7 @@ function CorrespondenceView({
   useSupersets,
   relationEdges,
   enabledCategories,
+  hierarchySelections,
 }: {
   figures: Node[];
   onSelectNode: (node: Node | null) => void;
@@ -2868,6 +2869,7 @@ function CorrespondenceView({
   useSupersets?: Set<string>;
   relationEdges: RelationEdge[];
   enabledCategories?: Set<string>;
+  hierarchySelections?: Map<string, Set<string>>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawRef = useRef<(() => void) | null>(null);
@@ -2879,12 +2881,21 @@ function CorrespondenceView({
 
   const effectiveCaCats = useMemo(() => {
     if (caCategory !== "all") return new Set([caCategory]);
+    if (hierarchySelections && hierarchySelections.size > 0) {
+      const activeCatFields = [...hierarchySelections.entries()]
+        .filter(([, leafs]) => leafs.size > 0)
+        .map(([catField]) => HIERARCHY_CATEGORY_MAP[catField])
+        .filter(Boolean);
+      if (activeCatFields.length > 0) {
+        return new Set(activeCatFields);
+      }
+    }
     if (enabledCategories && enabledCategories.size > 0) {
       const allCats = new Set(TRAIT_FIELDS.map(f => f.category).concat(ARRAY_TRAIT_FIELDS.map(f => f.category)));
       if (enabledCategories.size < allCats.size) return enabledCategories;
     }
     return null;
-  }, [caCategory, enabledCategories]);
+  }, [caCategory, enabledCategories, hierarchySelections]);
 
   const effectiveCaLabel = useMemo(() => {
     if (!effectiveCaCats) return null;
@@ -5055,6 +5066,7 @@ export default function GraphPage() {
             useSupersets={activeSupersets}
             relationEdges={relationEdges}
             enabledCategories={enabledCategoriesSet}
+            hierarchySelections={hierarchySelections}
           />
         ) : viewMode === "dichotomy" ? (
           <DichotomyView
