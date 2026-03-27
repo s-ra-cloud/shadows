@@ -43,26 +43,33 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 - `users` - Admin users (username, password)
 
 ## Data Source
-- 1,131 mythological figures from curated database (JSON seed file)
+- 1,190+ mythological figures from curated database (JSON seed file + direct DB inserts)
   - 258 with normalized eventTypes, 387 with birthTypes, 60 with deathTypes
   - 83 with symbolism and archetype analysis
-  - 401 relationship edges (married_to, child_of, sibling_of, etc.)
+  - 450+ relationship edges (parent_of, child_of, sibling_of, married_to, trinity, adversary_of)
+  - Traditions: Greek, Egyptian, Norse, Hindu, Celtic (21 figures), Abrahamic, Canaanite, Gnostic, Phrygian, Balinese, Buddhist, and more
 - Seed runs automatically on startup if database is empty
 - Data file: data/mythology-database.json
 
 ## Graph Visualization
 - **Canvas-based** rendering for performance with 1000+ nodes
-- **Four view modes:**
+- **Five view modes:**
   - **Network** — Bipartite layout: character nodes + shared trait nodes (including eventTypes, birthTypes, deathTypes)
   - **Direct** — Characters only, connected by number of shared traits (line thickness = common traits count)
   - **Correspondence Analysis** — Interactive 3D scatter plot: D1/D2/D3 map to X/Y/Z spatial axes, D4 maps to color gradient (purple→green→white→yellow→red). Mouse drag to rotate, scroll to zoom. Perspective projection with depth-based sizing. Dimension labels computed from top-loading traits. Bottom-right panel shows all 4 dimensions with inertia % and trait poles + color bar.
   - **Dichotomy** — Recursive binary splits by exclusive traits using binary space partition layout (treemap-style). Cross-category trait pairs allowed. Coverage floor 10%, scoring: coverage²×10 + balance×0.2. Used traits blocked (not categories) across recursion levels.
+  - **Relations** — Dedicated 3D force-directed graph showing only characters connected by relationship edges. Nodes colored by tradition. Edges use semantic color gradient: Kinship (gold gradient: parent=#B8860B, child=#DAA520, sibling=#FFD700), Bond (married=#FF69B4), Spiritual (trinity=#9B59B6), Conflict (adversary=#DC143C). Curved edges for multi-relation pairs. Hover tooltip shows all relationships for a character. Grouped legend in bottom-right.
 - Character nodes uniform #E0DCE6, no tradition coloring
 - Trait nodes colored by category: gender, domain, object, animals, characterTrait, physicalCharacteristics, eventTypes (#E53935), birthTypes (#00BCD4), deathTypes (#B71C1C), familyRoles (#F48FB1), animalType (#FF8A65), objectType (#FFD700)
 - **Superset grouping** — "Group" toggle buttons on Animals and Object categories replace individual trait nodes (e.g. snake, eagle, sword) with superset categories (Mammals, Birds, Reptiles, Weapons, Armor & Protection, etc.). Unmapped items fall into "Other Animals"/"Other Objects". Supersets are defined in ANIMAL_SUPERSETS and OBJECT_SUPERSETS mappings. Works across all four view modes.
 - **Character selection** — Search and pick specific characters to display
 - **Min. connections slider** (1-10, default 2) — Controls minimum shared traits for trait nodes to appear in network view, and minimum connections for characters to appear in direct view
-- **Relationship edges** — Toggle-able color-coded lines showing family relationships between mythological figures across all 4 view modes. Types: Married To (#FF69B4 pink), Parent Of (#FFD700 gold), Child Of (#00CED1 teal), Sibling Of (#4DA6FF blue). Sidebar checkboxes with "Hide all / Show all" toggle. Canvas legend overlay shows active types. Uses refs for lightweight redraws (no simulation reset on toggle).
+- **Relationship edges** — Toggle-able color-coded lines showing relationships between mythological figures across all 5 view modes. 6 types grouped by semantic meaning:
+  - Kinship (gold gradient): Parent Of (#B8860B), Child Of (#DAA520), Sibling Of (#FFD700)
+  - Bond: Married To (#FF69B4)
+  - Spiritual: Trinity (#9B59B6) — for triple-deity groupings (e.g. Morrígna)
+  - Conflict: Adversary Of (#DC143C)
+  Sidebar checkboxes with "Hide all / Show all" toggle. Canvas legend overlay shows active types. Uses refs for lightweight redraws (no simulation reset on toggle).
 - Hover highlights connections, click opens detail panel
 - Zoom/pan with mouse, labels appear at zoom > 0.6x
 - Filters: attribute category checkboxes, search, character picker
