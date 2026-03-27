@@ -571,7 +571,7 @@ function getTraitsForFigure(fig: Node, enabledCategories?: Set<string>, useSuper
   });
 }
 
-function buildGraph(figures: Node[], minTraits = 3, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>, useSupersets?: Set<string>) {
+function buildGraph(figures: Node[], minTraits = 3, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>, useSupersets?: Set<string>, minTraitFrequency = 1) {
   const traitCounts = new Map<string, { label: string; category: string; count: number }>();
   const figureTraits = new Map<number, string[]>();
 
@@ -601,9 +601,10 @@ function buildGraph(figures: Node[], minTraits = 3, selectedCharacterIds?: Set<n
     if (traits.length >= minTraits) qualifiedFigureIds.add(fig.id);
   }
 
+  const effectiveMinFreq = Math.max(2, minTraitFrequency);
   const sharedTraits = new Map<string, { label: string; category: string; count: number }>();
   for (const [id, data] of traitCounts) {
-    if (data.count >= 2) {
+    if (data.count >= effectiveMinFreq) {
       sharedTraits.set(id, data);
     }
   }
@@ -4855,8 +4856,8 @@ export default function GraphPage() {
 
   const { graphNodes, graphLinks } = useMemo(() => {
     if (!effectiveNodes.length) return { graphNodes: [], graphLinks: [] };
-    return buildGraph(effectiveNodes, minTraits, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets);
-  }, [effectiveNodes, minTraits, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
+    return buildGraph(effectiveNodes, minTraits, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets, minTraitFrequency);
+  }, [effectiveNodes, minTraits, selectedCharacterIds, enabledCategoriesSet, activeSupersets, minTraitFrequency]);
 
   const { directNodes, directLinks } = useMemo(() => {
     if (!effectiveNodes.length) return { directNodes: [], directLinks: [] };
