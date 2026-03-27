@@ -80,9 +80,9 @@ const RELATION_TYPES = ["parent of", "child of", "sibling of", "married to", "tr
 type RelationType = typeof RELATION_TYPES[number];
 
 const RELATION_COLORS: Record<RelationType, string> = {
-  "parent of": "#4FC3F7",
-  "child of": "#81C784",
-  "sibling of": "#FFB74D",
+  "parent of": "#1565C0",
+  "child of": "#42A5F5",
+  "sibling of": "#B3E5FC",
   "married to": "#F06292",
   "trinity": "#CE93D8",
   "adversary of": "#EF5350",
