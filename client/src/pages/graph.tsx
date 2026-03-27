@@ -1370,6 +1370,7 @@ interface HierarchyTreeNode {
   children: HierarchyTreeNode[];
   isLeaf: boolean;
   leafTraits: string[];
+  figureCount: number;
 }
 
 const HIERARCHY_CATEGORY_MAP: Record<string, string> = {
@@ -1419,7 +1420,7 @@ function buildHierarchyTrees(items: HierarchyItem[]): Map<string, HierarchyTreeN
     for (const item of catItems) byId.set(item.id, item);
     const nodeMap = new Map<number, HierarchyTreeNode>();
     for (const item of catItems) {
-      nodeMap.set(item.id, { id: item.id, name: item.traitName, children: [], isLeaf: item.isLeaf === 1, leafTraits: [] });
+      nodeMap.set(item.id, { id: item.id, name: item.traitName, children: [], isLeaf: item.isLeaf === 1, leafTraits: [], figureCount: 0 });
     }
     const roots: HierarchyTreeNode[] = [];
     for (const item of catItems) {
@@ -1445,18 +1446,47 @@ function buildHierarchyTrees(items: HierarchyItem[]): Map<string, HierarchyTreeN
   return result;
 }
 
+function filterTreeByFrequency(nodes: HierarchyTreeNode[], minFreq: number): HierarchyTreeNode[] {
+  if (minFreq <= 1) return nodes;
+  const result: HierarchyTreeNode[] = [];
+  for (const node of nodes) {
+    if (node.isLeaf) {
+      if (node.figureCount >= minFreq) result.push(node);
+    } else {
+      const filteredChildren = filterTreeByFrequency(node.children, minFreq);
+      if (filteredChildren.length > 0) {
+        const filteredLeafTraits: string[] = [];
+        function collectLeafs(n: HierarchyTreeNode) {
+          if (n.isLeaf) filteredLeafTraits.push(n.name);
+          else for (const c of n.children) collectLeafs(c);
+        }
+        for (const c of filteredChildren) collectLeafs(c);
+        result.push({
+          ...node,
+          children: filteredChildren,
+          leafTraits: filteredLeafTraits,
+          figureCount: filteredChildren.reduce((s, c) => s + c.figureCount, 0),
+        });
+      }
+    }
+  }
+  return result;
+}
+
 function HierarchyTreePicker({
   categoryField,
   roots,
   selectedLeafs,
   onToggleNode,
   categoryColor,
+  minFrequency = 1,
 }: {
   categoryField: string;
   roots: HierarchyTreeNode[];
   selectedLeafs: Set<string>;
   onToggleNode: (categoryField: string, leafTraits: string[], checked: boolean) => void;
   categoryColor: string;
+  minFrequency?: number;
 }) {
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [sectionOpen, setSectionOpen] = useState(false);
@@ -1470,11 +1500,13 @@ function HierarchyTreePicker({
     });
   }, []);
 
+  const filteredRoots = useMemo(() => filterTreeByFrequency(roots, minFrequency), [roots, minFrequency]);
+
   const totalLeafs = useMemo(() => {
     const all: string[] = [];
-    for (const r of roots) all.push(...r.leafTraits);
+    for (const r of filteredRoots) all.push(...r.leafTraits);
     return all;
-  }, [roots]);
+  }, [filteredRoots]);
 
   const selectedCount = useMemo(() => {
     return totalLeafs.filter(l => selectedLeafs.has(l)).length;
@@ -1518,9 +1550,7 @@ function HierarchyTreePicker({
           >
             {node.name}
           </label>
-          {!node.isLeaf && (
-            <span className="text-[8px] text-shadows-text/25 ml-auto pr-1">{node.leafTraits.length}</span>
-          )}
+          <span className="text-[8px] text-shadows-text/25 ml-auto pr-1">{node.figureCount}</span>
         </div>
         {hasChildren && isExpanded && node.children.map(c => renderNode(c, depth + 1))}
       </div>
@@ -1559,7 +1589,7 @@ function HierarchyTreePicker({
               {totalLeafs.every(l => selectedLeafs.has(l)) ? "Clear all" : "Select all"}
             </button>
           </div>
-          {roots.map(r => renderNode(r, 0))}
+          {filteredRoots.map(r => renderNode(r, 0))}
         </div>
       )}
     </div>
@@ -1589,6 +1619,8 @@ function FilterSidebar({
   hierarchySelections,
   onToggleHierarchyNode,
   onClearHierarchyFilter,
+  minTraitFrequency,
+  onMinTraitFrequencyChange,
   enabledRelationTypes,
   onToggleRelationType,
   allTraditions,
@@ -1618,6 +1650,8 @@ function FilterSidebar({
   hierarchySelections: Map<string, Set<string>>;
   onToggleHierarchyNode: (categoryField: string, leafTraits: string[], checked: boolean) => void;
   onClearHierarchyFilter: () => void;
+  minTraitFrequency: number;
+  onMinTraitFrequencyChange: (val: number) => void;
   enabledRelationTypes: Set<RelationType>;
   onToggleRelationType: (rt: RelationType) => void;
   allTraditions: string[];
@@ -1783,6 +1817,19 @@ function FilterSidebar({
                     </button>
                   )}
                 </div>
+                <div className="flex items-center gap-2 mb-2 mt-1">
+                  <span className="text-[9px] text-shadows-text/40 whitespace-nowrap">Min. figures:</span>
+                  <Slider
+                    min={1}
+                    max={20}
+                    step={1}
+                    value={[minTraitFrequency]}
+                    onValueChange={([v]) => onMinTraitFrequencyChange(v)}
+                    className="flex-1"
+                    data-testid="slider-min-trait-frequency"
+                  />
+                  <span className="text-[9px] text-[#03FF9B] font-mono w-4 text-right" data-testid="text-min-trait-frequency">{minTraitFrequency}</span>
+                </div>
                 <div className="space-y-0.5">
                   {HIERARCHY_CATEGORY_ORDER.filter(cat => hierarchyTrees.has(cat)).map(catField => {
                     const roots = hierarchyTrees.get(catField)!;
@@ -1796,6 +1843,7 @@ function FilterSidebar({
                         selectedLeafs={hierarchySelections.get(catField) || new Set()}
                         onToggleNode={onToggleHierarchyNode}
                         categoryColor={color}
+                        minFrequency={minTraitFrequency}
                       />
                     );
                   })}
@@ -4547,6 +4595,7 @@ export default function GraphPage() {
   const [dichotomyDepth, setDichotomyDepth] = useState(1);
   const [dichotomyThreshold, setDichotomyThreshold] = useState(0.9);
   const [minTraits, setMinTraits] = useState(2);
+  const [minTraitFrequency, setMinTraitFrequency] = useState(1);
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<Set<number>>(new Set());
   const [characterSearch, setCharacterSearch] = useState("");
   const [enabledRelationTypes, setEnabledRelationTypes] = useState<Set<RelationType>>(new Set());
@@ -4625,7 +4674,56 @@ export default function GraphPage() {
       : buildHierarchyTrees(hierarchyData);
 
     if (data?.nodes) {
+      const CATEGORY_FIELD_TO_NODE_KEY_LOCAL: Record<string, { key: keyof Node; isArray: boolean; isSingle?: boolean }> = {
+        physical_characteristics: { key: "physicalCharacteristics", isArray: false },
+        object: { key: "object", isArray: false },
+        animals: { key: "animals", isArray: false },
+        domain: { key: "domain", isArray: false },
+        character_trait: { key: "characterTrait", isArray: false },
+        event_types: { key: "eventTypes", isArray: true },
+        death_types: { key: "deathTypes", isArray: true },
+        birth_types: { key: "birthTypes", isArray: true },
+        gender: { key: "gender", isArray: false, isSingle: true },
+      };
+
+      const traitFigureCounts = new Map<string, Map<string, number>>();
+      for (const [catField, mapping] of Object.entries(CATEGORY_FIELD_TO_NODE_KEY_LOCAL)) {
+        const counts = new Map<string, number>();
+        for (const node of data.nodes) {
+          let tokens: string[] = [];
+          if (mapping.isSingle) {
+            const val = node[mapping.key] as string | null;
+            if (val) tokens = [val.trim().toLowerCase()];
+          } else if (mapping.isArray) {
+            const arr = node[mapping.key] as string[] | null;
+            if (arr && Array.isArray(arr)) tokens = arr.map(t => t.trim().toLowerCase());
+          } else {
+            const val = node[mapping.key] as string | null;
+            if (val) tokens = val.split(/[,;]+/).map(t => t.trim().toLowerCase()).filter(t => t.length > 0);
+          }
+          for (const t of tokens) {
+            counts.set(t, (counts.get(t) || 0) + 1);
+          }
+        }
+        traitFigureCounts.set(catField, counts);
+      }
+
+      function assignFigureCounts(node: HierarchyTreeNode, catField: string) {
+        const counts = traitFigureCounts.get(catField);
+        if (node.isLeaf) {
+          node.figureCount = counts?.get(node.name.toLowerCase()) || 0;
+        } else {
+          for (const c of node.children) assignFigureCounts(c, catField);
+          node.figureCount = node.children.reduce((sum, c) => sum + c.figureCount, 0);
+        }
+      }
+
+      for (const [catField, roots] of trees) {
+        for (const root of roots) assignFigureCounts(root, catField);
+      }
+
       const genderValues = new Set<string>();
+      const genderCounts = traitFigureCounts.get("gender") || new Map<string, number>();
       for (const n of data.nodes) {
         if (n.gender) genderValues.add(n.gender.toLowerCase());
       }
@@ -4635,6 +4733,7 @@ export default function GraphPage() {
         children: [],
         isLeaf: true,
         leafTraits: [g],
+        figureCount: genderCounts.get(g) || 0,
       }));
       trees.set("gender", genderLeafs);
     }
@@ -5028,6 +5127,8 @@ export default function GraphPage() {
         hierarchySelections={hierarchySelections}
         onToggleHierarchyNode={toggleHierarchyNode}
         onClearHierarchyFilter={clearHierarchyFilter}
+        minTraitFrequency={minTraitFrequency}
+        onMinTraitFrequencyChange={setMinTraitFrequency}
         enabledRelationTypes={enabledRelationTypes}
         onToggleRelationType={toggleRelationType}
         allTraditions={allTraditions}
