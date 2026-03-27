@@ -899,13 +899,17 @@ interface CAResult {
   totalInertia: number;
 }
 
-function computeCorrespondenceAnalysis(figures: Node[], useSupersets?: Set<string>): CAResult {
-  const minShared = 3;
+function computeCorrespondenceAnalysis(figures: Node[], useSupersets?: Set<string>, caCategory?: string | null): CAResult {
+  const minShared = caCategory ? 2 : 3;
+  const minFigTraits = caCategory ? 1 : 2;
   const traitCounts = new Map<string, { label: string; category: string; count: number }>();
   const figTraitSets = new Map<number, Set<string>>();
 
+  const enabledCats = caCategory ? new Set([caCategory]) : undefined;
+
   for (const fig of figures) {
-    const traits = new Set(getTraitsForFigure(fig, undefined, useSupersets));
+    const traits = new Set(getTraitsForFigure(fig, enabledCats, useSupersets));
+    if (traits.size === 0) continue;
     figTraitSets.set(fig.id, traits);
     for (const traitId of traits) {
       const parts = traitId.split("::");
@@ -919,17 +923,18 @@ function computeCorrespondenceAnalysis(figures: Node[], useSupersets?: Set<strin
     .filter(([, d]) => d.count >= minShared)
     .map(([id]) => id);
 
-  const qualifiedFigs = figures.filter(fig => {
+  const figuresWithTraits = figures.filter(fig => figTraitSets.has(fig.id));
+  const qualifiedFigs = figuresWithTraits.filter(fig => {
     const traits = figTraitSets.get(fig.id);
     if (!traits) return false;
     let count = 0;
     for (const t of traits) {
       if ((traitCounts.get(t)?.count ?? 0) >= minShared) count++;
     }
-    return count >= 2;
+    return count >= minFigTraits;
   });
 
-  if (qualifiedFigs.length < 5 || sharedTraitIds.length < 5) return [];
+  if (qualifiedFigs.length < 5 || sharedTraitIds.length < 5) return { points: [], dimensions: [], totalInertia: 0 };
 
   const nRows = qualifiedFigs.length;
   const nCols = sharedTraitIds.length;
@@ -2833,6 +2838,19 @@ function d4ColorMap(t: number): string {
   }
 }
 
+const CA_CATEGORY_OPTIONS: { value: string; label: string }[] = [
+  { value: "all", label: "All Elements" },
+  { value: "domain", label: "Domain" },
+  { value: "characterTrait", label: "Character Traits" },
+  { value: "animals", label: "Animals" },
+  { value: "object", label: "Objects" },
+  { value: "physicalCharacteristics", label: "Physical Characteristics" },
+  { value: "eventTypes", label: "Event Types" },
+  { value: "birthTypes", label: "Birth Types" },
+  { value: "deathTypes", label: "Death Types" },
+  { value: "familyRoles", label: "Family Roles" },
+];
+
 function CorrespondenceView({
   figures,
   onSelectNode,
@@ -2854,8 +2872,9 @@ function CorrespondenceView({
   const relationEdgesRef = useRef(relationEdges);
   selectedNodeIdsRef.current = selectedNodeIds;
   relationEdgesRef.current = relationEdges;
+  const [caCategory, setCaCategory] = useState<string>("all");
 
-  const caResult = useMemo(() => computeCorrespondenceAnalysis(figures, useSupersets), [figures, useSupersets]);
+  const caResult = useMemo(() => computeCorrespondenceAnalysis(figures, useSupersets, caCategory === "all" ? null : caCategory), [figures, useSupersets, caCategory]);
   const { points: caPoints, dimensions: caDimensions } = caResult;
 
   useEffect(() => {
@@ -3217,9 +3236,22 @@ function CorrespondenceView({
   }, [selectedNodeIds, relationEdges]);
 
   if (caPoints.length === 0) {
+    const selectedLabel = CA_CATEGORY_OPTIONS.find(o => o.value === caCategory)?.label || "All Elements";
     return (
-      <div className="w-full h-full flex items-center justify-center">
-        <p className="text-shadows-text/40 text-sm" data-testid="text-ca-computing">Computing correspondence analysis...</p>
+      <div className="w-full h-full flex flex-col items-center justify-center gap-3">
+        <p className="text-shadows-text/40 text-sm" data-testid="text-ca-computing">
+          {caCategory === "all" ? "Computing correspondence analysis..." : `Not enough shared traits for "${selectedLabel}" analysis. Try a different category or add more figures.`}
+        </p>
+        <select
+          value={caCategory}
+          onChange={(e) => setCaCategory(e.target.value)}
+          className="bg-black/60 border border-white/10 rounded px-2 py-1 text-[10px] text-shadows-text/70 outline-none cursor-pointer hover:border-white/20"
+          data-testid="select-ca-category-fallback"
+        >
+          {CA_CATEGORY_OPTIONS.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
       </div>
     );
   }
@@ -3248,8 +3280,20 @@ function CorrespondenceView({
           )}
         </div>
       )}
-      <div className="absolute top-3 left-3 bg-black/40 rounded px-2 py-1 text-[9px] text-shadows-text/40" data-testid="text-ca-controls">
-        Drag to rotate · Scroll to zoom
+      <div className="absolute top-3 left-3 flex items-center gap-2" data-testid="panel-ca-controls">
+        <div className="bg-black/40 rounded px-2 py-1 text-[9px] text-shadows-text/40">
+          Drag to rotate · Scroll to zoom
+        </div>
+        <select
+          value={caCategory}
+          onChange={(e) => setCaCategory(e.target.value)}
+          className="bg-black/60 border border-white/10 rounded px-2 py-1 text-[9px] text-shadows-text/70 outline-none cursor-pointer hover:border-white/20"
+          data-testid="select-ca-category"
+        >
+          {CA_CATEGORY_OPTIONS.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
       </div>
     </div>
   );
