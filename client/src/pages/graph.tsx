@@ -899,13 +899,14 @@ interface CAResult {
   totalInertia: number;
 }
 
-function computeCorrespondenceAnalysis(figures: Node[], useSupersets?: Set<string>, caCategory?: string | null): CAResult {
-  const minShared = caCategory ? 2 : 3;
-  const minFigTraits = caCategory ? 1 : 2;
+function computeCorrespondenceAnalysis(figures: Node[], useSupersets?: Set<string>, caCats?: Set<string> | null): CAResult {
+  const isSingleCat = caCats && caCats.size === 1;
+  const minShared = isSingleCat ? 2 : 3;
+  const minFigTraits = isSingleCat ? 1 : 2;
   const traitCounts = new Map<string, { label: string; category: string; count: number }>();
   const figTraitSets = new Map<number, Set<string>>();
 
-  const enabledCats = caCategory ? new Set([caCategory]) : undefined;
+  const enabledCats = caCats && caCats.size > 0 ? caCats : undefined;
 
   for (const fig of figures) {
     const traits = new Set(getTraitsForFigure(fig, enabledCats, useSupersets));
@@ -2858,6 +2859,7 @@ function CorrespondenceView({
   selectedNodeIds,
   useSupersets,
   relationEdges,
+  enabledCategories,
 }: {
   figures: Node[];
   onSelectNode: (node: Node | null) => void;
@@ -2865,6 +2867,7 @@ function CorrespondenceView({
   selectedNodeIds: Set<number>;
   useSupersets?: Set<string>;
   relationEdges: RelationEdge[];
+  enabledCategories?: Set<string>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawRef = useRef<(() => void) | null>(null);
@@ -2874,7 +2877,25 @@ function CorrespondenceView({
   relationEdgesRef.current = relationEdges;
   const [caCategory, setCaCategory] = useState<string>("all");
 
-  const caResult = useMemo(() => computeCorrespondenceAnalysis(figures, useSupersets, caCategory === "all" ? null : caCategory), [figures, useSupersets, caCategory]);
+  const effectiveCaCats = useMemo(() => {
+    if (caCategory !== "all") return new Set([caCategory]);
+    if (enabledCategories && enabledCategories.size > 0) {
+      const allCats = new Set(TRAIT_FIELDS.map(f => f.category).concat(ARRAY_TRAIT_FIELDS.map(f => f.category)));
+      if (enabledCategories.size < allCats.size) return enabledCategories;
+    }
+    return null;
+  }, [caCategory, enabledCategories]);
+
+  const effectiveCaLabel = useMemo(() => {
+    if (!effectiveCaCats) return null;
+    if (effectiveCaCats.size === 1) {
+      const cat = [...effectiveCaCats][0];
+      return CA_CATEGORY_OPTIONS.find(o => o.value === cat)?.label || cat;
+    }
+    return `${effectiveCaCats.size} categories`;
+  }, [effectiveCaCats]);
+
+  const caResult = useMemo(() => computeCorrespondenceAnalysis(figures, useSupersets, effectiveCaCats), [figures, useSupersets, effectiveCaCats]);
   const { points: caPoints, dimensions: caDimensions } = caResult;
 
   useEffect(() => {
@@ -3236,11 +3257,12 @@ function CorrespondenceView({
   }, [selectedNodeIds, relationEdges]);
 
   if (caPoints.length === 0) {
-    const selectedLabel = CA_CATEGORY_OPTIONS.find(o => o.value === caCategory)?.label || "All Elements";
     return (
       <div className="w-full h-full flex flex-col items-center justify-center gap-3">
         <p className="text-shadows-text/40 text-sm" data-testid="text-ca-computing">
-          {caCategory === "all" ? "Computing correspondence analysis..." : `Not enough shared traits for "${selectedLabel}" analysis. Try a different category or add more figures.`}
+          {effectiveCaLabel
+            ? `Not enough shared traits for "${effectiveCaLabel}" analysis. Try a different category or add more figures.`
+            : "Computing correspondence analysis..."}
         </p>
         <select
           value={caCategory}
@@ -3261,7 +3283,10 @@ function CorrespondenceView({
       <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-ca" />
       {caDimensions.length > 0 && (
         <div className="absolute bottom-3 right-3 bg-black/60 rounded-lg border border-white/10 p-2 max-w-[260px]" data-testid="panel-ca-dimensions">
-          <div className="text-[8px] text-shadows-text/40 uppercase tracking-wider mb-1">Axes → Spatial (D1–D3) · Color (D4)</div>
+          <div className="text-[8px] text-shadows-text/40 uppercase tracking-wider mb-1">
+            {effectiveCaLabel ? `${effectiveCaLabel} · ` : ""}
+            Axes → Spatial (D1–D3) · Color (D4)
+          </div>
           {caDimensions.map(dim => (
             <div key={dim.index} className="text-[9px] text-shadows-text/60 mb-0.5 leading-tight" data-testid={`text-ca-dim-${dim.index}`}>
               <span className="text-shadows-text/80 font-medium">D{dim.index}</span>
@@ -5029,6 +5054,7 @@ export default function GraphPage() {
             selectedNodeIds={selectedNodeIds}
             useSupersets={activeSupersets}
             relationEdges={relationEdges}
+            enabledCategories={enabledCategoriesSet}
           />
         ) : viewMode === "dichotomy" ? (
           <DichotomyView
