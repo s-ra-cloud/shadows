@@ -83,8 +83,8 @@ const RELATION_COLORS: Record<RelationType, string> = {
   "parent of": "#1565C0",
   "child of": "#42A5F5",
   "sibling of": "#B3E5FC",
-  "married to": "#F06292",
-  "trinity": "#CE93D8",
+  "married to": "#FF80AB",
+  "trinity": "#FFD600",
   "adversary of": "#EF5350",
 };
 
