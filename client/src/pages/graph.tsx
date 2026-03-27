@@ -3707,17 +3707,28 @@ function RelationsView({
   const drawRef = useRef<(() => void) | null>(null);
   const selectedNodeIdsRef = useRef(selectedNodeIds);
   selectedNodeIdsRef.current = selectedNodeIds;
+  const [relFilters, setRelFilters] = useState<Set<RelationType>>(() => new Set(RELATION_TYPES));
+  const relFiltersRef = useRef(relFilters);
+  relFiltersRef.current = relFilters;
+
+  const toggleRelFilter = useCallback((rt: RelationType) => {
+    setRelFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(rt)) next.delete(rt); else next.add(rt);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    const relEdges = edges.filter(e => RELATION_TYPES.includes(e.relationType as RelationType));
-    const connectedNodeIds = new Set<number>();
-    for (const e of relEdges) {
-      connectedNodeIds.add(e.sourceNodeId);
-      connectedNodeIds.add(e.targetNodeId);
+    const allRelEdges = edges.filter(e => RELATION_TYPES.includes(e.relationType as RelationType));
+    const allConnectedIds = new Set<number>();
+    for (const e of allRelEdges) {
+      allConnectedIds.add(e.sourceNodeId);
+      allConnectedIds.add(e.targetNodeId);
     }
-    const relNodes = nodes.filter(n => connectedNodeIds.has(n.id));
+    const relNodes = nodes.filter(n => allConnectedIds.has(n.id));
     if (relNodes.length === 0) return;
 
     const canvas = canvasRef.current;
@@ -3736,7 +3747,7 @@ function RelationsView({
     canvas.style.height = height + "px";
     ctx.scale(dpr, dpr);
 
-    const spread = Math.min(width, height) * 0.3;
+    const spread = Math.min(width, height) * 0.4;
     const simNodes = relNodes.map(n => ({
       id: `fig-${n.id}`,
       label: n.name,
@@ -3744,74 +3755,67 @@ function RelationsView({
       tradition: n.tradition,
       x: (Math.random() - 0.5) * spread,
       y: (Math.random() - 0.5) * spread,
-      z: (Math.random() - 0.5) * spread,
     }));
     const simNodeMap = new Map<string, any>();
     simNodes.forEach(n => simNodeMap.set(n.id, n));
 
-    const simEdges = relEdges.map(e => ({
+    const allSimEdges = allRelEdges.map(e => ({
       source: simNodeMap.get(`fig-${e.sourceNodeId}`),
       target: simNodeMap.get(`fig-${e.targetNodeId}`),
       relationType: e.relationType as RelationType,
     })).filter(e => e.source && e.target);
 
-    const deduped = new Map<string, typeof simEdges[0]>();
-    for (const e of simEdges) {
+    const deduped = new Map<string, typeof allSimEdges[0]>();
+    for (const e of allSimEdges) {
       const key = [e.source.id, e.target.id].sort().join("|") + "|" + e.relationType;
       if (!deduped.has(key)) deduped.set(key, e);
     }
-    const uniqueEdges = Array.from(deduped.values());
+    const allUniqueEdges = Array.from(deduped.values());
 
     const nodeCount = simNodes.length;
-    const baseDist = nodeCount > 100 ? 80 : nodeCount > 50 ? 110 : 140;
+    const baseDist = nodeCount > 200 ? 120 : nodeCount > 100 ? 160 : nodeCount > 50 ? 200 : 250;
 
-    for (let iter = 0; iter < 600; iter++) {
-      const alpha = Math.max(0.001, 1 - iter / 600);
+    for (let iter = 0; iter < 800; iter++) {
+      const alpha = Math.max(0.001, 1 - iter / 800);
       for (let i = 0; i < simNodes.length; i++) {
         for (let j = i + 1; j < simNodes.length; j++) {
           const a = simNodes[i], b = simNodes[j];
-          let dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
-          let dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-          const repulse = (nodeCount > 100 ? -100 : nodeCount > 50 ? -200 : -350) * alpha / (dist * dist);
-          const fx = dx / dist * repulse, fy = dy / dist * repulse, fz = dz / dist * repulse;
-          a.x += fx; a.y += fy; a.z += fz;
-          b.x -= fx; b.y -= fy; b.z -= fz;
+          let dx = b.x - a.x, dy = b.y - a.y;
+          let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          const repulse = (nodeCount > 200 ? -300 : nodeCount > 100 ? -500 : nodeCount > 50 ? -800 : -1200) * alpha / (dist * dist);
+          const fx = dx / dist * repulse, fy = dy / dist * repulse;
+          a.x += fx; a.y += fy;
+          b.x -= fx; b.y -= fy;
         }
       }
-      for (const e of uniqueEdges) {
+      for (const e of allUniqueEdges) {
         const a = e.source, b = e.target;
-        let dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
-        let dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-        const strength = 0.15 * alpha;
+        let dx = b.x - a.x, dy = b.y - a.y;
+        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const strength = 0.08 * alpha;
         const delta = (dist - baseDist) * strength * 0.5;
-        const ux = dx / dist, uy = dy / dist, uz = dz / dist;
-        a.x += ux * delta; a.y += uy * delta; a.z += uz * delta;
-        b.x -= ux * delta; b.y -= uy * delta; b.z -= uz * delta;
+        const ux = dx / dist, uy = dy / dist;
+        a.x += ux * delta; a.y += uy * delta;
+        b.x -= ux * delta; b.y -= uy * delta;
       }
       for (const n of simNodes) {
-        n.x *= 0.998; n.y *= 0.998; n.z *= 0.998;
+        n.x *= 0.999; n.y *= 0.999;
       }
     }
 
-    let rotX = -0.3, rotY = 0.5;
+    let panX = 0, panY = 0;
     let zoom = 1;
     let isDragging = false;
     let lastMx = 0, lastMy = 0;
     let currentHovered: { node: any; sx: number; sy: number } | null = null;
+    let screenNodes: { sx: number; sy: number; node: any }[] = [];
 
-    function project(x3: number, y3: number, z3: number) {
-      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
-      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
-      let y1 = y3 * cosX - z3 * sinX;
-      let z1 = y3 * sinX + z3 * cosX;
-      let x1 = x3 * cosY + z1 * sinY;
-      let z2 = -x3 * sinY + z1 * cosY;
-      const perspective = 800;
-      const scale = perspective / (perspective + z2) * zoom;
-      return { sx: width / 2 + x1 * scale, sy: height / 2 + y1 * scale, z: z2, scale };
+    function toScreen(x: number, y: number) {
+      return {
+        sx: width / 2 + (x + panX) * zoom,
+        sy: height / 2 + (y + panY) * zoom,
+      };
     }
-
-    let projectedNodes: { sx: number; sy: number; z: number; scale: number; node: any }[] = [];
 
     function draw() {
       ctx.save();
@@ -3822,6 +3826,15 @@ function RelationsView({
       grad.addColorStop(1, "#0C0042");
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
+
+      const activeFilters = relFiltersRef.current;
+      const visibleEdges = allUniqueEdges.filter(e => activeFilters.has(e.relationType));
+
+      const visibleNodeIds = new Set<string>();
+      for (const e of visibleEdges) {
+        visibleNodeIds.add(e.source.id);
+        visibleNodeIds.add(e.target.id);
+      }
 
       const selIds = selectedNodeIdsRef.current;
       const hasSelection = selIds.size > 0;
@@ -3835,7 +3848,7 @@ function RelationsView({
       const hoveredId = currentHovered?.node?.id;
       const connectedIds = new Set<string>();
       if (hoveredId) {
-        for (const e of uniqueEdges) {
+        for (const e of visibleEdges) {
           if (e.source.id === hoveredId || e.target.id === hoveredId) {
             connectedIds.add(e.source.id);
             connectedIds.add(e.target.id);
@@ -3843,24 +3856,26 @@ function RelationsView({
         }
       }
       if (hasSelection) {
-        for (const e of uniqueEdges) {
+        for (const e of visibleEdges) {
           if (selectedSimIds.has(e.source.id)) connectedIds.add(e.target.id);
           if (selectedSimIds.has(e.target.id)) connectedIds.add(e.source.id);
         }
       }
       const anyActive = !!hoveredId || hasSelection;
 
-      projectedNodes = simNodes.map(n => {
-        const p = project(n.x, n.y, n.z);
-        return { ...p, node: n };
-      });
-      const nodeScreenMap = new Map<string, { sx: number; sy: number; z: number; scale: number }>();
-      for (const pn of projectedNodes) {
-        nodeScreenMap.set(pn.node.id, pn);
+      screenNodes = simNodes
+        .filter(n => visibleNodeIds.has(n.id))
+        .map(n => {
+          const s = toScreen(n.x, n.y);
+          return { ...s, node: n };
+        });
+      const nodeScreenMap = new Map<string, { sx: number; sy: number }>();
+      for (const sn of screenNodes) {
+        nodeScreenMap.set(sn.node.id, sn);
       }
 
-      const edgesByPair = new Map<string, typeof uniqueEdges>();
-      for (const e of uniqueEdges) {
+      const edgesByPair = new Map<string, typeof visibleEdges>();
+      for (const e of visibleEdges) {
         const pairKey = [e.source.id, e.target.id].sort().join("|");
         if (!edgesByPair.has(pairKey)) edgesByPair.set(pairKey, []);
         edgesByPair.get(pairKey)!.push(e);
@@ -3875,8 +3890,6 @@ function RelationsView({
 
           const isHighlighted = (hoveredId && (e.source.id === hoveredId || e.target.id === hoveredId)) ||
             (hasSelection && (selectedSimIds.has(e.source.id) || selectedSimIds.has(e.target.id)));
-
-          const color = RELATION_COLORS[e.relationType];
 
           ctx.beginPath();
           if (count > 1) {
@@ -3893,95 +3906,94 @@ function RelationsView({
             ctx.lineTo(tp.sx, tp.sy);
           }
 
-          ctx.strokeStyle = color;
-          ctx.globalAlpha = isHighlighted ? 0.85 : anyActive ? 0.08 : 0.45;
-          ctx.lineWidth = isHighlighted ? 3.5 : 2;
+          ctx.strokeStyle = RELATION_COLORS[e.relationType];
+          ctx.globalAlpha = isHighlighted ? 0.85 : anyActive ? 0.06 : 0.4;
+          ctx.lineWidth = isHighlighted ? 2.5 : 1.2;
           ctx.stroke();
 
-          if (isHighlighted && count <= 3) {
+          if (isHighlighted && count <= 4) {
             const midX = count > 1
               ? (sp.sx + tp.sx) / 2 + (-((tp.sy - sp.sy) / (Math.sqrt((tp.sx-sp.sx)**2+(tp.sy-sp.sy)**2)||1))) * ((idx - (count-1)/2) * 8) * 3
               : (sp.sx + tp.sx) / 2;
             const midY = count > 1
               ? (sp.sy + tp.sy) / 2 + (((tp.sx - sp.sx) / (Math.sqrt((tp.sx-sp.sx)**2+(tp.sy-sp.sy)**2)||1))) * ((idx - (count-1)/2) * 8) * 3
               : (sp.sy + tp.sy) / 2;
-            ctx.font = "9px 'Sofia Pro Light', sans-serif";
-            ctx.fillStyle = color;
-            ctx.globalAlpha = 0.9;
+            ctx.font = "8px 'Sofia Pro Light', sans-serif";
+            ctx.fillStyle = RELATION_COLORS[e.relationType];
+            ctx.globalAlpha = 0.85;
             ctx.textAlign = "center";
-            ctx.fillText(RELATION_LABELS[e.relationType], midX, midY - 4);
+            ctx.fillText(RELATION_LABELS[e.relationType], midX, midY - 3);
           }
         });
       }
 
-      projectedNodes.sort((a, b) => b.z - a.z);
-
-      for (const pn of projectedNodes) {
-        const n = pn.node;
+      for (const sn of screenNodes) {
+        const n = sn.node;
         const isHovered = n.id === hoveredId;
         const isSelected = n.original && selIds.has(n.original.id);
         const isConnected = connectedIds.has(n.id);
         const dimmed = anyActive && !isHovered && !isSelected && !isConnected;
 
         const tradColor = TRADITION_COLORS[n.tradition] || "#E0DCE6";
-        const baseR = 4 + pn.scale * 4;
-        const r = isHovered ? baseR + 3 : isSelected ? baseR + 2 : baseR;
+        const baseR = 2.5 * zoom;
+        const r = isHovered ? baseR + 2 : isSelected ? baseR + 1.5 : Math.max(1.5, baseR);
 
         ctx.beginPath();
-        ctx.arc(pn.sx, pn.sy, r, 0, Math.PI * 2);
+        ctx.arc(sn.sx, sn.sy, r, 0, Math.PI * 2);
         ctx.fillStyle = tradColor;
         ctx.globalAlpha = dimmed ? 0.08 : 0.9;
         ctx.fill();
 
         if (isSelected) {
           ctx.strokeStyle = "#FFD700";
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 1.5;
           ctx.globalAlpha = 0.9;
           ctx.stroke();
         } else if (isHovered || isConnected) {
           ctx.strokeStyle = isHovered ? "#03FF9B" : "#8F00FF";
-          ctx.lineWidth = isHovered ? 2 : 1.5;
+          ctx.lineWidth = isHovered ? 1.5 : 1;
           ctx.globalAlpha = 0.7;
           ctx.stroke();
         }
 
+        const fontSize = isHovered || isSelected ? 10 : Math.max(7, 8 * zoom);
         if (!dimmed || isSelected) {
-          ctx.font = (isHovered || isSelected) ? "bold 11px 'Cinzel Decorative', serif" : `${Math.max(8, 10 * pn.scale)}px 'Cinzel Decorative', serif`;
+          ctx.font = (isHovered || isSelected) ? `bold ${fontSize}px 'Cinzel Decorative', serif` : `${fontSize}px 'Cinzel Decorative', serif`;
           ctx.fillStyle = isSelected ? "#FFD700" : "#E0DCE6";
-          ctx.globalAlpha = (isHovered || isSelected) ? 1 : isConnected ? 0.9 : 0.6 * pn.scale;
+          ctx.globalAlpha = (isHovered || isSelected) ? 1 : isConnected ? 0.85 : zoom > 0.6 ? 0.55 : 0;
           ctx.textAlign = "center";
-          ctx.fillText(n.label, pn.sx, pn.sy - r - 5);
+          ctx.fillText(n.label, sn.sx, sn.sy - r - 3);
         }
       }
 
       if (currentHovered) {
         const hn = currentHovered.node;
-        const connEdges = uniqueEdges.filter(e => e.source.id === hn.id || e.target.id === hn.id);
+        const connEdges = visibleEdges.filter(e => e.source.id === hn.id || e.target.id === hn.id);
         if (connEdges.length > 0) {
           const tooltipLines = connEdges.map(e => {
             const other = e.source.id === hn.id ? e.target : e.source;
             return `${RELATION_LABELS[e.relationType]} → ${other.label}`;
           });
 
-          ctx.font = "bold 11px 'Cinzel Decorative', serif";
+          ctx.font = "bold 10px 'Cinzel Decorative', serif";
           const titleW = ctx.measureText(hn.label).width;
-          ctx.font = "10px 'Sofia Pro Light', sans-serif";
+          ctx.font = "9px 'Sofia Pro Light', sans-serif";
           const lineWidths = tooltipLines.map(l => ctx.measureText(l).width);
-          const boxW = Math.max(titleW, ...lineWidths) + 24;
-          const lineH = 16;
-          const boxH = 30 + tooltipLines.length * lineH;
+          const boxW = Math.max(titleW, ...lineWidths) + 20;
+          const lineH = 14;
+          const boxH = 26 + tooltipLines.length * lineH;
 
           let bx = currentHovered.sx - boxW / 2;
-          let by = currentHovered.sy - boxH - 20;
+          let by = currentHovered.sy - boxH - 16;
           if (bx < 4) bx = 4;
           if (bx + boxW > width - 4) bx = width - boxW - 4;
-          if (by < 4) by = currentHovered.sy + 20;
+          if (by < 4) by = currentHovered.sy + 16;
 
           ctx.globalAlpha = 0.92;
           ctx.fillStyle = "#0B0626";
           ctx.strokeStyle = "#350A8C";
           ctx.lineWidth = 1;
-          const cr = 6;
+          const cr = 5;
           ctx.beginPath();
           ctx.moveTo(bx + cr, by);
           ctx.lineTo(bx + boxW - cr, by);
@@ -3997,16 +4009,16 @@ function RelationsView({
           ctx.stroke();
 
           ctx.globalAlpha = 1;
-          ctx.font = "bold 11px 'Cinzel Decorative', serif";
+          ctx.font = "bold 10px 'Cinzel Decorative', serif";
           ctx.fillStyle = "#E0DCE6";
           ctx.textAlign = "left";
-          ctx.fillText(hn.label, bx + 12, by + 18);
+          ctx.fillText(hn.label, bx + 10, by + 16);
 
-          ctx.font = "10px 'Sofia Pro Light', sans-serif";
+          ctx.font = "9px 'Sofia Pro Light', sans-serif";
           tooltipLines.forEach((line, i) => {
             const relType = connEdges[i].relationType;
             ctx.fillStyle = RELATION_COLORS[relType];
-            ctx.fillText(line, bx + 12, by + 34 + i * lineH);
+            ctx.fillText(line, bx + 10, by + 30 + i * lineH);
           });
         }
       }
@@ -4031,8 +4043,8 @@ function RelationsView({
       if (isDragging) {
         const dx = ev.clientX - lastMx;
         const dy = ev.clientY - lastMy;
-        rotY += dx * 0.005;
-        rotX += dy * 0.005;
+        panX += dx / zoom;
+        panY += dy / zoom;
         lastMx = ev.clientX;
         lastMy = ev.clientY;
         draw();
@@ -4040,12 +4052,12 @@ function RelationsView({
       }
 
       let nearest: any = null;
-      let nearestDist = 20;
-      for (const pn of projectedNodes) {
-        const dx2 = pn.sx - mx, dy2 = pn.sy - my;
+      let nearestDist = 15;
+      for (const sn of screenNodes) {
+        const dx2 = sn.sx - mx, dy2 = sn.sy - my;
         const d = Math.sqrt(dx2 * dx2 + dy2 * dy2);
         if (d < nearestDist) {
-          nearest = pn;
+          nearest = sn;
           nearestDist = d;
         }
       }
@@ -4061,15 +4073,23 @@ function RelationsView({
       }
       draw();
     };
-    const handleClick = (ev: MouseEvent) => {
+    const handleClick = () => {
       if (currentHovered) {
         onSelectNode(currentHovered.node.original);
       }
     };
     const handleWheel = (ev: WheelEvent) => {
       ev.preventDefault();
-      zoom *= ev.deltaY > 0 ? 0.93 : 1.07;
-      zoom = Math.max(0.2, Math.min(5, zoom));
+      const rect = canvas.getBoundingClientRect();
+      const mx = ev.clientX - rect.left;
+      const my = ev.clientY - rect.top;
+      const wx = (mx - width / 2) / zoom - panX;
+      const wy = (my - height / 2) / zoom - panY;
+      const oldZoom = zoom;
+      zoom *= ev.deltaY > 0 ? 0.92 : 1.08;
+      zoom = Math.max(0.1, Math.min(10, zoom));
+      panX -= wx * (1 / oldZoom - 1 / zoom) * (zoom - oldZoom);
+      panY -= wy * (1 / oldZoom - 1 / zoom) * (zoom - oldZoom);
       draw();
     };
 
@@ -4090,9 +4110,45 @@ function RelationsView({
 
   useEffect(() => {
     if (drawRef.current) drawRef.current();
-  }, [selectedNodeIds]);
+  }, [selectedNodeIds, relFilters]);
 
-  return <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-relations-view" />;
+  return (
+    <div className="w-full h-full relative">
+      <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-relations-view" />
+      <div className="absolute top-4 right-4 z-20 bg-[#0B0626]/80 backdrop-blur-xl border border-[#350A8C]/30 rounded-md p-3 space-y-2" data-testid="relations-filter-panel">
+        <div className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-1">Filter Relations</div>
+        <div className="flex items-center gap-1 mb-1">
+          <button
+            className="text-[9px] text-shadows-text/40 hover:text-shadows-text/70 transition-colors"
+            onClick={() => {
+              const allEnabled = RELATION_TYPES.every(rt => relFilters.has(rt));
+              setRelFilters(allEnabled ? new Set() : new Set(RELATION_TYPES));
+            }}
+            data-testid="button-relations-toggle-all"
+          >
+            {RELATION_TYPES.every(rt => relFilters.has(rt)) ? "Hide all" : "Show all"}
+          </button>
+        </div>
+        {Object.entries(RELATION_GROUPS).map(([groupKey, types]) => (
+          <div key={groupKey} className="space-y-0.5">
+            <div className="text-[9px] text-white/25 uppercase tracking-wider">{RELATION_GROUP_LABELS[groupKey]}</div>
+            {types.map(rt => (
+              <label key={rt} className="flex items-center gap-2 cursor-pointer py-0.5">
+                <Checkbox
+                  checked={relFilters.has(rt)}
+                  onCheckedChange={() => toggleRelFilter(rt)}
+                  className="h-3 w-3 border-white/20"
+                  data-testid={`checkbox-rel-${rt.replace(/\s/g, "-")}`}
+                />
+                <span className="w-3 h-[2px] inline-block rounded" style={{ backgroundColor: RELATION_COLORS[rt] }} />
+                <span className="text-[10px] text-white/60">{RELATION_LABELS[rt]}</span>
+              </label>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function GraphPage() {
