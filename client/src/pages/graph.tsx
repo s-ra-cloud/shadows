@@ -80,12 +80,12 @@ const RELATION_TYPES = ["parent of", "child of", "sibling of", "married to", "tr
 type RelationType = typeof RELATION_TYPES[number];
 
 const RELATION_COLORS: Record<RelationType, string> = {
-  "parent of": "#B8860B",
-  "child of": "#DAA520",
-  "sibling of": "#FFD700",
-  "married to": "#FF69B4",
-  "trinity": "#9B59B6",
-  "adversary of": "#DC143C",
+  "parent of": "#4FC3F7",
+  "child of": "#81C784",
+  "sibling of": "#FFB74D",
+  "married to": "#F06292",
+  "trinity": "#CE93D8",
+  "adversary of": "#EF5350",
 };
 
 const RELATION_LABELS: Record<RelationType, string> = {
@@ -4066,6 +4066,75 @@ function RelationsView({
           ctx.globalAlpha = (isHovered || isSelected) ? 1 : isConnected ? 0.85 : zoom > 0.6 ? 0.55 : 0;
           ctx.textAlign = "center";
           ctx.fillText(n.label, sn.sx, sn.sy - r - 3);
+        }
+      }
+
+      if (activeFilters.has("trinity")) {
+        const trinityEdges = visibleEdges.filter(e => e.relationType === "trinity");
+        if (trinityEdges.length > 0) {
+          const trinityNodeIds = new Set<string>();
+          for (const e of trinityEdges) {
+            trinityNodeIds.add(e.source.id);
+            trinityNodeIds.add(e.target.id);
+          }
+          const trinityParent = new Map<string, string>();
+          for (const id of trinityNodeIds) trinityParent.set(id, id);
+          function tFind(x: string): string {
+            while (trinityParent.get(x) !== x) { trinityParent.set(x, trinityParent.get(trinityParent.get(x)!)!); x = trinityParent.get(x)!; }
+            return x;
+          }
+          for (const e of trinityEdges) {
+            const ra = tFind(e.source.id), rb = tFind(e.target.id);
+            if (ra !== rb) trinityParent.set(ra, rb);
+          }
+          const trinityGroups = new Map<string, string[]>();
+          for (const id of trinityNodeIds) {
+            const root = tFind(id);
+            if (!trinityGroups.has(root)) trinityGroups.set(root, []);
+            trinityGroups.get(root)!.push(id);
+          }
+
+          const TRINITY_NAMES: Record<string, string> = {};
+          for (const sn of screenNodes) {
+            const name = sn.node.label?.toLowerCase() || "";
+            if (name === "badb" || name === "macha" || name === "nemain") {
+              const root = tFind(sn.node.id);
+              TRINITY_NAMES[root] = "The Morrígán";
+            }
+          }
+
+          for (const [root, memberIds] of trinityGroups) {
+            const memberScreens = screenNodes.filter(sn => memberIds.includes(sn.node.id));
+            if (memberScreens.length < 2) continue;
+
+            let cx = 0, cy = 0;
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            for (const ms of memberScreens) {
+              cx += ms.sx; cy += ms.sy;
+              minX = Math.min(minX, ms.sx); minY = Math.min(minY, ms.sy);
+              maxX = Math.max(maxX, ms.sx); maxY = Math.max(maxY, ms.sy);
+            }
+            cx /= memberScreens.length;
+            cy /= memberScreens.length;
+
+            const pad = 25 * zoom;
+            ctx.beginPath();
+            ctx.ellipse(cx, cy, (maxX - minX) / 2 + pad, (maxY - minY) / 2 + pad, 0, 0, Math.PI * 2);
+            ctx.strokeStyle = RELATION_COLORS["trinity"];
+            ctx.globalAlpha = 0.25;
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            const groupName = TRINITY_NAMES[root] || "Trinity";
+            const labelSize = Math.max(9, 11 * zoom);
+            ctx.font = `italic ${labelSize}px 'Cinzel Decorative', serif`;
+            ctx.fillStyle = RELATION_COLORS["trinity"];
+            ctx.globalAlpha = anyActive ? 0.15 : 0.55;
+            ctx.textAlign = "center";
+            ctx.fillText(groupName, cx, minY - pad - 4);
+          }
         }
       }
 
