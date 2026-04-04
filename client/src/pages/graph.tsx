@@ -3093,13 +3093,7 @@ function CorrespondenceView({
 
         let color: string;
         if (p.isCharacter) {
-          if (hasD4) {
-            const d4val = p.coords[3] || 0;
-            const d4norm = (d4val / bounds[3] + 1) / 2;
-            color = d4ColorMap(d4norm);
-          } else {
-            color = "#E0DCE6";
-          }
+          color = TRADITION_COLORS[p.tradition || ""] || "#E0DCE6";
         } else {
           color = CATEGORY_COLORS[p.category || ""] || "#8F00FF";
         }
@@ -3220,13 +3214,7 @@ function CorrespondenceView({
         const [sx, sy, z] = project(nx, ny, nz);
         let color: string;
         if (p.isCharacter) {
-          if (hasD4) {
-            const d4val = p.coords[3] || 0;
-            const d4norm = (d4val / bounds[3] + 1) / 2;
-            color = d4ColorMap(d4norm);
-          } else {
-            color = "#E0DCE6";
-          }
+          color = TRADITION_COLORS[p.tradition || ""] || "#E0DCE6";
         } else {
           color = CATEGORY_COLORS[p.category || ""] || "#8F00FF";
         }
@@ -3350,27 +3338,32 @@ function CorrespondenceView({
     <div className="w-full h-full relative">
       <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-ca" />
       {caDimensions.length > 0 && (
-        <div className="absolute bottom-3 right-3 bg-black/60 rounded-lg border border-white/10 p-2 max-w-[260px]" data-testid="panel-ca-dimensions">
+        <div className="absolute bottom-3 right-3 bg-black/60 rounded-lg border border-white/10 p-2 max-w-[280px]" data-testid="panel-ca-dimensions">
           <div className="text-[8px] text-shadows-text/40 uppercase tracking-wider mb-1">
             {effectiveCaLabel ? `${effectiveCaLabel} · ` : ""}
-            Axes → Spatial (D1–D3) · Color (D4)
+            Axes → Spatial (D1–D3) · Color = Tradition
           </div>
-          {caDimensions.map(dim => (
+          {caDimensions.slice(0, 3).map(dim => (
             <div key={dim.index} className="text-[9px] text-shadows-text/60 mb-0.5 leading-tight" data-testid={`text-ca-dim-${dim.index}`}>
               <span className="text-shadows-text/80 font-medium">D{dim.index}</span>
               <span className="text-shadows-text/40"> ({dim.inertia.toFixed(1)}%)</span>
               <span className="text-shadows-text/50"> {dim.negTraits[0]} ↔ {dim.posTraits[0]}</span>
-              {dim.index <= 3 && <span className="text-shadows-text/30 ml-1">[{dim.index === 1 ? 'X' : dim.index === 2 ? 'Y' : 'Z'}]</span>}
-              {dim.index === 4 && <span className="text-shadows-text/30 ml-1">[color]</span>}
+              <span className="text-shadows-text/30 ml-1">[{dim.index === 1 ? 'X' : dim.index === 2 ? 'Y' : 'Z'}]</span>
             </div>
           ))}
-          {caDimensions.length >= 4 && (
-            <div className="mt-1.5 flex items-center gap-1">
-              <div className="text-[7px] text-shadows-text/30">{caDimensions[3].negTraits[0]}</div>
-              <div className="flex-1 h-2 rounded-full" style={{background: "linear-gradient(to right, #8F00FF, #03FF9B, #E0DCE6, #FFB800, #E53935)"}} />
-              <div className="text-[7px] text-shadows-text/30">{caDimensions[3].posTraits[0]}</div>
+          <div className="mt-1.5 border-t border-white/5 pt-1.5">
+            <div className="text-[7px] text-shadows-text/30 uppercase tracking-wider mb-1">Traditions</div>
+            <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+              {Object.entries(TRADITION_COLORS)
+                .filter(([t]) => t !== "Cross-cultural" && figures.some(f => f.tradition === t))
+                .map(([t, c]) => (
+                  <div key={t} className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: c }} />
+                    <span className="text-[7px] text-shadows-text/50">{t}</span>
+                  </div>
+                ))}
             </div>
-          )}
+          </div>
         </div>
       )}
       <div className="absolute top-3 left-3 flex items-center gap-2" data-testid="panel-ca-controls">
