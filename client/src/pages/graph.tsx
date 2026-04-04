@@ -2935,6 +2935,7 @@ function CorrespondenceView({
   selectedNodeIdsRef.current = selectedNodeIds;
   relationEdgesRef.current = relationEdges;
   const [caCategory, setCaCategory] = useState<string>("all");
+  const [caClipOutliers, setCaClipOutliers] = useState(true);
 
   const effectiveCaCats = useMemo(() => {
     if (caCategory !== "all") return new Set([caCategory]);
@@ -2992,15 +2993,18 @@ function CorrespondenceView({
     let lastMx = 0;
     let lastMy = 0;
 
-    function getBound(dimIdx: number) {
+    function getBound(dimIdx: number, percentile: number) {
       const vals = caPoints.map(p => p.coords[dimIdx] || 0);
       const absVals = vals.map(Math.abs).sort((a, b) => a - b);
-      const p95 = absVals[Math.floor(absVals.length * 0.95)] || 1;
-      return p95 * 1.3;
+      const pVal = absVals[Math.floor(absVals.length * percentile)] || 1;
+      return Math.max(pVal, 1e-6);
     }
 
-    const bounds = [0, 1, 2, 3].map(getBound);
-    const hasD4 = caDimensions.length >= 4;
+    const clipOn = caClipOutliers;
+    const pct = clipOn ? 0.90 : 0.98;
+    const rawBounds = [0, 1, 2].map(d => getBound(d, pct));
+    const uniformBound = Math.max(...rawBounds) * (clipOn ? 1.1 : 1.3);
+    const bounds = [uniformBound, uniformBound, uniformBound];
 
     function project(x3: number, y3: number, z3: number): [number, number, number] {
       const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
@@ -3086,9 +3090,15 @@ function CorrespondenceView({
       const hoveredId = currentHovered?.point.id;
 
       for (const p of caPoints) {
-        const nx = ((p.coords[0] || 0) / bounds[0]) * scaleF;
-        const ny = ((p.coords[1] || 0) / bounds[1]) * scaleF;
-        const nz = ((p.coords[2] || 0) / bounds[2]) * scaleF;
+        let cx = (p.coords[0] || 0), cy = (p.coords[1] || 0), cz = (p.coords[2] || 0);
+        if (clipOn) {
+          cx = Math.max(-bounds[0], Math.min(bounds[0], cx));
+          cy = Math.max(-bounds[1], Math.min(bounds[1], cy));
+          cz = Math.max(-bounds[2], Math.min(bounds[2], cz));
+        }
+        const nx = (cx / bounds[0]) * scaleF;
+        const ny = (cy / bounds[1]) * scaleF;
+        const nz = (cz / bounds[2]) * scaleF;
         const [sx, sy, z] = project(nx, ny, nz);
 
         let color: string;
@@ -3208,9 +3218,15 @@ function CorrespondenceView({
       const projected: Projected[] = [];
 
       for (const p of caPoints) {
-        const nx = ((p.coords[0] || 0) / bounds[0]) * scaleF;
-        const ny = ((p.coords[1] || 0) / bounds[1]) * scaleF;
-        const nz = ((p.coords[2] || 0) / bounds[2]) * scaleF;
+        let cx = (p.coords[0] || 0), cy = (p.coords[1] || 0), cz = (p.coords[2] || 0);
+        if (clipOn) {
+          cx = Math.max(-bounds[0], Math.min(bounds[0], cx));
+          cy = Math.max(-bounds[1], Math.min(bounds[1], cy));
+          cz = Math.max(-bounds[2], Math.min(bounds[2], cz));
+        }
+        const nx = (cx / bounds[0]) * scaleF;
+        const ny = (cy / bounds[1]) * scaleF;
+        const nz = (cz / bounds[2]) * scaleF;
         const [sx, sy, z] = project(nx, ny, nz);
         let color: string;
         if (p.isCharacter) {
@@ -3306,7 +3322,7 @@ function CorrespondenceView({
       canvas.onwheel = null;
       drawRef.current = null;
     };
-  }, [caPoints, caDimensions]);
+  }, [caPoints, caDimensions, caClipOutliers]);
 
   useEffect(() => {
     if (drawRef.current) drawRef.current();
@@ -3380,7 +3396,19 @@ function CorrespondenceView({
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
+        <button
+          onClick={() => setCaClipOutliers(prev => !prev)}
+          className={`px-2 py-1 rounded text-[9px] border transition-colors ${caClipOutliers ? "bg-[#8F00FF]/30 border-[#8F00FF]/40 text-shadows-text/80" : "bg-black/40 border-white/10 text-shadows-text/40"}`}
+          data-testid="button-ca-clip-outliers"
+        >
+          {caClipOutliers ? "Clipping ON" : "Clipping OFF"}
+        </button>
       </div>
+      {caDimensions.length >= 3 && caDimensions.slice(0, 3).every(d => d.inertia < 2) && (
+        <div className="absolute top-12 left-3 bg-[#E53935]/20 border border-[#E53935]/30 rounded px-2 py-1 text-[9px] text-shadows-text/60 max-w-[300px]" data-testid="text-ca-low-inertia-warning">
+          Low inertia on all axes ({caDimensions.slice(0, 3).map(d => `${d.inertia.toFixed(1)}%`).join(", ")}). This category may not have enough variation for meaningful 3D analysis.
+        </div>
+      )}
     </div>
   );
 }
