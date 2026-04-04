@@ -673,7 +673,7 @@ function buildGraph(figures: Node[], minTraits = 3, selectedCharacterIds?: Set<n
   return { graphNodes, graphLinks };
 }
 
-function buildDirectGraph(figures: Node[], minTraits: number, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>, useSupersets?: Set<string>): { nodes: CharNode[]; links: DirectLink[] } {
+function buildDirectGraph(figures: Node[], minTraits: number, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>, useSupersets?: Set<string>, minSharedTraits = 2): { nodes: CharNode[]; links: DirectLink[] } {
   const effectiveFigures = selectedCharacterIds && selectedCharacterIds.size > 0
     ? figures.filter(f => selectedCharacterIds.has(f.id))
     : figures;
@@ -691,8 +691,8 @@ function buildDirectGraph(figures: Node[], minTraits: number, selectedCharacterI
 
   const qualifiedFigures = effectiveFigures.filter(f => qualifiedIds.has(f.id));
 
-  const charNodes: CharNode[] = [];
   const directLinks: DirectLink[] = [];
+  const connectedIds = new Set<number>();
 
   for (let i = 0; i < qualifiedFigures.length; i++) {
     for (let j = i + 1; j < qualifiedFigures.length; j++) {
@@ -704,26 +704,31 @@ function buildDirectGraph(figures: Node[], minTraits: number, selectedCharacterI
       for (const t of traitsA) {
         if (traitsB.has(t)) common.push(t);
       }
-      if (common.length >= 2) {
+      if (common.length >= minSharedTraits) {
         directLinks.push({
           source: `fig-${a.id}`,
           target: `fig-${b.id}`,
           weight: common.length,
           commonTraits: common.map(t => t.split("::")[1]),
         });
+        connectedIds.add(a.id);
+        connectedIds.add(b.id);
       }
     }
   }
 
+  const charNodes: CharNode[] = [];
   for (const fig of qualifiedFigures) {
-    charNodes.push({
-      id: `fig-${fig.id}`,
-      nodeId: fig.id,
-      label: fig.name,
-      tradition: fig.tradition,
-      isCharacter: true,
-      original: fig,
-    });
+    if (connectedIds.has(fig.id)) {
+      charNodes.push({
+        id: `fig-${fig.id}`,
+        nodeId: fig.id,
+        label: fig.name,
+        tradition: fig.tradition,
+        isCharacter: true,
+        original: fig,
+      });
+    }
   }
 
   const qualifiedNodeIds = new Set(charNodes.map(n => n.id));
@@ -2410,7 +2415,7 @@ function DirectView({
     canvas.style.height = height + "px";
     ctx.scale(dpr, dpr);
 
-    const spread = Math.min(width, height) * 0.3;
+    const spread = Math.min(width, height) * (charNodes.length > 500 ? 0.6 : charNodes.length > 200 ? 0.45 : 0.3);
     const simNodes = charNodes.map((n) => ({
       ...n,
       x: (Math.random() - 0.5) * spread,
@@ -2431,16 +2436,18 @@ function DirectView({
       .filter((l) => l.source && l.target);
 
     const nodeCount = simNodes.length;
-    const baseDist = nodeCount > 100 ? 60 : nodeCount > 50 ? 90 : 120;
+    const baseDist = nodeCount > 500 ? 40 : nodeCount > 200 ? 50 : nodeCount > 100 ? 60 : nodeCount > 50 ? 90 : 120;
+    const repulseStrength = nodeCount > 500 ? -200 : nodeCount > 200 ? -150 : nodeCount > 100 ? -80 : nodeCount > 50 ? -150 : -250;
+    const iterations = nodeCount > 500 ? 300 : nodeCount > 200 ? 400 : 500;
 
-    for (let iter = 0; iter < 500; iter++) {
-      const alpha = Math.max(0.001, 1 - iter / 500);
+    for (let iter = 0; iter < iterations; iter++) {
+      const alpha = Math.max(0.001, 1 - iter / iterations);
       for (let i = 0; i < simNodes.length; i++) {
         for (let j = i + 1; j < simNodes.length; j++) {
           const a = simNodes[i], b = simNodes[j];
           let dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
           let dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-          const repulse = (nodeCount > 100 ? -80 : nodeCount > 50 ? -150 : -250) * alpha / (dist * dist);
+          const repulse = repulseStrength * alpha / (dist * dist);
           const fx = dx / dist * repulse;
           const fy = dy / dist * repulse;
           const fz = dz / dist * repulse;
@@ -2603,7 +2610,7 @@ function DirectView({
         const isConnected = connectedIds.has(n.id);
         const dimmed = anyActive && !isHovered && !isSelected && !isConnected;
 
-        const baseR = 3 + pn.scale * 3;
+        const baseR = (nodeCount > 500 ? 1.5 : nodeCount > 200 ? 2 : 3) + pn.scale * (nodeCount > 500 ? 2 : 3);
         const r = isHovered ? baseR + 3 : isSelected ? baseR + 2 : baseR;
         ctx.beginPath();
         ctx.arc(pn.sx, pn.sy, r, 0, Math.PI * 2);
@@ -2623,7 +2630,8 @@ function DirectView({
         }
 
         if (!dimmed || isSelected) {
-          ctx.font = (isHovered || isSelected) ? "bold 11px 'Cinzel Decorative', serif" : `${Math.max(7, 9 * pn.scale)}px 'Cinzel Decorative', serif`;
+          const labelSize = nodeCount > 500 ? Math.max(5, 7 * pn.scale) : Math.max(7, 9 * pn.scale);
+          ctx.font = (isHovered || isSelected) ? "bold 11px 'Cinzel Decorative', serif" : `${labelSize}px 'Cinzel Decorative', serif`;
           ctx.fillStyle = isSelected ? "#FFD700" : "#E0DCE6";
           ctx.globalAlpha = (isHovered || isSelected) ? 1 : isConnected ? 0.9 : 0.5 * pn.scale;
           ctx.textAlign = "center";
@@ -4596,6 +4604,7 @@ export default function GraphPage() {
   const [dichotomyDepth, setDichotomyDepth] = useState(1);
   const [dichotomyThreshold, setDichotomyThreshold] = useState(0.9);
   const [minTraits, setMinTraits] = useState(2);
+  const [minSharedTraits, setMinSharedTraits] = useState(4);
   const [minTraitFrequency, setMinTraitFrequency] = useState(1);
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<Set<number>>(new Set());
   const [characterSearch, setCharacterSearch] = useState("");
@@ -4861,9 +4870,9 @@ export default function GraphPage() {
 
   const { directNodes, directLinks } = useMemo(() => {
     if (!effectiveNodes.length) return { directNodes: [], directLinks: [] };
-    const result = buildDirectGraph(effectiveNodes, minTraits, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets);
+    const result = buildDirectGraph(effectiveNodes, minTraits, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets, minSharedTraits);
     return { directNodes: result.nodes, directLinks: result.links };
-  }, [effectiveNodes, minTraits, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
+  }, [effectiveNodes, minTraits, selectedCharacterIds, enabledCategoriesSet, activeSupersets, minSharedTraits]);
 
   const filters = useMemo(() => {
     const traditions: string[] = [];
@@ -5021,10 +5030,29 @@ export default function GraphPage() {
           {viewMode === "direct" ? "Direct Connections" : "Dichotomies"}
         </span>
         {viewMode === "direct" && (
-          <div className="mb-1 space-y-1">
+          <div className="mb-1 space-y-2">
             <p className="text-[9px] text-shadows-text/30 leading-tight">
               Characters connected by shared traits. Line thickness = number of common traits.
             </p>
+            <div>
+              <span className="text-[9px] text-shadows-text/40 block mb-1">Min shared traits: {minSharedTraits}</span>
+              <Slider
+                min={2}
+                max={10}
+                step={1}
+                value={[minSharedTraits]}
+                onValueChange={([v]) => setMinSharedTraits(v)}
+                className="w-full"
+                data-testid="slider-min-shared-traits"
+              />
+              <div className="flex justify-between text-[8px] text-shadows-text/25 mt-0.5">
+                <span>2</span><span>6</span><span>10</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-[9px] text-shadows-text/30">
+              <span>{directNodes.length} figures</span>
+              <span>{directLinks.length} connections</span>
+            </div>
           </div>
         )}
         {viewMode === "dichotomy" && (
