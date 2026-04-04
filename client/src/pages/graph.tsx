@@ -4650,7 +4650,7 @@ export default function GraphPage() {
     if (!data?.nodes) return [];
     const set = new Set<string>();
     for (const n of data.nodes) {
-      if (n.tradition) set.add(n.tradition);
+      if (n.tradition && n.tradition !== "Cross-cultural") set.add(n.tradition);
     }
     return Array.from(set).sort();
   }, [data?.nodes]);
@@ -4836,7 +4836,7 @@ export default function GraphPage() {
 
   const effectiveNodes = useMemo(() => {
     if (!data?.nodes) return [];
-    let nodes = data.nodes;
+    let nodes = data.nodes.filter(n => n.tradition !== "Cross-cultural");
     if (selectedTraditions) {
       nodes = nodes.filter(n => n.tradition && selectedTraditions.has(n.tradition));
     }

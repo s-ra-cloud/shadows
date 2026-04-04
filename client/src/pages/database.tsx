@@ -9,7 +9,7 @@ import {
   Download, Upload, FolderTree, Layers
 } from "lucide-react";
 
-type Tab = "nodes" | "relations" | "suggestions" | "sources";
+type Tab = "nodes" | "cross-cultural" | "relations" | "suggestions" | "sources";
 type NodeCategory = "characters" | "gender" | "domain" | "object" | "animals" | "characterTrait" | "physicalCharacteristics" | "significantEvent" | "symbolism" | "neumannArchetype" | "eventTypes" | "birthTypes" | "deathTypes" | "familyRoles";
 
 const NODE_CATEGORIES: { key: NodeCategory; label: string; isArray?: boolean; commaSplit?: boolean }[] = [
@@ -76,6 +76,7 @@ export default function DatabasePage() {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "nodes", label: "Nodes" },
+    { key: "cross-cultural", label: "Cross-cultural" },
     { key: "relations", label: "Relations" },
     { key: "suggestions", label: "Suggestions" },
     { key: "sources", label: "Sources" },
@@ -293,6 +294,14 @@ export default function DatabasePage() {
           <NodesTab
             isEditor={!!editorMode}
             onSuggest={openSuggestion}
+            excludeTradition="Cross-cultural"
+          />
+        )}
+        {activeTab === "cross-cultural" && (
+          <NodesTab
+            isEditor={!!editorMode}
+            onSuggest={openSuggestion}
+            onlyTradition="Cross-cultural"
           />
         )}
         {activeTab === "relations" && (
@@ -635,9 +644,11 @@ function SuggestionModal({ target, onClose }: {
   );
 }
 
-function NodesTab({ isEditor, onSuggest }: {
+function NodesTab({ isEditor, onSuggest, excludeTradition, onlyTradition }: {
   isEditor: boolean;
   onSuggest: (t: any) => void;
+  excludeTradition?: string;
+  onlyTradition?: string;
 }) {
   const [category, setCategory] = useState<NodeCategory>("characters");
   const [search, setSearch] = useState("");
@@ -651,9 +662,16 @@ function NodesTab({ isEditor, onSuggest }: {
   const [traditionFilter, setTraditionFilter] = useState<string>("");
   const { toast } = useToast();
 
-  const { data: nodes = [], isLoading } = useQuery<Node[]>({
+  const { data: rawNodes = [], isLoading } = useQuery<Node[]>({
     queryKey: ["/api/nodes"],
   });
+
+  const nodes = useMemo(() => {
+    let result = rawNodes;
+    if (excludeTradition) result = result.filter(n => n.tradition !== excludeTradition);
+    if (onlyTradition) result = result.filter(n => n.tradition === onlyTradition);
+    return result;
+  }, [rawNodes, excludeTradition, onlyTradition]);
 
   const { data: hierarchyData = [] } = useQuery<TraitHierarchy[]>({
     queryKey: ["/api/trait-hierarchy"],
