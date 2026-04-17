@@ -30,3 +30,21 @@ id = "yuw2neCEw0zuBzIaazat7"
 uri = "file://suggestions_report.md"
 type = "text"
 title = "SHADOWS Suggestions Audit Report"
+
+[[outputs]]
+id = "E0Ai48i6P9lgqWri9Yub3"
+uri = "file://Ami.csv"
+type = "table"
+title = "Ami — 80 figures to verify"
+
+[[outputs]]
+id = "6a68wUUva741V7R6z54LJ"
+uri = "file://Camille.csv"
+type = "table"
+title = "Camille — 80 figures to verify"
+
+[[outputs]]
+id = "4H0J4ZKxvdquXZBLzuieT"
+uri = "file://Laura.csv"
+type = "table"
+title = "Laura — 80 figures to verify"
