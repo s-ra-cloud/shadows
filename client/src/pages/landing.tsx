@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { ArrowRight, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroVideo from "@assets/hero_1772053813686.mp4";
-import teamPhotoPath from "@assets/Team_1772115638559.jpeg";
+import teamPhotoPath from "@assets/WhatsApp_Image_2026-04-17_at_11.14.20_1777461484318.jpeg";
 import odinImgPath from "@assets/Odin_1772207712816.png";
 import machinaLogoPath from "@assets/Machin_logo_1772208429837.jpeg";
 
