@@ -5198,7 +5198,7 @@ export default function GraphPage() {
           />
         )}
 
-        {(viewMode === "relations" || relationEdges.length > 0) && (
+        {viewMode !== "relations" && relationEdges.length > 0 && (
           <div className="absolute bottom-4 right-4 bg-[#0B0626]/90 border border-white/10 rounded-lg px-3 py-2 pointer-events-none" data-testid="relation-legend">
             <div className="text-[10px] text-white/50 uppercase tracking-wider mb-1">Relationships</div>
             {viewMode === "relations" ? (
