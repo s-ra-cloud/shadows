@@ -3405,21 +3405,11 @@ function DichotomyView({
         const ratio = aCount / Math.max(1, aCount + bCount);
         const gap = 8;
         const headerH = depth === 0 ? 36 : 30;
-        const splitHorizontally = rect.w >= rect.h;
-
-        if (splitHorizontally) {
-          const splitX = rect.x + rect.w * ratio;
-          const rA: CellRect = { x: rect.x, y: rect.y, w: splitX - rect.x - gap / 2, h: rect.h };
-          const rB: CellRect = { x: splitX + gap / 2, y: rect.y, w: rect.x + rect.w - splitX - gap / 2, h: rect.h };
-          buildGroupHierarchy(a, rA, depth, colorIdx);
-          buildGroupHierarchy(b, rB, depth, colorIdx);
-        } else {
-          const splitY = rect.y + rect.h * ratio;
-          const rA: CellRect = { x: rect.x, y: rect.y, w: rect.w, h: splitY - rect.y - gap / 2 };
-          const rB: CellRect = { x: rect.x, y: splitY + gap / 2, w: rect.w, h: rect.y + rect.h - splitY - gap / 2 };
-          buildGroupHierarchy(a, rA, depth, colorIdx);
-          buildGroupHierarchy(b, rB, depth, colorIdx);
-        }
+        const splitX = rect.x + rect.w * ratio;
+        const rA: CellRect = { x: rect.x, y: rect.y, w: splitX - rect.x - gap / 2, h: rect.h };
+        const rB: CellRect = { x: splitX + gap / 2, y: rect.y, w: rect.x + rect.w - splitX - gap / 2, h: rect.h };
+        buildGroupHierarchy(a, rA, depth, colorIdx);
+        buildGroupHierarchy(b, rB, depth, colorIdx);
       }
     }
 
