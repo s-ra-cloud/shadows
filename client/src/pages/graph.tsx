@@ -3751,16 +3751,6 @@ function DichotomyView({
     );
   }
 
-  const traditionsInView = useMemo(() => {
-    const traditions = new Set<string>();
-    for (const g of leafGroups) {
-      for (const fig of g.figures) {
-        if (fig.tradition) traditions.add(fig.tradition);
-      }
-    }
-    return Array.from(traditions).sort();
-  }, [leafGroups]);
-
   return (
     <div className="w-full h-full relative">
       <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-dichotomy" />
