@@ -3040,10 +3040,7 @@ function UMAPView({
         placedRects.push(placedRect);
         placed++;
 
-        // Draw subtle background pill
-        ctx.fillStyle = "rgba(11,6,38,0.78)";
-        ctx.fillRect(placedRect.x, placedRect.y, placedRect.w, placedRect.h);
-        // Text
+        // Text only — no background pill (keeps the map clean)
         ctx.fillStyle = isSelected ? "#FFD700" : "rgba(224,220,230,0.92)";
         ctx.textAlign = "left";
         ctx.fillText(text, (placedRect as any).labelX, (placedRect as any).labelY);
