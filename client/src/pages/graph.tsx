@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
 import type { Node, Edge } from "@shared/schema";
 
@@ -4889,48 +4890,31 @@ export default function GraphPage() {
             />
           </div>
         )}
-        <div className="flex bg-[#0B0626]/80 backdrop-blur-xl border border-[#350A8C]/30 rounded-md overflow-hidden">
-          <button
-            className={`p-2 transition-colors ${viewMode === "network" ? "bg-[#8F00FF]/30 text-[#E0DCE6]" : "text-shadows-text/40 hover:text-shadows-text/70"}`}
-            onClick={() => setViewMode("network")}
-            title="Network graph (characters + traits)"
-            data-testid="button-view-network"
+        <Select value={viewMode} onValueChange={(v) => setViewMode(v as typeof viewMode)}>
+          <SelectTrigger
+            className="w-[200px] bg-[#0B0626]/80 backdrop-blur-xl border-[#350A8C]/30 text-shadows-text text-sm hover:border-[#8F00FF]/50 transition-colors"
+            data-testid="select-view-mode"
           >
-            <Network size={18} />
-          </button>
-          <button
-            className={`p-2 transition-colors ${viewMode === "direct" ? "bg-[#8F00FF]/30 text-[#E0DCE6]" : "text-shadows-text/40 hover:text-shadows-text/70"}`}
-            onClick={() => setViewMode("direct")}
-            title="Direct connections (characters only)"
-            data-testid="button-view-direct"
-          >
-            <Users size={18} />
-          </button>
-          <button
-            className={`p-2 transition-colors ${viewMode === "umap" ? "bg-[#8F00FF]/30 text-[#E0DCE6]" : "text-shadows-text/40 hover:text-shadows-text/70"}`}
-            onClick={() => setViewMode("umap")}
-            title="Similarity map (UMAP) — clusters of similar figures"
-            data-testid="button-view-umap"
-          >
-            <Sparkles size={18} />
-          </button>
-          <button
-            className={`p-2 transition-colors ${viewMode === "dichotomy" ? "bg-[#8F00FF]/30 text-[#E0DCE6]" : "text-shadows-text/40 hover:text-shadows-text/70"}`}
-            onClick={() => setViewMode("dichotomy")}
-            title="Dichotomy view (recursive binary splits)"
-            data-testid="button-view-dichotomy"
-          >
-            <Split size={18} />
-          </button>
-          <button
-            className={`p-2 transition-colors ${viewMode === "relations" ? "bg-[#8F00FF]/30 text-[#E0DCE6]" : "text-shadows-text/40 hover:text-shadows-text/70"}`}
-            onClick={() => setViewMode("relations")}
-            title="Relations graph (family, trinity, adversary)"
-            data-testid="button-view-relations"
-          >
-            <Link2 size={18} />
-          </button>
-        </div>
+            <SelectValue placeholder="Choose view" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#0B0626]/95 backdrop-blur-xl border-[#350A8C]/40 text-shadows-text">
+            <SelectItem value="network" data-testid="option-view-network">
+              <span className="flex items-center gap-2"><Network size={14} /> Network</span>
+            </SelectItem>
+            <SelectItem value="direct" data-testid="option-view-direct">
+              <span className="flex items-center gap-2"><Users size={14} /> Direct connections</span>
+            </SelectItem>
+            <SelectItem value="umap" data-testid="option-view-umap">
+              <span className="flex items-center gap-2"><Sparkles size={14} /> Similarity map</span>
+            </SelectItem>
+            <SelectItem value="dichotomy" data-testid="option-view-dichotomy">
+              <span className="flex items-center gap-2"><Split size={14} /> Dichotomy</span>
+            </SelectItem>
+            <SelectItem value="relations" data-testid="option-view-relations">
+              <span className="flex items-center gap-2"><Link2 size={14} /> Relations</span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {(viewMode === "direct" || viewMode === "dichotomy") && (
