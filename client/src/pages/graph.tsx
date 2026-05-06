@@ -4879,17 +4879,19 @@ export default function GraphPage() {
   return (
     <div className="h-screen relative overflow-hidden" data-testid="page-graph">
       <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
-        <div className="relative w-64 lg:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-shadows-text/30" />
-          <Input
-            type="search"
-            placeholder="Search figures or traits..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-[#0B0626]/80 backdrop-blur-xl border-[#350A8C]/30 text-shadows-text text-sm focus:border-[#03FF9B]/50 focus:ring-[#03FF9B]/20 transition-all"
-            data-testid="input-search-nodes"
-          />
-        </div>
+        {viewMode === "network" && (
+          <div className="relative w-64 lg:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-shadows-text/30" />
+            <Input
+              type="search"
+              placeholder="Search figures or traits..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-[#0B0626]/80 backdrop-blur-xl border-[#350A8C]/30 text-shadows-text text-sm focus:border-[#03FF9B]/50 focus:ring-[#03FF9B]/20 transition-all"
+              data-testid="input-search-nodes"
+            />
+          </div>
+        )}
         <div className="flex bg-[#0B0626]/80 backdrop-blur-xl border border-[#350A8C]/30 rounded-md overflow-hidden">
           <button
             className={`p-2 transition-colors ${viewMode === "network" ? "bg-[#8F00FF]/30 text-[#E0DCE6]" : "text-shadows-text/40 hover:text-shadows-text/70"}`}
