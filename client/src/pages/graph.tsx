@@ -3233,10 +3233,7 @@ function UMAPView({
           <span className="text-shadows-text/30 text-[10px]">Projecting {figures.length} figures across shared traits</span>
         </div>
       )}
-      <div className="absolute top-3 left-3 flex items-center gap-2" data-testid="panel-umap-controls">
-        <div className="bg-black/40 rounded px-2 py-1 text-[9px] text-shadows-text/40">
-          Drag to pan · Scroll to zoom · Click a point
-        </div>
+      <div className="absolute top-3 left-16 flex items-center gap-2" data-testid="panel-umap-controls">
         <div className="flex items-center gap-1 bg-black/60 border border-white/10 rounded px-2 py-1">
           <span className="text-[9px] text-shadows-text/50">Neighbors</span>
           <input
