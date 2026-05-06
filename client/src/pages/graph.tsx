@@ -4405,7 +4405,7 @@ function RelationsView({
   return (
     <div className="w-full h-full relative">
       <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-relations-view" />
-      <div className="absolute top-20 right-4 z-20 bg-[#0B0626]/80 backdrop-blur-xl border border-[#350A8C]/30 rounded-md p-3 space-y-2 max-h-[75vh] overflow-y-auto scrollbar-thin" data-testid="relations-filter-panel">
+      <div className="absolute top-4 right-4 z-20 bg-[#0B0626]/80 backdrop-blur-xl border border-[#350A8C]/30 rounded-md p-3 space-y-2 max-h-[85vh] overflow-y-auto scrollbar-thin" data-testid="relations-filter-panel">
         <div className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-1">Filter Relations</div>
         <div className="flex items-center gap-1 mb-1">
           <button
@@ -4928,7 +4928,7 @@ export default function GraphPage() {
       )}
 
       {(viewMode === "direct" || viewMode === "dichotomy") && (
-      <div className="absolute top-20 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[75vh] overflow-y-auto">
+      <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[85vh] overflow-y-auto">
         <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">
           {viewMode === "direct" ? "Direct Connections" : "Dichotomies"}
         </span>
