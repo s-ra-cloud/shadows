@@ -4713,15 +4713,30 @@ export default function GraphPage() {
     });
   }, []);
 
+  // Search expansion: when the query matches nodes, keep them PLUS their immediate
+  // neighborhood (1-hop neighbors and 2-hop characters via shared trait nodes).
+  // This means searching "Athena" shows Athena + her trait nodes + every other character
+  // who shares those traits with her — i.e. her actual context in the graph.
   const filteredGraphNodes = useMemo(() => {
-    return graphNodes.filter((n) => {
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        if (!n.label.toLowerCase().includes(q)) return false;
-      }
-      return true;
-    });
-  }, [graphNodes, searchQuery]);
+    if (!searchQuery.trim()) return graphNodes;
+    const q = searchQuery.toLowerCase();
+    const directMatchIds = new Set(graphNodes.filter(n => n.label.toLowerCase().includes(q)).map(n => n.id));
+    if (directMatchIds.size === 0) return [];
+
+    // 1-hop: nodes connected to any direct match
+    const oneHop = new Set<string>(directMatchIds);
+    for (const l of graphLinks) {
+      if (directMatchIds.has(l.source)) oneHop.add(l.target);
+      if (directMatchIds.has(l.target)) oneHop.add(l.source);
+    }
+    // 2-hop: characters connected to the trait nodes brought in at 1-hop
+    const keep = new Set<string>(oneHop);
+    for (const l of graphLinks) {
+      if (oneHop.has(l.source)) keep.add(l.target);
+      if (oneHop.has(l.target)) keep.add(l.source);
+    }
+    return graphNodes.filter(n => keep.has(n.id));
+  }, [graphNodes, graphLinks, searchQuery]);
 
   const filteredNodeIds = useMemo(() => new Set(filteredGraphNodes.map(n => n.id)), [filteredGraphNodes]);
 
