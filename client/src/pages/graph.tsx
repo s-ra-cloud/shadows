@@ -673,15 +673,66 @@ function buildGraph(figures: Node[], minTraits = 3, selectedCharacterIds?: Set<n
   return { graphNodes, graphLinks };
 }
 
-function buildDirectGraph(figures: Node[], minTraits: number, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>, useSupersets?: Set<string>, minSharedTraits = 2): { nodes: CharNode[]; links: DirectLink[] } {
+function buildDirectGraph(figures: Node[], minTraits: number, selectedCharacterIds?: Set<number>, enabledCategories?: Set<string>, useSupersets?: Set<string>, minSharedTraits = 2, focalCharacterId?: number | null): { nodes: CharNode[]; links: DirectLink[] } {
+  const figureTraitSets = new Map<number, Set<string>>();
+  for (const fig of figures) {
+    figureTraitSets.set(fig.id, new Set(getTraitsForFigure(fig, enabledCategories, useSupersets)));
+  }
+
+  // Ego-centric mode: build graph centered on focal deity
+  if (focalCharacterId != null) {
+    const focal = figures.find(f => f.id === focalCharacterId);
+    if (!focal) return { nodes: [], links: [] };
+    const focalTraits = figureTraitSets.get(focal.id);
+    if (!focalTraits) return { nodes: [], links: [] };
+
+    const links: DirectLink[] = [];
+    const neighborIds = new Set<number>();
+    for (const other of figures) {
+      if (other.id === focal.id) continue;
+      const otherTraits = figureTraitSets.get(other.id);
+      if (!otherTraits) continue;
+      const common: string[] = [];
+      for (const t of focalTraits) {
+        if (otherTraits.has(t)) common.push(t);
+      }
+      if (common.length >= minSharedTraits) {
+        links.push({
+          source: `fig-${focal.id}`,
+          target: `fig-${other.id}`,
+          weight: common.length,
+          commonTraits: common.map(t => t.split("::")[1]),
+        });
+        neighborIds.add(other.id);
+      }
+    }
+
+    const nodes: CharNode[] = [
+      {
+        id: `fig-${focal.id}`,
+        nodeId: focal.id,
+        label: focal.name,
+        tradition: focal.tradition,
+        isCharacter: true,
+        original: focal,
+      },
+      ...figures.filter(f => neighborIds.has(f.id)).map(f => ({
+        id: `fig-${f.id}`,
+        nodeId: f.id,
+        label: f.name,
+        tradition: f.tradition,
+        isCharacter: true,
+        original: f,
+      } as CharNode)),
+    ];
+
+    return { nodes, links };
+  }
+
+  // Full-graph mode (legacy fallback, used when no focal selected)
   const effectiveFigures = selectedCharacterIds && selectedCharacterIds.size > 0
     ? figures.filter(f => selectedCharacterIds.has(f.id))
     : figures;
-
-  const figureTraitSets = new Map<number, Set<string>>();
-  for (const fig of effectiveFigures) {
-    figureTraitSets.set(fig.id, new Set(getTraitsForFigure(fig, enabledCategories, useSupersets)));
-  }
 
   const qualifiedIds = new Set<number>();
   for (const fig of effectiveFigures) {
@@ -4227,6 +4278,8 @@ export default function GraphPage() {
   const [dichotomyThreshold, setDichotomyThreshold] = useState(0.9);
   const [minTraits, setMinTraits] = useState(2);
   const [minSharedTraits, setMinSharedTraits] = useState(4);
+  const [focalCharacterId, setFocalCharacterId] = useState<number | null>(null);
+  const [focalSearch, setFocalSearch] = useState("");
   const [minTraitFrequency, setMinTraitFrequency] = useState(1);
   const [selectedCharacterIds, setSelectedCharacterIds] = useState<Set<number>>(new Set());
   const [characterSearch, setCharacterSearch] = useState("");
@@ -4492,9 +4545,9 @@ export default function GraphPage() {
 
   const { directNodes, directLinks } = useMemo(() => {
     if (!effectiveNodes.length) return { directNodes: [], directLinks: [] };
-    const result = buildDirectGraph(effectiveNodes, minTraits, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets, minSharedTraits);
+    const result = buildDirectGraph(effectiveNodes, minTraits, selectedCharacterIds.size > 0 ? selectedCharacterIds : undefined, enabledCategoriesSet, activeSupersets, minSharedTraits, focalCharacterId);
     return { directNodes: result.nodes, directLinks: result.links };
-  }, [effectiveNodes, minTraits, selectedCharacterIds, enabledCategoriesSet, activeSupersets, minSharedTraits]);
+  }, [effectiveNodes, minTraits, selectedCharacterIds, enabledCategoriesSet, activeSupersets, minSharedTraits, focalCharacterId]);
 
   const filters = useMemo(() => {
     const traditions: string[] = [];
@@ -4652,14 +4705,65 @@ export default function GraphPage() {
           {viewMode === "direct" ? "Direct Connections" : "Dichotomies"}
         </span>
         {viewMode === "direct" && (
-          <div className="mb-1 space-y-2">
+          <div className="mb-1 space-y-2 w-56">
             <p className="text-[9px] text-shadows-text/30 leading-tight">
-              Characters connected by shared traits. Line thickness = number of common traits.
+              Pick a focal deity. Its direct connections (other figures sharing traits) will appear around it.
             </p>
+            <div>
+              <span className="text-[9px] text-shadows-text/40 block mb-1">Focal deity</span>
+              {focalCharacterId != null ? (
+                <div className="flex items-center justify-between gap-2 px-2 py-1 rounded bg-[#8F00FF]/20 border border-[#8F00FF]/30">
+                  <span className="text-[11px] text-shadows-text truncate" data-testid="text-focal-deity">
+                    {data?.nodes.find(n => n.id === focalCharacterId)?.name || "Unknown"}
+                  </span>
+                  <button
+                    onClick={() => { setFocalCharacterId(null); setFocalSearch(""); }}
+                    className="text-shadows-text/50 hover:text-[#E53935] transition-colors flex-shrink-0"
+                    data-testid="button-clear-focal"
+                    title="Clear focal deity"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-shadows-text/30" />
+                  <Input
+                    type="search"
+                    placeholder="Search a deity…"
+                    value={focalSearch}
+                    onChange={(e) => setFocalSearch(e.target.value)}
+                    className="pl-7 h-7 text-xs bg-[#0B0626]/60 border-[#350A8C]/20 text-shadows-text focus:border-[#03FF9B]/50"
+                    data-testid="input-focal-search"
+                  />
+                </div>
+              )}
+              {focalCharacterId == null && focalSearch.trim().length > 0 && (
+                <div className="mt-1.5 max-h-40 overflow-y-auto space-y-0.5 border border-[#350A8C]/15 rounded p-1 bg-[#0B0626]/60">
+                  {(data?.nodes || [])
+                    .filter(n => n.name.toLowerCase().includes(focalSearch.toLowerCase()))
+                    .slice(0, 30)
+                    .map(n => (
+                      <button
+                        key={n.id}
+                        onClick={() => { setFocalCharacterId(n.id); setFocalSearch(""); }}
+                        className="flex items-center gap-2 w-full text-left rounded px-2 py-1 hover:bg-[#350A8C]/20 text-shadows-text/70 text-xs"
+                        data-testid={`button-pick-focal-${n.id}`}
+                      >
+                        <div className="w-2 h-2 rounded-full flex-shrink-0 bg-[#E0DCE6]" />
+                        <span className="truncate">{n.name}</span>
+                        {n.tradition && (
+                          <span className="text-[9px] text-shadows-text/25 ml-auto flex-shrink-0">{n.tradition}</span>
+                        )}
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
             <div>
               <span className="text-[9px] text-shadows-text/40 block mb-1">Min shared traits: {minSharedTraits}</span>
               <Slider
-                min={2}
+                min={1}
                 max={10}
                 step={1}
                 value={[minSharedTraits]}
@@ -4668,13 +4772,15 @@ export default function GraphPage() {
                 data-testid="slider-min-shared-traits"
               />
               <div className="flex justify-between text-[8px] text-shadows-text/25 mt-0.5">
-                <span>2</span><span>6</span><span>10</span>
+                <span>1</span><span>5</span><span>10</span>
               </div>
             </div>
-            <div className="flex items-center justify-between text-[9px] text-shadows-text/30">
-              <span>{directNodes.length} figures</span>
-              <span>{directLinks.length} connections</span>
-            </div>
+            {focalCharacterId != null && (
+              <div className="flex items-center justify-between text-[9px] text-shadows-text/30">
+                <span>{Math.max(0, directNodes.length - 1)} neighbors</span>
+                <span>{directLinks.length} connections</span>
+              </div>
+            )}
           </div>
         )}
         {viewMode === "dichotomy" && (
@@ -4801,14 +4907,35 @@ export default function GraphPage() {
             relationEdges={relationEdges}
           />
         ) : viewMode === "direct" ? (
-          <DirectView
-            charNodes={directNodes}
-            directLinks={directLinks}
-            onSelectNode={(n) => handleGraphNodeSelect(n)}
-            onHoverNode={setHoveredNode}
-            selectedNodeIds={selectedNodeIds}
-            relationEdges={relationEdges}
-          />
+          focalCharacterId == null ? (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-center max-w-md px-6">
+                <Users size={48} className="mx-auto mb-4 text-shadows-text/20" />
+                <h3 className="text-lg text-shadows-text/60 mb-2" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
+                  Choose a focal deity
+                </h3>
+                <p className="text-[12px] text-shadows-text/40 leading-relaxed">
+                  Search for a mythological figure in the panel on the right.<br />
+                  Its direct connections — figures sharing traits with it — will appear around it.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <DirectView
+              charNodes={directNodes}
+              directLinks={directLinks}
+              onSelectNode={(n) => {
+                if (n && n.id !== focalCharacterId) {
+                  setFocalCharacterId(n.id);
+                } else {
+                  handleGraphNodeSelect(n);
+                }
+              }}
+              onHoverNode={setHoveredNode}
+              selectedNodeIds={new Set([...selectedNodeIds, focalCharacterId])}
+              relationEdges={relationEdges}
+            />
+          )
         ) : viewMode === "umap" ? (
           <UMAPView
             figures={effectiveNodes}
