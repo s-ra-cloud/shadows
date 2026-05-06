@@ -2207,44 +2207,42 @@ function DirectView({
         weightByNeighbor.set(otherId, l.weight);
       }
 
-      // Adaptive ring density: fewer neighbors -> larger arc per node (better labels);
-      // many neighbors -> smaller arc (fits more, labels skipped for low-weight ones)
-      const totalNeighbors = neighbors.length;
-      const minArcDeg = totalNeighbors <= 40 ? 16 : totalNeighbors <= 120 ? 10 : totalNeighbors <= 300 ? 5 : 3;
-      const maxPerRing = Math.max(8, Math.floor(360 / minArcDeg));
-
-      // Sort by weight desc, then tradition for grouping
+      // Continuous starburst layout: all neighbors get a unique angle around 360°
+      // Radius is a smooth function of shared-trait weight (stronger = closer to center)
+      // Sort by tradition so neighbors of the same culture cluster together angularly
       const sorted = [...neighbors].sort((a, b) => {
+        const tA = (a.tradition || "").localeCompare(b.tradition || "");
+        if (tA !== 0) return tA;
         const wA = weightByNeighbor.get(a.id) || 0;
         const wB = weightByNeighbor.get(b.id) || 0;
-        if (wB !== wA) return wB - wA;
-        return (a.tradition || "").localeCompare(b.tradition || "");
+        return wB - wA;
       });
 
-      const numRings = Math.max(1, Math.ceil(sorted.length / maxPerRing));
-      const maxRadius = Math.min(width, height) * 0.44;
-      const baseRadius = Math.min(width, height) * (numRings > 1 ? 0.09 : 0.22);
-      const ringStep = numRings > 1 ? (maxRadius - baseRadius) / (numRings - 1) : 0;
+      const totalNeighbors = sorted.length;
+      const weights = sorted.map(n => weightByNeighbor.get(n.id) || 1);
+      const maxW = Math.max(...weights, 1);
+      const minW = Math.min(...weights, maxW);
+      const wRange = Math.max(1, maxW - minW);
 
-      const rings: any[][] = [];
-      for (let i = 0; i < sorted.length; i += maxPerRing) {
-        rings.push(sorted.slice(i, i + maxPerRing));
-      }
+      const innerRadius = Math.min(width, height) * 0.10;
+      const outerRadius = Math.min(width, height) * 0.45;
 
       focal.x = 0; focal.y = 0; focal.z = 0;
-      focal._weight = Math.max(1, ...weightByNeighbor.values());
-      rings.forEach((ringNodes, ringIdx) => {
-        const radius = baseRadius + ringIdx * ringStep;
-        const offset = ringIdx * 0.12; // stagger rings slightly to avoid radial line-up
-        ringNodes.forEach((n, i) => {
-          const angle = (i / ringNodes.length) * Math.PI * 2 + offset;
-          n.x = Math.cos(angle) * radius;
-          n.y = Math.sin(angle) * radius;
-          n.z = 0;
-          n._ringIdx = ringIdx;
-          n._angle = angle;
-          n._weight = weightByNeighbor.get(n.id) || 1;
-        });
+      focal._weight = maxW;
+
+      sorted.forEach((n, i) => {
+        const w = weightByNeighbor.get(n.id) || 1;
+        // Normalize: 1 for strongest, 0 for weakest
+        const norm = (w - minW) / wRange;
+        // Apply gentle curve so the strongest cluster doesn't pile up at the very center
+        const t = Math.pow(1 - norm, 0.85);
+        const radius = innerRadius + t * (outerRadius - innerRadius);
+        const angle = (i / totalNeighbors) * Math.PI * 2;
+        n.x = Math.cos(angle) * radius;
+        n.y = Math.sin(angle) * radius;
+        n.z = 0;
+        n._angle = angle;
+        n._weight = w;
       });
     } else {
       // Legacy 3D force-directed layout (used when no focal selected — kept for backwards compatibility)
@@ -4939,7 +4937,7 @@ export default function GraphPage() {
         )}
         {viewMode === "direct" && focalCharacterId != null && (
           <div className="mt-1 text-[9px] text-shadows-text/40 leading-tight text-center">
-            Inner rings = more shared traits<br />Outer rings = fewer
+            Closer to center = more shared traits<br />Farther = fewer
           </div>
         )}
       </div>)}
