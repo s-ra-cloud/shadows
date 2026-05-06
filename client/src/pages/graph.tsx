@@ -2137,6 +2137,7 @@ function DirectView({
   onHoverNode,
   selectedNodeIds,
   relationEdges,
+  focalNodeId,
 }: {
   charNodes: CharNode[];
   directLinks: DirectLink[];
@@ -2144,6 +2145,7 @@ function DirectView({
   onHoverNode: (node: any) => void;
   selectedNodeIds: Set<number>;
   relationEdges: RelationEdge[];
+  focalNodeId?: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawRef = useRef<(() => void) | null>(null);
@@ -2171,12 +2173,12 @@ function DirectView({
     canvas.style.height = height + "px";
     ctx.scale(dpr, dpr);
 
-    const spread = Math.min(width, height) * (charNodes.length > 500 ? 0.6 : charNodes.length > 200 ? 0.45 : 0.3);
+    const egoMode = !!focalNodeId && charNodes.some(n => n.id === focalNodeId);
     const simNodes = charNodes.map((n) => ({
       ...n,
-      x: (Math.random() - 0.5) * spread,
-      y: (Math.random() - 0.5) * spread,
-      z: (Math.random() - 0.5) * spread,
+      x: 0,
+      y: 0,
+      z: 0,
     }));
     const simNodeMap = new Map<string, any>();
     simNodes.forEach((n) => simNodeMap.set(n.id, n));
@@ -2192,43 +2194,97 @@ function DirectView({
       .filter((l) => l.source && l.target);
 
     const nodeCount = simNodes.length;
-    const baseDist = nodeCount > 500 ? 40 : nodeCount > 200 ? 50 : nodeCount > 100 ? 60 : nodeCount > 50 ? 90 : 120;
-    const repulseStrength = nodeCount > 500 ? -200 : nodeCount > 200 ? -150 : nodeCount > 100 ? -80 : nodeCount > 50 ? -150 : -250;
-    const iterations = nodeCount > 500 ? 300 : nodeCount > 200 ? 400 : 500;
 
-    for (let iter = 0; iter < iterations; iter++) {
-      const alpha = Math.max(0.001, 1 - iter / iterations);
-      for (let i = 0; i < simNodes.length; i++) {
-        for (let j = i + 1; j < simNodes.length; j++) {
-          const a = simNodes[i], b = simNodes[j];
+    if (egoMode) {
+      // Radial layout: focal at center, neighbors on concentric rings sorted by weight then tradition
+      const focal = simNodeMap.get(focalNodeId!);
+      const neighbors = simNodes.filter(n => n.id !== focalNodeId);
+
+      // Bucket neighbors by weight (closer ring = stronger connection)
+      const weightByNeighbor = new Map<string, number>();
+      for (const l of simLinks) {
+        const otherId = l.source.id === focalNodeId ? l.target.id : l.source.id;
+        weightByNeighbor.set(otherId, l.weight);
+      }
+
+      // Ring assignment: split into rings such that each ring fits comfortably (~ one label per ~14 deg arc)
+      const minArc = 14; // degrees per neighbor
+      const maxPerRing = Math.floor(360 / minArc);
+      // Sort by weight desc, then tradition for grouping
+      const sorted = [...neighbors].sort((a, b) => {
+        const wA = weightByNeighbor.get(a.id) || 0;
+        const wB = weightByNeighbor.get(b.id) || 0;
+        if (wB !== wA) return wB - wA;
+        return (a.tradition || "").localeCompare(b.tradition || "");
+      });
+
+      const baseRadius = Math.min(width, height) * 0.18;
+      const ringStep = Math.min(width, height) * 0.13;
+      const rings: any[][] = [];
+      for (let i = 0; i < sorted.length; i += maxPerRing) {
+        rings.push(sorted.slice(i, i + maxPerRing));
+      }
+
+      focal.x = 0; focal.y = 0; focal.z = 0;
+      rings.forEach((ringNodes, ringIdx) => {
+        const radius = baseRadius + ringIdx * ringStep;
+        const offset = ringIdx * 0.12; // stagger rings slightly to avoid radial line-up
+        ringNodes.forEach((n, i) => {
+          const angle = (i / ringNodes.length) * Math.PI * 2 + offset;
+          n.x = Math.cos(angle) * radius;
+          n.y = Math.sin(angle) * radius;
+          n.z = 0;
+          n._ringIdx = ringIdx;
+          n._angle = angle;
+        });
+      });
+    } else {
+      // Legacy 3D force-directed layout (used when no focal selected — kept for backwards compatibility)
+      const spread = Math.min(width, height) * (nodeCount > 500 ? 0.6 : nodeCount > 200 ? 0.45 : 0.3);
+      for (const n of simNodes) {
+        n.x = (Math.random() - 0.5) * spread;
+        n.y = (Math.random() - 0.5) * spread;
+        n.z = (Math.random() - 0.5) * spread;
+      }
+      const baseDist = nodeCount > 500 ? 40 : nodeCount > 200 ? 50 : nodeCount > 100 ? 60 : nodeCount > 50 ? 90 : 120;
+      const repulseStrength = nodeCount > 500 ? -200 : nodeCount > 200 ? -150 : nodeCount > 100 ? -80 : nodeCount > 50 ? -150 : -250;
+      const iterations = nodeCount > 500 ? 300 : nodeCount > 200 ? 400 : 500;
+
+      for (let iter = 0; iter < iterations; iter++) {
+        const alpha = Math.max(0.001, 1 - iter / iterations);
+        for (let i = 0; i < simNodes.length; i++) {
+          for (let j = i + 1; j < simNodes.length; j++) {
+            const a = simNodes[i], b = simNodes[j];
+            let dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+            let dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
+            const repulse = repulseStrength * alpha / (dist * dist);
+            const fx = dx / dist * repulse;
+            const fy = dy / dist * repulse;
+            const fz = dz / dist * repulse;
+            a.x += fx; a.y += fy; a.z += fz;
+            b.x -= fx; b.y -= fy; b.z -= fz;
+          }
+        }
+        for (const l of simLinks) {
+          const a = l.source, b = l.target;
           let dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
           let dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-          const repulse = repulseStrength * alpha / (dist * dist);
-          const fx = dx / dist * repulse;
-          const fy = dy / dist * repulse;
-          const fz = dz / dist * repulse;
-          a.x += fx; a.y += fy; a.z += fz;
-          b.x -= fx; b.y -= fy; b.z -= fz;
+          const norm = l.weight / maxWeight;
+          const targetDist = baseDist * (1 - norm * 0.85);
+          const strength = (0.05 + norm * norm * 0.9) * alpha;
+          const delta = (dist - targetDist) * strength * 0.5;
+          const ux = dx / dist, uy = dy / dist, uz = dz / dist;
+          a.x += ux * delta; a.y += uy * delta; a.z += uz * delta;
+          b.x -= ux * delta; b.y -= uy * delta; b.z -= uz * delta;
         }
-      }
-      for (const l of simLinks) {
-        const a = l.source, b = l.target;
-        let dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
-        let dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
-        const norm = l.weight / maxWeight;
-        const targetDist = baseDist * (1 - norm * 0.85);
-        const strength = (0.05 + norm * norm * 0.9) * alpha;
-        const delta = (dist - targetDist) * strength * 0.5;
-        const ux = dx / dist, uy = dy / dist, uz = dz / dist;
-        a.x += ux * delta; a.y += uy * delta; a.z += uz * delta;
-        b.x -= ux * delta; b.y -= uy * delta; b.z -= uz * delta;
-      }
-      for (const n of simNodes) {
-        n.x *= 0.998; n.y *= 0.998; n.z *= 0.998;
+        for (const n of simNodes) {
+          n.x *= 0.998; n.y *= 0.998; n.z *= 0.998;
+        }
       }
     }
 
-    let rotX = -0.3, rotY = 0.5;
+    let rotX = egoMode ? 0 : -0.3, rotY = egoMode ? 0 : 0.5;
+    let panX = 0, panY = 0;
     let zoom = 1;
     let isDragging = false;
     let lastMx = 0, lastMy = 0;
@@ -2237,6 +2293,14 @@ function DirectView({
     let pinnedEdge: { link: any; sx: number; sy: number } | null = null;
 
     function project(x3: number, y3: number, z3: number) {
+      if (egoMode) {
+        return {
+          sx: width / 2 + panX + x3 * zoom,
+          sy: height / 2 + panY + y3 * zoom,
+          z: 0,
+          scale: zoom,
+        };
+      }
       const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
       const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
       let y1 = y3 * cosX - z3 * sinX;
@@ -2386,12 +2450,28 @@ function DirectView({
         }
 
         if (!dimmed || isSelected) {
-          const labelSize = nodeCount > 500 ? Math.max(5, 7 * pn.scale) : Math.max(7, 9 * pn.scale);
-          ctx.font = (isHovered || isSelected) ? "bold 11px 'Cinzel Decorative', serif" : `${labelSize}px 'Cinzel Decorative', serif`;
-          ctx.fillStyle = isSelected ? "#FFD700" : "#E0DCE6";
-          ctx.globalAlpha = (isHovered || isSelected) ? 1 : isConnected ? 0.9 : 0.5 * pn.scale;
-          ctx.textAlign = "center";
-          ctx.fillText(n.label, pn.sx, pn.sy - r - 4);
+          const isFocal = egoMode && n.id === focalNodeId;
+          const labelSize = isFocal ? 14 : nodeCount > 500 ? Math.max(5, 7 * pn.scale) : Math.max(7, 10 * pn.scale);
+          ctx.font = (isHovered || isSelected || isFocal) ? `bold ${isFocal ? 14 : 11}px 'Cinzel Decorative', serif` : `${labelSize}px 'Cinzel Decorative', serif`;
+          ctx.fillStyle = isFocal ? "#03FF9B" : isSelected ? "#FFD700" : "#E0DCE6";
+          ctx.globalAlpha = (isHovered || isSelected || isFocal) ? 1 : isConnected ? 0.95 : 0.85;
+
+          if (egoMode && !isFocal && n._angle !== undefined) {
+            // Place label radially outward from center to avoid overlap with rings
+            const angle = n._angle as number;
+            const labelOffset = r + 10;
+            const lx = pn.sx + Math.cos(angle) * labelOffset;
+            const ly = pn.sy + Math.sin(angle) * labelOffset;
+            // Anchor based on angle: right half = left-anchor, left half = right-anchor
+            const cosA = Math.cos(angle);
+            ctx.textAlign = cosA > 0.3 ? "left" : cosA < -0.3 ? "right" : "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(n.label, lx, ly);
+            ctx.textBaseline = "alphabetic";
+          } else {
+            ctx.textAlign = "center";
+            ctx.fillText(n.label, pn.sx, pn.sy - r - 6);
+          }
         }
       }
 
@@ -2536,9 +2616,14 @@ function DirectView({
       if (isDragging) {
         const dx = e.clientX - lastMx;
         const dy = e.clientY - lastMy;
-        rotY += dx * 0.005;
-        rotX += dy * 0.005;
-        rotX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotX));
+        if (egoMode) {
+          panX += dx;
+          panY += dy;
+        } else {
+          rotY += dx * 0.005;
+          rotX += dy * 0.005;
+          rotX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotX));
+        }
         lastMx = e.clientX;
         lastMy = e.clientY;
         draw();
@@ -4934,6 +5019,7 @@ export default function GraphPage() {
               onHoverNode={setHoveredNode}
               selectedNodeIds={new Set([...selectedNodeIds, focalCharacterId])}
               relationEdges={relationEdges}
+              focalNodeId={`fig-${focalCharacterId}`}
             />
           )
         ) : viewMode === "umap" ? (
