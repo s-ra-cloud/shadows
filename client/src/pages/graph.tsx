@@ -2409,8 +2409,8 @@ function DirectView({
           ctx.globalAlpha = 0.9;
           ctx.lineWidth = 3;
         } else if (egoMode) {
-          ctx.globalAlpha = isHighlighted ? 0.55 : anyActive ? 0.04 : 0.18;
-          ctx.lineWidth = isHighlighted ? 1.5 : 0.5;
+          ctx.globalAlpha = isHighlighted ? 0.85 : anyActive ? 0.05 : 0.42;
+          ctx.lineWidth = isHighlighted ? 1.5 : 0.4;
         } else {
           ctx.globalAlpha = isHighlighted ? 0.4 + normalizedWeight * 0.4 : anyActive ? 0.02 : 0.04 + normalizedWeight * 0.12;
           ctx.lineWidth = isHighlighted ? 0.8 + normalizedWeight * 2.5 : 0.2 + normalizedWeight * 1.2;
@@ -2448,10 +2448,10 @@ function DirectView({
 
         let baseR: number;
         if (isFocal) {
-          baseR = 9;
+          baseR = 7;
         } else if (egoMode) {
-          // Uniform node size — ring distance already encodes shared-trait strength
-          baseR = 4;
+          // Small uniform dots — ring distance encodes strength; edges create the starburst
+          baseR = nodeCount > 300 ? 1.8 : nodeCount > 100 ? 2.5 : 3;
         } else {
           baseR = (nodeCount > 500 ? 1.5 : nodeCount > 200 ? 2 : 3) + pn.scale * (nodeCount > 500 ? 2 : 3);
         }
