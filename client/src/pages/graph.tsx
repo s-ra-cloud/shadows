@@ -3233,7 +3233,7 @@ function UMAPView({
           <span className="text-shadows-text/30 text-[10px]">Projecting {figures.length} figures across shared traits</span>
         </div>
       )}
-      <div className="absolute top-3 left-16 flex items-center gap-2" data-testid="panel-umap-controls">
+      <div className="absolute top-4 right-4 flex items-center gap-2 z-20" data-testid="panel-umap-controls">
         <div className="flex items-center gap-1 bg-black/60 border border-white/10 rounded px-2 py-1">
           <span className="text-[9px] text-shadows-text/50">Neighbors</span>
           <input
@@ -4875,7 +4875,7 @@ export default function GraphPage() {
 
   return (
     <div className="h-screen relative overflow-hidden" data-testid="page-graph">
-      <div className={`absolute top-4 z-30 flex items-center gap-2 transition-[right] duration-200 ${(lastSelectedNode || selectedTrait) ? "right-[21rem] lg:right-[25rem]" : "right-4"}`}>
+      <div className="absolute top-4 left-16 lg:left-[19rem] z-30 flex items-center gap-2">
         {viewMode === "network" && (
           <div className="relative w-64 lg:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-shadows-text/30" />
