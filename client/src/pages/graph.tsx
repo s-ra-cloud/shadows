@@ -4928,7 +4928,7 @@ export default function GraphPage() {
       )}
 
       {(viewMode === "direct" || viewMode === "dichotomy") && (
-      <div className={`absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[85vh] overflow-y-auto ${viewMode === "dichotomy" ? "w-52" : ""}`}>
+      <div className={`absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[85vh] overflow-y-auto ${viewMode === "dichotomy" ? "w-36" : ""}`}>
         <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">
           {viewMode === "direct" ? "Direct Connections" : "Dichotomies"}
         </span>
