@@ -1821,6 +1821,7 @@ function NetworkView({
   hoveredNode,
   selectedNodeIds,
   relationEdges,
+  searchQuery,
 }: {
   filteredGraphNodes: GraphNode[];
   filteredLinks: GraphLink[];
@@ -1830,12 +1831,17 @@ function NetworkView({
   hoveredNode: any;
   selectedNodeIds: Set<number>;
   relationEdges: RelationEdge[];
+  searchQuery: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
   const transformRef = useRef(d3.zoomIdentity);
+  const zoomBehaviorRef = useRef<d3.ZoomBehavior<HTMLCanvasElement, unknown> | null>(null);
   const simNodesRef = useRef<any[]>([]);
   const simLinksRef = useRef<any[]>([]);
+  const drawRef = useRef<() => void>(() => {});
+  const searchQueryRef = useRef(searchQuery);
+  searchQueryRef.current = searchQuery;
   const onSelectNodeRef = useRef(onSelectNode);
   const onSelectTraitRef = useRef(onSelectTrait);
   const selectedNodeIdsRef = useRef(selectedNodeIds);
@@ -2021,10 +2027,12 @@ function NetworkView({
 
       const baseR = nodeR;
       const anyActive = activeId || hasSelection;
+      const searchQ = (searchQueryRef.current || "").trim().toLowerCase();
       for (const n of simNodes) {
         const isHovered = n.id === hoveredId;
         const isSelected = n.isCharacter && n.original && selIds.has(n.original.id);
         const isConnected = connectedIds.has(n.id);
+        const isSearchMatch = !!searchQ && n.isCharacter && n.label.toLowerCase().includes(searchQ);
         const dimmed = anyActive && !isHovered && !isSelected && !isConnected && !selectedSimIds.has(n.id);
 
         if (n.isCharacter) {
@@ -2035,13 +2043,21 @@ function NetworkView({
           const minR = baseR * 0.3;
           const maxR = baseR * 3.5;
           const sizedR = minR + Math.pow(norm, 0.7) * (maxR - minR);
-          const r = isHovered ? sizedR + 4 : isSelected ? sizedR + 2 : sizedR;
+          const r = isHovered ? sizedR + 4 : isSelected ? sizedR + 2 : isSearchMatch ? sizedR + 3 : sizedR;
           ctx.beginPath();
           ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-          ctx.fillStyle = "#E0DCE6";
-          ctx.globalAlpha = dimmed ? 0.08 : 0.85;
+          ctx.fillStyle = isSearchMatch ? "#03FF9B" : "#E0DCE6";
+          ctx.globalAlpha = isSearchMatch ? 1 : dimmed ? 0.08 : 0.85;
           ctx.fill();
-          if (isSelected) {
+          if (isSearchMatch) {
+            ctx.strokeStyle = "#03FF9B";
+            ctx.lineWidth = 3;
+            ctx.globalAlpha = 1;
+            ctx.shadowColor = "#03FF9B";
+            ctx.shadowBlur = 18;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+          } else if (isSelected) {
             ctx.strokeStyle = "#FFD700";
             ctx.lineWidth = 2;
             ctx.globalAlpha = 0.9;
@@ -2066,12 +2082,29 @@ function NetworkView({
       ctx.globalAlpha = 1;
 
       const showLabels = t.k > 0.6 || anyActive;
+      // Always render labels for search-matched character nodes, even when zoomed out
+      if (searchQ) {
+        for (const n of simNodes) {
+          if (!n.isCharacter) continue;
+          if (!n.label.toLowerCase().includes(searchQ)) continue;
+          ctx.font = "bold 13px 'Cinzel Decorative', serif";
+          ctx.fillStyle = "#03FF9B";
+          ctx.globalAlpha = 1;
+          ctx.textAlign = "center";
+          ctx.shadowColor = "#0B0626";
+          ctx.shadowBlur = 6;
+          ctx.fillText(n.label, n.x, n.y - 16);
+          ctx.shadowBlur = 0;
+        }
+      }
       if (showLabels) {
         for (const n of simNodes) {
           const isHovered = n.id === hoveredId;
           const isActive = n.id === activeId;
           const isSelected = n.isCharacter && n.original && selIds.has(n.original.id);
           const isConnected = connectedIds.has(n.id);
+          const isSearchMatch = !!searchQ && n.isCharacter && n.label.toLowerCase().includes(searchQ);
+          if (isSearchMatch) continue; // already rendered above
           const dimmed = anyActive && !isHovered && !isActive && !isSelected && !isConnected;
 
           if (n.isCharacter) {
@@ -2095,6 +2128,7 @@ function NetworkView({
       ctx.restore();
     }
 
+    drawRef.current = draw;
     draw();
     simulation.on("tick", draw);
     simulation.alpha(0.01).restart();
@@ -2105,6 +2139,7 @@ function NetworkView({
         transformRef.current = event.transform;
         draw();
       });
+    zoomBehaviorRef.current = zoomBehavior;
 
     d3.select(canvas).call(zoomBehavior);
 
@@ -2160,6 +2195,45 @@ function NetworkView({
     const sim = simulationRef.current;
     if (sim) sim.alpha(0).restart();
   }, [selectedNodeIds, relationEdges]);
+
+  // When search query changes, pan and zoom to the matched character node so the user
+  // can actually see the figure they searched for. Wait for the simulation to settle
+  // a moment so the matched node has a meaningful position before centering.
+  useEffect(() => {
+    const q = (searchQuery || "").trim().toLowerCase();
+    if (!q) return;
+    const canvas = canvasRef.current;
+    const zoomBehavior = zoomBehaviorRef.current;
+    if (!canvas || !zoomBehavior) return;
+
+    const tryCenter = () => {
+      const nodes = simNodesRef.current;
+      if (!nodes || nodes.length === 0) return false;
+      const matches = nodes.filter((n: any) => n.isCharacter && n.label.toLowerCase().includes(q));
+      if (matches.length === 0) return false;
+      // Pick the shortest label match (closest to exact)
+      matches.sort((a: any, b: any) => a.label.length - b.label.length);
+      const target = matches[0];
+      if (target.x == null || target.y == null) return false;
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      const k = matches.length === 1 ? 2.2 : 1.6;
+      const tx = width / 2 - target.x * k;
+      const ty = height / 2 - target.y * k;
+      const transform = d3.zoomIdentity.translate(tx, ty).scale(k);
+      d3.select(canvas)
+        .transition()
+        .duration(750)
+        .call(zoomBehavior.transform as any, transform);
+      return true;
+    };
+
+    // Try immediately, then retry a couple of times while the force simulation settles
+    if (tryCenter()) return;
+    const t1 = setTimeout(() => { if (!tryCenter()) {} }, 300);
+    const t2 = setTimeout(() => { tryCenter(); }, 900);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [searchQuery, filteredGraphNodes]);
 
   return <canvas ref={canvasRef} className="w-full h-full" />;
 }
@@ -5061,6 +5135,7 @@ export default function GraphPage() {
             hoveredNode={hoveredNode}
             selectedNodeIds={selectedNodeIds}
             relationEdges={relationEdges}
+            searchQuery={searchQuery}
           />
         ) : viewMode === "direct" ? (
           focalCharacterId == null ? (
