@@ -2207,9 +2207,12 @@ function DirectView({
         weightByNeighbor.set(otherId, l.weight);
       }
 
-      // Ring assignment: split into rings such that each ring fits comfortably (~ one label per ~14 deg arc)
-      const minArc = 14; // degrees per neighbor
-      const maxPerRing = Math.floor(360 / minArc);
+      // Adaptive ring density: fewer neighbors -> larger arc per node (better labels);
+      // many neighbors -> smaller arc (fits more, labels skipped for low-weight ones)
+      const totalNeighbors = neighbors.length;
+      const minArcDeg = totalNeighbors <= 40 ? 16 : totalNeighbors <= 120 ? 10 : totalNeighbors <= 300 ? 5 : 3;
+      const maxPerRing = Math.max(8, Math.floor(360 / minArcDeg));
+
       // Sort by weight desc, then tradition for grouping
       const sorted = [...neighbors].sort((a, b) => {
         const wA = weightByNeighbor.get(a.id) || 0;
@@ -2218,14 +2221,18 @@ function DirectView({
         return (a.tradition || "").localeCompare(b.tradition || "");
       });
 
-      const baseRadius = Math.min(width, height) * 0.18;
-      const ringStep = Math.min(width, height) * 0.13;
+      const numRings = Math.max(1, Math.ceil(sorted.length / maxPerRing));
+      const maxRadius = Math.min(width, height) * 0.44;
+      const baseRadius = Math.min(width, height) * (numRings > 1 ? 0.09 : 0.22);
+      const ringStep = numRings > 1 ? (maxRadius - baseRadius) / (numRings - 1) : 0;
+
       const rings: any[][] = [];
       for (let i = 0; i < sorted.length; i += maxPerRing) {
         rings.push(sorted.slice(i, i + maxPerRing));
       }
 
       focal.x = 0; focal.y = 0; focal.z = 0;
+      focal._weight = Math.max(1, ...weightByNeighbor.values());
       rings.forEach((ringNodes, ringIdx) => {
         const radius = baseRadius + ringIdx * ringStep;
         const offset = ringIdx * 0.12; // stagger rings slightly to avoid radial line-up
@@ -2236,6 +2243,7 @@ function DirectView({
           n.z = 0;
           n._ringIdx = ringIdx;
           n._angle = angle;
+          n._weight = weightByNeighbor.get(n.id) || 1;
         });
       });
     } else {
@@ -2395,10 +2403,14 @@ function DirectView({
         ctx.beginPath();
         ctx.moveTo(sp.sx, sp.sy);
         ctx.lineTo(tp.sx, tp.sy);
-        ctx.strokeStyle = weightToColor(l.weight);
+        // In ego mode use a uniform muted color (size encodes strength on nodes); otherwise color by weight
+        ctx.strokeStyle = egoMode ? "#8F00FF" : weightToColor(l.weight);
         if (isEdgeActive) {
           ctx.globalAlpha = 0.9;
           ctx.lineWidth = 3;
+        } else if (egoMode) {
+          ctx.globalAlpha = isHighlighted ? 0.55 : anyActive ? 0.04 : 0.18;
+          ctx.lineWidth = isHighlighted ? 1.5 : 0.5;
         } else {
           ctx.globalAlpha = isHighlighted ? 0.4 + normalizedWeight * 0.4 : anyActive ? 0.02 : 0.04 + normalizedWeight * 0.12;
           ctx.lineWidth = isHighlighted ? 0.8 + normalizedWeight * 2.5 : 0.2 + normalizedWeight * 1.2;
@@ -2423,14 +2435,28 @@ function DirectView({
 
       projectedNodes.sort((a, b) => b.z - a.z);
 
+      // For ego mode: max weight to scale node sizes
+      const maxNeighborWeight = egoMode ? Math.max(1, ...simNodes.filter(n => n.id !== focalNodeId).map(n => n._weight || 1)) : 1;
+
       for (const pn of projectedNodes) {
         const n = pn.node;
         const isHovered = n.id === hoveredId;
         const isSelected = n.original && selIds.has(n.original.id);
         const isConnected = connectedIds.has(n.id);
         const dimmed = anyActive && !isHovered && !isSelected && !isConnected;
+        const isFocal = egoMode && n.id === focalNodeId;
 
-        const baseR = (nodeCount > 500 ? 1.5 : nodeCount > 200 ? 2 : 3) + pn.scale * (nodeCount > 500 ? 2 : 3);
+        let baseR: number;
+        if (isFocal) {
+          baseR = 9;
+        } else if (egoMode) {
+          // Size = function of shared-trait weight (more shared traits => bigger node)
+          const w = n._weight || 1;
+          const norm = w / maxNeighborWeight;
+          baseR = 2 + norm * 8; // 2px (weakest) → 10px (strongest)
+        } else {
+          baseR = (nodeCount > 500 ? 1.5 : nodeCount > 200 ? 2 : 3) + pn.scale * (nodeCount > 500 ? 2 : 3);
+        }
         const r = isHovered ? baseR + 3 : isSelected ? baseR + 2 : baseR;
         ctx.beginPath();
         ctx.arc(pn.sx, pn.sy, r, 0, Math.PI * 2);
@@ -2449,8 +2475,16 @@ function DirectView({
           ctx.stroke();
         }
 
-        if (!dimmed || isSelected) {
-          const isFocal = egoMode && n.id === focalNodeId;
+        // In ego mode with many neighbors, only label the top (by weight). Always label hovered/selected/focal.
+        let shouldLabel = !dimmed || isSelected;
+        if (egoMode && !isFocal && !isHovered && !isSelected) {
+          const w = n._weight || 1;
+          const norm = w / maxNeighborWeight;
+          // Show labels for nodes whose weight is at least 30% of max, or top tier
+          shouldLabel = norm >= 0.3 || (nodeCount <= 80);
+        }
+
+        if (shouldLabel) {
           const labelSize = isFocal ? 14 : nodeCount > 500 ? Math.max(5, 7 * pn.scale) : Math.max(7, 10 * pn.scale);
           ctx.font = (isHovered || isSelected || isFocal) ? `bold ${isFocal ? 14 : 11}px 'Cinzel Decorative', serif` : `${labelSize}px 'Cinzel Decorative', serif`;
           ctx.fillStyle = isFocal ? "#03FF9B" : isSelected ? "#FFD700" : "#E0DCE6";
@@ -2676,7 +2710,7 @@ function DirectView({
     canvas.onwheel = (e) => {
       e.preventDefault();
       zoom *= e.deltaY > 0 ? 0.93 : 1.07;
-      zoom = Math.max(0.3, Math.min(5, zoom));
+      zoom = Math.max(egoMode ? 0.05 : 0.3, Math.min(5, zoom));
       draw();
     };
 
@@ -4905,14 +4939,16 @@ export default function GraphPage() {
             </div>
           </div>
         )}
-        {viewMode === "direct" && (
+        {viewMode === "direct" && focalCharacterId != null && (
           <div className="mt-1">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2 justify-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#E0DCE6]" />
               <span className="text-[9px] text-shadows-text/40">fewer</span>
-              <div className="w-16 h-[3px] rounded-full" style={{ background: "linear-gradient(to right, #8F00FF, #03FF9B)" }} />
+              <span className="w-3 h-3 rounded-full bg-[#E0DCE6]" />
               <span className="text-[9px] text-shadows-text/40">more</span>
+              <span className="w-4 h-4 rounded-full bg-[#E0DCE6]" />
             </div>
-            <span className="text-[9px] text-shadows-text/30 block text-center">shared traits</span>
+            <span className="text-[9px] text-shadows-text/30 block text-center mt-0.5">shared traits (node size)</span>
           </div>
         )}
       </div>)}
