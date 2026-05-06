@@ -2450,10 +2450,8 @@ function DirectView({
         if (isFocal) {
           baseR = 9;
         } else if (egoMode) {
-          // Size = function of shared-trait weight (more shared traits => bigger node)
-          const w = n._weight || 1;
-          const norm = w / maxNeighborWeight;
-          baseR = 2 + norm * 8; // 2px (weakest) → 10px (strongest)
+          // Uniform node size — ring distance already encodes shared-trait strength
+          baseR = 4;
         } else {
           baseR = (nodeCount > 500 ? 1.5 : nodeCount > 200 ? 2 : 3) + pn.scale * (nodeCount > 500 ? 2 : 3);
         }
@@ -4940,15 +4938,8 @@ export default function GraphPage() {
           </div>
         )}
         {viewMode === "direct" && focalCharacterId != null && (
-          <div className="mt-1">
-            <div className="flex items-center gap-2 justify-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#E0DCE6]" />
-              <span className="text-[9px] text-shadows-text/40">fewer</span>
-              <span className="w-3 h-3 rounded-full bg-[#E0DCE6]" />
-              <span className="text-[9px] text-shadows-text/40">more</span>
-              <span className="w-4 h-4 rounded-full bg-[#E0DCE6]" />
-            </div>
-            <span className="text-[9px] text-shadows-text/30 block text-center mt-0.5">shared traits (node size)</span>
+          <div className="mt-1 text-[9px] text-shadows-text/40 leading-tight text-center">
+            Inner rings = more shared traits<br />Outer rings = fewer
           </div>
         )}
       </div>)}
