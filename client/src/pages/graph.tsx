@@ -4875,7 +4875,7 @@ export default function GraphPage() {
 
   return (
     <div className="h-screen relative overflow-hidden" data-testid="page-graph">
-      <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
+      <div className={`absolute top-4 z-30 flex items-center gap-2 transition-[right] duration-200 ${(lastSelectedNode || selectedTrait) ? "right-[21rem] lg:right-[25rem]" : "right-4"}`}>
         {viewMode === "network" && (
           <div className="relative w-64 lg:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-shadows-text/30" />
