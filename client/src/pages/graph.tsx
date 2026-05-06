@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
 import type { Node, Edge } from "@shared/schema";
 
@@ -4877,7 +4877,42 @@ export default function GraphPage() {
   return (
     <div className="h-screen relative overflow-hidden" data-testid="page-graph">
       <div className="absolute top-4 left-16 lg:left-[19rem] z-30 flex items-center gap-2">
-        {viewMode === "network" && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="p-2 rounded-md bg-[#0B0626]/80 backdrop-blur-xl border border-[#350A8C]/30 text-shadows-text/80 hover:text-[#E0DCE6] hover:border-[#8F00FF]/50 transition-colors"
+              title="Change view"
+              data-testid="button-view-menu"
+            >
+              {viewMode === "network" ? <Network size={18} />
+                : viewMode === "direct" ? <Users size={18} />
+                : viewMode === "umap" ? <Sparkles size={18} />
+                : viewMode === "dichotomy" ? <Split size={18} />
+                : <Link2 size={18} />}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="bg-[#0B0626]/95 backdrop-blur-xl border-[#350A8C]/40 text-shadows-text">
+            <DropdownMenuItem onSelect={() => setViewMode("network")} data-testid="option-view-network">
+              <Network size={14} className="mr-2" /> Network
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setViewMode("direct")} data-testid="option-view-direct">
+              <Users size={14} className="mr-2" /> Direct connections
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setViewMode("umap")} data-testid="option-view-umap">
+              <Sparkles size={14} className="mr-2" /> Similarity map
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setViewMode("dichotomy")} data-testid="option-view-dichotomy">
+              <Split size={14} className="mr-2" /> Dichotomy
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setViewMode("relations")} data-testid="option-view-relations">
+              <Link2 size={14} className="mr-2" /> Relations
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {viewMode === "network" && (
+        <div className={`absolute top-4 z-30 transition-[right] duration-200 ${(lastSelectedNode || selectedTrait) ? "right-[21rem] lg:right-[25rem]" : "right-4"}`}>
           <div className="relative w-64 lg:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-shadows-text/30" />
             <Input
@@ -4889,33 +4924,8 @@ export default function GraphPage() {
               data-testid="input-search-nodes"
             />
           </div>
-        )}
-        <Select value={viewMode} onValueChange={(v) => setViewMode(v as typeof viewMode)}>
-          <SelectTrigger
-            className="w-[200px] bg-[#0B0626]/80 backdrop-blur-xl border-[#350A8C]/30 text-shadows-text text-sm hover:border-[#8F00FF]/50 transition-colors"
-            data-testid="select-view-mode"
-          >
-            <SelectValue placeholder="Choose view" />
-          </SelectTrigger>
-          <SelectContent className="bg-[#0B0626]/95 backdrop-blur-xl border-[#350A8C]/40 text-shadows-text">
-            <SelectItem value="network" data-testid="option-view-network">
-              <span className="flex items-center gap-2"><Network size={14} /> Network</span>
-            </SelectItem>
-            <SelectItem value="direct" data-testid="option-view-direct">
-              <span className="flex items-center gap-2"><Users size={14} /> Direct connections</span>
-            </SelectItem>
-            <SelectItem value="umap" data-testid="option-view-umap">
-              <span className="flex items-center gap-2"><Sparkles size={14} /> Similarity map</span>
-            </SelectItem>
-            <SelectItem value="dichotomy" data-testid="option-view-dichotomy">
-              <span className="flex items-center gap-2"><Split size={14} /> Dichotomy</span>
-            </SelectItem>
-            <SelectItem value="relations" data-testid="option-view-relations">
-              <span className="flex items-center gap-2"><Link2 size={14} /> Relations</span>
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+        </div>
+      )}
 
       {(viewMode === "direct" || viewMode === "dichotomy") && (
       <div className="absolute top-20 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[75vh] overflow-y-auto">
