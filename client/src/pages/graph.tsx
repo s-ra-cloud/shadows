@@ -3765,19 +3765,6 @@ function DichotomyView({
   return (
     <div className="w-full h-full relative">
       <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-dichotomy" />
-      {traditionsInView.length > 0 && (
-        <div className="absolute bottom-3 left-3 bg-black/60 rounded-lg border border-white/10 p-2 max-w-[180px]" data-testid="panel-tradition-legend">
-          <div className="text-[8px] text-shadows-text/40 uppercase tracking-wider mb-1">Traditions</div>
-          <div className="flex flex-wrap gap-x-2 gap-y-0.5">
-            {traditionsInView.map(t => (
-              <div key={t} className="flex items-center gap-1" data-testid={`legend-tradition-${t.toLowerCase()}`}>
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getTraditionColor(t) }} />
-                <span className="text-[8px] text-shadows-text/50">{t}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
