@@ -1896,6 +1896,33 @@ function NetworkView({
       nodeDegree.set(tid, (nodeDegree.get(tid) || 0) + 1);
     }
 
+    // For each character, count total trait-overlaps with OTHER characters.
+    // For each trait node connected to the character, count (other characters sharing that trait).
+    // Sum gives the total number of shared-trait incidences across all of this deity's traits.
+    const charSharedCount = new Map<string, number>();
+    for (const l of simLinks) {
+      const s = typeof l.source === "object" ? l.source : simNodeMap.get(l.source);
+      const t = typeof l.target === "object" ? l.target : simNodeMap.get(l.target);
+      if (!s || !t) continue;
+      const charNode = s.isCharacter ? s : t.isCharacter ? t : null;
+      const traitNode = s.isCharacter ? t : s;
+      if (!charNode || traitNode.isCharacter) continue;
+      const traitDeg = nodeDegree.get(traitNode.id) || 1;
+      const others = Math.max(0, traitDeg - 1); // other characters sharing this trait
+      charSharedCount.set(charNode.id, (charSharedCount.get(charNode.id) || 0) + others);
+    }
+
+    let maxCharShared = 1;
+    for (const v of charSharedCount.values()) if (v > maxCharShared) maxCharShared = v;
+    // Attach normalized weight (0..1) to each character node for use in rendering
+    for (const n of simNodes) {
+      if (n.isCharacter) {
+        const c = charSharedCount.get(n.id) || 0;
+        n._sharedCount = c;
+        n._sharedNorm = c / maxCharShared;
+      }
+    }
+
     const viewArea = width * height;
     const targetDensity = 0.15;
     const nodeArea = totalNodes * Math.PI * nodeR * nodeR;
@@ -2001,7 +2028,14 @@ function NetworkView({
         const dimmed = anyActive && !isHovered && !isSelected && !isConnected && !selectedSimIds.has(n.id);
 
         if (n.isCharacter) {
-          const r = isHovered ? baseR + 4 : isSelected ? baseR + 2 : baseR;
+          // Size character nodes by total shared-trait count with other deities.
+          // Use sqrt scaling so area (not radius) is roughly proportional to count — keeps very popular
+          // figures from dominating while still making the difference clearly visible.
+          const norm = n._sharedNorm || 0;
+          const minR = baseR * 0.45;
+          const maxR = baseR * 2.2;
+          const sizedR = minR + Math.sqrt(norm) * (maxR - minR);
+          const r = isHovered ? sizedR + 4 : isSelected ? sizedR + 2 : sizedR;
           ctx.beginPath();
           ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
           ctx.fillStyle = "#E0DCE6";
