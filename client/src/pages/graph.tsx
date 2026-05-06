@@ -3437,6 +3437,9 @@ function UMAPView({
   const [minDist, setMinDist] = useState(0.1);
   const [computing, setComputing] = useState(true);
   const [points, setPoints] = useState<{ figure: Node; x: number; y: number }[]>([]);
+  const [showAllLabels, setShowAllLabels] = useState(false);
+  const showAllLabelsRef = useRef(showAllLabels);
+  showAllLabelsRef.current = showAllLabels;
 
   useEffect(() => {
     let cancelled = false;
@@ -3546,6 +3549,11 @@ function UMAPView({
       };
     }
 
+    // Sort points by importance (mention count) for label priority
+    const sortedByImportance = [...points].sort((a, b) =>
+      (b.figure.mentionCount || 0) - (a.figure.mentionCount || 0)
+    );
+
     function draw() {
       ctx.clearRect(0, 0, width, height);
       const grad = ctx.createLinearGradient(0, 0, width, height);
@@ -3556,19 +3564,34 @@ function UMAPView({
 
       const selIds = selectedNodeIdsRef.current;
       const hasSelection = selIds.size > 0;
-      const r = 3.5 * Math.min(2, Math.max(0.6, zoom * 0.9));
+      const baseR = 4.5 * Math.min(2, Math.max(0.7, zoom * 0.85));
 
+      // Compute connected ids when hovering
+      const hoveredId = hovered?.p.figure.id;
+
+      // Draw points (dim when something is hovered/selected)
       for (const p of points) {
         const { sx, sy } = project(p);
+        if (sx < -20 || sx > width + 20 || sy < -20 || sy > height + 20) continue;
         const isSelected = selIds.has(p.figure.id);
-        const isHovered = hovered?.p.figure.id === p.figure.id;
-        const dim = hasSelection && !isSelected;
+        const isHovered = hoveredId === p.figure.id;
+        const dim = (hasSelection && !isSelected) || (hoveredId && !isHovered);
+        // Make important figures slightly larger
+        const importance = Math.log10((p.figure.mentionCount || 0) + 1);
+        const r = baseR * (1 + Math.min(0.9, importance * 0.25));
         const color = TRADITION_COLORS[p.figure.tradition || ""] || "#E0DCE6";
-        ctx.globalAlpha = dim ? 0.18 : 0.85;
+        ctx.globalAlpha = dim ? 0.15 : 0.9;
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.arc(sx, sy, isHovered ? r * 1.8 : r, 0, Math.PI * 2);
         ctx.fill();
+        // Subtle outline for visibility on dark bg
+        if (!dim) {
+          ctx.globalAlpha = 0.5;
+          ctx.strokeStyle = "rgba(11,6,38,0.9)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
         if (isSelected) {
           ctx.globalAlpha = 1;
           ctx.strokeStyle = "#FFD700";
@@ -3580,29 +3603,77 @@ function UMAPView({
       }
       ctx.globalAlpha = 1;
 
-      // Labels at high zoom
-      if (zoom > 1.4) {
-        ctx.font = "10px 'DM Sans', sans-serif";
-        ctx.fillStyle = "rgba(224,220,230,0.7)";
-        ctx.textAlign = "left";
-        for (const p of points) {
-          const { sx, sy } = project(p);
-          if (sx < -50 || sx > width + 50 || sy < -20 || sy > height + 20) continue;
-          ctx.fillText(p.figure.name, sx + 6, sy + 3);
+      // Greedy label placement: most-important first, skip if it would collide
+      ctx.font = "11px 'DM Sans', sans-serif";
+      ctx.textBaseline = "middle";
+      const placedRects: { x: number; y: number; w: number; h: number }[] = [];
+      const labelPad = 4;
+      const labelOffset = 8;
+      const labelH = 14;
+      const maxLabels = showAllLabelsRef.current ? points.length : Math.min(150, Math.floor(80 + zoom * 40));
+      let placed = 0;
+
+      const candidates = hoveredId
+        ? sortedByImportance.filter(p => p.figure.id === hoveredId)  // only show hovered tooltip below
+        : sortedByImportance;
+
+      for (const p of candidates) {
+        if (placed >= maxLabels) break;
+        const { sx, sy } = project(p);
+        if (sx < 0 || sx > width || sy < 0 || sy > height) continue;
+        const isSelected = selIds.has(p.figure.id);
+        const dim = hasSelection && !isSelected;
+        if (dim && !showAllLabelsRef.current) continue;
+
+        const text = p.figure.name;
+        const tw = ctx.measureText(text).width;
+        // Try positions: right, left, top, bottom
+        const positions = [
+          { x: sx + labelOffset, y: sy },
+          { x: sx - tw - labelOffset, y: sy },
+          { x: sx - tw / 2, y: sy - labelOffset - labelH / 2 },
+          { x: sx - tw / 2, y: sy + labelOffset + labelH / 2 },
+        ];
+        let placedRect: typeof placedRects[number] | null = null;
+        for (const pos of positions) {
+          const rect = { x: pos.x - labelPad, y: pos.y - labelH / 2 - labelPad, w: tw + labelPad * 2, h: labelH + labelPad * 2 };
+          let collides = false;
+          for (const existing of placedRects) {
+            if (rect.x < existing.x + existing.w && rect.x + rect.w > existing.x &&
+                rect.y < existing.y + existing.h && rect.y + rect.h > existing.y) {
+              collides = true;
+              break;
+            }
+          }
+          if (!collides) { placedRect = { ...rect, ...pos } as any; (placedRect as any).labelX = pos.x; (placedRect as any).labelY = pos.y; break; }
         }
+        if (!placedRect) continue;
+        placedRects.push(placedRect);
+        placed++;
+
+        // Draw subtle background pill
+        ctx.fillStyle = "rgba(11,6,38,0.78)";
+        ctx.fillRect(placedRect.x, placedRect.y, placedRect.w, placedRect.h);
+        // Text
+        ctx.fillStyle = isSelected ? "#FFD700" : "rgba(224,220,230,0.92)";
+        ctx.textAlign = "left";
+        ctx.fillText(text, (placedRect as any).labelX, (placedRect as any).labelY);
       }
 
+      // Hover tooltip (richer info)
       if (hovered) {
         ctx.font = "12px 'DM Sans', sans-serif";
         const label = `${hovered.p.figure.name} · ${hovered.p.figure.tradition || ""}`;
-        const w = ctx.measureText(label).width + 12;
-        ctx.fillStyle = "rgba(11,6,38,0.95)";
-        ctx.fillRect(hovered.sx + 10, hovered.sy - 22, w, 22);
-        ctx.strokeStyle = "rgba(143,0,255,0.5)";
-        ctx.strokeRect(hovered.sx + 10, hovered.sy - 22, w, 22);
+        const w = ctx.measureText(label).width + 14;
+        ctx.fillStyle = "rgba(11,6,38,0.97)";
+        ctx.fillRect(hovered.sx + 12, hovered.sy - 24, w, 24);
+        ctx.strokeStyle = "rgba(143,0,255,0.6)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(hovered.sx + 12, hovered.sy - 24, w, 24);
         ctx.fillStyle = "#E0DCE6";
         ctx.textAlign = "left";
-        ctx.fillText(label, hovered.sx + 16, hovered.sy - 7);
+        ctx.textBaseline = "middle";
+        ctx.fillText(label, hovered.sx + 19, hovered.sy - 12);
       }
     }
     drawRef.current = draw;
@@ -3684,7 +3755,7 @@ function UMAPView({
     };
   }, [points, onHoverNode, onSelectNode]);
 
-  useEffect(() => { if (drawRef.current) drawRef.current(); }, [selectedNodeIds]);
+  useEffect(() => { if (drawRef.current) drawRef.current(); }, [selectedNodeIds, showAllLabels]);
 
   const visibleTraditions = useMemo(() => {
     const s = new Set<string>();
@@ -3728,6 +3799,14 @@ function UMAPView({
           />
           <span className="text-[9px] text-shadows-text/70 w-7 text-right">{minDist.toFixed(2)}</span>
         </div>
+        <button
+          onClick={() => setShowAllLabels(v => !v)}
+          className={`px-2 py-1 rounded text-[9px] border transition-colors ${showAllLabels ? "bg-[#8F00FF]/30 border-[#8F00FF]/40 text-shadows-text/80" : "bg-black/40 border-white/10 text-shadows-text/40"}`}
+          data-testid="button-umap-labels"
+          title="When ON, every figure tries to show its name (overlapping ones are skipped). When OFF, only the most-mentioned figures are labeled."
+        >
+          {showAllLabels ? "All labels" : "Top labels"}
+        </button>
       </div>
       {visibleTraditions.length > 0 && (
         <div className="absolute bottom-3 right-3 bg-black/60 border border-white/10 rounded px-2 py-2 max-w-[200px]" data-testid="legend-umap">
