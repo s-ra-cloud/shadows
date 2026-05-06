@@ -2029,12 +2029,12 @@ function NetworkView({
 
         if (n.isCharacter) {
           // Size character nodes by total shared-trait count with other deities.
-          // Use sqrt scaling so area (not radius) is roughly proportional to count — keeps very popular
-          // figures from dominating while still making the difference clearly visible.
+          // Wider range + gentler curve (^0.7) makes differences clearly perceptible:
+          // the least-connected figures stay small while the most-connected pop dramatically.
           const norm = n._sharedNorm || 0;
-          const minR = baseR * 0.45;
-          const maxR = baseR * 2.2;
-          const sizedR = minR + Math.sqrt(norm) * (maxR - minR);
+          const minR = baseR * 0.3;
+          const maxR = baseR * 3.5;
+          const sizedR = minR + Math.pow(norm, 0.7) * (maxR - minR);
           const r = isHovered ? sizedR + 4 : isSelected ? sizedR + 2 : sizedR;
           ctx.beginPath();
           ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
