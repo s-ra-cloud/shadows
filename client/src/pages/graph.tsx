@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as d3 from "d3";
-import { X, Search, Filter, ArrowLeft, Network, ScatterChart, Users, SlidersHorizontal, Split, ChevronRight, ChevronDown, TreePine, Link2, Globe } from "lucide-react";
+import { X, Search, Filter, ArrowLeft, Network, ScatterChart, Users, SlidersHorizontal, Split, ChevronRight, ChevronDown, TreePine, Link2, Globe, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -3413,6 +3413,339 @@ function CorrespondenceView({
   );
 }
 
+function UMAPView({
+  figures,
+  onSelectNode,
+  onHoverNode,
+  selectedNodeIds,
+  useSupersets,
+  enabledCategories,
+}: {
+  figures: Node[];
+  onSelectNode: (node: Node | null) => void;
+  onHoverNode: (node: any) => void;
+  selectedNodeIds: Set<number>;
+  useSupersets?: Set<string>;
+  enabledCategories?: Set<string>;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawRef = useRef<(() => void) | null>(null);
+  const selectedNodeIdsRef = useRef(selectedNodeIds);
+  selectedNodeIdsRef.current = selectedNodeIds;
+
+  const [neighbors, setNeighbors] = useState(15);
+  const [minDist, setMinDist] = useState(0.1);
+  const [computing, setComputing] = useState(true);
+  const [points, setPoints] = useState<{ figure: Node; x: number; y: number }[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setComputing(true);
+    setPoints([]);
+
+    (async () => {
+      const { UMAP } = await import("umap-js");
+
+      const usable = figures.filter(f => {
+        const traits = getTraitsForFigure(f, enabledCategories, useSupersets);
+        return traits.length > 0;
+      });
+      if (usable.length < 4) {
+        if (!cancelled) { setPoints([]); setComputing(false); }
+        return;
+      }
+
+      const traitSets = usable.map(f => new Set(getTraitsForFigure(f, enabledCategories, useSupersets)));
+      const allTraits = new Set<string>();
+      traitSets.forEach(s => s.forEach(t => allTraits.add(t)));
+      const traitList = [...allTraits];
+      const traitIdx = new Map(traitList.map((t, i) => [t, i]));
+
+      const data = traitSets.map(s => {
+        const v = new Array(traitList.length).fill(0);
+        s.forEach(t => { const i = traitIdx.get(t); if (i !== undefined) v[i] = 1; });
+        return v;
+      });
+
+      function jaccardDistance(a: number[], b: number[]) {
+        let inter = 0, uni = 0;
+        for (let i = 0; i < a.length; i++) {
+          if (a[i] || b[i]) {
+            uni++;
+            if (a[i] && b[i]) inter++;
+          }
+        }
+        return uni === 0 ? 1 : 1 - inter / uni;
+      }
+
+      const umap = new UMAP({
+        nComponents: 2,
+        nNeighbors: Math.min(neighbors, usable.length - 1),
+        minDist,
+        distanceFn: jaccardDistance,
+      });
+
+      try {
+        const embedding = await umap.fitAsync(data);
+        if (cancelled) return;
+        const result = embedding.map((coords, i) => ({
+          figure: usable[i],
+          x: coords[0],
+          y: coords[1],
+        }));
+        setPoints(result);
+      } finally {
+        if (!cancelled) setComputing(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [figures, useSupersets, enabledCategories, neighbors, minDist]);
+
+  useEffect(() => {
+    if (!canvasRef.current || points.length === 0) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const container = canvas.parentElement;
+    if (!container) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const xs = points.map(p => p.x);
+    const ys = points.map(p => p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const padding = 60;
+    const scaleX = (width - padding * 2) / (maxX - minX || 1);
+    const scaleY = (height - padding * 2) / (maxY - minY || 1);
+    const scale = Math.min(scaleX, scaleY);
+    const offsetX = padding + ((width - padding * 2) - (maxX - minX) * scale) / 2;
+    const offsetY = padding + ((height - padding * 2) - (maxY - minY) * scale) / 2;
+
+    let zoom = 1;
+    let panX = 0, panY = 0;
+    let isDragging = false;
+    let lastMx = 0, lastMy = 0;
+    let didDrag = false;
+    let hovered: { p: typeof points[0]; sx: number; sy: number } | null = null;
+
+    function project(p: { x: number; y: number }) {
+      const baseX = offsetX + (p.x - minX) * scale;
+      const baseY = offsetY + (p.y - minY) * scale;
+      return {
+        sx: width / 2 + (baseX - width / 2) * zoom + panX,
+        sy: height / 2 + (baseY - height / 2) * zoom + panY,
+      };
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+      const grad = ctx.createLinearGradient(0, 0, width, height);
+      grad.addColorStop(0, "#0B0626");
+      grad.addColorStop(1, "#0C0042");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+
+      const selIds = selectedNodeIdsRef.current;
+      const hasSelection = selIds.size > 0;
+      const r = 3.5 * Math.min(2, Math.max(0.6, zoom * 0.9));
+
+      for (const p of points) {
+        const { sx, sy } = project(p);
+        const isSelected = selIds.has(p.figure.id);
+        const isHovered = hovered?.p.figure.id === p.figure.id;
+        const dim = hasSelection && !isSelected;
+        const color = TRADITION_COLORS[p.figure.tradition || ""] || "#E0DCE6";
+        ctx.globalAlpha = dim ? 0.18 : 0.85;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(sx, sy, isHovered ? r * 1.8 : r, 0, Math.PI * 2);
+        ctx.fill();
+        if (isSelected) {
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = "#FFD700";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(sx, sy, r * 2.2, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+
+      // Labels at high zoom
+      if (zoom > 1.4) {
+        ctx.font = "10px 'DM Sans', sans-serif";
+        ctx.fillStyle = "rgba(224,220,230,0.7)";
+        ctx.textAlign = "left";
+        for (const p of points) {
+          const { sx, sy } = project(p);
+          if (sx < -50 || sx > width + 50 || sy < -20 || sy > height + 20) continue;
+          ctx.fillText(p.figure.name, sx + 6, sy + 3);
+        }
+      }
+
+      if (hovered) {
+        ctx.font = "12px 'DM Sans', sans-serif";
+        const label = `${hovered.p.figure.name} · ${hovered.p.figure.tradition || ""}`;
+        const w = ctx.measureText(label).width + 12;
+        ctx.fillStyle = "rgba(11,6,38,0.95)";
+        ctx.fillRect(hovered.sx + 10, hovered.sy - 22, w, 22);
+        ctx.strokeStyle = "rgba(143,0,255,0.5)";
+        ctx.strokeRect(hovered.sx + 10, hovered.sy - 22, w, 22);
+        ctx.fillStyle = "#E0DCE6";
+        ctx.textAlign = "left";
+        ctx.fillText(label, hovered.sx + 16, hovered.sy - 7);
+      }
+    }
+    drawRef.current = draw;
+
+    function findHover(mx: number, my: number) {
+      const r = 6 * Math.max(1, zoom);
+      let best: { p: typeof points[0]; sx: number; sy: number; d: number } | null = null;
+      for (const p of points) {
+        const { sx, sy } = project(p);
+        const dx = sx - mx, dy = sy - my;
+        const d = dx * dx + dy * dy;
+        if (d < r * r && (!best || d < best.d)) best = { p, sx, sy, d };
+      }
+      return best ? { p: best.p, sx: best.sx, sy: best.sy } : null;
+    }
+
+    canvas.onmousedown = (e) => {
+      isDragging = true;
+      didDrag = false;
+      lastMx = e.clientX;
+      lastMy = e.clientY;
+    };
+    canvas.onmousemove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      if (isDragging) {
+        const dx = e.clientX - lastMx;
+        const dy = e.clientY - lastMy;
+        if (Math.abs(dx) + Math.abs(dy) > 3) didDrag = true;
+        panX += dx; panY += dy;
+        lastMx = e.clientX;
+        lastMy = e.clientY;
+        draw();
+      } else {
+        const h = findHover(mx, my);
+        if (h?.p.figure.id !== hovered?.p.figure.id) {
+          hovered = h;
+          onHoverNode(h ? h.p.figure : null);
+          draw();
+        } else {
+          hovered = h;
+        }
+      }
+    };
+    canvas.onmouseup = () => { isDragging = false; };
+    canvas.onmouseleave = () => { isDragging = false; hovered = null; onHoverNode(null); draw(); };
+    canvas.onclick = (e) => {
+      if (didDrag) return;
+      const rect = canvas.getBoundingClientRect();
+      const h = findHover(e.clientX - rect.left, e.clientY - rect.top);
+      if (h) onSelectNode(h.p.figure);
+    };
+    canvas.onwheel = (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.15 : 0.87;
+      const newZoom = Math.max(0.3, Math.min(8, zoom * factor));
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      // Zoom toward cursor
+      const cx = width / 2 + panX;
+      const cy = height / 2 + panY;
+      panX = mx - (mx - cx) * (newZoom / zoom) - width / 2;
+      panY = my - (my - cy) * (newZoom / zoom) - height / 2;
+      zoom = newZoom;
+      draw();
+    };
+
+    draw();
+    return () => {
+      canvas.onmousedown = null;
+      canvas.onmousemove = null;
+      canvas.onmouseup = null;
+      canvas.onmouseleave = null;
+      canvas.onclick = null;
+      canvas.onwheel = null;
+      drawRef.current = null;
+    };
+  }, [points, onHoverNode, onSelectNode]);
+
+  useEffect(() => { if (drawRef.current) drawRef.current(); }, [selectedNodeIds]);
+
+  const visibleTraditions = useMemo(() => {
+    const s = new Set<string>();
+    points.forEach(p => { if (p.figure.tradition) s.add(p.figure.tradition); });
+    return [...s].sort();
+  }, [points]);
+
+  return (
+    <div className="relative w-full h-full">
+      <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-umap" />
+      {computing && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0B0626]/80 pointer-events-none">
+          <div className="w-8 h-8 border-2 border-[#8F00FF]/30 border-t-[#03FF9B] rounded-full animate-spin" />
+          <span className="text-shadows-text/60 text-xs">Computing similarity map…</span>
+          <span className="text-shadows-text/30 text-[10px]">Projecting {figures.length} figures across shared traits</span>
+        </div>
+      )}
+      <div className="absolute top-3 left-3 flex items-center gap-2" data-testid="panel-umap-controls">
+        <div className="bg-black/40 rounded px-2 py-1 text-[9px] text-shadows-text/40">
+          Drag to pan · Scroll to zoom · Click a point
+        </div>
+        <div className="flex items-center gap-1 bg-black/60 border border-white/10 rounded px-2 py-1">
+          <span className="text-[9px] text-shadows-text/50">Neighbors</span>
+          <input
+            type="range" min={5} max={50} step={1}
+            value={neighbors}
+            onChange={(e) => setNeighbors(parseInt(e.target.value))}
+            className="w-20 accent-[#8F00FF]"
+            data-testid="slider-umap-neighbors"
+          />
+          <span className="text-[9px] text-shadows-text/70 w-5 text-right">{neighbors}</span>
+        </div>
+        <div className="flex items-center gap-1 bg-black/60 border border-white/10 rounded px-2 py-1">
+          <span className="text-[9px] text-shadows-text/50">Spread</span>
+          <input
+            type="range" min={1} max={50} step={1}
+            value={Math.round(minDist * 100)}
+            onChange={(e) => setMinDist(parseInt(e.target.value) / 100)}
+            className="w-20 accent-[#8F00FF]"
+            data-testid="slider-umap-mindist"
+          />
+          <span className="text-[9px] text-shadows-text/70 w-7 text-right">{minDist.toFixed(2)}</span>
+        </div>
+      </div>
+      {visibleTraditions.length > 0 && (
+        <div className="absolute bottom-3 right-3 bg-black/60 border border-white/10 rounded px-2 py-2 max-w-[200px]" data-testid="legend-umap">
+          <div className="text-[9px] text-shadows-text/50 mb-1 uppercase tracking-wider">Traditions</div>
+          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+            {visibleTraditions.map(t => (
+              <div key={t} className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: TRADITION_COLORS[t] || "#E0DCE6" }} />
+                <span className="text-[9px] text-shadows-text/60">{t}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const DICHOTOMY_COLORS = [
   "#8F00FF", "#03FF9B", "#FFB800", "#FF4081",
   "#4A7BFF", "#FF6B35", "#00BCD4", "#B388FF",
@@ -4621,7 +4954,7 @@ export default function GraphPage() {
   const [hierarchySelections, setHierarchySelections] = useState<Map<string, Set<string>>>(new Map());
   const [hoveredNode, setHoveredNode] = useState<any>(null);
   const [selectedTraditions, setSelectedTraditions] = useState<Set<string> | null>(null);
-  const [viewMode, setViewMode] = useState<"network" | "direct" | "ca" | "dichotomy" | "relations">("network");
+  const [viewMode, setViewMode] = useState<"network" | "direct" | "ca" | "umap" | "dichotomy" | "relations">("network");
   const [dichotomyDepth, setDichotomyDepth] = useState(1);
   const [dichotomyThreshold, setDichotomyThreshold] = useState(0.9);
   const [minTraits, setMinTraits] = useState(2);
@@ -5027,6 +5360,14 @@ export default function GraphPage() {
             <ScatterChart size={18} />
           </button>
           <button
+            className={`p-2 transition-colors ${viewMode === "umap" ? "bg-[#8F00FF]/30 text-[#E0DCE6]" : "text-shadows-text/40 hover:text-shadows-text/70"}`}
+            onClick={() => setViewMode("umap")}
+            title="Similarity map (UMAP) — clusters of similar figures"
+            data-testid="button-view-umap"
+          >
+            <Sparkles size={18} />
+          </button>
+          <button
             className={`p-2 transition-colors ${viewMode === "dichotomy" ? "bg-[#8F00FF]/30 text-[#E0DCE6]" : "text-shadows-text/40 hover:text-shadows-text/70"}`}
             onClick={() => setViewMode("dichotomy")}
             title="Dichotomy view (recursive binary splits)"
@@ -5218,6 +5559,15 @@ export default function GraphPage() {
             relationEdges={relationEdges}
             enabledCategories={enabledCategoriesSet}
             hierarchySelections={hierarchySelections}
+          />
+        ) : viewMode === "umap" ? (
+          <UMAPView
+            figures={effectiveNodes}
+            onSelectNode={(n) => handleGraphNodeSelect(n)}
+            onHoverNode={setHoveredNode}
+            selectedNodeIds={selectedNodeIds}
+            useSupersets={activeSupersets}
+            enabledCategories={enabledCategoriesSet}
           />
         ) : viewMode === "dichotomy" ? (
           <DichotomyView

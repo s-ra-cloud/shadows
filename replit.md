@@ -54,10 +54,11 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 
 ## Graph Visualization
 - **Canvas-based** rendering for performance with 1000+ nodes
-- **Five view modes:**
+- **Six view modes:**
   - **Network** — Bipartite layout: character nodes + shared trait nodes (including eventTypes, birthTypes, deathTypes)
   - **Direct** — Characters only, connected by number of shared traits (line thickness = common traits count)
   - **Correspondence Analysis** — Interactive 3D scatter plot: D1/D2/D3 map to X/Y/Z spatial axes, D4 maps to color gradient (purple→green→white→yellow→red). Mouse drag to rotate, scroll to zoom. Perspective projection with depth-based sizing. Dimension labels computed from top-loading traits. Bottom-right panel shows all 4 dimensions with inertia % and trait poles + color bar.
+  - **Similarity Map (UMAP)** — 2D non-linear projection optimized for revealing clusters of similar figures. Builds binary trait vectors per figure (across all enabled categories, including supersets), runs UMAP with Jaccard distance (umap-js package). Adjustable Neighbors slider (5–50, local vs global focus) and Spread slider (0.01–0.50, cluster tightness). Points colored by tradition. Pan/zoom/click/hover. Designed to expose cluster structure that CA cannot when the data is high-dimensional with many unique trait values.
   - **Dichotomy** — Recursive binary splits by exclusive traits using binary space partition layout (treemap-style). Cross-category trait pairs allowed. Coverage floor 10%, scoring: coverage²×10 + balance×0.2. Used traits blocked (not categories) across recursion levels.
   - **Relations** — Dedicated 3D force-directed graph showing only characters connected by relationship edges. Nodes colored by tradition. Edges use semantic color gradient: Kinship (gold gradient: parent=#B8860B, child=#DAA520, sibling=#FFD700), Bond (married=#FF69B4), Spiritual (trinity=#9B59B6), Conflict (adversary=#DC143C). Curved edges for multi-relation pairs. Hover tooltip shows all relationships for a character. Grouped legend in bottom-right.
 - Character nodes uniform #E0DCE6, no tradition coloring
