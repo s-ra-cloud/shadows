@@ -3453,7 +3453,7 @@ function DichotomyView({
       }
     }
 
-    const rootRect: CellRect = { x: 8, y: 8, w: width - 16, h: height - 16 };
+    const rootRect: CellRect = { x: 8, y: 56, w: width - 16, h: height - 64 };
     buildHierarchy(dichotomyResult, rootRect, 0, { val: 0 });
 
     const parentBoxes = allBoxes.filter(b => b.leafIndex === -1);
@@ -4928,7 +4928,7 @@ export default function GraphPage() {
       )}
 
       {(viewMode === "direct" || viewMode === "dichotomy") && (
-      <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[85vh] overflow-y-auto">
+      <div className={`absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[85vh] overflow-y-auto ${viewMode === "dichotomy" ? "w-52" : ""}`}>
         <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">
           {viewMode === "direct" ? "Direct Connections" : "Dichotomies"}
         </span>
@@ -5013,9 +5013,6 @@ export default function GraphPage() {
         )}
         {viewMode === "dichotomy" && (
           <div className="mb-1 space-y-2">
-            <p className="text-[9px] text-shadows-text/30 leading-tight">
-              Recursive binary splits by mutually exclusive traits.
-            </p>
             <div>
               <span className="text-[9px] text-shadows-text/40 block mb-1">Divisions: {Math.pow(2, dichotomyDepth)}</span>
               <Slider
