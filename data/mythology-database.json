@@ -16591,7 +16591,7 @@
       "id": 3396,
       "projectId": 6,
       "name": "Sophia",
-      "tradition": "Abrahamic / Gnostic (Wisdom literature continuum, from Proverbs through Gnostic systems)",
+      "tradition": "Gnostic",
       "gender": "Female",
       "domain": "feminine personification of divine wisdom; God's first-created or eternally-present companion at creation; the calling-out wisdom of the city gates; in Christian theology identified with Christ as \"the wisdom of God\" (1 Corinthians 1:24); in Gnostic systems an emanation, sometimes fallen, sometimes restored; Hebrew ḥokmâ, Greek sophia",
       "object": "house with seven pillars (Proverbs 9:1); banquet (Proverbs 9:2-6); the lifegiving tree (Proverbs 3:18); the law/Torah (Sirach 24:23 explicitly identifies Wisdom with Torah)",
@@ -17544,7 +17544,7 @@
       "id": 3448,
       "projectId": 6,
       "name": "Lilith",
-      "tradition": "Abrahamic (Jewish, with Mesopotamian etymological background)",
+      "tradition": "Abrahamic",
       "gender": "Female",
       "domain": "seduction, child-killing, night, demonic, wind/storm (etymological), succubus / nocturnal sexual predation",
       "object": "screech-owl (lilit) iconography; she steals from babies in incantation-bowl imagery; flowing hair (sign of demonic disorder)",
@@ -33425,7 +33425,7 @@
     },
     {
       "name": "YHWH",
-      "tradition": "Abrahamic (Jewish primary)",
+      "tradition": "Abrahamic",
       "gender": "Male",
       "domain": "covenant deity of Israel, creator of heaven and earth, holy (qādōš), jealous (qannāʾ), just, merciful, the Tetragrammaton (the four-letter Name יהוה, ineffable in later Jewish practice and read as Adonai or Hashem)",
       "domain_source": "The Tanakh (Hebrew Bible) passim. The principal self-disclosure passages: Exodus 3:14 (ʾehyeh ʾăšer ʾehyeh, \"I am that I am\" / \"I will be what I will be\"); Exodus 6:2-3 (revelation of the Name to Moses); Exodus 20:1-17 (the Decalogue); Exodus 34:6-7 (the thirteen attributes of mercy); Deuteronomy 6:4-5 (the Shema, \"YHWH is one\")",
@@ -33466,7 +33466,7 @@
     },
     {
       "name": "Allah",
-      "tradition": "Abrahamic (Islamic primary)",
+      "tradition": "Abrahamic",
       "gender": "Male",
       "domain": "the One God of Islam (al-Wāḥid al-Aḥad), creator (al-Khāliq), most merciful (al-Raḥmān al-Raḥīm), the source of revelation, the only deity (lā ilāha illā Allāh, \"there is no god but Allah\" — the first part of the shahāda); identified with the God of the Hebrew Bible and Christianity per Islamic theology",
       "domain_source": "The Quran in toto, especially Surah al-Fātiḥah (1, the opening chapter, recited in every prayer); Surah al-Ikhlāṣ (112, the chapter of pure monotheism); Ayat al-Kursī (the Throne Verse, 2:255); the 99 Beautiful Names (al-asmāʾ al-ḥusnā); Hadith literature; classical kalām (Islamic systematic theology) — Ashʿarī, Māturīdī, Muʿtazilī schools",
@@ -33501,7 +33501,7 @@
     },
     {
       "name": "God-the-Father",
-      "tradition": "Abrahamic (Christian primary)",
+      "tradition": "Abrahamic",
       "gender": "Male",
       "domain": "first person of the Christian Trinity, identified with YHWH of the Hebrew Bible, Father of Jesus Christ \"in a unique sense\" (only-begotten, John 3:16) and Father of all believers by adoption (Romans 8:15, Galatians 4:6)",
       "domain_source": "New Testament passim; principally the Synoptic Gospels and John on Jesus's relation to the Father; the Lord's Prayer (Matthew 6:9-13 / Luke 11:2-4); the Gethsemane prayer (Matthew 26:39-42); the Trinitarian formulae (Matthew 28:19, 2 Corinthians 13:14, Ephesians 4:4-6); the Apostles' Creed; the Nicene-Constantinopolitan Creed (325/381 CE); the Athanasian Creed; classical Trinitarian theology (Cappadocian Fathers, Augustine, Aquinas)",
@@ -33538,7 +33538,7 @@
     },
     {
       "name": "Holy Spirit",
-      "tradition": "Abrahamic (Christian primary)",
+      "tradition": "Abrahamic",
       "gender": "Other",
       "domain": "third person of the Christian Trinity (Pneuma Hagion in Greek, Spiritus Sanctus in Latin); the breath/wind of God (Hebrew rūaḥ, also feminine grammatically); presence of God; sanctifier; gift-giver; comforter (paraclete, John 14:26); the indwelling presence in believers",
       "domain_source": "Genesis 1:2 (the rūaḥ ʾĕlōhīm hovering over the waters); Numbers 11:25; Judges 14-15 (the Spirit empowers Samson); 1 Samuel 16:13 (the Spirit comes upon David); Isaiah 11:2, 61:1; Joel 2:28-29 (the eschatological outpouring); the four Gospels (descent at Jesus's baptism — Mark 1:10, etc.); Acts 2 (Pentecost); 1 Corinthians 12 (the gifts); Romans 8 (the indwelling Spirit); the Nicene-Constantinopolitan Creed",
@@ -33576,7 +33576,7 @@
     },
     {
       "name": "Iblis",
-      "tradition": "Abrahamic (Islamic primary)",
+      "tradition": "Abrahamic",
       "gender": "Male",
       "domain": "Islamic primary devil-figure; refuser of obeisance to Adam; ancestor of the shayāṭīn (devils/satans); whisperer (al-waswās); accursed (al-rajīm)",
       "domain_source": "Quran: 2:34, 7:11-25, 15:28-43, 17:61-65, 18:50, 20:115-123, 38:71-85; ḥadīth tradition; classical Islamic exegesis (Tabari, Ibn Kathir)",
@@ -33618,7 +33618,7 @@
     },
     {
       "name": "Asmodeus",
-      "tradition": "Abrahamic (Jewish, with Persian etymological background)",
+      "tradition": "Abrahamic",
       "gender": "Male",
       "domain": "demon of lust and marriage-disrupting; in Tobit kills Sarah's seven husbands; in rabbinic tradition the king of demons (under or alongside Solomon); etymologically from Persian/Avestan Aēšma-daēva (the demon of Wrath)",
       "domain_source": "Tobit 3:7-17, 6:14-18, 8:1-3 (Catholic/Orthodox deuterocanon); b. Pesachim 110a; b. Gittin 68a-b (Asmodeus and Solomon — he tricks Solomon and rules in his place); Testament of Solomon (Christian-era pseudepigraphon, c. 1st-3rd c. CE); the etymological link to Avestan Aēšma-daēva is established in scholarship (cf. Yasht 11.6)",
@@ -33655,7 +33655,7 @@
     },
     {
       "name": "Beelzebub",
-      "tradition": "Abrahamic (Jewish/Christian, with Canaanite/Philistine background)",
+      "tradition": "Abrahamic",
       "gender": "Male",
       "domain": "prince of demons in the New Testament; Hebrew Bible: the Philistine god of Ekron (Baal-Zebub, \"Lord of the Flies\" — a polemical Hebrew distortion of Canaanite Baal-Zebul \"Prince Baal\"); in later Christian demonology, one of the chief princes of hell",
       "domain_source": "2 Kings 1:2-16 (Ahaziah inquires of \"Baal-Zebub the god of Ekron\"); Mark 3:22, Matthew 12:24, Luke 11:15 (Beelzebul as \"the prince of demons\"); Matthew 10:25; Testament of Solomon 6 (Beelzebul as fallen prince of angels); medieval Christian demonology (the four crown princes of hell)",
@@ -33692,7 +33692,7 @@
     },
     {
       "name": "Azazel",
-      "tradition": "Abrahamic (Jewish — Leviticus and Enochic)",
+      "tradition": "Abrahamic",
       "gender": "Male",
       "domain": "in Leviticus 16, the wilderness-recipient of the Yom Kippur scapegoat; in 1 Enoch, chief of the Watchers — the fallen angels who taught humanity forbidden arts; the prototype of the corrupting fallen angel",
       "domain_source": "Leviticus 16:8, 16:10, 16:26 (the scapegoat sent \"to Azazel\"); 1 Enoch 6-13 (the Book of the Watchers — Azazel as chief of the Watchers); 1 Enoch 8:1-3 (Azazel teaches sword-making, armor, women's adornments); 1 Enoch 9:6, 10:4-8 (Azazel's judgment); 4 Q En (Qumran Enoch fragments); Apocalypse of Abraham 13-14 (Azazel as the fallen serpent)",
@@ -33736,7 +33736,7 @@
     },
     {
       "name": "Samael",
-      "tradition": "Abrahamic (Jewish — rabbinic and Kabbalistic)",
+      "tradition": "Abrahamic",
       "gender": "Male",
       "domain": "rabbinic angel of death and venom (Hebrew sam = \"poison/drug\"); the angel-rider of the serpent of Eden; in Kabbalah, the consort of Lilith and the demonic counterpart of YHWH; in some traditions identified with Satan",
       "domain_source": "Targum Pseudo-Jonathan to Genesis 3 (Samael riding the serpent); Pirkei de Rabbi Eliezer 13, 21 (Samael, Eve, and the serpent); 3 Enoch 14:2, 26:12 (Samael in the heavenly court); Treatise on the Left Emanation (Isaac ha-Cohen, 13th c. — Samael and Lilith as the demonic dyad); Zohar passim; Bahir",
@@ -33777,7 +33777,7 @@
     },
     {
       "name": "Mastema",
-      "tradition": "Abrahamic (Jewish — Jubilees and Qumran)",
+      "tradition": "Abrahamic",
       "gender": "Male",
       "domain": "prince of evil spirits in the Book of Jubilees; accuser, tester; given charge of one-tenth of the evil spirits to do God's work of testing humanity; sometimes identified with Satan (the name mastēmâ means \"hostility/animosity\")",
       "domain_source": "Jubilees 10:7-12, 11:5, 11:11, 17:15-18, 18:9-12, 48:2-3, 48:9-19 (the principal source); Damascus Document (CD-A); 4 Q387 fr. 2 (Qumran); 1 QM (the War Scroll) uses the term mastēmâ for the spirits of Belial's lot",
@@ -33815,7 +33815,7 @@
     },
     {
       "name": "Shekhinah",
-      "tradition": "Abrahamic (Jewish — rabbinic and Kabbalistic)",
+      "tradition": "Abrahamic",
       "gender": "Female",
       "domain": "divine presence (literally \"dwelling\", from the root šākan \"to dwell\"); the indwelling presence of God in the Tabernacle, the Temple, with Israel in exile, with the studious; in Kabbalah, the tenth Sefirah (Malkhut), the divine femininity, the \"bride\" of Tiferet seeking reunion",
       "domain_source": "Targum Onkelos passim (substituting \"the Shekhinah of YHWH\" where the Hebrew has YHWH himself in anthropomorphic contexts); m. Avot 3:2 (where two study Torah, the Shekhinah is between them); b. Sanhedrin 39a; b. Berakhot 6a; Sifre Numbers 161 (the Shekhinah's exile with Israel); Zohar; Sefer Yetzirah; Bahir; Lurianic Kabbalah",
@@ -33851,7 +33851,7 @@
     },
     {
       "name": "Sandalphon",
-      "tradition": "Abrahamic (Jewish — rabbinic and Hekhalot)",
+      "tradition": "Abrahamic",
       "gender": "Male",
       "domain": "archangel of song and prayer; weaver of crowns from the prayers of Israel; in some traditions identified with the prophet Elijah ascended; companion or twin of Metatron; one of the great angelic princes of the divine throne",
       "domain_source": "b. Hagigah 13b (the principal source); Hekhalot Rabbati; Sefer Hekhalot (3 Enoch); Pirkei de Rabbi Eliezer 4; medieval angelology; Maaseh Merkavah",
@@ -33891,7 +33891,7 @@
     },
     {
       "name": "Leviathan",
-      "tradition": "Abrahamic (Jewish, with Canaanite Lotan-cognate background)",
+      "tradition": "Abrahamic",
       "gender": "Male",
       "domain": "cosmic sea-monster; primordial chaos-serpent; eschatological beast; Hebrew livyātān, cognate of the Ugaritic Lotan/Litan",
       "domain_source": "Job 41 (the principal description); Job 3:8 (\"those who curse the day, who are skilled to rouse up Leviathan\"); Psalm 74:14 (\"you crushed the heads of Leviathan\"); Psalm 104:26 (Leviathan plays in the sea); Isaiah 27:1 (\"YHWH with his hard and great and strong sword will punish Leviathan, the fleeing serpent, the twisting serpent, and slay the dragon that is in the sea\"); 1 Enoch 60:7-9; 4 Ezra 6:49-52; 2 Baruch 29:4; b. Bava Batra 74b-75a (rabbinic eschatological feast)",
@@ -33935,7 +33935,7 @@
     },
     {
       "name": "Behemoth",
-      "tradition": "Abrahamic (Jewish)",
+      "tradition": "Abrahamic",
       "gender": "Male",
       "domain": "cosmic land-monster; primordial chaos-beast; Hebrew bĕhēmôt (intensive plural of bĕhēmâ \"beast\"); paired with Leviathan as the great primordial creatures of land and sea",
       "domain_source": "Job 40:15-24 (the principal description); 1 Enoch 60:7-10 (paired with Leviathan); 4 Ezra 6:49-52; 2 Baruch 29:4; b. Bava Batra 74b-75a",
@@ -33977,7 +33977,7 @@
     },
     {
       "name": "Asherah (Israelite)",
-      "tradition": "Abrahamic (Iron-Age Israelite, continuation of Canaanite Athirat)",
+      "tradition": "Abrahamic",
       "gender": "Female",
       "domain": "Iron-Age Israelite goddess; continuation in Israelite religion of the Canaanite Athirat tradition; per the Kuntillet ʿAjrud and Khirbet el-Qom inscriptions, consort of YHWH in popular Iron-Age religion (contested); the asherah-pole is her cultic emblem condemned by the Deuteronomistic Historians; possibly identical with the \"Queen of Heaven\" of Jeremiah",
       "domain_source": "Kuntillet ʿAjrud inscriptions (8th c. BCE Hebrew, on storage jars and plaster — \"YHWH of Samaria and his Asherah\", \"YHWH of Teman and his Asherah\"); Khirbet el-Qom Inscription III (8th c. BCE — \"Uriyahu the rich wrote it: blessed be Uriyahu by YHWH and by his Asherah\"); Deuteronomy 7:5, 12:3, 16:21; Judges 3:7, 6:25-30; 1 Kings 14:15, 14:23, 15:13, 16:33, 18:19; 2 Kings 13:6, 17:10, 17:16, 18:4, 21:3, 21:7, 23:4, 23:6-7, 23:14-15; Jeremiah 7:18, 44:17-25 (\"the Queen of Heaven\", malkat ha-šāmayim — debated identification); Judean pillar figurines (8th-7th c. BCE; Kletter 1996)",
