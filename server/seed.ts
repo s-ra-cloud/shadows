@@ -968,43 +968,6 @@ export async function seedDatabase() {
       project = existingProjects[0];
     }
 
-    const existingNodes = await storage.getNodes(project.id);
-    if (existingNodes.length > 0) {
-      const hasNewFields = existingNodes.some(
-        (n) => n.eventTypes || n.birthTypes || n.deathTypes || n.familyRoles
-      );
-      if (hasNewFields) {
-        console.log(`Database already has ${existingNodes.length} nodes with full data, skipping seed.`);
-        await applyTraitMerges();
-        await applyNodeDeletions();
-        await applyNodeMerges();
-        await applyNodeCreations();
-        await applyGenderFixes();
-        await applyDomainAdditions();
-        await applyDeathTypeCleanup();
-        await applyUnderscoreCleanup();
-        await seedAnimalHierarchy();
-        await seedDomainHierarchy();
-        await seedCharacterTraitHierarchy();
-        await seedEventTypesHierarchy();
-        await seedDeathTypesHierarchy();
-        await seedBirthTypesHierarchy();
-        return;
-      }
-      console.log(`Database has ${existingNodes.length} nodes but missing new trait fields. Re-seeding...`);
-      await db.delete(edges);
-      await db.delete(nodes);
-      const allProjects = await storage.getProjects();
-      for (const p of allProjects) {
-        if (p.id !== project.id) {
-          await db.delete(edges);
-          await db.delete(nodes);
-        }
-      }
-    }
-
-    console.log("Seeding mythology nodes...");
-
     let data: any;
     const jsonPaths = [
       path.join(process.cwd(), "data", "mythology-database.json"),
@@ -1025,6 +988,32 @@ export async function seedDatabase() {
       console.log("No mythology JSON data file found, skipping node seed.");
       return;
     }
+
+    const existingNodes = await storage.getNodes(project.id);
+    const expectedCount = data.nodes?.length ?? 0;
+    if (existingNodes.length === expectedCount && expectedCount > 0) {
+      const hasNewFields = existingNodes.some(
+        (n) => n.eventTypes || n.birthTypes || n.deathTypes || n.familyRoles
+      );
+      if (hasNewFields) {
+        console.log(`Database already has ${existingNodes.length} nodes matching data file, skipping seed.`);
+        await seedAnimalHierarchy();
+        await seedDomainHierarchy();
+        await seedCharacterTraitHierarchy();
+        await seedEventTypesHierarchy();
+        await seedDeathTypesHierarchy();
+        await seedBirthTypesHierarchy();
+        return;
+      }
+    }
+    if (existingNodes.length > 0) {
+      console.log(`Database has ${existingNodes.length} nodes but data file has ${expectedCount}. Re-seeding from data file...`);
+      await db.delete(suggestions);
+      await db.delete(edges);
+      await db.delete(nodes);
+    }
+
+    console.log("Seeding mythology nodes...");
 
     const batchSize = 50;
     let inserted = 0;
@@ -1065,19 +1054,23 @@ export async function seedDatabase() {
       let edgesInserted = 0;
       let edgesSkipped = 0;
 
-      const allEdgeIds = data.edges.flatMap((e: any) => [e.sourceNodeId, e.targetNodeId]);
-      const oldIdOffset = Math.min(...allEdgeIds);
-
       const oldIdToNewId: Record<number, number> = {};
-      data.nodes.forEach((n: any, i: number) => {
-        const oldId = oldIdOffset + i;
-        if (nameToId[n.name]) {
+      data.nodes.forEach((n: any) => {
+        const oldId = typeof n.id === "string" ? parseInt(n.id, 10) : n.id;
+        if (oldId != null && nameToId[n.name]) {
           oldIdToNewId[oldId] = nameToId[n.name];
         }
       });
 
+      const normEdge = (e: any) => ({
+        sourceNodeId: e.sourceNodeId ?? (e.source_node_id != null ? parseInt(e.source_node_id, 10) : undefined),
+        targetNodeId: e.targetNodeId ?? (e.target_node_id != null ? parseInt(e.target_node_id, 10) : undefined),
+        relationType: e.relationType ?? e.relation_type ?? e.type ?? null,
+        weight: e.weight != null ? (typeof e.weight === "string" ? parseInt(e.weight, 10) : e.weight) : 1,
+      });
+
       for (let i = 0; i < data.edges.length; i += batchSize) {
-        const batch = data.edges.slice(i, i + batchSize);
+        const batch = data.edges.slice(i, i + batchSize).map(normEdge);
         const validEdges: any[] = [];
 
         for (const e of batch) {
