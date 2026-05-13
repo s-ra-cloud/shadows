@@ -2625,20 +2625,26 @@ function DirectView({
           const eColor = weightToColor(al.weight);
           const srcName = al.source.label || "?";
           const tgtName = al.target.label || "?";
+          const srcTrad = (al.source.tradition || "").trim();
+          const tgtTrad = (al.target.tradition || "").trim();
           const traits: string[] = al.commonTraits || [];
           const titleText = `${srcName}  ↔  ${tgtName}`;
+          const traditionText = (srcTrad || tgtTrad) ? `${srcTrad || "—"}  ·  ${tgtTrad || "—"}` : "";
           const subtitleText = `${traits.length} shared trait${traits.length !== 1 ? "s" : ""}`;
 
           ctx.font = "bold 11px 'Cinzel Decorative', serif";
           const titleW = ctx.measureText(titleText).width;
+          ctx.font = "italic 9px 'Sofia Pro Light', sans-serif";
+          const tradW = traditionText ? ctx.measureText(traditionText).width : 0;
           ctx.font = "10px 'Sofia Pro Light', sans-serif";
           const subtitleW = ctx.measureText(subtitleText).width;
           const traitWidths = traits.map((tr: string) => ctx.measureText(`• ${tr}`).width);
           const maxTraitW = traitWidths.length > 0 ? Math.max(...traitWidths) : 0;
-          const boxW = Math.max(titleW, subtitleW, maxTraitW) + 28;
+          const boxW = Math.max(titleW, tradW, subtitleW, maxTraitW) + 28;
           const lineH = 15;
           const displayCount = Math.min(traits.length, 15);
-          const boxH = 38 + lineH + displayCount * lineH + (traits.length > 15 ? lineH : 0);
+          const tradLineH = traditionText ? 12 : 0;
+          const boxH = 38 + tradLineH + lineH + displayCount * lineH + (traits.length > 15 ? lineH : 0);
           let bx = midSx - boxW / 2;
           let by = midSy - boxH - 12;
           if (bx < 4) bx = 4;
@@ -2670,7 +2676,15 @@ function DirectView({
           ctx.fillStyle = "#FFD700";
           ctx.textAlign = "center";
           ctx.fillText(titleText, bx + boxW / 2, ty);
-          ty += 16;
+          ty += 14;
+          if (traditionText) {
+            ctx.font = "italic 9px 'Sofia Pro Light', sans-serif";
+            ctx.fillStyle = "#E0DCE6";
+            ctx.globalAlpha = 0.55;
+            ctx.fillText(traditionText, bx + boxW / 2, ty);
+            ctx.globalAlpha = 1;
+            ty += 12;
+          }
           ctx.font = "10px 'Sofia Pro Light', sans-serif";
           ctx.fillStyle = eColor;
           ctx.fillText(subtitleText, bx + boxW / 2, ty);
