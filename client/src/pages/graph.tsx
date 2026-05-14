@@ -2783,6 +2783,8 @@ function FCAView({
     extentKey: string;
     layer: number;             // intent size
     x: number; y: number;
+    dominantCategory: string;  // most common trait category in intent
+    categoryMix: { category: string; count: number }[]; // sorted desc
   };
   const [concepts, setConcepts] = useState<Concept[]>([]);
   const [usableFigures, setUsableFigures] = useState<Node[]>([]);
@@ -2849,13 +2851,23 @@ function FCAView({
 
       const seen = new Map<string, Concept>();
 
+      function makeConcept(ext: number[], intent: string[], key: string): Concept {
+        const catCount = new Map<string, number>();
+        for (const t of intent) {
+          const cat = t.split("::")[0];
+          catCount.set(cat, (catCount.get(cat) || 0) + 1);
+        }
+        const mix = [...catCount.entries()]
+          .map(([category, count]) => ({ category, count }))
+          .sort((a, b) => b.count - a.count);
+        const dominantCategory = mix[0]?.category || "";
+        return { extent: ext, intent, extentKey: key, layer: intent.length, x: 0, y: 0, dominantCategory, categoryMix: mix };
+      }
+
       // Top concept (universe)
       const universe = Array.from({ length: n }, (_, i) => i);
       const topInt = closure(universe);
-      seen.set(extentKey(universe), {
-        extent: universe, intent: topInt, extentKey: extentKey(universe),
-        layer: topInt.length, x: 0, y: 0,
-      });
+      seen.set(extentKey(universe), makeConcept(universe, topInt, extentKey(universe)));
 
       // Seed: singleton concepts for each kept trait
       for (const t of traits) {
@@ -2864,7 +2876,7 @@ function FCAView({
         const key = extentKey(ext);
         if (seen.has(key)) continue;
         const intent = closure(ext);
-        seen.set(key, { extent: ext, intent, extentKey: key, layer: intent.length, x: 0, y: 0 });
+        seen.set(key, makeConcept(ext, intent, key));
       }
 
       // Pairwise intersections (one round)
@@ -2887,7 +2899,7 @@ function FCAView({
           const key = extentKey(inter);
           if (seen.has(key)) continue;
           const intent = closure(inter);
-          seen.set(key, { extent: inter, intent, extentKey: key, layer: intent.length, x: 0, y: 0 });
+          seen.set(key, makeConcept(inter, intent, key));
         }
       }
 
@@ -2976,10 +2988,38 @@ function FCAView({
     canvas.style.width = W + "px"; canvas.style.height = H + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const padX = 60, padY = 60;
+    const padX = 70, padY = 70;
     let zoom = 1, panX = 0, panY = 0;
     let isDragging = false, lastMx = 0, lastMy = 0, didDrag = false;
     let hovered: number | null = null;
+
+    // Pre-compute ancestor/descendant sets for hover ripple highlighting
+    const childrenOf: Set<number>[] = concepts.map(() => new Set());
+    const parentsOf: Set<number>[] = concepts.map(() => new Set());
+    for (const e of hasseEdges) {
+      // edge a -> b means a's extent ⊂ b's extent (b is more general / parent in the lattice)
+      parentsOf[e.a].add(e.b);
+      childrenOf[e.b].add(e.a);
+    }
+    function ancestorsOf(i: number): Set<number> {
+      const out = new Set<number>(); const stack = [...parentsOf[i]];
+      while (stack.length) { const x = stack.pop()!; if (!out.has(x)) { out.add(x); parentsOf[x].forEach(p => stack.push(p)); } }
+      return out;
+    }
+    function descendantsOf(i: number): Set<number> {
+      const out = new Set<number>(); const stack = [...childrenOf[i]];
+      while (stack.length) { const x = stack.pop()!; if (!out.has(x)) { out.add(x); childrenOf[x].forEach(p => stack.push(p)); } }
+      return out;
+    }
+
+    // Twinkly background stars (deterministic per render)
+    const STAR_COUNT = 60;
+    const stars: { x: number; y: number; r: number; a: number }[] = [];
+    let seed = 1337;
+    const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    for (let i = 0; i < STAR_COUNT; i++) {
+      stars.push({ x: rnd() * W, y: rnd() * H, r: rnd() * 1.2 + 0.3, a: rnd() * 0.5 + 0.1 });
+    }
 
     function project(c: { x: number; y: number }) {
       const baseX = padX + c.x * (W - padX * 2);
@@ -2991,79 +3031,286 @@ function FCAView({
     }
 
     function nodeRadius(c: typeof concepts[0]) {
-      return Math.max(4, Math.min(22, 4 + Math.log10(c.extent.length + 1) * 5)) * Math.min(2, Math.max(0.7, zoom * 0.85));
+      return Math.max(5, Math.min(28, 5 + Math.log10(c.extent.length + 1) * 6)) * Math.min(2, Math.max(0.7, zoom * 0.85));
+    }
+    function colorFor(c: typeof concepts[0]) {
+      return CATEGORY_COLORS[c.dominantCategory] || "#8F00FF";
+    }
+    function hexToRgba(hex: string, a: number) {
+      const h = hex.replace("#", "");
+      const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+      return `rgba(${r},${g},${b},${a})`;
     }
 
     const selIds = selectedNodeIdsRef.current;
+    const isUniverse = (c: typeof concepts[0]) => c.intent.length === 0 || c.extent.length === usableFigures.length;
 
     function draw() {
+      // Background + radial vignette
       ctx.clearRect(0, 0, W, H);
-      const grad = ctx.createLinearGradient(0, 0, W, H);
-      grad.addColorStop(0, "#0B0626"); grad.addColorStop(1, "#0C0042");
-      ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+      const bgGrad = ctx.createRadialGradient(W / 2, H * 0.4, 0, W / 2, H / 2, Math.max(W, H) * 0.8);
+      bgGrad.addColorStop(0, "#150A3E");
+      bgGrad.addColorStop(0.6, "#0C0042");
+      bgGrad.addColorStop(1, "#06021C");
+      ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H);
 
-      // Edges
-      ctx.strokeStyle = "rgba(143,0,255,0.25)";
+      // Stars
+      for (const s of stars) {
+        ctx.fillStyle = `rgba(224,220,230,${s.a})`;
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // Layer guide bands (very subtle horizontal stripes by intent size)
+      const layerYs = new Set<number>();
+      concepts.forEach(c => layerYs.add(Math.round(project(c).sy)));
+      const sortedLayerYs = [...layerYs].sort((a, b) => a - b);
+      ctx.strokeStyle = "rgba(143,0,255,0.05)";
       ctx.lineWidth = 1;
+      for (const ly of sortedLayerYs) {
+        ctx.beginPath(); ctx.moveTo(0, ly); ctx.lineTo(W, ly); ctx.stroke();
+      }
+
+      // ----- EDGES (curved bezier with category gradient) -----
+      const hl = hovered;
+      const hlAnc = hl !== null ? ancestorsOf(hl) : null;
+      const hlDes = hl !== null ? descendantsOf(hl) : null;
+      const hlSet = hl !== null ? new Set([hl, ...hlAnc!, ...hlDes!]) : null;
+
+      ctx.lineCap = "round";
       for (const e of hasseEdges) {
         const a = project(concepts[e.a]);
         const b = project(concepts[e.b]);
+        const onPath = hlSet ? (hlSet.has(e.a) && hlSet.has(e.b)) : false;
+        const dim = hl !== null && !onPath;
+        const colA = colorFor(concepts[e.a]);
+        const colB = colorFor(concepts[e.b]);
+        const grad = ctx.createLinearGradient(a.sx, a.sy, b.sx, b.sy);
+        grad.addColorStop(0, hexToRgba(colA, dim ? 0.06 : (onPath ? 0.85 : 0.32)));
+        grad.addColorStop(1, hexToRgba(colB, dim ? 0.06 : (onPath ? 0.85 : 0.32)));
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = onPath ? 2.2 : 1.1;
         ctx.beginPath();
-        ctx.moveTo(a.sx, a.sy); ctx.lineTo(b.sx, b.sy);
+        ctx.moveTo(a.sx, a.sy);
+        const midY = (a.sy + b.sy) / 2;
+        ctx.bezierCurveTo(a.sx, midY, b.sx, midY, b.sx, b.sy);
         ctx.stroke();
       }
+      ctx.lineCap = "butt";
 
-      // Nodes
+      // ----- NODES -----
       for (let i = 0; i < concepts.length; i++) {
         const c = concepts[i];
         const { sx, sy } = project(c);
         const r = nodeRadius(c);
         const isHovered = hovered === i;
-        // selection: highlight if any selected figure is in this concept's extent
+        const onPath = hlSet ? hlSet.has(i) : false;
+        const dim = hl !== null && !isHovered && !onPath;
         const hasSelected = c.extent.some(idx => selIds.has(usableFigures[idx].id));
-        ctx.fillStyle = hasSelected ? "rgba(255,215,0,0.85)" : "rgba(143,0,255,0.55)";
-        ctx.globalAlpha = hovered !== null && !isHovered ? 0.3 : 1;
-        ctx.beginPath();
-        ctx.arc(sx, sy, isHovered ? r * 1.3 : r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "rgba(11,6,38,0.9)";
-        ctx.lineWidth = 1; ctx.stroke();
+        const baseCol = colorFor(c);
+        const universeRoot = isUniverse(c);
+
+        // Outer glow halo
+        const glowR = r * (universeRoot ? 3.5 : (isHovered ? 2.6 : 1.9));
+        const glow = ctx.createRadialGradient(sx, sy, r * 0.4, sx, sy, glowR);
+        glow.addColorStop(0, hexToRgba(baseCol, dim ? 0.05 : (universeRoot ? 0.55 : (isHovered ? 0.6 : 0.32))));
+        glow.addColorStop(1, hexToRgba(baseCol, 0));
+        ctx.fillStyle = glow;
+        ctx.beginPath(); ctx.arc(sx, sy, glowR, 0, Math.PI * 2); ctx.fill();
+
+        // Body — radial fill (lighter center → category color edge)
+        const body = ctx.createRadialGradient(sx - r * 0.3, sy - r * 0.3, r * 0.1, sx, sy, r);
+        body.addColorStop(0, hexToRgba("#FFFFFF", dim ? 0.08 : 0.55));
+        body.addColorStop(0.45, hexToRgba(baseCol, dim ? 0.15 : 0.95));
+        body.addColorStop(1, hexToRgba(baseCol, dim ? 0.10 : 0.7));
+        ctx.fillStyle = body;
+        ctx.beginPath(); ctx.arc(sx, sy, isHovered ? r * 1.15 : r, 0, Math.PI * 2); ctx.fill();
+
+        // Crisp ring
+        ctx.strokeStyle = hexToRgba(baseCol, dim ? 0.2 : 1);
+        ctx.lineWidth = isHovered ? 2 : 1.2;
+        ctx.stroke();
+
+        // Category-mix ring segments (small donut around the node showing the trait category mix)
+        if (c.categoryMix.length > 1 && r > 6 && !dim) {
+          const totalCount = c.categoryMix.reduce((s, m) => s + m.count, 0);
+          let a0 = -Math.PI / 2;
+          ctx.lineWidth = Math.max(2, r * 0.22);
+          for (const m of c.categoryMix) {
+            const arc = (m.count / totalCount) * Math.PI * 2;
+            ctx.strokeStyle = hexToRgba(CATEGORY_COLORS[m.category] || "#8F00FF", 0.95);
+            ctx.beginPath();
+            ctx.arc(sx, sy, r + ctx.lineWidth / 2 + 2, a0, a0 + arc);
+            ctx.stroke();
+            a0 += arc;
+          }
+        }
+
+        // Special marker for the universe (root) concept: 4-pointed star
+        if (universeRoot && !dim) {
+          ctx.save();
+          ctx.translate(sx, sy);
+          ctx.fillStyle = "rgba(255,255,255,0.85)";
+          ctx.beginPath();
+          for (let k = 0; k < 8; k++) {
+            const ang = (k * Math.PI) / 4;
+            const rr = k % 2 === 0 ? r * 0.55 : r * 0.18;
+            const px = Math.cos(ang) * rr, py = Math.sin(ang) * rr;
+            if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.closePath(); ctx.fill();
+          ctx.restore();
+        } else if (r > 10 && !dim) {
+          // Extent count inside node
+          ctx.font = `${Math.max(9, Math.min(13, r * 0.7))}px 'DM Sans', sans-serif`;
+          ctx.fillStyle = "rgba(11,6,38,0.85)";
+          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillText(String(c.extent.length), sx, sy);
+        }
+
+        // Selection ring
         if (hasSelected) {
-          ctx.strokeStyle = "#FFD700"; ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.arc(sx, sy, r * 1.6, 0, Math.PI * 2); ctx.stroke();
+          ctx.strokeStyle = "#FFD700";
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(sx, sy, r * 1.55, 0, Math.PI * 2); ctx.stroke();
         }
       }
-      ctx.globalAlpha = 1;
 
-      // Hover tooltip
+      // ----- LAYER LABEL on right gutter -----
+      const layerSet = new Map<number, number>(); // intent size -> count
+      concepts.forEach(c => layerSet.set(c.intent.length, (layerSet.get(c.intent.length) || 0) + 1));
+      ctx.font = "10px 'DM Sans', sans-serif";
+      ctx.textAlign = "right"; ctx.textBaseline = "middle";
+      const seenLayers = new Set<string>();
+      for (const c of concepts) {
+        const key = `${c.intent.length}`;
+        if (seenLayers.has(key)) continue;
+        seenLayers.add(key);
+        const { sy } = project(c);
+        ctx.fillStyle = "rgba(224,220,230,0.32)";
+        ctx.fillText(`${c.intent.length} trait${c.intent.length === 1 ? "" : "s"}`, W - 8, sy);
+      }
+
+      // ----- HOVER TOOLTIP -----
       if (hovered !== null) {
         const c = concepts[hovered];
         const { sx, sy } = project(c);
-        const lines = [
-          `${c.extent.length} figure${c.extent.length === 1 ? "" : "s"} · ${c.intent.length} trait${c.intent.length === 1 ? "" : "s"}`,
-          ...c.intent.slice(0, 8).map(t => {
-            const parts = t.split("::");
-            return `· ${parts[1] || parts[0]}`;
-          }),
-          ...(c.intent.length > 8 ? [`… +${c.intent.length - 8} more`] : []),
-          "",
-          ...c.extent.slice(0, 6).map(idx => `▸ ${usableFigures[idx].name}`),
-          ...(c.extent.length > 6 ? [`… +${c.extent.length - 6} more`] : []),
-        ];
+
         ctx.font = "11px 'DM Sans', sans-serif";
-        const widest = Math.max(...lines.map(l => ctx.measureText(l).width));
-        const boxW = widest + 16, boxH = lines.length * 15 + 10;
-        const bx = Math.min(W - boxW - 4, sx + 12);
-        const by = Math.min(H - boxH - 4, sy - boxH / 2);
-        ctx.fillStyle = "rgba(11,6,38,0.97)";
+        const headerLine = `${c.extent.length} figure${c.extent.length === 1 ? "" : "s"}  ·  ${c.intent.length} trait${c.intent.length === 1 ? "" : "s"}`;
+        const figLines = c.extent.slice(0, 8).map(idx => `▸ ${usableFigures[idx].name}  (${usableFigures[idx].tradition || "?"})`);
+        const figMore = c.extent.length > 8 ? [`… +${c.extent.length - 8} more figures`] : [];
+        // Group intent traits by category for colored pills
+        const byCat = new Map<string, string[]>();
+        for (const t of c.intent) {
+          const [cat, ...rest] = t.split("::");
+          const lbl = rest.join("::") || cat;
+          if (!byCat.has(cat)) byCat.set(cat, []);
+          byCat.get(cat)!.push(lbl);
+        }
+
+        // Measure
+        const allTextLines = [headerLine, ...figLines, ...figMore];
+        const widestText = Math.max(...allTextLines.map(l => ctx.measureText(l).width));
+        const pillH = 18, pillPadX = 6, pillGap = 4;
+        const headerH = 22;
+        // Pre-measure pills per category line
+        const pillRows: { cat: string; pills: { label: string; w: number; color: string }[] }[] = [];
+        for (const [cat, labels] of byCat) {
+          const color = CATEGORY_COLORS[cat] || "#8F00FF";
+          const pills = labels.slice(0, 8).map(label => ({
+            label, color, w: ctx.measureText(label).width + pillPadX * 2,
+          }));
+          if (labels.length > 8) pills.push({ label: `+${labels.length - 8}`, color, w: ctx.measureText(`+${labels.length - 8}`).width + pillPadX * 2 });
+          pillRows.push({ cat, pills });
+        }
+        const naturalRowW = Math.max(widestText, ...pillRows.map(r => r.pills.reduce((s, p) => s + p.w + pillGap, 60)));
+        const boxW = Math.min(380, naturalRowW + 24);
+        const innerWrapW = boxW - 8; // wrap boundary inside the panel (right edge minus margin)
+        const pillsTotalH = pillRows.reduce((s, r) => {
+          let used = 60; let lines = 1;
+          for (const p of r.pills) {
+            if (used + p.w + pillGap > innerWrapW - 10) { used = 60; lines++; }
+            used += p.w + pillGap;
+          }
+          return s + lines * (pillH + 4);
+        }, 0);
+        const figBlockH = (figLines.length + figMore.length) * 15;
+        const boxH = headerH + pillsTotalH + 6 + figBlockH + 14;
+
+        const bx = Math.min(W - boxW - 6, Math.max(6, sx + 14));
+        const by = Math.min(H - boxH - 6, Math.max(6, sy - boxH / 2));
+
+        // Frosted panel
+        const panelGrad = ctx.createLinearGradient(bx, by, bx, by + boxH);
+        panelGrad.addColorStop(0, "rgba(15,8,55,0.97)");
+        panelGrad.addColorStop(1, "rgba(8,3,30,0.97)");
+        ctx.fillStyle = panelGrad;
         ctx.fillRect(bx, by, boxW, boxH);
-        ctx.strokeStyle = "rgba(143,0,255,0.6)"; ctx.lineWidth = 1;
-        ctx.strokeRect(bx, by, boxW, boxH);
-        ctx.fillStyle = "#E0DCE6"; ctx.textAlign = "left"; ctx.textBaseline = "top";
-        lines.forEach((l, k) => {
-          ctx.fillStyle = k === 0 ? "#03FF9B" : (l.startsWith("▸") ? "#E0DCE6" : "rgba(224,220,230,0.65)");
-          ctx.fillText(l, bx + 8, by + 5 + k * 15);
-        });
+        ctx.strokeStyle = hexToRgba(colorFor(c), 0.7);
+        ctx.lineWidth = 1.2;
+        ctx.strokeRect(bx + 0.5, by + 0.5, boxW - 1, boxH - 1);
+
+        // Header
+        ctx.font = "12px 'DM Sans', sans-serif";
+        ctx.fillStyle = "#03FF9B";
+        ctx.textAlign = "left"; ctx.textBaseline = "middle";
+        ctx.fillText(headerLine, bx + 10, by + 12);
+
+        // Pills per category
+        let yCursor = by + headerH + 4;
+        ctx.font = "10px 'DM Sans', sans-serif";
+        for (const row of pillRows) {
+          let xCursor = bx + 10;
+          // Category mini-label
+          ctx.fillStyle = "rgba(224,220,230,0.45)";
+          ctx.fillText(row.cat.toUpperCase().slice(0, 6), xCursor, yCursor + pillH / 2);
+          xCursor = bx + 60;
+          for (const p of row.pills) {
+            if (xCursor + p.w > bx + boxW - 8) {
+              yCursor += pillH + 4;
+              xCursor = bx + 60;
+            }
+            // Pill background
+            ctx.fillStyle = hexToRgba(p.color, 0.18);
+            ctx.strokeStyle = hexToRgba(p.color, 0.7);
+            ctx.lineWidth = 1;
+            const rad = pillH / 2;
+            ctx.beginPath();
+            ctx.moveTo(xCursor + rad, yCursor);
+            ctx.lineTo(xCursor + p.w - rad, yCursor);
+            ctx.arc(xCursor + p.w - rad, yCursor + rad, rad, -Math.PI / 2, Math.PI / 2);
+            ctx.lineTo(xCursor + rad, yCursor + pillH);
+            ctx.arc(xCursor + rad, yCursor + rad, rad, Math.PI / 2, -Math.PI / 2);
+            ctx.closePath();
+            ctx.fill(); ctx.stroke();
+            ctx.fillStyle = p.color;
+            ctx.textAlign = "left"; ctx.textBaseline = "middle";
+            ctx.fillText(p.label, xCursor + pillPadX, yCursor + pillH / 2);
+            xCursor += p.w + pillGap;
+          }
+          yCursor += pillH + 4;
+        }
+
+        // Separator
+        ctx.strokeStyle = "rgba(143,0,255,0.25)"; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(bx + 10, yCursor + 2); ctx.lineTo(bx + boxW - 10, yCursor + 2);
+        ctx.stroke();
+        yCursor += 8;
+
+        // Figure list
+        ctx.font = "11px 'DM Sans', sans-serif";
+        ctx.textAlign = "left"; ctx.textBaseline = "top";
+        for (const line of figLines) {
+          ctx.fillStyle = "#E0DCE6";
+          ctx.fillText(line, bx + 10, yCursor);
+          yCursor += 15;
+        }
+        for (const line of figMore) {
+          ctx.fillStyle = "rgba(224,220,230,0.45)";
+          ctx.fillText(line, bx + 10, yCursor);
+          yCursor += 15;
+        }
       }
     }
     draw();
