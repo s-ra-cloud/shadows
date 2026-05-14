@@ -86,10 +86,10 @@ export default function DatabasePage() {
     { key: "relations", label: "Relations" },
     { key: "suggestions", label: "Suggestions" },
     { key: "sources", label: "Sources" },
-    ...(isAdmin ? [{ key: "dichotomy" as Tab, label: "Dichotomy (admin)" }] : []),
+    ...(editorMode ? [{ key: "dichotomy" as Tab, label: "Dichotomy" }] : []),
   ];
 
-  if (activeTab === "dichotomy" && !isAdmin && authStatus) {
+  if (activeTab === "dichotomy" && !editorMode && authStatus) {
     setActiveTab("nodes");
   }
 
@@ -327,7 +327,7 @@ export default function DatabasePage() {
         {activeTab === "sources" && (
           <SourcesTab isEditor={!!editorMode} />
         )}
-        {activeTab === "dichotomy" && isAdmin && (
+        {activeTab === "dichotomy" && editorMode && (
           <DichotomyTab />
         )}
       </div>
