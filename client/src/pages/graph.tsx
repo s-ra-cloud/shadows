@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as d3 from "d3";
-import { X, Search, Filter, ArrowLeft, Network, Users, SlidersHorizontal, Split, ChevronRight, ChevronDown, TreePine, Link2, Globe, Sparkles } from "lucide-react";
+import { X, Search, Filter, ArrowLeft, Network, Users, SlidersHorizontal, Split, ChevronRight, ChevronDown, TreePine, Link2, Globe, Sparkles, Compass } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -2891,6 +2891,446 @@ function d4ColorMap(t: number): string {
 }
 
 
+function MCAView({
+  figures,
+  onSelectNode,
+  onHoverNode,
+  selectedNodeIds,
+  useSupersets,
+  enabledCategories,
+  axisX,
+  axisY,
+  minTraitFreq,
+  showTraitLabels,
+  onVarianceComputed,
+}: {
+  figures: Node[];
+  onSelectNode: (node: Node | null) => void;
+  onHoverNode: (node: any) => void;
+  selectedNodeIds: Set<number>;
+  useSupersets?: Set<string>;
+  enabledCategories?: Set<string>;
+  axisX: number;
+  axisY: number;
+  minTraitFreq: number;
+  showTraitLabels: boolean;
+  onVarianceComputed?: (variance: number[]) => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawRef = useRef<(() => void) | null>(null);
+  const selectedNodeIdsRef = useRef(selectedNodeIds);
+  selectedNodeIdsRef.current = selectedNodeIds;
+
+  const [computing, setComputing] = useState(true);
+  type FigPoint = { figure: Node; coords: number[] };
+  type TraitPoint = { trait: string; category: string; label: string; coords: number[]; mass: number };
+  const [figurePoints, setFigurePoints] = useState<FigPoint[]>([]);
+  const [traitPoints, setTraitPoints] = useState<TraitPoint[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setComputing(true);
+
+    const handle = setTimeout(() => {
+      if (cancelled) return;
+
+      const usable = figures.filter(f => getTraitsForFigure(f, enabledCategories, useSupersets).length > 0);
+      if (usable.length < 4) {
+        setFigurePoints([]); setTraitPoints([]); setComputing(false);
+        onVarianceComputed?.([]);
+        return;
+      }
+
+      const traitSets = usable.map(f => new Set(getTraitsForFigure(f, enabledCategories, useSupersets)));
+
+      // Count trait frequencies and filter rare traits
+      const freq = new Map<string, number>();
+      traitSets.forEach(s => s.forEach(t => freq.set(t, (freq.get(t) || 0) + 1)));
+      const traitList = [...freq.entries()].filter(([_, c]) => c >= minTraitFreq).map(([t]) => t);
+      if (traitList.length < 4) {
+        setFigurePoints([]); setTraitPoints([]); setComputing(false);
+        onVarianceComputed?.([]);
+        return;
+      }
+      const traitIdx = new Map(traitList.map((t, i) => [t, i]));
+      const n = usable.length, m = traitList.length;
+
+      // Indicator matrix Z (n x m), flat
+      const Z = new Float64Array(n * m);
+      for (let i = 0; i < n; i++) {
+        traitSets[i].forEach(t => {
+          const j = traitIdx.get(t);
+          if (j !== undefined) Z[i * m + j] = 1;
+        });
+      }
+
+      // Row/col masses
+      let total = 0;
+      const rowSum = new Float64Array(n);
+      const colSum = new Float64Array(m);
+      for (let i = 0; i < n; i++) {
+        const off = i * m;
+        let rs = 0;
+        for (let j = 0; j < m; j++) {
+          const v = Z[off + j];
+          if (v) { rs += v; colSum[j] += v; total += v; }
+        }
+        rowSum[i] = rs;
+      }
+      if (total === 0) {
+        setFigurePoints([]); setTraitPoints([]); setComputing(false);
+        onVarianceComputed?.([]); return;
+      }
+
+      const sqrtR = new Float64Array(n);
+      const sqrtC = new Float64Array(m);
+      const r = new Float64Array(n);
+      const c = new Float64Array(m);
+      for (let i = 0; i < n; i++) { r[i] = rowSum[i] / total; sqrtR[i] = Math.sqrt(r[i]); }
+      for (let j = 0; j < m; j++) { c[j] = colSum[j] / total; sqrtC[j] = Math.sqrt(c[j]); }
+
+      // Standardized residuals S[i,j] = (P[i,j] - r[i]*c[j]) / (sqrt(r[i])*sqrt(c[j]))
+      const S = new Float64Array(n * m);
+      for (let i = 0; i < n; i++) {
+        if (sqrtR[i] === 0) continue;
+        const off = i * m;
+        const ri = r[i];
+        const sri = sqrtR[i];
+        for (let j = 0; j < m; j++) {
+          if (sqrtC[j] === 0) continue;
+          const Pij = Z[off + j] / total;
+          S[off + j] = (Pij - ri * c[j]) / (sri * sqrtC[j]);
+        }
+      }
+
+      // Power iteration with deflation for top-K singular triples
+      const K = 5;
+      const Us: Float64Array[] = [];
+      const Vs: Float64Array[] = [];
+      const sigmas: number[] = [];
+
+      const ITERS = 60;
+      const tmpU = new Float64Array(n);
+      const tmpV = new Float64Array(m);
+
+      function Sv(v: Float64Array, out: Float64Array) {
+        out.fill(0);
+        for (let i = 0; i < n; i++) {
+          const off = i * m;
+          let s = 0;
+          for (let j = 0; j < m; j++) s += S[off + j] * v[j];
+          out[i] = s;
+        }
+        for (let k = 0; k < sigmas.length; k++) {
+          let dotVk = 0; const Vk = Vs[k];
+          for (let j = 0; j < m; j++) dotVk += Vk[j] * v[j];
+          const sk = sigmas[k]; const Uk = Us[k];
+          for (let i = 0; i < n; i++) out[i] -= sk * Uk[i] * dotVk;
+        }
+      }
+      function STu(u: Float64Array, out: Float64Array) {
+        out.fill(0);
+        for (let i = 0; i < n; i++) {
+          const ui = u[i]; if (ui === 0) continue;
+          const off = i * m;
+          for (let j = 0; j < m; j++) out[j] += S[off + j] * ui;
+        }
+        for (let k = 0; k < sigmas.length; k++) {
+          let dotUk = 0; const Uk = Us[k];
+          for (let i = 0; i < n; i++) dotUk += Uk[i] * u[i];
+          const sk = sigmas[k]; const Vk = Vs[k];
+          for (let j = 0; j < m; j++) out[j] -= sk * Vk[j] * dotUk;
+        }
+      }
+      function nrm(a: Float64Array) { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * a[i]; return Math.sqrt(s); }
+
+      for (let k = 0; k < K; k++) {
+        const v = new Float64Array(m);
+        for (let j = 0; j < m; j++) v[j] = Math.random() - 0.5;
+        let vn = nrm(v); if (vn === 0) break;
+        for (let j = 0; j < m; j++) v[j] /= vn;
+        const u = new Float64Array(n);
+        let sigma = 0;
+        for (let it = 0; it < ITERS; it++) {
+          Sv(v, u);
+          sigma = nrm(u);
+          if (sigma < 1e-12) break;
+          for (let i = 0; i < n; i++) u[i] /= sigma;
+          STu(u, tmpV);
+          vn = nrm(tmpV);
+          if (vn < 1e-12) break;
+          for (let j = 0; j < m; j++) v[j] = tmpV[j] / vn;
+        }
+        Sv(v, u);
+        sigma = nrm(u);
+        if (sigma < 1e-9) break;
+        for (let i = 0; i < n; i++) u[i] /= sigma;
+        sigmas.push(sigma);
+        Us.push(u);
+        Vs.push(v);
+      }
+
+      const sumSq = sigmas.reduce((a, b) => a + b * b, 0);
+      const variance = sigmas.map(s => sumSq > 0 ? (s * s) / sumSq : 0);
+
+      // Principal coords for figures (rows): F[i,k] = sigma[k] * U[k,i] / sqrt(r[i])
+      // Principal coords for traits (cols): G[j,k] = sigma[k] * V[k,j] / sqrt(c[j])
+      const figCoords: FigPoint[] = usable.map((f, i) => ({
+        figure: f,
+        coords: sigmas.map((s, k) => sqrtR[i] > 0 ? s * Us[k][i] / sqrtR[i] : 0),
+      }));
+      const trCoords: TraitPoint[] = traitList.map((t, j) => {
+        const parts = t.split("::");
+        const category = parts[0];
+        const label = parts.slice(1).join("::");
+        return {
+          trait: t,
+          category,
+          label,
+          mass: c[j],
+          coords: sigmas.map((s, k) => sqrtC[j] > 0 ? s * Vs[k][j] / sqrtC[j] : 0),
+        };
+      });
+
+      if (cancelled) return;
+      setFigurePoints(figCoords);
+      setTraitPoints(trCoords);
+      onVarianceComputed?.(variance);
+      setComputing(false);
+    }, 30);
+
+    return () => { cancelled = true; clearTimeout(handle); };
+  }, [figures, useSupersets, enabledCategories, minTraitFreq]);
+
+  // Render
+  useEffect(() => {
+    if (!canvasRef.current || figurePoints.length === 0) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const container = canvas.parentElement;
+    if (!container) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Compute bounds across both figures and (top-mass) traits to keep them on the same scale
+    const ax = axisX, ay = axisY;
+    const allXs: number[] = [];
+    const allYs: number[] = [];
+    figurePoints.forEach(p => { allXs.push(p.coords[ax] || 0); allYs.push(p.coords[ay] || 0); });
+    traitPoints.forEach(p => { allXs.push(p.coords[ax] || 0); allYs.push(p.coords[ay] || 0); });
+    const minX = Math.min(...allXs), maxX = Math.max(...allXs);
+    const minY = Math.min(...allYs), maxY = Math.max(...allYs);
+    const padding = 80;
+    const scaleX = (width - padding * 2) / (maxX - minX || 1);
+    const scaleY = (height - padding * 2) / (maxY - minY || 1);
+    const baseScale = Math.min(scaleX, scaleY);
+    const offsetX = padding + ((width - padding * 2) - (maxX - minX) * baseScale) / 2;
+    const offsetY = padding + ((height - padding * 2) - (maxY - minY) * baseScale) / 2;
+
+    let zoom = 1;
+    let panX = 0, panY = 0;
+    let isDragging = false;
+    let lastMx = 0, lastMy = 0;
+    let didDrag = false;
+    let hovered: { figure: Node; sx: number; sy: number } | null = null;
+
+    function project(cx: number, cy: number) {
+      const baseX = offsetX + (cx - minX) * baseScale;
+      const baseY = offsetY + (cy - minY) * baseScale;
+      return {
+        sx: width / 2 + (baseX - width / 2) * zoom + panX,
+        sy: height / 2 + (baseY - height / 2) * zoom + panY,
+      };
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+      const grad = ctx.createLinearGradient(0, 0, width, height);
+      grad.addColorStop(0, "#0B0626");
+      grad.addColorStop(1, "#0C0042");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Axes through origin (0,0 in MCA coordinate space)
+      const origin = project(0, 0);
+      ctx.strokeStyle = "rgba(143,0,255,0.18)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, origin.sy); ctx.lineTo(width, origin.sy);
+      ctx.moveTo(origin.sx, 0); ctx.lineTo(origin.sx, height);
+      ctx.stroke();
+
+      // Axis labels
+      ctx.fillStyle = "rgba(224,220,230,0.35)";
+      ctx.font = "10px 'DM Sans', sans-serif";
+      ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+      ctx.fillText(`Dim ${axisX + 1}`, width - 8, origin.sy - 4);
+      ctx.textAlign = "left"; ctx.textBaseline = "top";
+      ctx.fillText(`Dim ${axisY + 1}`, origin.sx + 6, 6);
+
+      const selIds = selectedNodeIdsRef.current;
+      const hasSelection = selIds.size > 0;
+      const hoveredId = hovered?.figure.id;
+
+      // Draw trait labels first (in background) — colored by category, sized by mass
+      if (showTraitLabels) {
+        // Show top-N most massive traits to avoid clutter
+        const sortedTraits = [...traitPoints].sort((a, b) => b.mass - a.mass);
+        const maxTraitLabels = Math.min(traitPoints.length, Math.floor(60 + zoom * 30));
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        for (let i = 0; i < Math.min(maxTraitLabels, sortedTraits.length); i++) {
+          const tr = sortedTraits[i];
+          const { sx, sy } = project(tr.coords[ax] || 0, tr.coords[ay] || 0);
+          if (sx < -50 || sx > width + 50 || sy < -20 || sy > height + 20) continue;
+          const cat = tr.category;
+          const color = CATEGORY_COLORS[cat] || "#FFD700";
+          const fontSize = Math.max(9, Math.min(13, 9 + Math.log10(tr.mass * 1000 + 1) * 1.5));
+          ctx.font = `${fontSize}px 'Sofia Pro Light', sans-serif`;
+          ctx.fillStyle = color;
+          ctx.globalAlpha = hasSelection || hoveredId ? 0.25 : 0.55;
+          ctx.fillText(tr.label, sx, sy);
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // Figure dots
+      const baseR = 3.5 * Math.min(2, Math.max(0.7, zoom * 0.85));
+      for (const p of figurePoints) {
+        const { sx, sy } = project(p.coords[ax] || 0, p.coords[ay] || 0);
+        if (sx < -20 || sx > width + 20 || sy < -20 || sy > height + 20) continue;
+        const isSelected = selIds.has(p.figure.id);
+        const isHovered = hoveredId === p.figure.id;
+        const dim = (hasSelection && !isSelected) || (hoveredId && !isHovered);
+        const importance = Math.log10((p.figure.mentionCount || 0) + 1);
+        const r = baseR * (1 + Math.min(0.9, importance * 0.25));
+        const color = TRADITION_COLORS[p.figure.tradition || ""] || "#E0DCE6";
+        ctx.globalAlpha = dim ? 0.12 : 0.92;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(sx, sy, isHovered ? r * 1.8 : r, 0, Math.PI * 2);
+        ctx.fill();
+        if (!dim) {
+          ctx.globalAlpha = 0.5;
+          ctx.strokeStyle = "rgba(11,6,38,0.9)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+        if (isSelected) {
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = "#FFD700";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(sx, sy, r * 2.2, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+
+      // Hover tooltip
+      if (hovered) {
+        ctx.font = "12px 'DM Sans', sans-serif";
+        const label = `${hovered.figure.name} · ${hovered.figure.tradition || ""}`;
+        const w = ctx.measureText(label).width + 14;
+        ctx.fillStyle = "rgba(11,6,38,0.97)";
+        ctx.fillRect(hovered.sx + 12, hovered.sy - 24, w, 24);
+        ctx.strokeStyle = "rgba(143,0,255,0.6)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(hovered.sx + 12, hovered.sy - 24, w, 24);
+        ctx.fillStyle = "#E0DCE6";
+        ctx.textAlign = "left"; ctx.textBaseline = "middle";
+        ctx.fillText(label, hovered.sx + 19, hovered.sy - 12);
+      }
+    }
+    drawRef.current = draw;
+    draw();
+
+    function findHover(mx: number, my: number) {
+      const r = 7 * Math.max(1, zoom);
+      let best: { figure: Node; sx: number; sy: number; d: number } | null = null;
+      for (const p of figurePoints) {
+        const { sx, sy } = project(p.coords[axisX] || 0, p.coords[axisY] || 0);
+        const dx = sx - mx, dy = sy - my;
+        const d = dx * dx + dy * dy;
+        if (d < r * r && (!best || d < best.d)) best = { figure: p.figure, sx, sy, d };
+      }
+      return best ? { figure: best.figure, sx: best.sx, sy: best.sy } : null;
+    }
+
+    canvas.onmousedown = (e) => { isDragging = true; didDrag = false; lastMx = e.clientX; lastMy = e.clientY; };
+    canvas.onmousemove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      if (isDragging) {
+        const dx = e.clientX - lastMx, dy = e.clientY - lastMy;
+        if (Math.abs(dx) + Math.abs(dy) > 3) didDrag = true;
+        panX += dx; panY += dy;
+        lastMx = e.clientX; lastMy = e.clientY;
+        draw();
+      } else {
+        const h = findHover(mx, my);
+        if (h?.figure.id !== hovered?.figure.id) {
+          hovered = h;
+          onHoverNode(h ? h.figure : null);
+          draw();
+        } else {
+          hovered = h;
+        }
+      }
+    };
+    canvas.onmouseup = () => { isDragging = false; };
+    canvas.onmouseleave = () => { isDragging = false; hovered = null; onHoverNode(null); draw(); };
+    canvas.onclick = (e) => {
+      if (didDrag) return;
+      const rect = canvas.getBoundingClientRect();
+      const h = findHover(e.clientX - rect.left, e.clientY - rect.top);
+      if (h) onSelectNode(h.figure);
+    };
+    canvas.onwheel = (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.15 : 0.87;
+      const newZoom = Math.max(0.3, Math.min(8, zoom * factor));
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const cx = width / 2 + panX;
+      const cy = height / 2 + panY;
+      panX = mx - (mx - cx) * (newZoom / zoom) - width / 2;
+      panY = my - (my - cy) * (newZoom / zoom) - height / 2;
+      zoom = newZoom;
+      draw();
+    };
+
+    return () => {
+      canvas.onmousedown = null; canvas.onmousemove = null; canvas.onmouseup = null;
+      canvas.onmouseleave = null; canvas.onclick = null; canvas.onwheel = null;
+    };
+  }, [figurePoints, traitPoints, axisX, axisY, showTraitLabels]);
+
+  return (
+    <div className="absolute inset-0">
+      <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-mca" />
+      {computing && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="text-shadows-text/50 text-sm" data-testid="text-mca-computing">Computing MCA…</span>
+        </div>
+      )}
+      {!computing && figurePoints.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="text-shadows-text/40 text-sm" data-testid="text-mca-empty">Not enough data — try lowering the trait frequency threshold or enabling more categories.</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 function UMAPView({
   figures,
   onSelectNode,
@@ -4481,9 +4921,14 @@ export default function GraphPage() {
   const [hierarchySelections, setHierarchySelections] = useState<Map<string, Set<string>>>(new Map());
   const [hoveredNode, setHoveredNode] = useState<any>(null);
   const [selectedTraditions, setSelectedTraditions] = useState<Set<string> | null>(null);
-  const [viewMode, setViewMode] = useState<"network" | "direct" | "umap" | "dichotomy" | "relations">("network");
+  const [viewMode, setViewMode] = useState<"network" | "direct" | "umap" | "dichotomy" | "ca" | "relations">("network");
   const [dichotomyDepth, setDichotomyDepth] = useState(1);
   const [dichotomyThreshold, setDichotomyThreshold] = useState(0.9);
+  const [caAxisX, setCaAxisX] = useState(0);
+  const [caAxisY, setCaAxisY] = useState(1);
+  const [caMinTraitFreq, setCaMinTraitFreq] = useState(3);
+  const [caShowTraitLabels, setCaShowTraitLabels] = useState(true);
+  const [caVariance, setCaVariance] = useState<number[]>([]);
   const [minTraits, setMinTraits] = useState(2);
   const [minSharedTraits, setMinSharedTraits] = useState(4);
   const [focalCharacterId, setFocalCharacterId] = useState<number | null>(null);
@@ -4878,6 +5323,7 @@ export default function GraphPage() {
                 : viewMode === "direct" ? <Users size={18} />
                 : viewMode === "umap" ? <Sparkles size={18} />
                 : viewMode === "dichotomy" ? <Split size={18} />
+                : viewMode === "ca" ? <Compass size={18} />
                 : <Link2 size={18} />}
             </button>
           </DropdownMenuTrigger>
@@ -4893,6 +5339,9 @@ export default function GraphPage() {
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setViewMode("dichotomy")} data-testid="option-view-dichotomy">
               <Split size={14} className="mr-2" /> Dichotomy
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setViewMode("ca")} data-testid="option-view-ca">
+              <Compass size={14} className="mr-2" /> Correspondence (MCA)
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setViewMode("relations")} data-testid="option-view-relations">
               <Link2 size={14} className="mr-2" /> Relations
@@ -5042,6 +5491,99 @@ export default function GraphPage() {
         )}
       </div>)}
 
+      {viewMode === "ca" && (
+        <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[85vh] overflow-y-auto w-56">
+          <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">Correspondence (MCA)</span>
+          <p className="text-[9px] text-shadows-text/35 leading-tight mb-1">
+            Biplot of figures and traits via correspondence analysis on the binary trait matrix. Figures and traits that lie in the same direction from the origin tend to co‑occur.
+          </p>
+          <div className="space-y-2">
+            <div>
+              <span className="text-[9px] text-shadows-text/40 block mb-1">X axis</span>
+              <div className="flex gap-1" data-testid="ca-axis-x">
+                {[0, 1, 2, 3, 4].map(k => (
+                  <button
+                    key={k}
+                    onClick={() => setCaAxisX(k)}
+                    disabled={k === caAxisY}
+                    className={`flex-1 text-[10px] py-1 rounded border transition-colors ${
+                      caAxisX === k
+                        ? "bg-[#8F00FF]/30 border-[#8F00FF]/60 text-shadows-text"
+                        : k === caAxisY
+                          ? "border-shadows-text/10 text-shadows-text/20 cursor-not-allowed"
+                          : "border-shadows-text/15 text-shadows-text/60 hover:border-[#8F00FF]/40"
+                    }`}
+                    data-testid={`button-ca-axisx-${k}`}
+                  >{k + 1}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <span className="text-[9px] text-shadows-text/40 block mb-1">Y axis</span>
+              <div className="flex gap-1" data-testid="ca-axis-y">
+                {[0, 1, 2, 3, 4].map(k => (
+                  <button
+                    key={k}
+                    onClick={() => setCaAxisY(k)}
+                    disabled={k === caAxisX}
+                    className={`flex-1 text-[10px] py-1 rounded border transition-colors ${
+                      caAxisY === k
+                        ? "bg-[#8F00FF]/30 border-[#8F00FF]/60 text-shadows-text"
+                        : k === caAxisX
+                          ? "border-shadows-text/10 text-shadows-text/20 cursor-not-allowed"
+                          : "border-shadows-text/15 text-shadows-text/60 hover:border-[#8F00FF]/40"
+                    }`}
+                    data-testid={`button-ca-axisy-${k}`}
+                  >{k + 1}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <span className="text-[9px] text-shadows-text/40 block mb-1">Min trait freq: {caMinTraitFreq}</span>
+              <Slider
+                min={1}
+                max={20}
+                step={1}
+                value={[caMinTraitFreq]}
+                onValueChange={([v]) => setCaMinTraitFreq(v)}
+                className="w-full"
+                data-testid="slider-ca-minfreq"
+              />
+              <p className="text-[8px] text-shadows-text/25 mt-0.5 leading-tight">
+                Drop traits used by fewer than this many figures. Higher = cleaner axes, less noise.
+              </p>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer text-[10px] text-shadows-text/70">
+              <Checkbox
+                checked={caShowTraitLabels}
+                onCheckedChange={(v) => setCaShowTraitLabels(!!v)}
+                data-testid="checkbox-ca-show-traits"
+              />
+              <span>Show trait labels</span>
+            </label>
+            {caVariance.length > 0 && (
+              <div className="pt-1 border-t border-shadows-text/10">
+                <span className="text-[9px] text-shadows-text/40 block mb-1">Inertia (% of top 5)</span>
+                <div className="space-y-0.5">
+                  {caVariance.map((v, k) => (
+                    <div key={k} className="flex items-center gap-1.5 text-[9px]">
+                      <span className={`w-3 ${k === caAxisX || k === caAxisY ? "text-[#03FF9B]" : "text-shadows-text/40"}`}>{k + 1}</span>
+                      <div className="flex-1 h-1.5 bg-shadows-text/5 rounded overflow-hidden">
+                        <div className="h-full bg-[#8F00FF]/60" style={{ width: `${(v * 100).toFixed(1)}%` }} />
+                      </div>
+                      <span className="text-shadows-text/50 w-10 text-right">{(v * 100).toFixed(1)}%</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[8px] text-shadows-text/25 mt-1 leading-tight">
+                  With many sparse traits the first few axes may capture only a small share of total variation. Browse multiple axis pairs.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {hoveredNode && hoveredNode.isCharacter && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 bg-[#0B0626]/90 backdrop-blur-sm border border-[#350A8C]/30 rounded-lg px-4 py-2 pointer-events-none">
           <div className="flex items-center gap-2">
@@ -5168,6 +5710,20 @@ export default function GraphPage() {
             enabledCategories={enabledCategoriesSet}
             useSupersets={activeSupersets}
             relationEdges={relationEdges}
+          />
+        ) : viewMode === "ca" ? (
+          <MCAView
+            figures={effectiveNodes}
+            onSelectNode={(n) => handleGraphNodeSelect(n)}
+            onHoverNode={setHoveredNode}
+            selectedNodeIds={selectedNodeIds}
+            useSupersets={activeSupersets}
+            enabledCategories={enabledCategoriesSet}
+            axisX={caAxisX}
+            axisY={caAxisY}
+            minTraitFreq={caMinTraitFreq}
+            showTraitLabels={caShowTraitLabels}
+            onVarianceComputed={setCaVariance}
           />
         ) : (
           <RelationsView
