@@ -6,10 +6,12 @@ import type { Node, Edge, Suggestion, Source, TraitHierarchy, TraitCrossCut } fr
 import {
   Search, Lock, Unlock, ChevronDown, ChevronRight, Plus, Pencil, Trash2,
   MessageSquarePlus, BookOpen, X, Check, AlertCircle, ArrowUpDown, ExternalLink,
-  Download, Upload, FolderTree, Layers
+  Download, Upload, FolderTree, Layers, Split
 } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { DichotomyView } from "./graph";
 
-type Tab = "nodes" | "cross-cultural" | "relations" | "suggestions" | "sources";
+type Tab = "nodes" | "cross-cultural" | "relations" | "suggestions" | "sources" | "dichotomy";
 type NodeCategory = "characters" | "gender" | "domain" | "object" | "animals" | "characterTrait" | "physicalCharacteristics" | "significantEvent" | "symbolism" | "neumannArchetype" | "eventTypes" | "birthTypes" | "deathTypes" | "familyRoles";
 
 const NODE_CATEGORIES: { key: NodeCategory; label: string; isArray?: boolean; commaSplit?: boolean }[] = [
@@ -68,11 +70,15 @@ export default function DatabasePage() {
   const importFileRef = useRef<HTMLInputElement>(null);
   const suggestionsImportRef = useRef<HTMLInputElement>(null);
 
-  const { data: authStatus } = useQuery<{ isEditor: boolean }>({
+  const { data: authStatus } = useQuery<{ isEditor: boolean; isAdmin: boolean }>({
     queryKey: ["/api/database/auth-status"],
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const editorMode = isEditor || authStatus?.isEditor;
+  const isAdmin = !!authStatus?.isAdmin;
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "nodes", label: "Nodes" },
@@ -80,7 +86,12 @@ export default function DatabasePage() {
     { key: "relations", label: "Relations" },
     { key: "suggestions", label: "Suggestions" },
     { key: "sources", label: "Sources" },
+    ...(isAdmin ? [{ key: "dichotomy" as Tab, label: "Dichotomy (admin)" }] : []),
   ];
+
+  if (activeTab === "dichotomy" && !isAdmin && authStatus) {
+    setActiveTab("nodes");
+  }
 
   function openSuggestion(target: typeof suggestionTarget) {
     setSuggestionTarget(target);
@@ -315,6 +326,9 @@ export default function DatabasePage() {
         )}
         {activeTab === "sources" && (
           <SourcesTab isEditor={!!editorMode} />
+        )}
+        {activeTab === "dichotomy" && isAdmin && (
+          <DichotomyTab />
         )}
       </div>
 
@@ -1681,6 +1695,72 @@ function LoadingState() {
   return (
     <div className="flex items-center justify-center py-20">
       <div className="w-6 h-6 border-2 border-[#8F00FF]/30 border-t-[#8F00FF] rounded-full animate-spin" />
+    </div>
+  );
+}
+
+function DichotomyTab() {
+  const { data: nodes = [], isLoading } = useQuery<Node[]>({
+    queryKey: ["/api/nodes"],
+  });
+  const [depth, setDepth] = useState(1);
+  const [threshold, setThreshold] = useState(0.9);
+
+  if (isLoading) return <LoadingState />;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start gap-6 flex-wrap p-4 rounded-md border border-[#350A8C]/30 bg-[#0B0626]/40">
+        <div className="flex items-center gap-2">
+          <Split size={16} className="text-[#8F00FF]" />
+          <h3 className="text-sm font-medium text-shadows-text">Recursive dichotomies</h3>
+        </div>
+        <p className="text-[11px] text-shadows-text/50 leading-snug max-w-md">
+          Recursive binary splits of the population by mutually-exclusive traits. Each level halves the figures along the most discriminative trait pair.
+        </p>
+        <div className="flex gap-6 ml-auto">
+          <div className="w-44">
+            <span className="text-[10px] text-shadows-text/50 block mb-1">Divisions: {Math.pow(2, depth)}</span>
+            <Slider
+              min={1}
+              max={4}
+              step={1}
+              value={[depth]}
+              onValueChange={([v]) => setDepth(v)}
+              data-testid="slider-dichotomy-depth"
+            />
+            <div className="flex justify-between text-[8px] text-shadows-text/30 mt-0.5">
+              <span>2</span><span>4</span><span>8</span><span>16</span>
+            </div>
+          </div>
+          <div className="w-44">
+            <span className="text-[10px] text-shadows-text/50 block mb-1">Exclusion: {Math.round(threshold * 100)}%</span>
+            <Slider
+              min={0.8}
+              max={1}
+              step={0.05}
+              value={[threshold]}
+              onValueChange={([v]) => setThreshold(v)}
+              data-testid="slider-dichotomy-threshold"
+            />
+            <div className="flex justify-between text-[8px] text-shadows-text/30 mt-0.5">
+              <span>80%</span><span>90%</span><span>100%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="w-full rounded-md border border-[#350A8C]/30 overflow-hidden" style={{ height: "calc(100vh - 280px)", minHeight: 500 }}>
+        <DichotomyView
+          figures={nodes}
+          dichotomyDepth={depth}
+          dichotomyThreshold={threshold}
+          onSelectNode={() => {}}
+          onHoverNode={() => {}}
+          selectedNodeIds={new Set()}
+          useSupersets={new Set()}
+          relationEdges={[]}
+        />
+      </div>
     </div>
   );
 }

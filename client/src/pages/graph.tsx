@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as d3 from "d3";
-import { X, Search, Filter, ArrowLeft, Network, Users, SlidersHorizontal, Split, ChevronRight, ChevronDown, TreePine, Link2, Globe, Sparkles, Compass, Layers } from "lucide-react";
+import { X, Search, Filter, ArrowLeft, Network, Users, SlidersHorizontal, ChevronRight, ChevronDown, TreePine, Link2, Globe, Sparkles, Compass, Layers } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -112,7 +112,7 @@ const RELATION_GROUPS: Record<string, RelationType[]> = {
   conflict: ["adversary of"],
 };
 
-interface RelationEdge {
+export interface RelationEdge {
   sourceId: string;
   targetId: string;
   relationType: RelationType;
@@ -4517,7 +4517,7 @@ const DICHOTOMY_COLORS = [
   "#D4A574", "#FFD700", "#B71C1C", "#C0C0C0",
 ];
 
-function DichotomyView({
+export function DichotomyView({
   figures,
   dichotomyDepth,
   dichotomyThreshold,
@@ -5693,21 +5693,7 @@ export default function GraphPage() {
   const [hierarchySelections, setHierarchySelections] = useState<Map<string, Set<string>>>(new Map());
   const [hoveredNode, setHoveredNode] = useState<any>(null);
   const [selectedTraditions, setSelectedTraditions] = useState<Set<string> | null>(null);
-  const [viewMode, setViewMode] = useState<"network" | "direct" | "umap" | "dichotomy" | "ca" | "fca" | "relations">("network");
-  const [dichotomyDepth, setDichotomyDepth] = useState(1);
-  const [dichotomyThreshold, setDichotomyThreshold] = useState(0.9);
-  const { data: authStatus } = useQuery<{ isEditor: boolean; isAdmin: boolean }>({
-    queryKey: ['/api/database/auth-status'],
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-  });
-  const isAdmin = !!authStatus?.isAdmin;
-  useEffect(() => {
-    if (viewMode === "dichotomy" && authStatus && !isAdmin) {
-      setViewMode("network");
-    }
-  }, [viewMode, isAdmin, authStatus]);
+  const [viewMode, setViewMode] = useState<"network" | "direct" | "umap" | "ca" | "fca" | "relations">("network");
   const [caAxisX, setCaAxisX] = useState(0);
   const [caAxisY, setCaAxisY] = useState(1);
   const [caMinTraitFreq, setCaMinTraitFreq] = useState(3);
@@ -6109,7 +6095,6 @@ export default function GraphPage() {
               {viewMode === "network" ? <Network size={18} />
                 : viewMode === "direct" ? <Users size={18} />
                 : viewMode === "umap" ? <Sparkles size={18} />
-                : viewMode === "dichotomy" ? <Split size={18} />
                 : viewMode === "ca" ? <Compass size={18} />
                 : viewMode === "fca" ? <Layers size={18} />
                 : <Link2 size={18} />}
@@ -6125,11 +6110,6 @@ export default function GraphPage() {
             <DropdownMenuItem onSelect={() => setViewMode("umap")} data-testid="option-view-umap">
               <Sparkles size={14} className="mr-2" /> Similarity map
             </DropdownMenuItem>
-            {isAdmin && (
-              <DropdownMenuItem onSelect={() => setViewMode("dichotomy")} data-testid="option-view-dichotomy">
-                <Split size={14} className="mr-2" /> Dichotomy (admin)
-              </DropdownMenuItem>
-            )}
             <DropdownMenuItem onSelect={() => setViewMode("ca")} data-testid="option-view-ca">
               <Compass size={14} className="mr-2" /> Correspondence (MCA)
             </DropdownMenuItem>
@@ -6289,47 +6269,6 @@ export default function GraphPage() {
                 <div className="text-[9px] text-shadows-text/35 mt-1">Hover a node to see its figures &amp; traits. Click to open the first figure in the side panel.</div>
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {viewMode === "dichotomy" && isAdmin && (
-        <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[85vh] overflow-y-auto w-56">
-          <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">Dichotomy (admin)</span>
-          <p className="text-[9px] text-shadows-text/35 leading-tight mb-1">
-            Recursive binary splits of the population by mutually-exclusive traits. Each level halves the figures along the most discriminative trait pair.
-          </p>
-          <div className="space-y-2">
-            <div>
-              <span className="text-[9px] text-shadows-text/40 block mb-1">Divisions: {Math.pow(2, dichotomyDepth)}</span>
-              <Slider
-                min={1}
-                max={4}
-                step={1}
-                value={[dichotomyDepth]}
-                onValueChange={([v]) => setDichotomyDepth(v)}
-                className="w-full"
-                data-testid="slider-dichotomy-depth"
-              />
-              <div className="flex justify-between text-[8px] text-shadows-text/25 mt-0.5">
-                <span>2</span><span>4</span><span>8</span><span>16</span>
-              </div>
-            </div>
-            <div>
-              <span className="text-[9px] text-shadows-text/40 block mb-1">Exclusion: {Math.round(dichotomyThreshold * 100)}%</span>
-              <Slider
-                min={0.8}
-                max={1}
-                step={0.05}
-                value={[dichotomyThreshold]}
-                onValueChange={([v]) => setDichotomyThreshold(v)}
-                className="w-full"
-                data-testid="slider-dichotomy-threshold"
-              />
-              <div className="flex justify-between text-[8px] text-shadows-text/25 mt-0.5">
-                <span>80%</span><span>90%</span><span>100%</span>
-              </div>
-            </div>
           </div>
         </div>
       )}
@@ -6541,18 +6480,6 @@ export default function GraphPage() {
             selectedNodeIds={selectedNodeIds}
             useSupersets={activeSupersets}
             enabledCategories={enabledCategoriesSet}
-          />
-        ) : viewMode === "dichotomy" && isAdmin ? (
-          <DichotomyView
-            figures={effectiveNodes}
-            dichotomyDepth={dichotomyDepth}
-            dichotomyThreshold={dichotomyThreshold}
-            onSelectNode={(n) => handleGraphNodeSelect(n)}
-            onHoverNode={setHoveredNode}
-            selectedNodeIds={selectedNodeIds}
-            enabledCategories={enabledCategoriesSet}
-            useSupersets={activeSupersets}
-            relationEdges={relationEdges}
           />
         ) : viewMode === "ca" ? (
           <MCAView
