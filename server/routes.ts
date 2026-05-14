@@ -572,7 +572,10 @@ export async function registerRoutes(
   });
 
   app.get("/api/database/auth-status", (req, res) => {
-    res.json({ isEditor: !!(req.session && (req.session.isEditor || req.session.isAdmin)) });
+    res.json({
+      isEditor: !!(req.session && (req.session.isEditor || req.session.isAdmin)),
+      isAdmin: !!(req.session && req.session.isAdmin),
+    });
   });
 
   return httpServer;

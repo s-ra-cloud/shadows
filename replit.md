@@ -56,7 +56,7 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 
 ## Graph Visualization
 - **Canvas-based** rendering for performance with 1000+ nodes
-- **Five view modes:**
+- **View modes** (Dichotomy is admin-only, gated on `/api/database/auth-status` `isAdmin`):
   - **Network** — Bipartite layout: character nodes + shared trait nodes (including eventTypes, birthTypes, deathTypes)
   - **Direct** — Ego-centric view: pick a focal deity, see only the figures sharing traits with it. Continuous radial starburst: every neighbor gets a unique angle around 360° (sorted by tradition for cultural clustering); distance from focal is a smooth function of shared-trait weight (stronger → closer to center, weaker → outer rim). Uniform small node dots; rays of edges create the starburst. Labels shown for strongest connections when crowded. Min-shared-traits slider (1–10) controls how many neighbors appear; click a neighbor to re-center; drag to pan; wheel to zoom (down to 0.05× in ego mode).
   - **Similarity Map (UMAP)** — 2D non-linear projection optimized for revealing clusters of similar figures. Builds binary trait vectors per figure (across all enabled categories, including supersets), runs UMAP with Jaccard distance (umap-js package). Adjustable Neighbors slider (5–50, local vs global focus) and Spread slider (0.01–0.50, cluster tightness). Points colored by tradition. Pan/zoom/click/hover. Designed to expose cluster structure that CA cannot when the data is high-dimensional with many unique trait values.
