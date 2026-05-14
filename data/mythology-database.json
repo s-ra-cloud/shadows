@@ -1407,11 +1407,11 @@
       "name": "Durga",
       "tradition": "Hindu",
       "gender": "Female",
-      "domain": "war, demon-slaying, motherhood, supreme goddess (Śākta), protection, lion/tiger-rider, the unapproachable one (durgā), slayer of Mahiṣa",
-      "object": "ten-armed: trident (from Śiva), discus (Viṣṇu), conch (Varuṇa), bow-arrows (Vāyu), thunderbolt (Indra), spear (Agni), staff (Yama), goad (Kāla), sword, shield",
+      "domain": "war, demon-slaying, motherhood, supreme goddess, protection, lion/tiger-rider, the unapproachable one, slayer of Mahiṣa",
+      "object": "ten-armed: trident, discus, conch, bow-arrows, thunderbolt, spear, staff, goad, sword, shield",
       "animals": null,
       "characterTrait": "fierce, unapproachable, supreme, protective, demon-slaying, queenly",
-      "physicalCharacteristics": "Many-armed (typically ten in Devī Māhātmya, eighteen in some Tantric forms); golden-complexioned; mounted on lion or tiger; bearing weapons of all male gods.",
+      "physicalCharacteristics": "Many-armed; golden-complexioned; mounted on lion or tiger; bearing weapons of all male gods.",
       "significantEvent": "Emanated from the combined tejas of all male gods when Mahiṣāsura defeated them. Slays Mahiṣa (Devī Māhātmya 2-3), then Śumbha and Niśumbha (5-10), generating Kālī from her brow.",
       "symbolism": "The 'Unapproachable' and 'Perilous'; Indian Terrible Mother; blood sacrifice",
       "neumannArchetype": "The 'Unapproachable' and 'Perilous.' Indian Terrible Mother requiring blood sacrifice.",
@@ -1427,8 +1427,8 @@
       "deathTypes": null,
       "familyRoles": [
         "supreme goddess",
-        "consort of Śiva (in Śākta theology)",
-        "mother of Gaṇeśa and Skanda (when identified with Pārvatī)"
+        "consort of Śiva",
+        "mother of Gaṇeśa and Skanda"
       ],
       "birthCircumstances": "Emanated from combined wrath-radiance of male gods at the Himalayas.",
       "deathCircumstances": null,
@@ -1440,7 +1440,8 @@
       "eventTypes_source": "Devī Māhātmya",
       "birthTypes_source": "Devī Māhātmya 2",
       "birthCircumstances_source": "Devī Māhātmya 2",
-      "verification_confidence": "verified"
+      "verification_confidence": "verified",
+      "objectProvenance": "ten-armed: trident (from Śiva), discus (Viṣṇu), conch (Varuṇa), bow-arrows (Vāyu), thunderbolt (Indra), spear (Agni), staff (Yama), goad (Kāla), sword, shield"
     },
     {
       "id": 4529,
@@ -18056,11 +18057,11 @@
       "name": "Kali",
       "tradition": "Hindu",
       "gender": "Female",
-      "domain": "war, death, time (kāla), demon-slaying, blood-drinking, cremation grounds, sacrifice (Tantric)",
-      "object": "sword (khaḍga), severed head, skull-bowl (kapāla), girdle of severed hands, garland of skulls (muṇḍamālā)",
+      "domain": "war, death, time, demon-slaying, blood-drinking, cremation grounds, sacrifice",
+      "object": "sword, severed head, skull-bowl, girdle of severed hands, garland of skulls",
       "animals": null,
       "characterTrait": "dark, fierce, bloodthirsty, all-devouring",
-      "physicalCharacteristics": "dark-skinned (kṛṣṇa-vārṇa, the 'black one'), many-armed (typically four-armed in Devī Māhātmya, ten or eighteen in Tantric forms), gaping mouth with lolling red tongue, gaunt/emaciated, sunken eyes, three-eyed, often naked (digambarā) in Tantric forms, sometimes shown standing on the supine Śiva",
+      "physicalCharacteristics": "dark-skinned, many-armed, gaping mouth with lolling red tongue, gaunt/emaciated, sunken eyes, three-eyed, often naked in Tantric forms, sometimes shown standing on the supine Śiva",
       "significantEvent": "Emerges from Durgā's furrowed brow in the form of fanged Kālī to slay the demon-generals Caṇḍa and Muṇḍa, earning the name Cāmuṇḍā. Slays the demon Raktabīja by drinking his blood from the kapāla before drops can hit the ground and spawn duplicates. Joins Durgā in the destruction of Śumbha and Niśumbha. (Tantric:) standing on the supine Śiva to halt her dance of destruction.",
       "symbolism": "Terrible Mother archetype; 'dark, all-devouring time'; stands on Shiva's corpse; devouring feminine",
       "neumannArchetype": "Primary example of the Terrible Mother. 'Dark, all-devouring time.' Stands on Shiva's corpse.",
@@ -18089,7 +18090,8 @@
       "familyRoles_source": "'Mother' role is Tantric / Bengali Śākta (post-Devī Māhātmya). In the Devī Māhātmya itself she is an aspect of the Devī, not a discrete maternal figure.",
       "verification_confidence": "attested",
       "characterTrait_source": "Devī Māhātmya 7-8; Tantric tradition",
-      "birthTypes_source": "Devī Māhātmya 7"
+      "birthTypes_source": "Devī Māhātmya 7",
+      "objectProvenance": "sword (khaḍga), severed head, skull-bowl (kapāla), girdle of severed hands, garland of skulls (muṇḍamālā)"
     },
     {
       "id": 3411,
@@ -18378,14 +18380,14 @@
       "object": null,
       "animals": null,
       "characterTrait": "illusory, veiling, creative-of-appearance, cosmic, fundamental",
-      "physicalCharacteristics": "When personified, depicted as goddess (Mahāmāyā); often identified with Durgā/Pārvatī/Lakṣmī in cosmic-creative aspects. In Advaita, abstract cosmic principle.",
+      "physicalCharacteristics": "When personified, depicted as goddess; often identified with Durgā/Pārvatī/Lakṣmī in cosmic-creative aspects. In Advaita, abstract cosmic principle.",
       "significantEvent": "Bhagavad Gītā 7.14: Kṛṣṇa's māyā is divine and hard to overcome but devotees cross beyond it. In Advaita (Śaṅkara), cosmic veil making One appear as Many. In Vaiṣṇavism, Yogamāyā is Kṛṣṇa's internal energy for divine play (līlā), including the birth-night infant-exchange (Bhāgavata Purāṇa 10.3).",
       "symbolism": "Cosmic illusion; world as hell or Maya; fate as Heimarmene; goddess as the Maya, 'the great...'",
       "neumannArchetype": "The goddess as Maya, cosmic illusion and fate.",
       "mentionCount": 8,
       "eventTypes": [
         "cosmic veiling",
-        "divine play (līlā)"
+        "divine play"
       ],
       "birthTypes": [
         "eternal cosmic principle"
@@ -18393,7 +18395,7 @@
       "deathTypes": null,
       "familyRoles": [
         "cosmic principle",
-        "goddess (when personified)"
+        "goddess"
       ],
       "birthCircumstances": null,
       "deathCircumstances": null,
@@ -18682,11 +18684,11 @@
       "name": "Shiva",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "destruction, asceticism, yoga, dance, cremation grounds, death, the liṅga, auspiciousness, cosmic time (Mahākāla), boon-granting, healing of poisons",
-      "object": "trident (triśūla), drum (ḍamaru), bow (Pināka), battle-axe (paraśu), skull-staff (khaṭvāṅga), skull-bowl (kapāla), garland of skulls (muṇḍamālā), rudrākṣa beads, the crescent moon, the river Gaṅgā in his hair, ash (vibhūti), tiger and elephant skin",
+      "domain": "destruction, asceticism, yoga, dance, cremation grounds, death, the liṅga, auspiciousness, cosmic time, boon-granting, healing of poisons",
+      "object": "trident, drum, bow, battle-axe, skull-staff, skull-bowl, garland of skulls, rudrākṣa beads, the crescent moon, the river Gaṅgā in his hair, ash, tiger and elephant skin",
       "animals": null,
-      "characterTrait": "imperturbable, transcendent, destructive, ascetic, ash-smeared, boon-giving, easily pleased and easily angered, paradoxical (auspicious-and-terrible)",
-      "physicalCharacteristics": "third eye, ash-coloured (cremation-ash-smeared), blue-throated (Nīlakaṇṭha), matted hair (jaṭā) with the moon and Gaṅgā in it, sometimes five-faced (Sadāśiva)",
+      "characterTrait": "imperturbable, transcendent, destructive, ascetic, ash-smeared, boon-giving, easily pleased and easily angered, paradoxical",
+      "physicalCharacteristics": "third eye, ash-coloured, blue-throated, matted hair with the moon and Gaṅgā in it, sometimes five-faced",
       "significantEvent": "Drinks the halāhala poison at the churning of the ocean, turning his throat blue (Nīlakaṇṭha). Destroys the three demon cities of Tripura with a single arrow as Tripurāntaka. Burns the love-god Kāma to ashes with his third eye when Kāma tries to make him desire Pārvatī. Marries Pārvatī after long ascetic courtship. Destroys his father-in-law Daksha's sacrifice via Vīrabhadra after Satī's death. Receives the descending Gaṅgā in his matted hair to break her fall to earth (Bhagīratha episode). Manifests as the infinite pillar of fire (the original liṅga) before Brahmā and Viṣṇu.",
       "symbolism": "Kali stands on his corpse; 'double symbol in which Shiva or Shakti is contained'; 'the imperturbable'",
       "neumannArchetype": "Kali stands on his corpse. 'The imperturbable' contained within Shakti.",
@@ -18700,7 +18702,7 @@
         "manifestation"
       ],
       "birthTypes": [
-        "self-existent (svayambhū)"
+        "self-existent"
       ],
       "deathTypes": null,
       "familyRoles": [
@@ -18719,7 +18721,8 @@
       "eventTypes_source": "Mahābhārata; Liṅga Purāṇa; Bhāgavata Purāṇa; Kumārasambhava",
       "birthTypes_source": "Liṅga Purāṇa; Vedānta tradition",
       "birthCircumstances_source": "Liṅga Purāṇa 17; Śvetāśvatara Upaniṣad",
-      "verification_confidence": "attested"
+      "verification_confidence": "attested",
+      "objectProvenance": "trident (triśūla), drum (ḍamaru), bow (Pināka), battle-axe (paraśu), skull-staff (khaṭvāṅga), skull-bowl (kapāla), garland of skulls (muṇḍamālā), rudrākṣa beads, the crescent moon, the river Gaṅgā in his hair, ash (vibhūti), tiger and elephant skin"
     },
     {
       "id": 3439,
@@ -19185,10 +19188,10 @@
       "name": "Shakti",
       "tradition": "Hindu",
       "gender": "Female",
-      "domain": "divine feminine power, creative-dynamic energy of universe, supreme goddess principle (Śākta); every god has his śakti as the female personification of his power (Brahma-Sarasvati, Viṣṇu-Lakṣmī, Śiva-Pārvatī)",
+      "domain": "divine feminine power, creative-dynamic energy of universe, supreme goddess principle; every god has his śakti as the female personification of his power",
       "object": "varies by manifestation — trident, sword, lotus, weapons of the goddess-forms; the yoni in tantric iconography",
       "animals": null,
-      "characterTrait": "dynamic, creative, powerful, active, transformative — without her the male god is a śava (corpse)",
+      "characterTrait": "dynamic, creative, powerful, active, transformative — without her the male god is a śava",
       "physicalCharacteristics": "When personified, manifests as Pārvatī/Durgā/Kālī/Lakṣmī/Sarasvatī depending on context; in tantric iconography, active feminine principle in union with passive masculine.",
       "significantEvent": "The cosmic principle of feminine power. In Śākta tradition, the supreme reality of which all goddesses are manifestations. Devī Māhātmya 1.78 declares the Devī supreme power creating-maintaining-destroying the universe. In Tantric tradition (Kashmir Śaivism, Śrī Vidyā), Śakti is the spanda — cosmic vibration whose pulsation is the universe.",
       "symbolism": "Divine feminine power; 'double symbol in which Shiva or Shakti is contained'",
@@ -19205,7 +19208,7 @@
       "deathTypes": null,
       "familyRoles": [
         "cosmic-feminine principle",
-        "consort of every male god (in his śakti-aspect)"
+        "consort of every male god"
       ],
       "birthCircumstances": null,
       "deathCircumstances": null,
@@ -21363,7 +21366,7 @@
       "object": "khanda",
       "animals": null,
       "characterTrait": "time-associated, Southeast Asian, Thai, Hindu-syncretic",
-      "physicalCharacteristics": "a deity worshipped in Thai Hindu tradition, associated with Kala (time) and the power of time",
+      "physicalCharacteristics": "a deity worshipped in Thai Hindu tradition, associated with Kala and the power of time",
       "significantEvent": "represents the Hindu concept of Kala (time) as worshipped in Southeast Asian (particularly Thai) Hindu traditions, the divine power of time that governs all things",
       "symbolism": "time as a divine power worshipped in Southeast Asian Hindu traditions, the Thai adaptation of the Hindu temporal deity",
       "neumannArchetype": "the masculine of cosmic time, the patriarchal consciousness of temporal order",
@@ -29298,7 +29301,7 @@
       "characterTrait": "divine, cosmic, ordered, dharmic, manifold",
       "physicalCharacteristics": "the collective concept of the Hindu divine beings encompassing all deities from the supreme Brahman to local village gods",
       "significantEvent": "the Hindu deities represent one of the largest and most complex pantheons in world religion, organized in triads (Trimurti), families, avatars, and local manifestations",
-      "symbolism": "the unity in multiplicity of the Hindu divine, the one supreme reality manifesting as countless deities, the cosmic order (dharma) as the organizing principle of the divine",
+      "symbolism": "the unity in multiplicity of the Hindu divine, the one supreme reality manifesting as countless deities, the cosmic order as the organizing principle of the divine",
       "neumannArchetype": "the collective numinous of the Hindu cosmos, the infinite manifestations of the divine consciousness",
       "mentionCount": null,
       "eventTypes": null,
@@ -29324,10 +29327,10 @@
       "tradition": "Hindu",
       "gender": "Female",
       "domain": "androgyny, the union of Shiva and Parvati, divine gender unity, cosmic balance",
-      "object": "trident (right/Śiva side), lotus (left/Pārvatī side); Śiva-side carries trident-drum-axe; Pārvatī-side carries lotus and mirror",
+      "object": "trident, lotus; Śiva-side carries trident-drum-axe; Pārvatī-side carries lotus and mirror",
       "animals": null,
       "characterTrait": "androgynous, unified, balanced, half-male-half-female, cosmic",
-      "physicalCharacteristics": "the Lord Who Is Half Woman, depicted as half Shiva (male right side) and half Parvati (female left side), with one breast, half a mustache, and split attire",
+      "physicalCharacteristics": "the Lord Who Is Half Woman, depicted as half Shiva and half Parvati, with one breast, half a mustache, and split attire",
       "significantEvent": "represents the inseparable unity of the masculine and feminine principles in Hindu cosmology, demonstrates that the supreme god contains both genders within one body",
       "symbolism": "the half-and-half body as the visual proof that masculine and feminine are one, the split form as the cosmic balance, the androgynous deity as the resolution of all gender duality",
       "neumannArchetype": "the uroboric unity of masculine and feminine in one body, the divine androgyne that precedes and transcends gender differentiation",
@@ -29355,7 +29358,8 @@
       "eventTypes_source": "Śiva Purāṇa; Skanda Purāṇa",
       "birthTypes_source": "Purāṇic tradition",
       "birthCircumstances_source": "Śiva Purāṇa",
-      "verification_confidence": "verified"
+      "verification_confidence": "verified",
+      "objectProvenance": "trident (right/Śiva side), lotus (left/Pārvatī side); Śiva-side carries trident-drum-axe; Pārvatī-side carries lotus and mirror"
     },
     {
       "id": 4118,
@@ -29374,7 +29378,7 @@
       "mentionCount": null,
       "eventTypes": [
         "solar-collective rule",
-        "cosmic-law upholding (ṛta)"
+        "cosmic-law upholding"
       ],
       "birthTypes": [
         "divine parentage"
@@ -29527,7 +29531,7 @@
       "eventTypes": [
         "ancestral enmity with Garuḍa",
         "treasure-guardianship",
-        "underworld-rule (Pātāla)"
+        "underworld-rule"
       ],
       "birthTypes": [
         "descended from Kadrū and Kaśyapa"
@@ -29557,9 +29561,9 @@
       "name": "Vahana",
       "tradition": "Hindu",
       "gender": "Unspecified",
-      "domain": "divine mounts/vehicles of the gods — sacred animals (sometimes humans/abstract beings) who carry the major Hindu deities; vāhana = 'that which carries'",
+      "domain": "divine mounts/vehicles of the gods — sacred animals who carry the major Hindu deities; vāhana = 'that which carries'",
       "object": null,
-      "animals": "various — Garuḍa (eagle) for Viṣṇu; Nandī (bull) for Śiva; Haṃsa (swan) for Brahmā and Sarasvatī; Mūṣika (mouse) for Gaṇeśa; Mayūra (peacock) for Skanda; Siṃha/Vyāghra for Durgā; Ulūka (owl) for Lakṣmī; Mahiṣa (buffalo) for Yama; Airāvata (elephant) for Indra",
+      "animals": "various — Garuḍa for Viṣṇu; Nandī for Śiva; Haṃsa for Brahmā and Sarasvatī; Mūṣika for Gaṇeśa; Mayūra for Skanda; Siṃha/Vyāghra for Durgā; Ulūka for Lakṣmī; Mahiṣa for Yama; Airāvata for Indra",
       "characterTrait": "mount-serving, vehicle-being, divine-transport, companion-animal",
       "physicalCharacteristics": "the animal vehicles of Hindu deities, each god rides or is associated with a specific sacred animal",
       "significantEvent": "Each major Hindu deity has a vāhana symbolizing aspects of power/character. The vāhanas are personalities themselves: Garuḍa has his own biography; Nandī is supreme devotee of Śiva; Hanumān sometimes considered Vāyu's avatara.",
@@ -29659,14 +29663,14 @@
       "name": "Radha Krishna",
       "tradition": "Hindu",
       "gender": "Unspecified",
-      "domain": "divine love, devotion (bhakti), the beloved and the lover, the eternal couple",
+      "domain": "divine love, devotion, the beloved and the lover, the eternal couple",
       "object": "flute, lotus, cows, Vrindavan",
       "animals": null,
       "characterTrait": "loving, devoted, ecstatic, playful, eternal-couple, bhakti",
-      "physicalCharacteristics": "the eternal divine couple, Krishna (dark-skinned flute player) and Radha (fair-skinned devoted lover) depicted together in eternal embrace or dance",
+      "physicalCharacteristics": "the eternal divine couple, Krishna and Radha depicted together in eternal embrace or dance",
       "significantEvent": "represents the supreme expression of divine love (bhakti) in Hindu tradition, Radha and Krishnas love story from the Bhagavata Purana and Gita Govinda is the model for all devotional love, their union is the highest spiritual state",
       "symbolism": "the divine couple as the model of devotional love, the flute as the call of the divine beloved, Vrindavan as the sacred garden of divine love, the erotic as the highest expression of the spiritual",
-      "neumannArchetype": "the hieros gamos of the supreme masculine (Krishna) and the supreme feminine (Radha), the union of consciousness with its beloved as the highest spiritual achievement",
+      "neumannArchetype": "the hieros gamos of the supreme masculine and the supreme feminine, the union of consciousness with its beloved as the highest spiritual achievement",
       "mentionCount": null,
       "eventTypes": [
         "divine union",
@@ -29806,7 +29810,7 @@
       "object": "skull, ashes, trident",
       "animals": null,
       "characterTrait": "death-dwelling, ascetic, cremation-ground-inhabiting, fierce, ash-covered",
-      "physicalCharacteristics": "the Lord of the Cremation Ground, an aspect of Shiva or a deity associated with the shmashana (cremation ground)",
+      "physicalCharacteristics": "the Lord of the Cremation Ground, an aspect of Shiva or a deity associated with the shmashana",
       "significantEvent": "rules the cremation ground where the dead are burned, associated with the tantric and ascetic traditions that worship in cremation grounds, the shmashana is the place where life meets death and spiritual transformation occurs",
       "symbolism": "the cremation ground as the place of ultimate transformation, the ashes as the final state of the body, the lord of the burning ground as the deity of the threshold between life and death",
       "neumannArchetype": "the terrible Great Father of the cremation ground, the masculine consciousness that presides over the dissolution of the body and the transformation of death",
@@ -29818,7 +29822,7 @@
       "birthTypes": null,
       "deathTypes": null,
       "familyRoles": [
-        "lord of the cremation-ground (aspect or attendant of Śiva)"
+        "lord of the cremation-ground"
       ],
       "birthCircumstances": null,
       "deathCircumstances": null,
@@ -29843,7 +29847,7 @@
       "physicalCharacteristics": "Vishnu seated on the cosmic serpent Shesha with Lakshmi at his feet, floating on the cosmic ocean",
       "significantEvent": "the iconic form of Vishnu resting on the cosmic serpent Shesha on the primordial waters with Lakshmi (the goddess of prosperity) serving at his feet, from Vishnus navel grows the lotus that bears Brahma the creator",
       "symbolism": "the cosmic couple as the source of creation, the serpent bed as the infinity of time, the lotus from the navel as the birth of the creator, Lakshmi at the feet as prosperity attending the divine",
-      "neumannArchetype": "the supreme patriarchal consciousness resting on the uroboric serpent (Shesha) with the Great Mother of prosperity at his feet, the hieros gamos that generates creation",
+      "neumannArchetype": "the supreme patriarchal consciousness resting on the uroboric serpent with the Great Mother of prosperity at his feet, the hieros gamos that generates creation",
       "mentionCount": null,
       "eventTypes": [
         "cosmic rest",
@@ -29887,8 +29891,8 @@
         "curse"
       ],
       "birthTypes": [
-        "descent from heaven (Gaṅgā)",
-        "daughter of Sūrya (Yamunā)",
+        "descent from heaven",
+        "daughter of Sūrya",
         "cosmic river"
       ],
       "deathTypes": null,
@@ -29967,7 +29971,7 @@
       ],
       "deathTypes": null,
       "familyRoles": [
-        "the eight Vasus (Anala/Agni, Vasu, Soma, Dhara, Anila/Vāyu, Anila, Prabhāsa, Dyu)"
+        "the eight Vasus"
       ],
       "birthCircumstances": "sons of the goddess Vasu or born from Dharma and Vasu",
       "deathCircumstances": null,
@@ -30023,10 +30027,10 @@
       "tradition": "Hindu",
       "gender": "Female",
       "domain": "Shakti, tantric worship, lightning, diamond, the supreme goddess of tantric practice",
-      "object": "vajra (thunderbolt/diamond), lotus",
+      "object": "vajra, lotus",
       "animals": null,
       "characterTrait": "diamond-hard, lightning-wielding, tantric, supreme-goddess, fierce",
-      "physicalCharacteristics": "the Diamond Goddess, a supreme tantric deity associated with the vajra (thunderbolt/diamond) and supreme feminine power",
+      "physicalCharacteristics": "the Diamond Goddess, a supreme tantric deity associated with the vajra and supreme feminine power",
       "significantEvent": "worshipped in tantric traditions as a form of the supreme goddess Devi, associated with the vajra (the diamond thunderbolt) representing indestructible spiritual power",
       "symbolism": "the diamond as the indestructible feminine power, the vajra as the thunderbolt of supreme awareness, the tantric goddess as the ultimate spiritual force, diamond hardness as the nature of the highest feminine consciousness",
       "neumannArchetype": "the Great Mother of the diamond-thunderbolt, the indestructible feminine consciousness of tantric realization",
@@ -30050,7 +30054,8 @@
       "characterTrait_source": "Tantric Śākta tradition",
       "physicalCharacteristics_source": "Tantric iconography",
       "significantEvent_source": "Tantric tradition; Vajreśvarī temple",
-      "eventTypes_source": "Tantric tradition"
+      "eventTypes_source": "Tantric tradition",
+      "objectProvenance": "vajra (thunderbolt/diamond), lotus"
     },
     {
       "id": 4065,
@@ -32232,7 +32237,7 @@
       "object": null,
       "animals": null,
       "characterTrait": "inevitable, death-bringing, impartial, patient, inexorable",
-      "physicalCharacteristics": "the personification of death in Hinduism, distinct from Yama (the god of death), Mrtyu is death itself as an abstract principle",
+      "physicalCharacteristics": "the personification of death in Hinduism, distinct from Yama, Mrtyu is death itself as an abstract principle",
       "significantEvent": "the personification of death as a cosmic principle, Mrtyu represents the inevitable mortality that even the gods cannot fully escape, the abstract concept of dying as a divine force",
       "symbolism": "death as an impersonal cosmic force, the inevitability of mortality as a divine principle, Mrtyu as the ultimate fate that underlies all existence",
       "neumannArchetype": "the shadow of consciousness itself, death as the absolute boundary of ego-awareness",
@@ -36436,33 +36441,33 @@
       "name": "Vishnu",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "preserver of the cosmos (sthiti); supreme being in Vaiṣṇavism; avatar-incarnator descending in each age to restore dharma; dweller in Vaikuṇṭha on cosmic serpent Śeṣa; four-armed bearer of conch-discus-mace-lotus",
+      "domain": "preserver of the cosmos; supreme being in Vaiṣṇavism; avatar-incarnator descending in each age to restore dharma; dweller in Vaikuṇṭha on cosmic serpent Śeṣa; four-armed bearer of conch-discus-mace-lotus",
       "domain_source": "Rig Veda 1.154-155 (three strides); Śatapatha Brāhmaṇa; Bhagavad Gītā; Bhāgavata Purāṇa; Viṣṇu Purāṇa; Pañcarātra and Vaikhānasa Āgamas; Divyaprabandham (Tamil)",
-      "object": "conch (Pāñcajanya), discus (Sudarśana), mace (Kaumodakī), lotus (padma); cosmic serpent Śeṣa as couch; Vaikuṇṭha (abode); bow Śārṅga; yellow garments (pītāmbara)",
+      "object": "conch, discus, mace, lotus; cosmic serpent Śeṣa as couch; Vaikuṇṭha; bow Śārṅga; yellow garments",
       "object_source": "Bhāgavata Purāṇa 2.9, 8.7; Viṣṇu Purāṇa 1; Mahābhārata, Śānti Parvan",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "preserver, sustainer, compassionate (kṛpālu), boon-giving, avatar-descending, lawful, accessible to bhakti, serene",
+      "characterTrait": "preserver, sustainer, compassionate, boon-giving, avatar-descending, lawful, accessible to bhakti, serene",
       "characterTrait_source": "Bhāgavata Purāṇa passim; Bhagavad Gītā 12; Viṣṇu Sahasranāma",
-      "physicalCharacteristics": "Four-armed, dark blue or cloud-colored (śyāmala/nīla-meghaśyāma); bears conch-discus-mace-lotus; śrīvatsa mark on chest; kaustubha-jewel; yellow silken garments; reclines on Śeṣa floating on the cosmic ocean during pralaya; from his navel sprouts the lotus from which Brahmā emerges.",
+      "physicalCharacteristics": "Four-armed, dark blue or cloud-colored; bears conch-discus-mace-lotus; śrīvatsa mark on chest; kaustubha-jewel; yellow silken garments; reclines on Śeṣa floating on the cosmic ocean during pralaya; from his navel sprouts the lotus from which Brahmā emerges.",
       "physicalCharacteristics_source": "Bhāgavata Purāṇa 2.9; Viṣṇu Purāṇa 1; Vaiṣṇava iconography",
       "significantEvent": "In Vedic stratum, god of the three world-spanning strides (Trivikrama, RV 1.154). In Purāṇic theology, supreme being who incarnates as the daśāvatāra (Matsya, Kūrma, Varāha, Narasiṃha, Vāmana, Paraśurāma, Rāma, Kṛṣṇa, Buddha [in some lists], Kalki). Bhagavad Gītā 4.7-8: 'whenever there is decline of dharma and rise of adharma, I manifest myself'.",
       "significantEvent_source": "Rig Veda 1.154-155; Bhāgavata Purāṇa (daśāvatāra accounts); Bhagavad Gītā 4.7-8; Viṣṇu Purāṇa",
       "eventTypes": [
         "cosmic preservation",
         "avatar-descent",
-        "three-strides (Trivikrama)",
+        "three-strides",
         "dharma-restoration"
       ],
       "eventTypes_source": "Rig Veda; Bhāgavata Purāṇa; Bhagavad Gītā",
       "familyRoles": [
-        "supreme being (Vaiṣṇavism)",
+        "supreme being",
         "husband of Lakṣmī",
         "father of countless avatars",
         "Trimūrti member"
       ],
       "birthTypes": [
-        "eternal, beginningless (anādi)"
+        "eternal, beginningless"
       ],
       "birthTypes_source": "Bhāgavata Purāṇa 1.1.1",
       "birthCircumstances": "Eternal, beginningless. In avatar-form, born in many ages from various mothers (Devakī for Kṛṣṇa, Kausalyā for Rāma).",
@@ -36471,21 +36476,22 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4703,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "conch (Pāñcajanya), discus (Sudarśana), mace (Kaumodakī), lotus (padma); cosmic serpent Śeṣa as couch; Vaikuṇṭha (abode); bow Śārṅga; yellow garments (pītāmbara)"
     },
     {
       "name": "Brahma",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "creator of the cosmos (sṛṣṭi); demiurge; source of the Vedas; four-faced; born from Viṣṇu's navel-lotus; his day is a kalpa (4.32 billion years); cursed to receive almost no temples",
+      "domain": "creator of the cosmos; demiurge; source of the Vedas; four-faced; born from Viṣṇu's navel-lotus; his day is a kalpa; cursed to receive almost no temples",
       "domain_source": "Śatapatha Brāhmaṇa; Manu Smṛti 1; Bhāgavata Purāṇa 2-3; Viṣṇu Purāṇa 1; Brahmavaivarta Purāṇa",
-      "object": "four Vedas (one per face); rosary (akṣamālā); water-pot (kamaṇḍalu); swan (haṃsa) as vāhana; lotus seat",
+      "object": "four Vedas; rosary; water-pot; swan as vāhana; lotus seat",
       "object_source": "Purāṇic iconography",
       "animals": null,
       "animals_source": null,
       "characterTrait": "creative, knowledge-bearing, distracted, self-engendered, often cursed",
       "characterTrait_source": "Bhāgavata Purāṇa 3-4; Śiva Purāṇa (Brahmā-Bhairava); Matsya Purāṇa",
-      "physicalCharacteristics": "Four-faced (catur-mukha), four-armed; originally five-headed but Śiva-as-Bhairava cut off the fifth for pride/untruthfulness; long white beard; red-skinned; rides the haṃsa.",
+      "physicalCharacteristics": "Four-faced, four-armed; originally five-headed but Śiva-as-Bhairava cut off the fifth for pride/untruthfulness; long white beard; red-skinned; rides the haṃsa.",
       "physicalCharacteristics_source": "Purāṇic iconography; Śiva Purāṇa (five-to-four head transition)",
       "significantEvent": "Emerges from a lotus growing from Viṣṇu's navel at the start of each cosmic cycle (Bhāgavata Purāṇa 3.8). Recites the four Vedas from his four faces. The Liṅgodbhava: Brahmā and Viṣṇu argue who is supreme; infinite liṅga of fire appears; Brahmā as swan flies up to find its top, Viṣṇu as boar digs down for its bottom; both fail; Śiva manifests from the liṅga; Brahmā lies that he reached the top and is cursed never to have widespread worship.",
       "significantEvent_source": "Bhāgavata Purāṇa 3.8; Śiva Purāṇa; Liṅga Purāṇa 17",
@@ -36513,21 +36519,22 @@
       "deathCircumstances_source": "Bhāgavata Purāṇa 3; Mahābhārata",
       "verification_confidence": "verified",
       "id": 4704,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "four Vedas (one per face); rosary (akṣamālā); water-pot (kamaṇḍalu); swan (haṃsa) as vāhana; lotus seat"
     },
     {
       "name": "Lakshmi",
       "tradition": "Hindu",
       "gender": "Female",
-      "domain": "wealth, prosperity, fortune, beauty, royal authority (śrī); divine consort of Viṣṇu; lotus-goddess; mother of Kāma; giver of mokṣa",
+      "domain": "wealth, prosperity, fortune, beauty, royal authority; divine consort of Viṣṇu; lotus-goddess; mother of Kāma; giver of mokṣa",
       "domain_source": "Śrī-sūkta (late RV appendix); Mahābhārata, Sabhā Parvan; Bhāgavata Purāṇa 8.8; Viṣṇu Purāṇa 1; Padma Purāṇa; Lakṣmī Tantra",
-      "object": "lotus (in two of four hands, also her seat); golden pots overflowing with gold; the cosmic elephants Aṣṭadiggaja bathing her",
+      "object": "lotus; golden pots overflowing with gold; the cosmic elephants Aṣṭadiggaja bathing her",
       "object_source": "Śrī-sūkta; Bhāgavata Purāṇa 8.8; Vaiṣṇava iconography",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "auspicious, fickle (cala-lakṣmī — famously restless), wealth-bestowing, royal, lotus-loving, devoted to Viṣṇu",
+      "characterTrait": "auspicious, fickle, wealth-bestowing, royal, lotus-loving, devoted to Viṣṇu",
       "characterTrait_source": "Mahābhārata, Sabhā Parvan; Purāṇic tradition",
-      "physicalCharacteristics": "Four-armed (supreme form) or two-armed; golden-complexioned (heṃa-varṇa); seated/standing on lotus; lotuses in two hands; gold coins from third hand; flanked by white elephants (the famous Gaja-Lakṣmī iconography from Sāñcī, c. 1st c. BCE).",
+      "physicalCharacteristics": "Four-armed or two-armed; golden-complexioned; seated/standing on lotus; lotuses in two hands; gold coins from third hand; flanked by white elephants.",
       "physicalCharacteristics_source": "Śrī-sūkta; Bhāgavata Purāṇa 8.8; Sāñcī iconography",
       "significantEvent": "Emerges from the cosmic ocean during the churning (samudra-manthana) when gods and demons churned for amṛta; arises seated on a lotus, chooses Viṣṇu as husband by garlanding him (Bhāgavata Purāṇa 8.8). In each Viṣṇu avatar she descends as consort — Sītā for Rāma, Rukmiṇī or Rādhā for Kṛṣṇa.",
       "significantEvent_source": "Bhāgavata Purāṇa 8.8; Padma Purāṇa; Rāmāyaṇa",
@@ -36553,21 +36560,22 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4705,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "lotus (in two of four hands, also her seat); golden pots overflowing with gold; the cosmic elephants Aṣṭadiggaja bathing her"
     },
     {
       "name": "Saraswati",
       "tradition": "Hindu",
       "gender": "Female",
-      "domain": "wisdom, learning, music, the arts, eloquence, speech (vāc), the Vedas; the (now-lost) river Sarasvatī; consort of Brahmā",
+      "domain": "wisdom, learning, music, the arts, eloquence, speech, the Vedas; the river Sarasvatī; consort of Brahmā",
       "domain_source": "Rig Veda 6.61, 7.95-96 (Sarasvatī as river-goddess); Devī Māhātmya; Brahmavaivarta Purāṇa; Padma Purāṇa; Sarasvatī-stotra",
-      "object": "vīṇā (Indian lute); palm-leaf book (Vedas); rosary (akṣamālā); water-pot; white lotus or haṃsa (swan) as vāhana; white garments",
+      "object": "vīṇā; palm-leaf book; rosary; water-pot; white lotus or haṃsa as vāhana; white garments",
       "object_source": "Purāṇic-iconographic tradition",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "wise, eloquent, musical, scholarly, gracious, pure-white, peaceful (śānta)",
+      "characterTrait": "wise, eloquent, musical, scholarly, gracious, pure-white, peaceful",
       "characterTrait_source": "Rig Veda 6.61; Devī Māhātmya; Purāṇic tradition",
-      "physicalCharacteristics": "Four-armed (supreme form) or two-armed; pure white in complexion (śveta-varṇa); seated on white lotus or riding the haṃsa; holding vīṇā, book, and rosary; clothed in white; calm-faced.",
+      "physicalCharacteristics": "Four-armed or two-armed; pure white in complexion; seated on white lotus or riding the haṃsa; holding vīṇā, book, and rosary; clothed in white; calm-faced.",
       "physicalCharacteristics_source": "Purāṇic-iconographic tradition",
       "significantEvent": "Originally a Vedic river-goddess (RV 6.61.13: 'best of mothers, best of rivers, best of goddesses'). By late-Vedic period identified with Vāc (Speech). In Purāṇas, consort of Brahmā and goddess of all learning. The narrative of Brahmā's incestuous attraction (and his fifth head being cut off by Śiva-Bhairava) involves Sarasvatī. Invoked daily by students before study.",
       "significantEvent_source": "Rig Veda 6.61, 7.95-96; Brahmavaivarta Purāṇa; Skanda Purāṇa",
@@ -36579,7 +36587,7 @@
       "eventTypes_source": "Vedic-Purāṇic transition tradition",
       "familyRoles": [
         "wife of Brahmā",
-        "daughter of Brahmā (in some accounts)",
+        "daughter of Brahmā",
         "one of the Tridevī",
         "goddess of all learning"
       ],
@@ -36593,21 +36601,22 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4706,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "vīṇā (Indian lute); palm-leaf book (Vedas); rosary (akṣamālā); water-pot; white lotus or haṃsa (swan) as vāhana; white garments"
     },
     {
       "name": "Parvati",
       "tradition": "Hindu",
       "gender": "Female",
-      "domain": "consort of Śiva; daughter of the mountain (Himavān); the gentle aspect of the Mahādevī (fierce aspects are Durgā and Kālī); mother of Gaṇeśa and Skanda; cosmic feminine principle as Śiva's eternal companion",
+      "domain": "consort of Śiva; daughter of the mountain; the gentle aspect of the Mahādevī; mother of Gaṇeśa and Skanda; cosmic feminine principle as Śiva's eternal companion",
       "domain_source": "Kālidāsa, Kumārasambhava (the central poetic source); Skanda Purāṇa; Śiva Purāṇa, Pārvatī-khaṇḍa; Liṅga Purāṇa",
-      "object": "lotus, mirror (in Pārvatī-side of Ardhanārīśvara); trident and sword in warrior-aspect; sweets for Gaṇeśa",
+      "object": "lotus, mirror; trident and sword in warrior-aspect; sweets for Gaṇeśa",
       "object_source": "Śaiva iconography",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "gracious (saumyā), gentle, devoted-wife, ascetic (in tapas-period before winning Śiva), motherly, capable of fierce manifestations",
+      "characterTrait": "gracious, gentle, devoted-wife, ascetic, motherly, capable of fierce manifestations",
       "characterTrait_source": "Kumārasambhava; Śiva Purāṇa",
-      "physicalCharacteristics": "Two- or four-armed; golden- or fair-complexioned (contrasting with dark Kālī); long black hair; sari and ornaments; often seated next to Śiva or on lion-mount; sometimes nursing Gaṇeśa or Skanda.",
+      "physicalCharacteristics": "Two- or four-armed; golden- or fair-complexioned; long black hair; sari and ornaments; often seated next to Śiva or on lion-mount; sometimes nursing Gaṇeśa or Skanda.",
       "physicalCharacteristics_source": "Śaiva iconographic tradition",
       "significantEvent": "Born as daughter of Himavān (king of Himalayas) and Menā after Satī's self-immolation at Dakṣa's sacrifice. Recognized from childhood as Śiva's destined consort. Performs intense tapas to win him, accepting privation; Śiva incinerates Kāma with his third eye when Kāma tries to make him fall in love. Eventually wins Śiva and marries him. Becomes mother of Gaṇeśa (created from her own bodily-substance, beheaded by Śiva, revived with elephant's head) and Skanda. In fierce manifestations, she is Durgā and Kālī.",
       "significantEvent_source": "Kumārasambhava; Śiva Purāṇa; Skanda Purāṇa, Maheśvara-khaṇḍa",
@@ -36623,7 +36632,7 @@
         "wife of Śiva",
         "daughter of Himavān and Menā",
         "mother of Gaṇeśa and Skanda",
-        "sister of Gaṅgā (in some accounts)",
+        "sister of Gaṅgā",
         "one of the Tridevī"
       ],
       "birthTypes": [
@@ -36637,21 +36646,22 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4707,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "lotus, mirror (in Pārvatī-side of Ardhanārīśvara); trident and sword in warrior-aspect; sweets for Gaṇeśa"
     },
     {
       "name": "Ganesha",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "remover of obstacles (Vighneśvara); patron of beginnings; lord of the Gaṇas; wisdom, learning, success; elephant-headed son of Śiva and Pārvatī; first-worshipped at every Hindu rite",
+      "domain": "remover of obstacles; patron of beginnings; lord of the Gaṇas; wisdom, learning, success; elephant-headed son of Śiva and Pārvatī; first-worshipped at every Hindu rite",
       "domain_source": "Śiva Purāṇa, Rudra-saṃhitā, Kumārakhaṇḍa 13-20; Mudgala Purāṇa; Gaṇeśa Purāṇa; Mahābhārata frame-narrative",
-      "object": "modaka (sweet rice-ball); goad (aṅkuśa); noose (pāśa); broken tusk (used to write the Mahābhārata for Vyāsa); lotus; axe; vāhana: mūṣika (mouse/rat)",
+      "object": "modaka; goad; noose; broken tusk; lotus; axe; vāhana: mūṣika",
       "object_source": "Gāṇapatya iconography; Mahābhārata frame-narrative",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "wise, obstacle-removing, sweet-toothed, pot-bellied, scribe (wrote the Mahābhārata on a broken tusk), patient, first-honored at every ritual",
+      "characterTrait": "wise, obstacle-removing, sweet-toothed, pot-bellied, scribe, patient, first-honored at every ritual",
       "characterTrait_source": "Mahābhārata frame-narrative; Gāṇapatya tradition",
-      "physicalCharacteristics": "Elephant-headed (with one broken tusk); pot-bellied (lambodara); four-armed; reddish-skinned; rides the mūṣika. The elephant-head was given after Śiva beheaded him; Śiva revived him with the head of the first creature his attendants found.",
+      "physicalCharacteristics": "Elephant-headed; pot-bellied; four-armed; reddish-skinned; rides the mūṣika. The elephant-head was given after Śiva beheaded him; Śiva revived him with the head of the first creature his attendants found.",
       "physicalCharacteristics_source": "Śiva Purāṇa, Kumārakhaṇḍa 13-20",
       "significantEvent": "Created by Pārvatī from saffron-paste of her own body to guard her bath. Śiva returned, was blocked by the unknown boy at the door, beheaded him in rage. Pārvatī demanded restoration. Śiva's attendants brought the head of the first creature facing north — an elephant. Gaṇeśa thereafter is chief of Śiva's gaṇas and first-worshipped at all Hindu rites. Also broke off his right tusk as a pen when writing the Mahābhārata as dictated by Vyāsa. In a cosmic race with Skanda for a divine mango, won by circumambulating his parents instead of the universe ('my parents are my universe').",
       "significantEvent_source": "Śiva Purāṇa, Rudra-saṃhitā, Kumārakhaṇḍa 13-20; Mahābhārata, Ādi Parvan",
@@ -36679,29 +36689,30 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4708,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "modaka (sweet rice-ball); goad (aṅkuśa); noose (pāśa); broken tusk (used to write the Mahābhārata for Vyāsa); lotus; axe; vāhana: mūṣika (mouse/rat)"
     },
     {
       "name": "Kartikeya",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "war, divine general (Devasenāpati), youth, slayer of demon Tāraka, son of Śiva, six-faced (Ṣaṇmukha), the Tamil god Murugan, Skanda, peacock-rider, spear-wielder",
+      "domain": "war, divine general, youth, slayer of demon Tāraka, son of Śiva, six-faced, the Tamil god Murugan, Skanda, peacock-rider, spear-wielder",
       "domain_source": "Kālidāsa, Kumārasambhava; Mahābhārata, Vana Parvan 224-230 (Skanda-jananī); Skanda Purāṇa (the largest Purāṇa, focused on him); Tamil bhakti (Tirumurugāṟṟuppaṭai)",
-      "object": "spear (vēl/śakti — iconic weapon, given by Pārvatī); bow; rooster banner (kukkuṭa-dhvaja); vāhana: peacock (Paravāṇi)",
+      "object": "spear; bow; rooster banner; vāhana: peacock",
       "object_source": "Kumārasambhava; Skanda Purāṇa; Tamil tradition",
       "animals": null,
       "animals_source": null,
       "characterTrait": "youthful, fierce-warrior, six-faced, Tamil-celebrated as Murugan",
       "characterTrait_source": "Kumārasambhava; Skanda Purāṇa; Tamil Murugan tradition",
-      "physicalCharacteristics": "Six-faced (ṣaḍ-ānana) and twelve-armed (supreme form); youthful (kumāra); golden-complexioned; rides the peacock Paravāṇi; bears the spear vēl. In Tamil iconography, often two-armed at the six aṟupaḍai-vīṭus (Six Abodes of Murugan — Palani, Tiruchendur, Pazhamudirsolai, etc.).",
+      "physicalCharacteristics": "Six-faced and twelve-armed; youthful; golden-complexioned; rides the peacock Paravāṇi; bears the spear vēl. In Tamil iconography, often two-armed at the six aṟupaḍai-vīṭus.",
       "physicalCharacteristics_source": "Kumārasambhava; Skanda Purāṇa; Tamil iconography",
       "significantEvent": "Born from Śiva's seed (nurtured by the six Kṛttikās of the Pleiades, hence Kārttikeya = 'son of the Kṛttikās') specifically to slay the demon Tāraka, who could be killed only by a son of Śiva. As a child becomes commander-in-chief of the divine army and slays Tāraka in cosmic battle. In Tamil tradition as Murugan, marries Vaḷḷi (hill-tribe girl) and Devasenā (Indra's daughter). Lost the cosmic-mango race to Gaṇeśa.",
       "significantEvent_source": "Kumārasambhava; Mahābhārata, Vana Parvan 224-230; Skanda Purāṇa",
       "eventTypes": [
-        "miraculous birth (from Śiva's seed)",
-        "demon-slaying (Tāraka)",
+        "miraculous birth",
+        "demon-slaying",
         "divine generalship",
-        "Tamil bridal narratives (Vaḷḷi, Devasenā)"
+        "Tamil bridal narratives"
       ],
       "eventTypes_source": "Kumārasambhava; Skanda Purāṇa",
       "familyRoles": [
@@ -36709,7 +36720,7 @@
         "brother of Gaṇeśa",
         "foster-son of the six Kṛttikās",
         "divine general",
-        "husband of Vaḷḷi and Devasenā (Tamil)"
+        "husband of Vaḷḷi and Devasenā"
       ],
       "birthTypes": [
         "miraculous, from Śiva's seed nurtured by Kṛttikās"
@@ -36721,21 +36732,22 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4709,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "spear (vēl/śakti — iconic weapon, given by Pārvatī); bow; rooster banner (kukkuṭa-dhvaja); vāhana: peacock (Paravāṇi)"
     },
     {
       "name": "Krishna",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "supreme being (in Caitanya/Gauḍīya Vaiṣṇavism); eighth avatar of Viṣṇu; divine cowherd of Vṛndāvana; charioteer-teacher of the Bhagavad Gītā; slayer of Kaṃsa; lover of Rādhā and the gopīs; counselor of the Pāṇḍavas",
+      "domain": "supreme being; eighth avatar of Viṣṇu; divine cowherd of Vṛndāvana; charioteer-teacher of the Bhagavad Gītā; slayer of Kaṃsa; lover of Rādhā and the gopīs; counselor of the Pāṇḍavas",
       "domain_source": "Bhagavad Gītā; Bhāgavata Purāṇa 10; Mahābhārata; Harivaṃśa; Viṣṇu Purāṇa 5; Brahma Saṃhitā; Caitanya tradition",
-      "object": "flute (vāṃśī, iconic); Sudarśana discus; Pāñcajanya conch; Kaumodakī mace; peacock-feather in crown; yellow garments (pītāmbara); cows of Vṛndāvana",
+      "object": "flute; Sudarśana discus; Pāñcajanya conch; Kaumodakī mace; peacock-feather in crown; yellow garments; cows of Vṛndāvana",
       "object_source": "Bhāgavata Purāṇa 10; Gīta Govinda; Vaiṣṇava iconography",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "playful (līlā), beautiful, charming, mischievous as child, passionate as youth, wise as Gītā-teacher, strategic as Mahābhārata adviser, all-encompassing as supreme being",
+      "characterTrait": "playful, beautiful, charming, mischievous as child, passionate as youth, wise as Gītā-teacher, strategic as Mahābhārata adviser, all-encompassing as supreme being",
       "characterTrait_source": "Bhāgavata Purāṇa 10; Gīta Govinda; Bhagavad Gītā 11",
-      "physicalCharacteristics": "Dark-blue or cloud-colored (kṛṣṇa = 'dark'); youthful, beautiful; peacock-feather crown; yellow silken garments; standing in tribhaṅga (three-bend) pose with flute. As Pārtha-sārathi (charioteer), kingly attire; in the Viśvarūpa-theophany of Bhagavad Gītā 11, all of cosmos contained in his form.",
+      "physicalCharacteristics": "Dark-blue or cloud-colored; youthful, beautiful; peacock-feather crown; yellow silken garments; standing in tribhaṅga pose with flute. As Pārtha-sārathi, kingly attire; in the Viśvarūpa-theophany of Bhagavad Gītā 11, all of cosmos contained in his form.",
       "physicalCharacteristics_source": "Bhāgavata Purāṇa 10; Bhagavad Gītā 11; iconography",
       "significantEvent": "Born in prison to Devakī and Vasudeva while uncle Kaṃsa (told a son of Devakī would kill him) waited to slay him. Vasudeva escaped through opened doors with the infant, crossed the parting Yamunā, exchanged him for a girl-baby at Yaśodā and Nanda's home. Grew up among cowherds of Vṛndāvana: stealing butter; defeating serpent Kāliya; lifting Mount Govardhana on his finger for seven days against Indra's wrath; rāsa-līlā with the gopīs; slaying Kaṃsa. Later married Rukmiṇī and many others. In the Mahābhārata, charioteer of Arjuna at Kurukṣetra, where he reveals the Bhagavad Gītā. After the war, dies when struck in the heel by the hunter Jara's arrow.",
       "significantEvent_source": "Bhāgavata Purāṇa 10 (central); Harivaṃśa; Mahābhārata; Bhagavad Gītā",
@@ -36773,7 +36785,8 @@
       "deathCircumstances_source": "Bhāgavata Purāṇa 11.30",
       "verification_confidence": "verified",
       "id": 4710,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "flute (vāṃśī, iconic); Sudarśana discus; Pāñcajanya conch; Kaumodakī mace; peacock-feather in crown; yellow garments (pītāmbara); cows of Vṛndāvana"
     },
     {
       "name": "Radha",
@@ -36781,19 +36794,19 @@
       "gender": "Female",
       "domain": "Kṛṣṇa's beloved; supreme devotee; personification of bhakti; chief of the gopīs of Vṛndāvana; in Gauḍīya Vaiṣṇavism, supreme to Lakṣmī as the eternal feminine principle paired with Kṛṣṇa",
       "domain_source": "Gīta Govinda (Jayadeva, 12th c. — Rādhā's first major elevation); Brahma-vaivarta Purāṇa, Kṛṣṇa-janma-khaṇḍa; Padma Purāṇa; Caitanya tradition; Vidagdha-Mādhava and Lalita-Mādhava (Rūpa Gosvāmin)",
-      "object": "lotus; flute (sometimes shared with Kṛṣṇa); the swing on which she sits with Kṛṣṇa",
+      "object": "lotus; flute; the swing on which she sits with Kṛṣṇa",
       "object_source": "Gīta Govinda; Caitanya iconography",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "loving, passionate, jealous (in viraha), supremely devoted, supremely beautiful, chief gopī; in Caitanya theology the hlādinī-śakti (bliss-power) of Kṛṣṇa",
+      "characterTrait": "loving, passionate, jealous, supremely devoted, supremely beautiful, chief gopī; in Caitanya theology the hlādinī-śakti of Kṛṣṇa",
       "characterTrait_source": "Gīta Govinda; Caitanya tradition",
-      "physicalCharacteristics": "Fair-complexioned (golden, contrasting with Kṛṣṇa's dark blue); youthful gopī; cowherd-village attire (sometimes silken in temple-iconography); long hair; lotus-eyed.",
+      "physicalCharacteristics": "Fair-complexioned; youthful gopī; cowherd-village attire; long hair; lotus-eyed.",
       "physicalCharacteristics_source": "Gīta Govinda; iconography",
       "significantEvent": "Chief gopī of Vṛndāvana, eternally beloved of Kṛṣṇa; their love is the subject of the Gīta Govinda, foundational poem of mature Rādhā-devotion. Celebrated for the depth of her longing (viraha) when separated from Kṛṣṇa — model for the bhakta's longing for God. In Caitanya theology, supreme expression of devotional love; Kṛṣṇa takes her bhāva and complexion to taste devotion to himself, the theological understanding of Caitanya's incarnation.",
       "significantEvent_source": "Gīta Govinda; Brahma-vaivarta Purāṇa; Caitanya-caritāmṛta",
       "eventTypes": [
         "divine love",
-        "viraha (separation-longing)",
+        "viraha",
         "rāsa-līlā",
         "model-of-bhakti"
       ],
@@ -36801,7 +36814,7 @@
       "familyRoles": [
         "eternal beloved of Kṛṣṇa",
         "chief gopī",
-        "wife of the cowherd Āyana (in some parakīyā accounts)"
+        "wife of the cowherd Āyana"
       ],
       "birthTypes": [
         "cosmic-eternal"
@@ -36813,21 +36826,22 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4711,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "lotus; flute (sometimes shared with Kṛṣṇa); the swing on which she sits with Kṛṣṇa"
     },
     {
       "name": "Rama",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "seventh avatar of Viṣṇu; ideal king (maryāda-puruṣottama); exemplar of dharma; slayer of Rāvaṇa; husband of Sītā; hero of the Rāmāyaṇa",
+      "domain": "seventh avatar of Viṣṇu; ideal king; exemplar of dharma; slayer of Rāvaṇa; husband of Sītā; hero of the Rāmāyaṇa",
       "domain_source": "Vālmīki Rāmāyaṇa (c. 5th-2nd c. BCE); Adhyātma Rāmāyaṇa; Tulsīdās's Rāmacaritamānasa (16th c.); Kamba Rāmāyaṇam (Tamil); Bhāgavata Purāṇa 9.10-11",
-      "object": "great bow Kodaṇḍa (or Śārṅga); arrows; ring he sends to Sītā via Hanumān",
+      "object": "great bow Kodaṇḍa; arrows; ring he sends to Sītā via Hanumān",
       "object_source": "Vālmīki Rāmāyaṇa",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "dharma-embodying, royal, just, devoted-husband, obedient-son (accepting exile to honor his father's word), restrained, sorrowful (over Sītā's losses)",
+      "characterTrait": "dharma-embodying, royal, just, devoted-husband, obedient-son, restrained, sorrowful",
       "characterTrait_source": "Vālmīki Rāmāyaṇa; Rāmacaritamānasa",
-      "physicalCharacteristics": "Dark blue-green complexioned (śyāmala, like Viṣṇu and Kṛṣṇa); youthful, beautiful; tall; bearing the great bow; usually depicted with Sītā at his left, Lakṣmaṇa at his right, Hanumān bowing.",
+      "physicalCharacteristics": "Dark blue-green complexioned; youthful, beautiful; tall; bearing the great bow; usually depicted with Sītā at his left, Lakṣmaṇa at his right, Hanumān bowing.",
       "physicalCharacteristics_source": "Vālmīki Rāmāyaṇa; iconography",
       "significantEvent": "Born in Ayodhyā as eldest son of King Daśaratha by Kausalyā. Wins Sītā by stringing and breaking Śiva's bow at her svayaṃvara. On the eve of his coronation, stepmother Kaikeyī invokes an old boon demanding his exile and her son Bharata's coronation. Rāma accepts with perfect equanimity, going into 14-year forest exile with Sītā and Lakṣmaṇa. The demon-king Rāvaṇa abducts Sītā. With Hanumān and Sugrīva's vānara army, Rāma builds a bridge to Laṅkā, slays Rāvaṇa, recovers Sītā. Returns to Ayodhyā as king (Rāma-rājya). Banishes the pregnant Sītā when gossip impugns her chastity; she gives birth to Lava and Kuśa; Rāma eventually meets his sons; Sītā returns to the earth.",
       "significantEvent_source": "Vālmīki Rāmāyaṇa (entire epic — seven kāṇḍas)",
@@ -36851,34 +36865,35 @@
         "king of Ayodhyā"
       ],
       "birthTypes": [
-        "avatar-incarnation; divine-blessing-birth (pāyasa from sacrificial fire)"
+        "avatar-incarnation; divine-blessing-birth"
       ],
       "birthTypes_source": "Vālmīki Rāmāyaṇa, Bāla-kāṇḍa 14-15",
       "birthCircumstances": "Born in Ayodhyā to Daśaratha and Kausalyā; conceived after the putreṣṭi yajña in which the sacrificial fire gave the king divine pāyasa for his three queens.",
       "birthCircumstances_source": "Vālmīki Rāmāyaṇa, Bāla-kāṇḍa 14-15",
       "deathTypes": [
-        "ascension to Vaikuṇṭha (entering the Sarayū river)"
+        "ascension to Vaikuṇṭha"
       ],
       "deathTypes_source": "Vālmīki Rāmāyaṇa, Uttara-kāṇḍa 109-110",
       "deathCircumstances": "Returns to Vaikuṇṭha by walking into the Sarayū river with his subjects.",
       "deathCircumstances_source": "Vālmīki Rāmāyaṇa, Uttara-kāṇḍa 109-110",
       "verification_confidence": "verified",
       "id": 4712,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "great bow Kodaṇḍa (or Śārṅga); arrows; ring he sends to Sītā via Hanumān"
     },
     {
       "name": "Sita",
       "tradition": "Hindu",
       "gender": "Female",
-      "domain": "Rāma's wife; the ideal woman (traditional Hindu conception); avatar of Lakṣmī; daughter of the earth (Bhū-devi); abducted by Rāvaṇa and rescued; queen of Ayodhyā",
+      "domain": "Rāma's wife; the ideal woman; avatar of Lakṣmī; daughter of the earth; abducted by Rāvaṇa and rescued; queen of Ayodhyā",
       "domain_source": "Vālmīki Rāmāyaṇa; Adhyātma Rāmāyaṇa; Rāmacaritamānasa; Sītā-Upaniṣad",
-      "object": "lotus; fire (in the agni-parīkṣā ordeal); the plough-furrow (her name Sītā = 'furrow'); jewels she dropped from the air as Rāvaṇa carried her",
+      "object": "lotus; fire; the plough-furrow; jewels she dropped from the air as Rāvaṇa carried her",
       "object_source": "Vālmīki Rāmāyaṇa; Rāmacaritamānasa",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "devoted-wife (pativratā), patient, suffering (especially in abduction and forest-banishment), chaste, dignified, finally weary",
+      "characterTrait": "devoted-wife, patient, suffering, chaste, dignified, finally weary",
       "characterTrait_source": "Vālmīki Rāmāyaṇa; bhakti tradition",
-      "physicalCharacteristics": "Fair-complexioned (golden); supremely beautiful; royal; depicted to Rāma's left, usually demure.",
+      "physicalCharacteristics": "Fair-complexioned; supremely beautiful; royal; depicted to Rāma's left, usually demure.",
       "physicalCharacteristics_source": "Vālmīki Rāmāyaṇa; iconography",
       "significantEvent": "Born from the furrow of the earth when King Janaka was ploughing a sacrificial field; raised as his daughter. Won by Rāma at her svayaṃvara when he strung Śiva's bow. Followed Rāma into 14-year exile. Abducted by Rāvaṇa from the forest hermitage; held captive in Laṅkā's Aśoka-vana. Rescued after Rāma's war with Rāvaṇa. Submitted to agni-parīkṣā to prove chastity. Banished by Rāma when gossip impugned her; gave birth to Lava and Kuśa in Vālmīki's hermitage. When recalled, called on her mother Earth instead of returning; the earth opened to take her back.",
       "significantEvent_source": "Vālmīki Rāmāyaṇa (entire epic)",
@@ -36900,7 +36915,7 @@
         "avatar of Lakṣmī"
       ],
       "birthTypes": [
-        "born from the earth (plough-furrow)"
+        "born from the earth"
       ],
       "birthTypes_source": "Vālmīki Rāmāyaṇa, Bāla-kāṇḍa",
       "birthCircumstances": "Born from the furrow of the earth as King Janaka was ploughing.",
@@ -36913,7 +36928,8 @@
       "deathCircumstances_source": "Vālmīki Rāmāyaṇa, Uttara-kāṇḍa",
       "verification_confidence": "verified",
       "id": 4713,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "lotus; fire (in the agni-parīkṣā ordeal); the plough-furrow (her name Sītā = 'furrow'); jewels she dropped from the air as Rāvaṇa carried her"
     },
     {
       "name": "Lakshmana",
@@ -36921,13 +36937,13 @@
       "gender": "Male",
       "domain": "Rāma's devoted younger half-brother; servant-companion in 14-year exile; slayer of Indrajit; avatar of cosmic serpent Śeṣa",
       "domain_source": "Vālmīki Rāmāyaṇa; Bhāgavata Purāṇa 9.10-11; Rāmacaritamānasa",
-      "object": "bow and arrows; the rekhā (protective line he drew around Sītā during the abduction-scene)",
+      "object": "bow and arrows; the rekhā",
       "object_source": "Vālmīki Rāmāyaṇa",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "devoted-servant-of-Rāma, fierce in battle, irascible, deeply protective, abstemious (slept little for 14 exile years)",
+      "characterTrait": "devoted-servant-of-Rāma, fierce in battle, irascible, deeply protective, abstemious",
       "characterTrait_source": "Vālmīki Rāmāyaṇa",
-      "physicalCharacteristics": "Fair-complexioned (contrasting with dark Rāma); youthful warrior-handsome; bears bow and arrows.",
+      "physicalCharacteristics": "Fair-complexioned; youthful warrior-handsome; bears bow and arrows.",
       "physicalCharacteristics_source": "Vālmīki Rāmāyaṇa; iconography",
       "significantEvent": "Son of King Daśaratha by Sumitrā; twin of Śatrughna. Inseparable from Rāma. Followed him into exile, slept little for the 14 years. Slew the great rākṣasa Indrajit (Rāvaṇa's son) — the only being besides Rāma who could. Struck unconscious by Indrajit's brahmāstra; Hanumān saved him by fetching the sañjīvani herb. Eventually banished himself when Rāma was forced (by a previous boon to a sage) to put him to death.",
       "significantEvent_source": "Vālmīki Rāmāyaṇa; Bhāgavata Purāṇa 9",
@@ -36945,7 +36961,7 @@
         "avatar of Śeṣa"
       ],
       "birthTypes": [
-        "avatar-incarnation (of Śeṣa)",
+        "avatar-incarnation",
         "royal lineage"
       ],
       "birthTypes_source": "Vaiṣṇava tradition",
@@ -36959,21 +36975,22 @@
       "deathCircumstances_source": "Vālmīki Rāmāyaṇa, Uttara-kāṇḍa",
       "verification_confidence": "verified",
       "id": 4714,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "bow and arrows; the rekhā (protective line he drew around Sītā during the abduction-scene)"
     },
     {
       "name": "Hanuman",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "supreme devotee of Rāma; vānara general; son of Vāyu; immortal (Cirañjīvī); leaper across the ocean to find Sītā; lifter of the Sañjīvani mountain; universally worshipped god of strength, devotion, courage, celibacy",
+      "domain": "supreme devotee of Rāma; vānara general; son of Vāyu; immortal; leaper across the ocean to find Sītā; lifter of the Sañjīvani mountain; universally worshipped god of strength, devotion, courage, celibacy",
       "domain_source": "Vālmīki Rāmāyaṇa, Sundara-kāṇḍa; Hanumān Cālīsā (Tulsīdās); Rāmacaritamānasa; Mahābhārata; Skanda Purāṇa",
-      "object": "mace (gadā); the Sañjīvani mountain (which he carried from Himalayas to Laṅkā); Rāma's ring (carried to Sītā); his own tail (which Rāvaṇa set fire to; with it Hanumān burned Laṅkā)",
+      "object": "mace; the Sañjīvani mountain; Rāma's ring; his own tail",
       "object_source": "Vālmīki Rāmāyaṇa, Sundara and Yuddha kāṇḍas",
       "animals": null,
       "animals_source": "Vālmīki Rāmāyaṇa — Hanumān as vānara (monkey-being); this is his nature, not a symbolic mount",
-      "characterTrait": "supremely-devoted-to-Rāma, immensely-strong, leaping-able (across oceans), celibate (brahmacārī), wise (Sanskrit grammarian), humble, immortal, ever-present where Rāma's name is sung",
+      "characterTrait": "supremely-devoted-to-Rāma, immensely-strong, leaping-able, celibate, wise, humble, immortal, ever-present where Rāma's name is sung",
       "characterTrait_source": "Vālmīki Rāmāyaṇa; Hanumān Cālīsā",
-      "physicalCharacteristics": "Vānara (monkey-being); golden-complexioned, large, immensely strong; bears mace; broke his jaw as a child trying to grab the sun (hence Hanumān, hanu = 'jaw'); can grow to any size; can leap across the ocean.",
+      "physicalCharacteristics": "Vānara; golden-complexioned, large, immensely strong; bears mace; broke his jaw as a child trying to grab the sun; can grow to any size; can leap across the ocean.",
       "physicalCharacteristics_source": "Vālmīki Rāmāyaṇa, Sundara-kāṇḍa",
       "significantEvent": "Son of Añjanā and Vāyu. As child, leapt up to grab the sun thinking it a fruit; Indra struck him down with the vajra, breaking his jaw. Granted many boons making him almost invincible. Joined Sugrīva's vānara army allied with Rāma. Leapt the ocean to Laṅkā to find Sītā (Sundara-kāṇḍa). Burned Laṅkā with his tail. Carried Rāma and Lakṣmaṇa in battle. Lifted the entire Sañjīvani mountain from the Himalayas (uncertain which herb was needed) to save Lakṣmaṇa. After the war, granted eternal life as Cirañjīvī. Present wherever Rāma's name is sung.",
       "significantEvent_source": "Vālmīki Rāmāyaṇa (Sundara and Yuddha kāṇḍas); Hanumān Cālīsā",
@@ -36990,7 +37007,7 @@
         "son of Añjanā and Vāyu",
         "vānara general",
         "supreme devotee of Rāma",
-        "Cirañjīvī (immortal)"
+        "Cirañjīvī"
       ],
       "birthTypes": [
         "miraculous, of wind-god parentage"
@@ -37003,7 +37020,8 @@
       "deathCircumstances_source": "Vālmīki Rāmāyaṇa, Uttara-kāṇḍa; tradition",
       "verification_confidence": "verified",
       "id": 4715,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "mace (gadā); the Sañjīvani mountain (which he carried from Himalayas to Laṅkā); Rāma's ring (carried to Sītā); his own tail (which Rāvaṇa set fire to; with it Hanumān burned Laṅkā)"
     },
     {
       "name": "Garuda",
@@ -37011,13 +37029,13 @@
       "gender": "Male",
       "domain": "Viṣṇu's eagle-mount; king of birds; slayer of serpents; freer of his mother Vinatā from enslavement; Vedic son of Kaśyapa",
       "domain_source": "Mahābhārata, Ādi Parvan 16-34 (the central origin-narrative); Garuḍa Purāṇa (named after him); Bhāgavata Purāṇa; Viṣṇu Purāṇa",
-      "object": "the amṛta-pot (stolen from Indra's heaven); his mother's bondage-debt",
+      "object": "the amṛta-pot; his mother's bondage-debt",
       "object_source": "Mahābhārata, Ādi Parvan 28-34",
       "animals": null,
       "animals_source": "Mahābhārata — Garuḍa IS the eagle-king; nature, not symbol",
       "characterTrait": "swift, immensely-strong, loyal-son, sworn-enemy-of-serpents, loyal-mount-of-Viṣṇu",
       "characterTrait_source": "Mahābhārata, Ādi Parvan",
-      "physicalCharacteristics": "Vast eagle (often anthropomorphized as half-man/half-bird); golden-bodied with red wings, white face, eagle-beak; powerful enough to carry Viṣṇu and Lakṣmī. Born already gigantic from a long-incubated egg.",
+      "physicalCharacteristics": "Vast eagle; golden-bodied with red wings, white face, eagle-beak; powerful enough to carry Viṣṇu and Lakṣmī. Born already gigantic from a long-incubated egg.",
       "physicalCharacteristics_source": "Mahābhārata, Ādi Parvan",
       "significantEvent": "Son of Kaśyapa and Vinatā; nephew of Kadrū (mother of Nāgas). His mother Vinatā lost a wager to Kadrū about the color of Uccaiḥśravas's tail (Kadrū's serpent-sons clung to it making it appear black); Vinatā was enslaved. Garuḍa flew up to Indra's heaven, defeated the gods, seized the amṛta-pot, brought it down. The Nāgas demanded it to free Vinatā; Garuḍa placed it on kuśa-grass for them to ritually bathe; Indra recovered it; the Nāgas licked the grass, splitting their tongues (origin of serpent-tongues). Vinatā was freed. Garuḍa swore eternal serpent-enmity. Viṣṇu took him as his mount.",
       "significantEvent_source": "Mahābhārata, Ādi Parvan 16-34",
@@ -37036,7 +37054,7 @@
         "king of birds"
       ],
       "birthTypes": [
-        "miraculous (from a long-incubated egg)"
+        "miraculous"
       ],
       "birthTypes_source": "Mahābhārata, Ādi Parvan 14",
       "birthCircumstances": "Born from a great egg laid by Vinatā (who waited five centuries for it to hatch).",
@@ -37045,7 +37063,8 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4716,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "the amṛta-pot (stolen from Indra's heaven); his mother's bondage-debt"
     },
     {
       "name": "Nandi",
@@ -37059,7 +37078,7 @@
       "animals_source": "Nandi IS the bull — embodiment as Śiva's mount-and-devotee",
       "characterTrait": "supremely-devoted-to-Śiva, gatekeeper, patient, witnessing-listener, strong",
       "characterTrait_source": "Śaiva tradition",
-      "physicalCharacteristics": "White humped-bull (zebu); often anthropomorphized with bull-head and human body; bears Śiva and Pārvatī. In every Śiva-temple a Nandi-statue faces the central liṅga.",
+      "physicalCharacteristics": "White humped-bull; often anthropomorphized with bull-head and human body; bears Śiva and Pārvatī. In every Śiva-temple a Nandi-statue faces the central liṅga.",
       "physicalCharacteristics_source": "Śaiva iconography",
       "significantEvent": "Chief of Śiva's gaṇas; listened to all Śiva's teachings (the eight pramāṇa-yoga teachings were given by Śiva to Nandi first). Guards the door of Kailāśa. In some narratives originally a sage (the sage Śilāda's son) who gained Śiva's grace through tapas. The Tamil Periya Purāṇam tells of the devotee Sundarar's quarrel with Nandi at Tiruvārūr.",
       "significantEvent_source": "Śiva Purāṇa; Liṅga Purāṇa; Periya Purāṇam",
@@ -37076,7 +37095,7 @@
         "gatekeeper of Kailāśa"
       ],
       "birthTypes": [
-        "son of the sage Śilāda (in some accounts); primordial mount-of-Śiva (in others)"
+        "son of the sage Śilāda; primordial mount-of-Śiva"
       ],
       "birthTypes_source": "Śiva Purāṇa",
       "birthCircumstances": "Son of the sage Śilāda in some accounts; primordial mount of Śiva in others.",
@@ -37093,13 +37112,13 @@
       "gender": "Male",
       "domain": "Vedic king of the gods; thunder-wielder; rain-bringer; slayer of dragon Vṛtra; lord of Svarga; defender of gods against asuras; soma-drinker; in later Purāṇic theology demoted but still king of devas",
       "domain_source": "Rig Veda (~25% of 1028 hymns to Indra — including 1.32); Atharva Veda; Mahābhārata, Vana Parvan; Purāṇic tradition",
-      "object": "vajra (thunderbolt fashioned by Tvaṣṭṛ from the bones of sage Dadhīci); bow; noose; great white elephant Airāvata (born from churning of the ocean); soma-cup",
+      "object": "vajra; bow; noose; great white elephant Airāvata; soma-cup",
       "object_source": "Rig Veda 1.32, 1.85; Mahābhārata, Anuśāsana Parvan",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "warlike, soma-drinking, boisterous, sometimes lustful (Ahalyā), often jealous (sending nymphs to disrupt sage-tapas), the Vedic divine warrior par excellence",
+      "characterTrait": "warlike, soma-drinking, boisterous, sometimes lustful, often jealous, the Vedic divine warrior par excellence",
       "characterTrait_source": "Rig Veda; Mahābhārata; Rāmāyaṇa (Ahalyā)",
-      "physicalCharacteristics": "Golden-complexioned, mighty-armed, bearing vajra; classical iconography four-armed; rides Airāvata. Called sahasrākṣa ('thousand-eyed') — originally cursed by Gautama with a thousand yonis on his body for the Ahalyā affair, later transformed into eyes.",
+      "physicalCharacteristics": "Golden-complexioned, mighty-armed, bearing vajra; classical iconography four-armed; rides Airāvata. Called sahasrākṣa — originally cursed by Gautama with a thousand yonis on his body for the Ahalyā affair, later transformed into eyes.",
       "physicalCharacteristics_source": "Vedic-Purāṇic tradition",
       "significantEvent": "Vedic king of gods. Central deed: slaying the great dragon Vṛtra who had captured the cosmic waters (RV 1.32: 'with his hundred-jointed vajra he smote upon the back of Vṛtra'). Drinks soma for strength. In later mythology demoted: in the Govardhana narrative Kṛṣṇa lifts the mountain to defy his wrath. Periodic disgraces (Ahalyā curse, Kṛṣṇa-defiance, sage-tapas-fear) but remains king of devas through every cosmic cycle.",
       "significantEvent_source": "Rig Veda 1.32 (Vṛtra-slaying); Rāmāyaṇa, Bāla-kāṇḍa (Ahalyā); Bhāgavata Purāṇa 10 (Govardhana)",
@@ -37112,8 +37131,8 @@
       "eventTypes_source": "Rig Veda; Bhāgavata Purāṇa",
       "familyRoles": [
         "king of devas",
-        "husband of Indrāṇī (Śacī)",
-        "father of Jayanta and Arjuna (Mahābhārata)",
+        "husband of Indrāṇī",
+        "father of Jayanta and Arjuna",
         "one of the Ādityas"
       ],
       "birthTypes": [
@@ -37126,34 +37145,35 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4718,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "vajra (thunderbolt fashioned by Tvaṣṭṛ from the bones of sage Dadhīci); bow; noose; great white elephant Airāvata (born from churning of the ocean); soma-cup"
     },
     {
       "name": "Agni",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "fire — sacrificial fire, household fire, digestive fire, cosmic fire; messenger between gods and humans (carrier of offerings via smoke); first word of the Rig Veda (RV 1.1.1 'agnim īḷe purohitam'); twin to Indra in Vedic ritual importance",
+      "domain": "fire — sacrificial fire, household fire, digestive fire, cosmic fire; messenger between gods and humans; first word of the Rig Veda; twin to Indra in Vedic ritual importance",
       "domain_source": "Rig Veda (~200 hymns to Agni, second only to Indra); Yajur Veda; Brāhmaṇa literature; Mahābhārata, Ādi Parvan 220-224 (Khāṇḍava-dāha)",
-      "object": "fire-altar (vedi); fire-brand (samidh); sacrificial ladle (sruvā/sruc); rams' fleece; spear in classical iconography",
+      "object": "fire-altar; fire-brand; sacrificial ladle; rams' fleece; spear in classical iconography",
       "object_source": "Vedic ritual tradition",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "all-consuming, purifying, messenger, twin-faced (seven-tongued in iconography), ravenous, priestly",
+      "characterTrait": "all-consuming, purifying, messenger, twin-faced, ravenous, priestly",
       "characterTrait_source": "Rig Veda; Mahābhārata",
-      "physicalCharacteristics": "Red-complexioned, two-faced (or seven-tongued); golden-bearded; rides a ram (meṣa); bears sacrificial implements; flames issuing from mouth or head.",
+      "physicalCharacteristics": "Red-complexioned, two-faced; golden-bearded; rides a ram; bears sacrificial implements; flames issuing from mouth or head.",
       "physicalCharacteristics_source": "Rig Veda; standard iconography",
       "significantEvent": "Mediator of every Vedic sacrifice — carries offerings from earth to gods via smoke. Rig Veda opens with him. In Mahābhārata, suffers from indigestion (from too many offerings); burns the Khāṇḍava forest with Kṛṣṇa and Arjuna's help; gives Arjuna the Gāṇḍīva-bow (from Varuṇa via Agni). Called Apām Napāt ('grandson of the waters') for his origin in lightning.",
       "significantEvent_source": "Rig Veda 1.1; Mahābhārata, Ādi Parvan 220-224",
       "eventTypes": [
         "sacrificial mediation",
         "Khāṇḍava-forest burning",
-        "weapon-giving (Gāṇḍīva)"
+        "weapon-giving"
       ],
       "eventTypes_source": "Rig Veda; Mahābhārata",
       "familyRoles": [
         "fire-god",
         "one of the eight Vasus",
-        "grandson of the waters (Apām Napāt)",
+        "grandson of the waters",
         "priest of the gods"
       ],
       "birthTypes": [
@@ -37166,21 +37186,22 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4719,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "fire-altar (vedi); fire-brand (samidh); sacrificial ladle (sruvā/sruc); rams' fleece; spear in classical iconography"
     },
     {
       "name": "Surya",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "the sun; cosmic source of light and life; seven-horse-chariot-rider; eye of the cosmos; father of Yama and Yamunā (by dawn-goddess Saṃjñā); object of the Gāyatrī Mantra (RV 3.62.10)",
+      "domain": "the sun; cosmic source of light and life; seven-horse-chariot-rider; eye of the cosmos; father of Yama and Yamunā; object of the Gāyatrī Mantra",
       "domain_source": "Rig Veda 1.50, 1.115 (Sūrya hymns); Gāyatrī mantra (RV 3.62.10); Mahābhārata, Vana Parvan 3, 290-294; Bhaviṣya Purāṇa; the Konārk Sun Temple (13th c.)",
-      "object": "seven-horse chariot (driven by Aruṇa, his charioteer); discus; lotus in two hands; rays of light",
+      "object": "seven-horse chariot; discus; lotus in two hands; rays of light",
       "object_source": "Rig Veda 1.50; Bhaviṣya Purāṇa; Konārk imagery",
       "animals": null,
       "animals_source": null,
       "characterTrait": "radiant, all-seeing, life-giving, all-source, royal, generous",
       "characterTrait_source": "Vedic-Purāṇic tradition",
-      "physicalCharacteristics": "Golden- or red-complexioned; two- or four-armed; mounted on chariot of seven horses (one per color of spectrum / day of week); driven by Aruṇa (his legless charioteer-brother); rays of light around him.",
+      "physicalCharacteristics": "Golden- or red-complexioned; two- or four-armed; mounted on chariot of seven horses; driven by Aruṇa; rays of light around him.",
       "physicalCharacteristics_source": "Rig Veda; Bhaviṣya Purāṇa; Konārk iconography",
       "significantEvent": "The cosmic sun in daily transit. Father of twins Yama (death) and Yamunā by his wife Saṃjñā. Saṃjñā fled his radiance, leaving her shadow-form Chāyā; Tvaṣṭṛ ground Sūrya's brilliance to one-eighth. Father of Karṇa, born to Kuntī before her marriage (Mahābhārata, Vana Parvan 290-294). Gave Yudhiṣṭhira the akṣaya-pātra (inexhaustible food-vessel) in forest exile.",
       "significantEvent_source": "Rig Veda; Mahābhārata, Vana Parvan 3, 290-294",
@@ -37196,7 +37217,7 @@
         "sun-god",
         "one of the Ādityas",
         "husband of Saṃjñā and Chāyā",
-        "father of Yama, Yamunā, Karṇa, the Aśvin-twins, Manu (Vaivasvata)"
+        "father of Yama, Yamunā, Karṇa, the Aśvin-twins, Manu"
       ],
       "birthTypes": [
         "son of Aditi by Kaśyapa"
@@ -37208,21 +37229,22 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4720,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "seven-horse chariot (driven by Aruṇa, his charioteer); discus; lotus in two hands; rays of light"
     },
     {
       "name": "Varuna",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "Vedic period: supreme god of cosmic order (ṛta), all-seeing celestial sovereign, law-keeper, punisher of falsehood, paired with Mitra (Mitra-Varuṇa); later Hindu: demoted to lord of waters and western direction",
+      "domain": "Vedic period: supreme god of cosmic order, all-seeing celestial sovereign, law-keeper, punisher of falsehood, paired with Mitra; later Hindu: demoted to lord of waters and western direction",
       "domain_source": "Rig Veda 1.25, 5.85, 7.86-89 (great Varuṇa-hymns); Atharva Veda; Brāhmaṇa literature; Purāṇic tradition (water-deity, lokapāla of west)",
-      "object": "noose (pāśa, with which he binds the unrighteous); great makara (sea-monster/crocodile) mount; conch; umbrella",
+      "object": "noose; great makara mount; conch; umbrella",
       "object_source": "Vedic-Purāṇic iconography",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "all-seeing (spies sit by him observing truth/lies), wrath-bearing for falsehood, just, terrifying, finally water-bound",
+      "characterTrait": "all-seeing, wrath-bearing for falsehood, just, terrifying, finally water-bound",
       "characterTrait_source": "Rig Veda 1.25, 7.86-89",
-      "physicalCharacteristics": "Fair-complexioned, two- or four-armed; bears noose; rides makara (or swan or great fish in classical iconography); white garments. Originally sky-god of vast dignity; in classical Hindu iconography, water-deity.",
+      "physicalCharacteristics": "Fair-complexioned, two- or four-armed; bears noose; rides makara; white garments. Originally sky-god of vast dignity; in classical Hindu iconography, water-deity.",
       "physicalCharacteristics_source": "Rig Veda; standard iconography",
       "significantEvent": "Vedic period: supreme celestial sovereign. RV 7.86 is one of the most extraordinary hymns of cosmic religious feeling in the corpus — the worshipper begs Varuṇa's forgiveness for unknown sins, recognizes his all-seeing presence. Over Vedic-to-Purāṇic transition, demoted: cosmic-law function passes partly to Yama, partly to Viṣṇu. In Mahābhārata, gives Arjuna divine weapons (Gāṇḍīva via Agni at Khāṇḍava). In Rāmāyaṇa, makes ocean cross-able when Rāma demands it for the Laṅkā-bridge.",
       "significantEvent_source": "Rig Veda 1.25, 5.85, 7.86-89; Mahābhārata; Rāmāyaṇa",
@@ -37248,13 +37270,14 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4721,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "noose (pāśa, with which he binds the unrighteous); great makara (sea-monster/crocodile) mount; conch; umbrella"
     },
     {
       "name": "Vayu",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "wind, breath, vital force (prāṇa); father of Hanumān and Bhīma; swift-mover; messenger between worlds",
+      "domain": "wind, breath, vital force; father of Hanumān and Bhīma; swift-mover; messenger between worlds",
       "domain_source": "Rig Veda 1.2, 1.135, 7.90-92; Aitareya Upaniṣad; Mahābhārata; Vāyu Purāṇa",
       "object": "banner; goad; deer-chariot",
       "object_source": "Vāyu-iconography",
@@ -37262,7 +37285,7 @@
       "animals_source": null,
       "characterTrait": "swift, all-pervading, prāṇa-bearing, messenger",
       "characterTrait_source": "Vedic tradition",
-      "physicalCharacteristics": "Two- or four-armed; rides chariot drawn by deer or antelopes (or horse); bears banner and goad; clothed in white.",
+      "physicalCharacteristics": "Two- or four-armed; rides chariot drawn by deer or antelopes; bears banner and goad; clothed in white.",
       "physicalCharacteristics_source": "Purāṇic iconography",
       "significantEvent": "Wind-god of Vedic and Purāṇic traditions. In Vedic religion, paired with Indra (Vāyu-Indra); receives the first soma-cup after Indra. Father of Hanumān (by Añjanā, Rāmāyaṇa) and Bhīma (by Kuntī, Mahābhārata) — both renowned for great strength. In Bṛhad-Āraṇyaka Upaniṣad 1.3 wins the contest of the senses (Wind/Breath as most essential).",
       "significantEvent_source": "Rig Veda; Bṛhad-Āraṇyaka Upaniṣad 1.3; Rāmāyaṇa; Mahābhārata",
@@ -37293,15 +37316,15 @@
       "name": "Soma",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "moon; sacred plant whose juice was central Vedic ritual offering; moon-god (Candra); husband of the 27 nakṣatras (Dakṣa's daughters); ancestor of the Lunar dynasty (Soma-vaṃśa)",
+      "domain": "moon; sacred plant whose juice was central Vedic ritual offering; moon-god; husband of the 27 nakṣatras; ancestor of the Lunar dynasty",
       "domain_source": "Rig Veda 9 (entire Maṇḍala 9 — 114 hymns); Atharva Veda; Mahābhārata, Ādi Parvan; Vāyu Purāṇa; Bhāgavata Purāṇa 9",
-      "object": "soma-pot (sacrificial vessel); moon's crescent; lotus",
+      "object": "soma-pot; moon's crescent; lotus",
       "object_source": "Rig Veda 9; Purāṇic iconography",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "intoxicating, glowing, monthly-waxing-and-waning, fertile, favored-husband (Rohiṇī among 27 wives), cursed-then-blessed",
+      "characterTrait": "intoxicating, glowing, monthly-waxing-and-waning, fertile, favored-husband, cursed-then-blessed",
       "characterTrait_source": "Rig Veda 9; Mahābhārata; Bhāgavata Purāṇa",
-      "physicalCharacteristics": "Fair- or silver-complexioned; two- or four-armed; bears moon-crescent and lotus; sometimes on chariot drawn by ten white horses (or antelope).",
+      "physicalCharacteristics": "Fair- or silver-complexioned; two- or four-armed; bears moon-crescent and lotus; sometimes on chariot drawn by ten white horses.",
       "physicalCharacteristics_source": "Standard iconography",
       "significantEvent": "Vedic stratum: central ritual-offering, the soma-juice pressed from a sacred plant, offered to Indra and the gods (entire RV Maṇḍala 9). The original soma-plant's botanical identity is debated. Purāṇic stratum: becomes Candra. Married the 27 daughters of Dakṣa; favored Rohiṇī; the other 26 complained; Dakṣa cursed Soma with wasting-disease. Soma fled to Śiva, who placed him on his head (hence Śiva is Candraśekhara, 'moon-crested') — but curse remained partly active, causing the moon to wax and wane.",
       "significantEvent_source": "Rig Veda 9; Mahābhārata, Ādi Parvan; Bhāgavata Purāṇa 9",
@@ -37316,7 +37339,7 @@
         "moon-god",
         "husband of 27 nakṣatras",
         "favorite of Rohiṇī",
-        "ancestor of Soma-vaṃśa (Lunar dynasty — Pāṇḍavas descend from it)"
+        "ancestor of Soma-vaṃśa"
       ],
       "birthTypes": [
         "theogonic; from the eye of Atri in one account"
@@ -37328,19 +37351,20 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4723,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "soma-pot (sacrificial vessel); moon's crescent; lotus"
     },
     {
       "name": "Ushas",
       "tradition": "Hindu",
       "gender": "Female",
-      "domain": "Vedic goddess of dawn — the daily-rejoicing-radiant dawn; daughter of heaven (Dyaus); sister of the Aśvin-twins; one of the most beautifully-celebrated Vedic goddesses",
+      "domain": "Vedic goddess of dawn — the daily-rejoicing-radiant dawn; daughter of heaven; sister of the Aśvin-twins; one of the most beautifully-celebrated Vedic goddesses",
       "domain_source": "Rig Veda 1.48, 1.49, 1.92, 1.113, 1.123, 1.124, 5.79, 6.64, 6.65, 7.75-81 (the great Uṣas-hymns)",
-      "object": "chariot drawn by red cows (or tawny horses); radiance of dawn",
+      "object": "chariot drawn by red cows; radiance of dawn",
       "object_source": "Rig Veda 1.113, 7.75",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "radiant, youthful (eternally), beautiful, fleeting, daily-renewing, awakening (rouses humans, beasts, birds), generous",
+      "characterTrait": "radiant, youthful, beautiful, fleeting, daily-renewing, awakening, generous",
       "characterTrait_source": "Rig Veda 1.48, 1.92",
       "physicalCharacteristics": "Beautiful young woman in brilliant red garment; rides chariot drawn by red cows or tawny horses; appears each morning in the eastern sky; her body is the dawning sky itself.",
       "physicalCharacteristics_source": "Rig Veda 1.92, 1.113",
@@ -37367,19 +37391,20 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4724,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "chariot drawn by red cows (or tawny horses); radiance of dawn"
     },
     {
       "name": "Narasimha",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "fourth avatar of Viṣṇu — the man-lion who slew Hiraṇyakaśipu; protector of devotee Prahlāda; the wrathful (ugra) form of Viṣṇu; the form between man and beast, day and night, inside and outside",
+      "domain": "fourth avatar of Viṣṇu — the man-lion who slew Hiraṇyakaśipu; protector of devotee Prahlāda; the wrathful form of Viṣṇu; the form between man and beast, day and night, inside and outside",
       "domain_source": "Bhāgavata Purāṇa 7.2-10 (central narrative); Viṣṇu Purāṇa 1.16-20; Narasiṃha Purāṇa; Hari-vaṃśa",
-      "object": "discus (Sudarśana), conch, mace, lotus; the entrails of Hiraṇyakaśipu (worn as garland)",
+      "object": "discus, conch, mace, lotus; the entrails of Hiraṇyakaśipu",
       "object_source": "Bhāgavata Purāṇa 7.8",
       "animals": null,
       "animals_source": "Narasiṃha IS the man-lion — embodiment via avatar-form",
-      "characterTrait": "wrathful (ugra), boundary-crossing, protective-of-devotees, fierce, paradoxical",
+      "characterTrait": "wrathful, boundary-crossing, protective-of-devotees, fierce, paradoxical",
       "characterTrait_source": "Bhāgavata Purāṇa 7.8",
       "physicalCharacteristics": "Man-lion — human body with lion's head and claws; four-armed; immense and terrifying; eyes blazing with wrath; manifests by tearing out of a pillar with a great roar.",
       "physicalCharacteristics_source": "Bhāgavata Purāṇa 7.8",
@@ -37396,7 +37421,7 @@
         "fourth avatar of Viṣṇu"
       ],
       "birthTypes": [
-        "avatar-emergence (from a pillar)"
+        "avatar-emergence"
       ],
       "birthTypes_source": "Bhāgavata Purāṇa 7.8",
       "birthCircumstances": "Manifests from a pillar struck by Hiraṇyakaśipu's mace — fully formed as the man-lion.",
@@ -37405,27 +37430,28 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4725,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "discus (Sudarśana), conch, mace, lotus; the entrails of Hiraṇyakaśipu (worn as garland)"
     },
     {
       "name": "Varaha",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "third avatar of Viṣṇu — the great boar who rescued earth (Bhū-devi) from the demon Hiraṇyākṣa, who had dragged her into the cosmic ocean",
+      "domain": "third avatar of Viṣṇu — the great boar who rescued earth from the demon Hiraṇyākṣa, who had dragged her into the cosmic ocean",
       "domain_source": "Bhāgavata Purāṇa 3.13, 3.18-19; Viṣṇu Purāṇa 1.4; Varāha Purāṇa; Taittirīya Saṃhitā",
-      "object": "the rescued earth on his tusks; conch, discus, mace, lotus (classical iconography)",
+      "object": "the rescued earth on his tusks; conch, discus, mace, lotus",
       "object_source": "Bhāgavata Purāṇa 3.13",
       "animals": null,
       "animals_source": "Varāha IS the great boar — embodiment via avatar-form",
       "characterTrait": "earth-rescuing, mighty, primordial, tusk-bearing",
       "characterTrait_source": "Bhāgavata Purāṇa 3.13",
-      "physicalCharacteristics": "Great boar with tusks (often depicted as human body with boar-head, four-armed, bearing Viṣṇu's emblems); immense — capable of carrying the earth on his tusks.",
+      "physicalCharacteristics": "Great boar with tusks; immense — capable of carrying the earth on his tusks.",
       "physicalCharacteristics_source": "Bhāgavata Purāṇa 3.13; iconography",
       "significantEvent": "When demon Hiraṇyākṣa (brother of Hiraṇyakaśipu) seized the earth and dragged her into the cosmic ocean, Viṣṇu manifested as Varāha. Plunged into the ocean, fought and slew Hiraṇyākṣa in thousand-year combat, lifted the earth back up on his tusks to her proper place in the cosmos.",
       "significantEvent_source": "Bhāgavata Purāṇa 3.13, 3.18-19; Viṣṇu Purāṇa 1.4",
       "eventTypes": [
         "earth-rescue",
-        "demon-slaying (Hiraṇyākṣa)",
+        "demon-slaying",
         "cosmic-restoration"
       ],
       "eventTypes_source": "Bhāgavata Purāṇa 3",
@@ -37434,7 +37460,7 @@
         "rescuer of Bhū-devi"
       ],
       "birthTypes": [
-        "avatar-emergence (from Brahmā's nostril in one account)"
+        "avatar-emergence"
       ],
       "birthTypes_source": "Bhāgavata Purāṇa 3.13",
       "birthCircumstances": "In one account, manifests from Brahmā's nostril (size of a thumb-joint) and grows to immense size.",
@@ -37443,21 +37469,22 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4726,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "the rescued earth on his tusks; conch, discus, mace, lotus (classical iconography)"
     },
     {
       "name": "Matsya",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "first avatar of Viṣṇu — the great fish who saved Manu (the law-giver, first man of this kalpa) from the cosmic flood and preserved the Vedas",
+      "domain": "first avatar of Viṣṇu — the great fish who saved Manu from the cosmic flood and preserved the Vedas",
       "domain_source": "Śatapatha Brāhmaṇa 1.8.1 (earliest); Bhāgavata Purāṇa 8.24; Matsya Purāṇa; Mahābhārata, Vana Parvan 187",
-      "object": "the Vedas (preserved during the flood); his fishing-horn; the boat (in which Manu sailed)",
+      "object": "the Vedas; his fishing-horn; the boat",
       "object_source": "Bhāgavata Purāṇa 8.24; Matsya Purāṇa",
       "animals": null,
       "animals_source": "Matsya IS the great fish — embodiment via avatar-form",
-      "characterTrait": "flood-saving, Veda-preserving, growing-rapidly (from minnow to cosmic-fish), guiding",
+      "characterTrait": "flood-saving, Veda-preserving, growing-rapidly, guiding",
       "characterTrait_source": "Bhāgavata Purāṇa 8.24",
-      "physicalCharacteristics": "Great fish (sometimes with a horn on the head to which Manu tied his boat); classical iconography often half-fish/half-human.",
+      "physicalCharacteristics": "Great fish; classical iconography often half-fish/half-human.",
       "physicalCharacteristics_source": "Iconography",
       "significantEvent": "When Manu was performing morning ablutions, a tiny fish leapt into his hands asking for protection. Manu placed it in a jar; it grew until it filled the jar. He placed it in a pond; it filled the pond. He placed it in a river; it filled the river. He placed it in the ocean; it filled the ocean. Then it revealed itself as Viṣṇu and warned of imminent cosmic flood. Told Manu to build a great boat and gather the seven sages, the seeds of all life, and the Vedas. When the flood came, Manu tied his boat to the fish's horn; the fish-Viṣṇu towed him through the floodwaters to safety. After the flood, life and the Vedas were re-established. Also slew the demon Hayagrīva who had stolen the Vedas at the start of the cycle.",
       "significantEvent_source": "Bhāgavata Purāṇa 8.24; Matsya Purāṇa; Śatapatha Brāhmaṇa 1.8.1",
@@ -37465,7 +37492,7 @@
         "flood-rescue",
         "Veda-preservation",
         "exponential-growth",
-        "demon-slaying (Hayagrīva)"
+        "demon-slaying"
       ],
       "eventTypes_source": "Bhāgavata Purāṇa 8.24; Matsya Purāṇa",
       "familyRoles": [
@@ -37483,7 +37510,8 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4727,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "the Vedas (preserved during the flood); his fishing-horn; the boat (in which Manu sailed)"
     },
     {
       "name": "Kurma",
@@ -37491,13 +37519,13 @@
       "gender": "Male",
       "domain": "second avatar of Viṣṇu — the great turtle who supported Mount Mandara on his back during the churning of the cosmic ocean",
       "domain_source": "Bhāgavata Purāṇa 8.7-8 (central narrative); Kūrma Purāṇa; Viṣṇu Purāṇa 1.9; Mahābhārata, Ādi Parvan 18",
-      "object": "Mount Mandara (which he supported); the cosmic ocean's churning-vessel",
+      "object": "Mount Mandara; the cosmic ocean's churning-vessel",
       "object_source": "Bhāgavata Purāṇa 8.7",
       "animals": null,
       "animals_source": "Kūrma IS the great turtle — embodiment via avatar-form",
       "characterTrait": "supporting, immovable, vast, cosmic-foundation, patient",
       "characterTrait_source": "Bhāgavata Purāṇa 8.7",
-      "physicalCharacteristics": "Vast turtle/tortoise (sometimes depicted with human upper body and tortoise lower body); back broad enough to support Mount Mandara.",
+      "physicalCharacteristics": "Vast turtle/tortoise; back broad enough to support Mount Mandara.",
       "physicalCharacteristics_source": "Bhāgavata Purāṇa 8.7; iconography",
       "significantEvent": "When the gods and demons together churned the cosmic ocean to obtain amṛta (using the Vāsuki serpent as churning-rope around Mount Mandara), the mountain began to sink into the ocean. Viṣṇu took the form of Kūrma — a vast turtle — and dove beneath the mountain to support it on his back. From the churning emerged the fourteen ratnas (cosmic treasures): the goddess Lakṣmī, the goddess of wine Vāruṇī, the divine elephant Airāvata, the cosmic horse Uccaiḥśravas, the kalpa-tree, Kāmadhenu (wish-cow), the moon, the apsaras Rambhā, the halāhala poison (drunk by Śiva), Dhanvantari (god of medicine) bearing the amṛta-pot, the conch Pāñcajanya, the bow Śārṅga, and finally the amṛta itself.",
       "significantEvent_source": "Bhāgavata Purāṇa 8.7-8; Mahābhārata, Ādi Parvan 18",
@@ -37521,19 +37549,20 @@
       "deathCircumstances": null,
       "verification_confidence": "verified",
       "id": 4728,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "Mount Mandara (which he supported); the cosmic ocean's churning-vessel"
     },
     {
       "name": "Ravana",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "ten-headed king of Laṅkā; chief rākṣasa adversary of Rāma; supreme devotee of Śiva (paradoxically); abductor of Sītā; in some traditions a learned brahmin (his father Viśravas), in others the supreme demon",
+      "domain": "ten-headed king of Laṅkā; chief rākṣasa adversary of Rāma; supreme devotee of Śiva; abductor of Sītā; in some traditions a learned brahmin, in others the supreme demon",
       "domain_source": "Vālmīki Rāmāyaṇa (entire epic, but especially Yuddha-kāṇḍa); Bhāgavata Purāṇa 9.10; Adhyātma Rāmāyaṇa; Rāmacaritamānasa; Adbhuta Rāmāyaṇa; Śiva Purāṇa (the Rāvaṇa as Śiva-devotee narratives)",
-      "object": "his ten heads (each representing one of the ten qualities of intellect — though some readings make them his ten Vedas-knowledge); the bow he tried to lift but could not (the same Śiva-bow Rāma broke at Sītā's svayaṃvara); the Puṣpaka vimāna (flying chariot stolen from Kubera)",
+      "object": "his ten heads; the bow he tried to lift but could not; the Puṣpaka vimāna",
       "object_source": "Vālmīki Rāmāyaṇa",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "ten-headed, learned (a brahmin by paternal lineage, scholar of Vedas), boon-blessed (almost invincible), lust-driven (the Sītā abduction), proud, ultimately devoted to Śiva, fearsome king",
+      "characterTrait": "ten-headed, learned, boon-blessed, lust-driven, proud, ultimately devoted to Śiva, fearsome king",
       "characterTrait_source": "Vālmīki Rāmāyaṇa; Śiva Purāṇa",
       "physicalCharacteristics": "Ten-headed; twenty-armed; rākṣasa-king of great stature and learning; dark-complexioned; wearing royal ornaments; armed with many weapons.",
       "physicalCharacteristics_source": "Vālmīki Rāmāyaṇa; iconography",
@@ -37541,7 +37570,7 @@
       "significantEvent_source": "Vālmīki Rāmāyaṇa, especially Bāla, Araṇya, and Yuddha kāṇḍas; Śiva Purāṇa, Rāvaṇa-saṃhitā",
       "eventTypes": [
         "tapas-boon-acquisition",
-        "sister-abduction (in some narratives)",
+        "sister-abduction",
         "Sītā-abduction",
         "Puṣpaka-theft",
         "Śiva-devotion",
@@ -37556,7 +37585,7 @@
         "half-brother of Kubera",
         "brother of Vibhīṣaṇa, Kumbhakarṇa, Śūrpaṇakhā",
         "husband of Mandodarī",
-        "father of Indrajit (Meghanāda)"
+        "father of Indrajit"
       ],
       "birthTypes": [
         "half-rākṣasa, half-brahmin lineage"
@@ -37572,7 +37601,8 @@
       "deathCircumstances_source": "Vālmīki Rāmāyaṇa, Yuddha-kāṇḍa",
       "verification_confidence": "verified",
       "id": 4729,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "his ten heads (each representing one of the ten qualities of intellect — though some readings make them his ten Vedas-knowledge); the bow he tried to lift but could not (the same Śiva-bow Rāma broke at Sītā's svayaṃvara); the Puṣpaka vimāna (flying chariot stolen from Kubera)"
     },
     {
       "name": "Hiranyakashipu",
@@ -37580,11 +37610,11 @@
       "gender": "Male",
       "domain": "demon-king; father of the Viṣṇu-devotee Prahlāda; slain by Narasiṃha; the recipient of Brahmā's circumvented boon",
       "domain_source": "Bhāgavata Purāṇa 7.2-10 (the central narrative); Viṣṇu Purāṇa 1.16-20; Hari-vaṃśa; Narasiṃha Purāṇa",
-      "object": "his mace (with which he struck the pillar from which Narasiṃha emerged); the throne he usurped",
+      "object": "his mace; the throne he usurped",
       "object_source": "Bhāgavata Purāṇa 7.8",
       "animals": null,
       "animals_source": null,
-      "characterTrait": "proud, boon-blessed, anti-Viṣṇu, tyrannical, son-persecuting (against the devoted Prahlāda), self-deifying",
+      "characterTrait": "proud, boon-blessed, anti-Viṣṇu, tyrannical, son-persecuting, self-deifying",
       "characterTrait_source": "Bhāgavata Purāṇa 7",
       "physicalCharacteristics": "Mighty demon-king; immense, royal-attired; bearing weapons; tyrannical countenance.",
       "physicalCharacteristics_source": "Bhāgavata Purāṇa 7",
@@ -37598,26 +37628,27 @@
       ],
       "eventTypes_source": "Bhāgavata Purāṇa 7",
       "familyRoles": [
-        "demon-king (daitya)",
+        "demon-king",
         "brother of Hiraṇyākṣa",
         "father of Prahlāda",
         "son of Diti and Kaśyapa"
       ],
       "birthTypes": [
-        "daitya lineage (asura/demon)"
+        "daitya lineage"
       ],
       "birthTypes_source": "Bhāgavata Purāṇa 7",
       "birthCircumstances": "Son of Diti and Kaśyapa; one of the daityas (descendants of Diti).",
       "birthCircumstances_source": "Bhāgavata Purāṇa 7",
       "deathTypes": [
-        "slain by Narasiṃha (boon-circumvention)"
+        "slain by Narasiṃha"
       ],
       "deathTypes_source": "Bhāgavata Purāṇa 7.8",
       "deathCircumstances": "Slain by Narasiṃha by circumventing every condition of his boon: at the threshold (neither inside nor outside), at twilight (neither day nor night), on Narasiṃha's lap (neither earth nor sky), with claws (not a weapon).",
       "deathCircumstances_source": "Bhāgavata Purāṇa 7.8",
       "verification_confidence": "verified",
       "id": 4730,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "his mace (with which he struck the pillar from which Narasiṃha emerged); the throne he usurped"
     },
     {
       "name": "Mahishasura",
@@ -37625,13 +37656,13 @@
       "gender": "Male",
       "domain": "the buffalo-demon — chief asura defeated all male gods, against whom Durgā was created and by whom slain in the central narrative of the Devī Māhātmya",
       "domain_source": "Devī Māhātmya (Mārkaṇḍeya Purāṇa 81-93), chapters 2-3 (the central narrative); Devī-Bhāgavata Purāṇa 5.2-20; Skanda Purāṇa",
-      "object": "his many weapons (he wields each in his various forms during the battle with Durgā); his buffalo-form itself",
+      "object": "his many weapons; his buffalo-form itself",
       "object_source": "Devī Māhātmya 2-3",
       "animals": null,
       "animals_source": "Mahiṣa IS the buffalo (in his original form) — embodiment via shapeshifting between buffalo, lion, elephant, man-buffalo, and full demon-form",
-      "characterTrait": "shapeshifter (buffalo-lion-elephant-warrior-buffalo), boon-blessed (could not be killed by any male being), tyrannical, defeats-of-gods",
+      "characterTrait": "shapeshifter, boon-blessed, tyrannical, defeats-of-gods",
       "characterTrait_source": "Devī Māhātmya 2-3",
-      "physicalCharacteristics": "In his demon-king form, mighty asura warrior; in his buffalo form, vast water-buffalo (mahiṣa = buffalo); can shapeshift between forms in battle.",
+      "physicalCharacteristics": "In his demon-king form, mighty asura warrior; in his buffalo form, vast water-buffalo; can shapeshift between forms in battle.",
       "physicalCharacteristics_source": "Devī Māhātmya 2-3",
       "significantEvent": "Performed such great tapas that Brahmā granted him the boon of invincibility against any male being. Set himself up against the gods, defeated Indra and all the devas, drove them from heaven. The gods, helpless, fled to the Trimūrti. Their combined wrath-tejas (radiance) emerged as the supreme goddess Durgā, who alone could kill him since she was female. In the ensuing battle (Devī Māhātmya 2-3), Mahiṣa shapeshifted into many forms — buffalo, lion, elephant, warrior — while Durgā defeated him in each form. Finally, in his buffalo form, she pierced him with her trident and beheaded him. The Durgā-pūjā festival of Bengal centers on this victory.",
       "significantEvent_source": "Devī Māhātmya 2-3; Devī-Bhāgavata Purāṇa 5.2-20",
@@ -37654,14 +37685,15 @@
       "birthCircumstances": "Son of the asura Rambha and a buffalo-cow (according to one tradition, his mother was an apsara cursed to buffalo-form); hence his ability to shapeshift between buffalo and man-form.",
       "birthCircumstances_source": "Skanda Purāṇa; Devī-Bhāgavata Purāṇa",
       "deathTypes": [
-        "slain by Durgā (trident-piercing and beheading)"
+        "slain by Durgā"
       ],
       "deathTypes_source": "Devī Māhātmya 3",
       "deathCircumstances": "Slain by Durgā after his shapeshifting battle: she pierced him with her trident in his buffalo form and beheaded him.",
       "deathCircumstances_source": "Devī Māhātmya 3",
       "verification_confidence": "verified",
       "id": 4731,
-      "projectId": 6
+      "projectId": 6,
+      "objectProvenance": "his many weapons (he wields each in his various forms during the battle with Durgā); his buffalo-form itself"
     },
     {
       "id": 4732,
@@ -37669,29 +37701,29 @@
       "name": "Yama (Hindu)",
       "tradition": "Hindu",
       "gender": "Male",
-      "domain": "god of death; lord of the dead; first man to die (path-finder for all who follow); judge of the dead; lord of southern direction; son of Sūrya; twin of Yamī (the Yamunā river)",
+      "domain": "god of death; lord of the dead; first man to die; judge of the dead; lord of southern direction; son of Sūrya; twin of Yamī",
       "domain_source": "Rig Veda 10.10 (Yama-Yamī dialogue); RV 10.14 (funeral hymn); Atharva Veda; Kaṭha Upaniṣad (Yama as death-teacher of Naciketas); Mahābhārata, Vana Parvan; Garuḍa Purāṇa; Yama-Smṛti",
-      "object": "noose (pāśa, to draw out the soul); mace (daṇḍa); great water-buffalo Mahiṣa as vāhana; Citragupta-ledger (his scribe records every deed)",
+      "object": "noose; mace; great water-buffalo Mahiṣa as vāhana; Citragupta-ledger",
       "object_source": "Vedic-Purāṇic iconography",
       "animals": null,
       "animals_source": null,
       "characterTrait": "just, terrible, impartial, inescapable, great teacher of mortality, kind-to-the-righteous, fearsome-to-the-wicked",
       "characterTrait_source": "Kaṭha Upaniṣad; Mahābhārata",
-      "physicalCharacteristics": "Dark-complexioned, two- or four-armed; bears noose and mace; rides great water-buffalo (Mahiṣa); often with Citragupta beside him.",
+      "physicalCharacteristics": "Dark-complexioned, two- or four-armed; bears noose and mace; rides great water-buffalo; often with Citragupta beside him.",
       "physicalCharacteristics_source": "Garuḍa Purāṇa; iconography",
       "significantEvent": "First of mortals to die — found the path to the world of ancestors (Pitṛloka) and became its lord (RV 10.14: 'who explored the way for many — King Yama'). In RV 10.10, his twin Yamī tries to seduce him; he refuses on dharma-grounds. In Kaṭha Upaniṣad, teaches the central death-immortality teaching to young Naciketas. In Mahābhārata, tests Yudhiṣṭhira as a yakṣa at the lake (Yakṣa-praśna). Judges every soul; righteous go to Svarga, wicked to the narakas. His scribe Citragupta keeps the ledger.",
       "significantEvent_source": "Rig Veda 10.10, 10.14; Kaṭha Upaniṣad; Mahābhārata, Vana Parvan 313-315",
       "eventTypes": [
         "first-to-die",
         "path-finding",
-        "death-teaching (Naciketas)",
+        "death-teaching",
         "Yakṣa-praśna",
         "judgment-of-souls"
       ],
       "eventTypes_source": "Rig Veda; Kaṭha Upaniṣad; Mahābhārata",
       "familyRoles": [
         "lord of the dead",
-        "son of Sūrya (Vivasvant) and Saṃjñā",
+        "son of Sūrya and Saṃjñā",
         "twin of Yamī",
         "lokapāla of the south"
       ],
@@ -37704,7 +37736,8 @@
       "deathTypes": null,
       "deathCircumstances": "As lord of death, does not die in cosmic-functional sense; was first to die in primordial time and thereby became immortal-as-death-lord.",
       "deathCircumstances_source": "Rig Veda 10.14",
-      "verification_confidence": "verified"
+      "verification_confidence": "verified",
+      "objectProvenance": "noose (pāśa, to draw out the soul); mace (daṇḍa); great water-buffalo Mahiṣa as vāhana; Citragupta-ledger (his scribe records every deed)"
     },
     {
       "id": 4733,

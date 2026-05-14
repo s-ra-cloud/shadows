@@ -37,6 +37,7 @@ export const nodes = pgTable("nodes", {
   familyRoles: text("family_roles").array(),
   birthCircumstances: text("birth_circumstances"),
   deathCircumstances: text("death_circumstances"),
+  objectProvenance: text("object_provenance"),
 });
 
 export const edges = pgTable("edges", {
