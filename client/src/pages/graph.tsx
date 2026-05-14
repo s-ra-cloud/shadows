@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as d3 from "d3";
-import { X, Search, Filter, ArrowLeft, Network, Users, SlidersHorizontal, Split, ChevronRight, ChevronDown, TreePine, Link2, Globe, Sparkles, Compass, Layers, GitBranch } from "lucide-react";
+import { X, Search, Filter, ArrowLeft, Network, Users, SlidersHorizontal, Split, ChevronRight, ChevronDown, TreePine, Link2, Globe, Sparkles, Compass, Layers } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -3284,385 +3284,6 @@ function FCAView({
 }
 
 
-function HClustView({
-  figures,
-  onSelectNode,
-  onHoverNode,
-  selectedNodeIds,
-  useSupersets,
-  enabledCategories,
-  maxFigures,
-  linkage,
-  cutClusters,
-  onStatsComputed,
-}: {
-  figures: Node[];
-  onSelectNode: (node: Node | null) => void;
-  onHoverNode: (node: any) => void;
-  selectedNodeIds: Set<number>;
-  useSupersets?: Set<string>;
-  enabledCategories?: Set<string>;
-  maxFigures: number;
-  linkage: "average" | "single" | "complete";
-  cutClusters: number;
-  onStatsComputed?: (stats: { n: number; maxDist: number }) => void;
-}) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const selectedNodeIdsRef = useRef(selectedNodeIds);
-  selectedNodeIdsRef.current = selectedNodeIds;
-  const [computing, setComputing] = useState(true);
-
-  type DNode = { id: number; height: number; size: number; left?: number; right?: number; figureIdx?: number };
-  const [tree, setTree] = useState<DNode[]>([]);
-  const [rootId, setRootId] = useState<number>(-1);
-  const [leafOrder, setLeafOrder] = useState<number[]>([]);
-  const [usable, setUsable] = useState<Node[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    setComputing(true);
-    const handle = setTimeout(() => {
-      if (cancelled) return;
-
-      const candidate = figures.filter(f => getTraitsForFigure(f, enabledCategories, useSupersets).length > 0);
-      if (candidate.length < 4) {
-        setTree([]); setRootId(-1); setLeafOrder([]); setUsable([]);
-        onStatsComputed?.({ n: 0, maxDist: 0 });
-        setComputing(false); return;
-      }
-      // Take top by mention count, fallback alphabetical
-      const sorted = [...candidate].sort((a, b) =>
-        ((b.mentionCount || 0) - (a.mentionCount || 0)) || a.name.localeCompare(b.name)
-      );
-      const figs = sorted.slice(0, Math.min(maxFigures, sorted.length));
-      const N = figs.length;
-      const traits = figs.map(f => new Set(getTraitsForFigure(f, enabledCategories, useSupersets)));
-
-      // Pairwise Jaccard distance matrix (flat upper triangle stored as full for simplicity)
-      const D = new Float32Array(N * N);
-      for (let i = 0; i < N; i++) {
-        for (let j = i + 1; j < N; j++) {
-          let inter = 0;
-          const a = traits[i], b = traits[j];
-          a.forEach(t => { if (b.has(t)) inter++; });
-          const uni = a.size + b.size - inter;
-          const d = uni === 0 ? 1 : 1 - inter / uni;
-          D[i * N + j] = d; D[j * N + i] = d;
-        }
-      }
-
-      // Agglomerative with Lance-Williams update on full N×N distance matrix
-      const active = new Uint8Array(N + N); active.fill(1, 0, N);
-      const sizes = new Int32Array(N + N);
-      for (let i = 0; i < N; i++) sizes[i] = 1;
-      // Allocate larger D for new clusters: extend to (2N-1) × (2N-1)
-      const M = 2 * N - 1;
-      const Dx = new Float32Array(M * M);
-      for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) Dx[i * M + j] = D[i * N + j];
-
-      const nodes: DNode[] = [];
-      for (let i = 0; i < N; i++) nodes.push({ id: i, height: 0, size: 1, figureIdx: i });
-
-      let nextId = N;
-      let activeCount = N;
-      let maxH = 0;
-      while (activeCount > 1) {
-        // Find closest pair among active
-        let bi = -1, bj = -1, bd = Infinity;
-        for (let i = 0; i < nextId; i++) {
-          if (!active[i]) continue;
-          for (let j = i + 1; j < nextId; j++) {
-            if (!active[j]) continue;
-            const d = Dx[i * M + j];
-            if (d < bd) { bd = d; bi = i; bj = j; }
-          }
-        }
-        if (bi === -1) break;
-        const ni = sizes[bi], nj = sizes[bj];
-        const newId = nextId++;
-        nodes.push({ id: newId, height: bd, size: ni + nj, left: bi, right: bj });
-        sizes[newId] = ni + nj;
-        active[newId] = 1;
-        active[bi] = 0; active[bj] = 0;
-        maxH = Math.max(maxH, bd);
-        // Lance-Williams update for newId vs each remaining l
-        for (let l = 0; l < newId; l++) {
-          if (!active[l]) continue;
-          const dil = Dx[bi * M + l], djl = Dx[bj * M + l];
-          let dnew = 0;
-          if (linkage === "single") dnew = Math.min(dil, djl);
-          else if (linkage === "complete") dnew = Math.max(dil, djl);
-          else dnew = (ni * dil + nj * djl) / (ni + nj); // average
-          Dx[newId * M + l] = dnew; Dx[l * M + newId] = dnew;
-        }
-        activeCount--;
-      }
-
-      const root = nextId - 1;
-      // In-order traversal to get leaf order
-      const order: number[] = [];
-      function walk(id: number) {
-        const nd = nodes[id];
-        if (nd.figureIdx !== undefined) { order.push(nd.figureIdx); return; }
-        if (nd.left !== undefined) walk(nd.left);
-        if (nd.right !== undefined) walk(nd.right);
-      }
-      walk(root);
-
-      if (cancelled) return;
-      setUsable(figs);
-      setTree(nodes);
-      setRootId(root);
-      setLeafOrder(order);
-      onStatsComputed?.({ n: N, maxDist: maxH });
-      setComputing(false);
-    }, 30);
-    return () => { cancelled = true; clearTimeout(handle); };
-  }, [figures, useSupersets, enabledCategories, maxFigures, linkage]);
-
-  // Render dendrogram (horizontal: leaves on right, root on left)
-  useEffect(() => {
-    if (!canvasRef.current || tree.length === 0 || rootId < 0) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const container = canvas.parentElement;
-    if (!container) return;
-
-    const N = leafOrder.length;
-    const dpr = window.devicePixelRatio || 1;
-    const W = container.clientWidth;
-    // Make canvas tall enough for all leaves
-    const leafH = Math.max(11, Math.min(20, Math.floor((container.clientHeight - 40) / N)));
-    const H = Math.max(container.clientHeight, N * leafH + 40);
-    canvas.width = W * dpr; canvas.height = H * dpr;
-    canvas.style.width = W + "px"; canvas.style.height = H + "px";
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    const padTop = 20, padBottom = 20, padLeft = 30, padRight = 220;
-    const plotW = W - padLeft - padRight;
-    const plotH = H - padTop - padBottom;
-    const maxH = tree[rootId].height || 1;
-
-    // Compute y for each leaf and y for each internal node (mean of children)
-    const yMap = new Map<number, number>();
-    leafOrder.forEach((figIdx, k) => {
-      // find the leaf node id with this figureIdx
-      const leafNode = tree.find(n => n.figureIdx === figIdx)!;
-      yMap.set(leafNode.id, padTop + (k + 0.5) * (plotH / N));
-    });
-    function computeY(id: number): number {
-      if (yMap.has(id)) return yMap.get(id)!;
-      const n = tree[id];
-      const yl = computeY(n.left!), yr = computeY(n.right!);
-      const y = (yl + yr) / 2;
-      yMap.set(id, y); return y;
-    }
-    computeY(rootId);
-
-    function xOf(height: number) {
-      // root (max height) at left, leaves (height=0) at right
-      return padLeft + plotW * (1 - height / maxH);
-    }
-
-    // Determine cluster assignment for cut at K clusters
-    // Find the cut height: the height of the (N-K)th merge from the top
-    const merges = tree.filter(n => n.figureIdx === undefined).sort((a, b) => b.height - a.height);
-    const cutHeight = (cutClusters > 1 && cutClusters <= N && merges[cutClusters - 2])
-      ? merges[cutClusters - 2].height
-      : -1;
-
-    // Build cluster id per leaf by traversing top-down
-    const leafCluster = new Map<number, number>();
-    if (cutHeight >= 0) {
-      let cid = 0;
-      function assign(id: number, currentCid: number | null) {
-        const n = tree[id];
-        if (n.figureIdx !== undefined) {
-          leafCluster.set(n.figureIdx, currentCid !== null ? currentCid : cid++);
-          return;
-        }
-        if (currentCid === null && n.height <= cutHeight) {
-          const newCid = cid++;
-          assign(n.left!, newCid); assign(n.right!, newCid);
-        } else {
-          assign(n.left!, currentCid); assign(n.right!, currentCid);
-        }
-      }
-      assign(rootId, null);
-    }
-
-    // Cluster palette
-    const clusterColors = [
-      "#8F00FF", "#03FF9B", "#FFD700", "#FF69B4", "#00BCD4",
-      "#FF8A65", "#B71C1C", "#9B59B6", "#DAA520", "#E53935",
-      "#4CAF50", "#3F51B5", "#FF6F00", "#1DE9B6", "#EC407A",
-    ];
-
-    // Pan & zoom (vertical scroll/zoom)
-    let panY = 0;
-    let zoom = 1;
-    let hoveredLeafIdx = -1;
-
-    function draw() {
-      ctx.clearRect(0, 0, W, H);
-      const grad = ctx.createLinearGradient(0, 0, W, H);
-      grad.addColorStop(0, "#0B0626"); grad.addColorStop(1, "#0C0042");
-      ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
-
-      // Cut line
-      if (cutHeight >= 0) {
-        const cx = xOf(cutHeight);
-        ctx.strokeStyle = "rgba(3,255,155,0.35)";
-        ctx.setLineDash([4, 4]);
-        ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(cx, padTop); ctx.lineTo(cx, H - padBottom); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = "rgba(3,255,155,0.7)";
-        ctx.font = "10px 'DM Sans', sans-serif";
-        ctx.textAlign = "center"; ctx.textBaseline = "bottom";
-        ctx.fillText(`cut · ${cutClusters} clusters`, cx, padTop - 4);
-      }
-
-      // Draw branches (recursive)
-      ctx.strokeStyle = "rgba(143,0,255,0.55)";
-      ctx.lineWidth = 1.2;
-      function drawNode(id: number) {
-        const n = tree[id];
-        if (n.figureIdx !== undefined) return;
-        const x = xOf(n.height);
-        const yl = yMap.get(n.left!)!, yr = yMap.get(n.right!)!;
-        const xl = n.left! < N ? xOf(0) : xOf(tree[n.left!].height);
-        const xr = n.right! < N ? xOf(0) : xOf(tree[n.right!].height);
-        // Color edges by cluster if both descendants share one
-        const lf = collectLeaves(n.left!); const rf = collectLeaves(n.right!);
-        const cidL = lf.length > 0 ? leafCluster.get(lf[0]) : undefined;
-        const cidR = rf.length > 0 ? leafCluster.get(rf[0]) : undefined;
-        const colL = cidL !== undefined ? clusterColors[cidL % clusterColors.length] : "rgba(143,0,255,0.55)";
-        const colR = cidR !== undefined ? clusterColors[cidR % clusterColors.length] : "rgba(143,0,255,0.55)";
-        // Vertical connector at x
-        ctx.strokeStyle = "rgba(143,0,255,0.35)";
-        ctx.beginPath(); ctx.moveTo(x, yl); ctx.lineTo(x, yr); ctx.stroke();
-        // Horizontal to children, colored by cluster only if below cut
-        ctx.strokeStyle = (cutHeight >= 0 && n.height <= cutHeight) ? colL : "rgba(143,0,255,0.55)";
-        ctx.beginPath(); ctx.moveTo(x, yl); ctx.lineTo(xl, yl); ctx.stroke();
-        ctx.strokeStyle = (cutHeight >= 0 && n.height <= cutHeight) ? colR : "rgba(143,0,255,0.55)";
-        ctx.beginPath(); ctx.moveTo(x, yr); ctx.lineTo(xr, yr); ctx.stroke();
-        drawNode(n.left!); drawNode(n.right!);
-      }
-      function collectLeaves(id: number): number[] {
-        const n = tree[id];
-        if (n.figureIdx !== undefined) return [n.figureIdx];
-        return collectLeaves(n.left!).concat(collectLeaves(n.right!));
-      }
-      drawNode(rootId);
-
-      // Draw leaves: dot + label
-      const selIds = selectedNodeIdsRef.current;
-      ctx.font = `${Math.max(9, leafH - 3)}px 'DM Sans', sans-serif`;
-      ctx.textBaseline = "middle";
-      leafOrder.forEach((figIdx, k) => {
-        const f = usable[figIdx];
-        const leafNode = tree.find(n => n.figureIdx === figIdx)!;
-        const y = yMap.get(leafNode.id)!;
-        const x = xOf(0);
-        const cid = leafCluster.get(figIdx);
-        const baseColor = TRADITION_COLORS[f.tradition || ""] || "#E0DCE6";
-        const cidColor = cid !== undefined ? clusterColors[cid % clusterColors.length] : null;
-        const isSelected = selIds.has(f.id);
-        const isHovered = hoveredLeafIdx === k;
-        // Dot (tradition color)
-        ctx.fillStyle = baseColor;
-        ctx.beginPath(); ctx.arc(x + 4, y, isHovered ? 4 : 2.5, 0, Math.PI * 2); ctx.fill();
-        if (cidColor) {
-          // Small cluster swatch
-          ctx.fillStyle = cidColor;
-          ctx.fillRect(x + 9, y - 3, 5, 6);
-        }
-        // Label
-        ctx.fillStyle = isSelected ? "#FFD700" : (isHovered ? "#03FF9B" : "rgba(224,220,230,0.85)");
-        ctx.textAlign = "left";
-        ctx.fillText(f.name, x + 18, y);
-        if (isSelected) {
-          ctx.strokeStyle = "#FFD700"; ctx.lineWidth = 1.5;
-          ctx.beginPath(); ctx.arc(x + 4, y, 5.5, 0, Math.PI * 2); ctx.stroke();
-        }
-      });
-
-      // X axis (distance)
-      ctx.strokeStyle = "rgba(224,220,230,0.15)";
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(padLeft, H - padBottom + 2); ctx.lineTo(padLeft + plotW, H - padBottom + 2); ctx.stroke();
-      ctx.fillStyle = "rgba(224,220,230,0.4)";
-      ctx.font = "9px 'DM Sans', sans-serif";
-      ctx.textAlign = "center"; ctx.textBaseline = "top";
-      for (let k = 0; k <= 4; k++) {
-        const h = (k / 4) * maxH;
-        const x = xOf(h);
-        ctx.fillText(h.toFixed(2), x, H - padBottom + 5);
-      }
-      ctx.textAlign = "right";
-      ctx.fillText("Jaccard distance", padLeft + plotW, H - 4);
-    }
-    draw();
-
-    function findHover(my: number) {
-      // Find leaf with closest y
-      let best = -1, bestD = Infinity;
-      leafOrder.forEach((figIdx, k) => {
-        const leafNode = tree.find(n => n.figureIdx === figIdx)!;
-        const y = yMap.get(leafNode.id)!;
-        const d = Math.abs(y - my);
-        if (d < bestD && d < leafH * 0.7) { bestD = d; best = k; }
-      });
-      return best;
-    }
-
-    canvas.onmousemove = (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const my = e.clientY - rect.top;
-      const h = findHover(my);
-      if (h !== hoveredLeafIdx) {
-        hoveredLeafIdx = h;
-        const f = h >= 0 ? usable[leafOrder[h]] : null;
-        onHoverNode(f);
-        draw();
-      }
-    };
-    canvas.onmouseleave = () => { hoveredLeafIdx = -1; onHoverNode(null); draw(); };
-    canvas.onclick = (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const my = e.clientY - rect.top;
-      const h = findHover(my);
-      if (h >= 0) {
-        const f = usable[leafOrder[h]];
-        onSelectNode(f);
-      }
-    };
-
-    return () => {
-      canvas.onmousemove = null; canvas.onmouseleave = null; canvas.onclick = null;
-    };
-  }, [tree, rootId, leafOrder, usable, cutClusters]);
-
-  return (
-    <div className="absolute inset-0 overflow-auto">
-      <canvas ref={canvasRef} className="block" data-testid="canvas-hclust" />
-      {computing && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-shadows-text/50 text-sm" data-testid="text-hclust-computing">Computing dendrogram…</span>
-        </div>
-      )}
-      {!computing && tree.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-shadows-text/40 text-sm" data-testid="text-hclust-empty">Not enough figures with traits.</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-
 function MCAView({
   figures,
   onSelectNode,
@@ -3694,8 +3315,8 @@ function MCAView({
   selectedNodeIdsRef.current = selectedNodeIds;
 
   const [computing, setComputing] = useState(true);
-  type FigPoint = { figure: Node; coords: number[] };
-  type TraitPoint = { trait: string; category: string; label: string; coords: number[]; mass: number };
+  type FigPoint = { figure: Node; coords: number[]; traits: Set<string> };
+  type TraitPoint = { trait: string; category: string; label: string; coords: number[]; mass: number; figureIds: Set<number> };
   const [figurePoints, setFigurePoints] = useState<FigPoint[]>([]);
   const [traitPoints, setTraitPoints] = useState<TraitPoint[]>([]);
 
@@ -3849,8 +3470,19 @@ function MCAView({
       // Principal coords for traits (cols): G[j,k] = sigma[k] * V[k,j] / sqrt(c[j])
       const figCoords: FigPoint[] = usable.map((f, i) => ({
         figure: f,
+        traits: traitSets[i],
         coords: sigmas.map((s, k) => sqrtR[i] > 0 ? s * Us[k][i] / sqrtR[i] : 0),
       }));
+      // Reverse-lookup: trait -> set of figure ids holding it
+      const traitToFigIds = new Map<string, Set<number>>();
+      for (let i = 0; i < usable.length; i++) {
+        const fid = usable[i].id;
+        traitSets[i].forEach(t => {
+          let s = traitToFigIds.get(t);
+          if (!s) { s = new Set(); traitToFigIds.set(t, s); }
+          s.add(fid);
+        });
+      }
       const trCoords: TraitPoint[] = traitList.map((t, j) => {
         const parts = t.split("::");
         const category = parts[0];
@@ -3860,6 +3492,7 @@ function MCAView({
           category,
           label,
           mass: c[j],
+          figureIds: traitToFigIds.get(t) || new Set(),
           coords: sigmas.map((s, k) => sqrtC[j] > 0 ? s * Vs[k][j] / sqrtC[j] : 0),
         };
       });
@@ -3912,7 +3545,8 @@ function MCAView({
     let isDragging = false;
     let lastMx = 0, lastMy = 0;
     let didDrag = false;
-    let hovered: { figure: Node; sx: number; sy: number } | null = null;
+    let hoveredFig: { figure: Node; sx: number; sy: number; traits: Set<string> } | null = null;
+    let hoveredTrait: { trait: TraitPoint; sx: number; sy: number } | null = null;
 
     function project(cx: number, cy: number) {
       const baseX = offsetX + (cx - minX) * baseScale;
@@ -3950,41 +3584,133 @@ function MCAView({
 
       const selIds = selectedNodeIdsRef.current;
       const hasSelection = selIds.size > 0;
-      const hoveredId = hovered?.figure.id;
+      const hoveredFigId = hoveredFig?.figure.id;
+      const hoveredFigTraits = hoveredFig?.traits;
+      const hoveredTr = hoveredTrait?.trait;
+      const hoveredTrFigs = hoveredTr?.figureIds;
+      const anyHover = !!(hoveredFig || hoveredTrait);
 
-      // Draw trait labels first (in background) — colored by category, sized by mass
-      if (showTraitLabels) {
-        // Show top-N most massive traits to avoid clutter
-        const sortedTraits = [...traitPoints].sort((a, b) => b.mass - a.mass);
-        const maxTraitLabels = Math.min(traitPoints.length, Math.floor(60 + zoom * 30));
-        ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        for (let i = 0; i < Math.min(maxTraitLabels, sortedTraits.length); i++) {
-          const tr = sortedTraits[i];
+      // Connection rays from hovered figure to its traits (or hovered trait to its figures)
+      if (hoveredFig && hoveredFigTraits) {
+        ctx.strokeStyle = "rgba(255,215,0,0.18)";
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        for (const tr of traitPoints) {
+          if (!hoveredFigTraits.has(tr.trait)) continue;
           const { sx, sy } = project(tr.coords[ax] || 0, tr.coords[ay] || 0);
-          if (sx < -50 || sx > width + 50 || sy < -20 || sy > height + 20) continue;
-          const cat = tr.category;
-          const color = CATEGORY_COLORS[cat] || "#FFD700";
+          ctx.moveTo(hoveredFig.sx, hoveredFig.sy);
+          ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+      } else if (hoveredTrait && hoveredTrFigs) {
+        ctx.strokeStyle = "rgba(3,255,155,0.18)";
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        for (const p of figurePoints) {
+          if (!hoveredTrFigs.has(p.figure.id)) continue;
+          const { sx, sy } = project(p.coords[ax] || 0, p.coords[ay] || 0);
+          ctx.moveTo(hoveredTrait.sx, hoveredTrait.sy);
+          ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+      }
+
+      // ----- TRAIT MARKERS (small dots) -----
+      // Project all visible traits, store screen coords for hit-testing
+      const traitScreen: { tr: TraitPoint; sx: number; sy: number; r: number }[] = [];
+      for (const tr of traitPoints) {
+        const { sx, sy } = project(tr.coords[ax] || 0, tr.coords[ay] || 0);
+        if (sx < -30 || sx > width + 30 || sy < -30 || sy > height + 30) continue;
+        const r = Math.max(2, Math.min(7, 2 + Math.log10(tr.mass * 1000 + 1) * 1.4));
+        traitScreen.push({ tr, sx, sy, r });
+      }
+      // Draw trait dots
+      for (const { tr, sx, sy, r } of traitScreen) {
+        const color = CATEGORY_COLORS[tr.category] || "#FFD700";
+        const isThis = hoveredTr?.trait === tr.trait;
+        const inFigSet = hoveredFigTraits?.has(tr.trait);
+        let alpha = 0.55;
+        if (anyHover) alpha = isThis ? 1 : (inFigSet ? 0.95 : 0.10);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(sx, sy, isThis ? r * 1.6 : r, 0, Math.PI * 2);
+        ctx.fill();
+        if (isThis || inFigSet) {
+          ctx.globalAlpha = 0.9;
+          ctx.strokeStyle = "rgba(11,6,38,0.85)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+
+      // ----- TRAIT LABELS with greedy collision avoidance -----
+      if (showTraitLabels) {
+        const placed: { x: number; y: number; w: number; h: number }[] = [];
+        // Order: hovered/related first (always show), then by mass desc
+        const ordered = [...traitScreen].sort((a, b) => {
+          const aPri = (hoveredTr?.trait === a.tr.trait || hoveredFigTraits?.has(a.tr.trait)) ? 1 : 0;
+          const bPri = (hoveredTr?.trait === b.tr.trait || hoveredFigTraits?.has(b.tr.trait)) ? 1 : 0;
+          if (aPri !== bPri) return bPri - aPri;
+          return b.tr.mass - a.tr.mass;
+        });
+        const maxLabels = Math.min(ordered.length, Math.floor(80 + zoom * 50));
+        let drawn = 0;
+        ctx.textBaseline = "middle";
+        for (const item of ordered) {
+          if (drawn >= maxLabels) break;
+          const { tr, sx, sy, r } = item;
+          const isPriority = hoveredTr?.trait === tr.trait || hoveredFigTraits?.has(tr.trait);
+          if (anyHover && !isPriority) continue;
           const fontSize = Math.max(9, Math.min(13, 9 + Math.log10(tr.mass * 1000 + 1) * 1.5));
           ctx.font = `${fontSize}px 'Sofia Pro Light', sans-serif`;
+          const tw = ctx.measureText(tr.label).width;
+          const th = fontSize + 2;
+          // Try right then left placement
+          const candidates = [
+            { x: sx + r + 4, y: sy - th / 2, align: "left" as CanvasTextAlign },
+            { x: sx - r - 4 - tw, y: sy - th / 2, align: "left" as CanvasTextAlign },
+            { x: sx - tw / 2, y: sy + r + 4, align: "left" as CanvasTextAlign },
+            { x: sx - tw / 2, y: sy - r - th - 2, align: "left" as CanvasTextAlign },
+          ];
+          let chosen: { x: number; y: number; align: CanvasTextAlign } | null = null;
+          for (const cnd of candidates) {
+            const box = { x: cnd.x - 2, y: cnd.y - 1, w: tw + 4, h: th + 2 };
+            let ok = true;
+            for (const p of placed) {
+              if (box.x < p.x + p.w && box.x + box.w > p.x && box.y < p.y + p.h && box.y + box.h > p.y) { ok = false; break; }
+            }
+            if (ok) { chosen = cnd; placed.push(box); break; }
+          }
+          if (!chosen) continue;
+          const color = CATEGORY_COLORS[tr.category] || "#FFD700";
           ctx.fillStyle = color;
-          ctx.globalAlpha = hasSelection || hoveredId ? 0.25 : 0.55;
-          ctx.fillText(tr.label, sx, sy);
+          ctx.globalAlpha = isPriority ? 1 : (anyHover ? 0.2 : 0.7);
+          ctx.textAlign = chosen.align;
+          ctx.fillText(tr.label, chosen.x, chosen.y + th / 2);
+          drawn++;
         }
         ctx.globalAlpha = 1;
       }
 
-      // Figure dots
+      // ----- FIGURE DOTS -----
       const baseR = 3.5 * Math.min(2, Math.max(0.7, zoom * 0.85));
+      const figScreen: { p: FigPoint; sx: number; sy: number; r: number }[] = [];
       for (const p of figurePoints) {
         const { sx, sy } = project(p.coords[ax] || 0, p.coords[ay] || 0);
         if (sx < -20 || sx > width + 20 || sy < -20 || sy > height + 20) continue;
-        const isSelected = selIds.has(p.figure.id);
-        const isHovered = hoveredId === p.figure.id;
-        const dim = (hasSelection && !isSelected) || (hoveredId && !isHovered);
         const importance = Math.log10((p.figure.mentionCount || 0) + 1);
         const r = baseR * (1 + Math.min(0.9, importance * 0.25));
+        figScreen.push({ p, sx, sy, r });
+      }
+      for (const { p, sx, sy, r } of figScreen) {
+        const isSelected = selIds.has(p.figure.id);
+        const isHovered = hoveredFigId === p.figure.id;
+        const sharesHoveredTrait = hoveredTrFigs?.has(p.figure.id);
+        const dim = (hasSelection && !isSelected) || (anyHover && !isHovered && !sharesHoveredTrait);
         const color = TRADITION_COLORS[p.figure.tradition || ""] || "#E0DCE6";
-        ctx.globalAlpha = dim ? 0.12 : 0.92;
+        ctx.globalAlpha = dim ? 0.10 : 0.92;
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.arc(sx, sy, isHovered ? r * 1.8 : r, 0, Math.PI * 2);
@@ -4006,34 +3732,86 @@ function MCAView({
       }
       ctx.globalAlpha = 1;
 
-      // Hover tooltip
-      if (hovered) {
+      // Names of figures sharing a hovered trait (top contributors)
+      if (hoveredTrait && hoveredTrFigs) {
+        const placed: { x: number; y: number; w: number; h: number }[] = [];
+        const candidates = figScreen
+          .filter(({ p }) => hoveredTrFigs.has(p.figure.id))
+          .sort((a, b) => (b.p.figure.mentionCount || 0) - (a.p.figure.mentionCount || 0))
+          .slice(0, 30);
+        ctx.font = "10px 'DM Sans', sans-serif";
+        ctx.textBaseline = "middle";
+        ctx.textAlign = "left";
+        for (const { p, sx, sy, r } of candidates) {
+          const tw = ctx.measureText(p.figure.name).width;
+          const box = { x: sx + r + 3, y: sy - 6, w: tw + 4, h: 12 };
+          let ok = true;
+          for (const q of placed) {
+            if (box.x < q.x + q.w && box.x + box.w > q.x && box.y < q.y + q.h && box.y + box.h > q.y) { ok = false; break; }
+          }
+          if (!ok) continue;
+          placed.push(box);
+          ctx.fillStyle = "#E0DCE6";
+          ctx.globalAlpha = 0.95;
+          ctx.fillText(p.figure.name, sx + r + 4, sy);
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // ----- TOOLTIPS -----
+      if (hoveredFig) {
         ctx.font = "12px 'DM Sans', sans-serif";
-        const label = `${hovered.figure.name} · ${hovered.figure.tradition || ""}`;
+        const label = `${hoveredFig.figure.name} · ${hoveredFig.figure.tradition || ""}`;
         const w = ctx.measureText(label).width + 14;
         ctx.fillStyle = "rgba(11,6,38,0.97)";
-        ctx.fillRect(hovered.sx + 12, hovered.sy - 24, w, 24);
+        ctx.fillRect(hoveredFig.sx + 12, hoveredFig.sy - 24, w, 24);
         ctx.strokeStyle = "rgba(143,0,255,0.6)";
         ctx.lineWidth = 1;
-        ctx.strokeRect(hovered.sx + 12, hovered.sy - 24, w, 24);
+        ctx.strokeRect(hoveredFig.sx + 12, hoveredFig.sy - 24, w, 24);
         ctx.fillStyle = "#E0DCE6";
         ctx.textAlign = "left"; ctx.textBaseline = "middle";
-        ctx.fillText(label, hovered.sx + 19, hovered.sy - 12);
+        ctx.fillText(label, hoveredFig.sx + 19, hoveredFig.sy - 12);
+      } else if (hoveredTrait) {
+        const tr = hoveredTrait.trait;
+        ctx.font = "12px 'DM Sans', sans-serif";
+        const label = `${tr.label}  ·  ${tr.category}  ·  ${tr.figureIds.size} figures`;
+        const w = ctx.measureText(label).width + 14;
+        const tx = Math.min(width - w - 4, hoveredTrait.sx + 12);
+        const ty = Math.max(24, hoveredTrait.sy - 4);
+        ctx.fillStyle = "rgba(11,6,38,0.97)";
+        ctx.fillRect(tx, ty - 22, w, 24);
+        ctx.strokeStyle = "rgba(255,215,0,0.5)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(tx, ty - 22, w, 24);
+        ctx.fillStyle = "#E0DCE6";
+        ctx.textAlign = "left"; ctx.textBaseline = "middle";
+        ctx.fillText(label, tx + 7, ty - 10);
       }
     }
     drawRef.current = draw;
     draw();
 
-    function findHover(mx: number, my: number) {
+    function findHoverFig(mx: number, my: number) {
       const r = 7 * Math.max(1, zoom);
-      let best: { figure: Node; sx: number; sy: number; d: number } | null = null;
+      let best: { figure: Node; sx: number; sy: number; traits: Set<string>; d: number } | null = null;
       for (const p of figurePoints) {
         const { sx, sy } = project(p.coords[axisX] || 0, p.coords[axisY] || 0);
         const dx = sx - mx, dy = sy - my;
         const d = dx * dx + dy * dy;
-        if (d < r * r && (!best || d < best.d)) best = { figure: p.figure, sx, sy, d };
+        if (d < r * r && (!best || d < best.d)) best = { figure: p.figure, sx, sy, traits: p.traits, d };
       }
-      return best ? { figure: best.figure, sx: best.sx, sy: best.sy } : null;
+      return best ? { figure: best.figure, sx: best.sx, sy: best.sy, traits: best.traits } : null;
+    }
+    function findHoverTrait(mx: number, my: number) {
+      const r = 8 * Math.max(1, zoom);
+      let best: { trait: TraitPoint; sx: number; sy: number; d: number } | null = null;
+      for (const tr of traitPoints) {
+        const { sx, sy } = project(tr.coords[axisX] || 0, tr.coords[axisY] || 0);
+        const dx = sx - mx, dy = sy - my;
+        const d = dx * dx + dy * dy;
+        if (d < r * r && (!best || d < best.d)) best = { trait: tr, sx, sy, d };
+      }
+      return best ? { trait: best.trait, sx: best.sx, sy: best.sy } : null;
     }
 
     canvas.onmousedown = (e) => { isDragging = true; didDrag = false; lastMx = e.clientX; lastMy = e.clientY; };
@@ -4047,23 +3825,26 @@ function MCAView({
         lastMx = e.clientX; lastMy = e.clientY;
         draw();
       } else {
-        const h = findHover(mx, my);
-        if (h?.figure.id !== hovered?.figure.id) {
-          hovered = h;
-          onHoverNode(h ? h.figure : null);
+        const hf = findHoverFig(mx, my);
+        const ht = hf ? null : findHoverTrait(mx, my);
+        const changed = hf?.figure.id !== hoveredFig?.figure.id || ht?.trait.trait !== hoveredTrait?.trait.trait;
+        hoveredFig = hf;
+        hoveredTrait = ht;
+        if (changed) {
+          onHoverNode(hf ? hf.figure : null);
+          canvas.style.cursor = (hf || ht) ? "pointer" : "default";
           draw();
-        } else {
-          hovered = h;
         }
       }
     };
     canvas.onmouseup = () => { isDragging = false; };
-    canvas.onmouseleave = () => { isDragging = false; hovered = null; onHoverNode(null); draw(); };
+    canvas.onmouseleave = () => { isDragging = false; hoveredFig = null; hoveredTrait = null; onHoverNode(null); draw(); };
     canvas.onclick = (e) => {
       if (didDrag) return;
       const rect = canvas.getBoundingClientRect();
-      const h = findHover(e.clientX - rect.left, e.clientY - rect.top);
-      if (h) onSelectNode(h.figure);
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const hf = findHoverFig(mx, my);
+      if (hf) { onSelectNode(hf.figure); return; }
     };
     canvas.onwheel = (e) => {
       e.preventDefault();
@@ -4084,6 +3865,9 @@ function MCAView({
       canvas.onmouseleave = null; canvas.onclick = null; canvas.onwheel = null;
     };
   }, [figurePoints, traitPoints, axisX, axisY, showTraitLabels]);
+
+  // Redraw when external selection changes (preserves zoom/pan via drawRef)
+  useEffect(() => { drawRef.current?.(); }, [selectedNodeIds]);
 
   return (
     <div className="absolute inset-0">
@@ -5693,7 +5477,7 @@ export default function GraphPage() {
   const [hierarchySelections, setHierarchySelections] = useState<Map<string, Set<string>>>(new Map());
   const [hoveredNode, setHoveredNode] = useState<any>(null);
   const [selectedTraditions, setSelectedTraditions] = useState<Set<string> | null>(null);
-  const [viewMode, setViewMode] = useState<"network" | "direct" | "umap" | "dichotomy" | "ca" | "fca" | "hclust" | "relations">("network");
+  const [viewMode, setViewMode] = useState<"network" | "direct" | "umap" | "dichotomy" | "ca" | "fca" | "relations">("network");
   const [dichotomyDepth, setDichotomyDepth] = useState(1);
   const [dichotomyThreshold, setDichotomyThreshold] = useState(0.9);
   const [caAxisX, setCaAxisX] = useState(0);
@@ -5704,10 +5488,6 @@ export default function GraphPage() {
   const [fcaMinSupport, setFcaMinSupport] = useState(8);
   const [fcaMaxConcepts, setFcaMaxConcepts] = useState(60);
   const [fcaStats, setFcaStats] = useState<{ total: number; shown: number; layers: number }>({ total: 0, shown: 0, layers: 0 });
-  const [hclustMaxFigures, setHclustMaxFigures] = useState(150);
-  const [hclustLinkage, setHclustLinkage] = useState<"average" | "single" | "complete">("average");
-  const [hclustCut, setHclustCut] = useState(6);
-  const [hclustStats, setHclustStats] = useState<{ n: number; maxDist: number }>({ n: 0, maxDist: 0 });
   const [minTraits, setMinTraits] = useState(2);
   const [minSharedTraits, setMinSharedTraits] = useState(4);
   const [focalCharacterId, setFocalCharacterId] = useState<number | null>(null);
@@ -6104,7 +5884,6 @@ export default function GraphPage() {
                 : viewMode === "dichotomy" ? <Split size={18} />
                 : viewMode === "ca" ? <Compass size={18} />
                 : viewMode === "fca" ? <Layers size={18} />
-                : viewMode === "hclust" ? <GitBranch size={18} />
                 : <Link2 size={18} />}
             </button>
           </DropdownMenuTrigger>
@@ -6126,9 +5905,6 @@ export default function GraphPage() {
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setViewMode("fca")} data-testid="option-view-fca">
               <Layers size={14} className="mr-2" /> Concept lattice (FCA)
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setViewMode("hclust")} data-testid="option-view-hclust">
-              <GitBranch size={14} className="mr-2" /> Hierarchical (Jaccard)
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setViewMode("relations")} data-testid="option-view-relations">
               <Link2 size={14} className="mr-2" /> Relations
@@ -6315,68 +6091,6 @@ export default function GraphPage() {
                 <div>Shown: <span className="text-shadows-text/85">{fcaStats.shown}</span> / generated {fcaStats.total}</div>
                 <div>Layers: <span className="text-shadows-text/85">{fcaStats.layers}</span></div>
                 <div className="text-[9px] text-shadows-text/35 mt-1">Hover a node to see its figures &amp; traits. Click to open the first figure in the side panel.</div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {viewMode === "hclust" && (
-        <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[85vh] overflow-y-auto w-56">
-          <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">Hierarchical clustering</span>
-          <p className="text-[9px] text-shadows-text/35 leading-tight mb-1">
-            Agglomerative clustering of figures using Jaccard distance on their trait sets. Figures merging at low distance share many traits. Cuts at higher distance produce coarser clusters.
-          </p>
-          <div className="space-y-2">
-            <div>
-              <span className="text-[9px] text-shadows-text/40 block mb-1">Figures: top {hclustMaxFigures} by mention</span>
-              <Slider
-                min={30}
-                max={400}
-                step={10}
-                value={[hclustMaxFigures]}
-                onValueChange={([v]) => setHclustMaxFigures(v)}
-                className="w-full"
-                data-testid="slider-hclust-max"
-              />
-              <p className="text-[8px] text-shadows-text/25 mt-0.5 leading-tight">Larger sets reveal more structure but get cluttered fast.</p>
-            </div>
-            <div>
-              <span className="text-[9px] text-shadows-text/40 block mb-1">Linkage</span>
-              <div className="flex gap-1" data-testid="hclust-linkage">
-                {(["average", "single", "complete"] as const).map(l => (
-                  <button
-                    key={l}
-                    onClick={() => setHclustLinkage(l)}
-                    className={`flex-1 text-[10px] py-1 rounded border transition-colors ${
-                      hclustLinkage === l
-                        ? "bg-[#8F00FF]/30 border-[#8F00FF]/60 text-shadows-text"
-                        : "border-shadows-text/15 text-shadows-text/60 hover:border-[#8F00FF]/40"
-                    }`}
-                    data-testid={`button-hclust-linkage-${l}`}
-                  >{l}</button>
-                ))}
-              </div>
-              <p className="text-[8px] text-shadows-text/25 mt-0.5 leading-tight">
-                avg = balanced · single = chains · complete = compact
-              </p>
-            </div>
-            <div>
-              <span className="text-[9px] text-shadows-text/40 block mb-1">Cut into K clusters: {hclustCut}</span>
-              <Slider
-                min={2}
-                max={20}
-                step={1}
-                value={[hclustCut]}
-                onValueChange={([v]) => setHclustCut(v)}
-                className="w-full"
-                data-testid="slider-hclust-cut"
-              />
-            </div>
-            {hclustStats.n > 0 && (
-              <div className="pt-1 border-t border-shadows-text/10 text-[10px] text-shadows-text/60 leading-tight">
-                <div>Figures: <span className="text-shadows-text/85">{hclustStats.n}</span></div>
-                <div>Max distance: <span className="text-shadows-text/85">{hclustStats.maxDist.toFixed(3)}</span></div>
               </div>
             )}
           </div>
@@ -6628,19 +6342,6 @@ export default function GraphPage() {
             minSupport={fcaMinSupport}
             maxConcepts={fcaMaxConcepts}
             onStatsComputed={setFcaStats}
-          />
-        ) : viewMode === "hclust" ? (
-          <HClustView
-            figures={effectiveNodes}
-            onSelectNode={(n) => handleGraphNodeSelect(n)}
-            onHoverNode={setHoveredNode}
-            selectedNodeIds={selectedNodeIds}
-            useSupersets={activeSupersets}
-            enabledCategories={enabledCategoriesSet}
-            maxFigures={hclustMaxFigures}
-            linkage={hclustLinkage}
-            cutClusters={hclustCut}
-            onStatsComputed={setHclustStats}
           />
         ) : (
           <RelationsView
