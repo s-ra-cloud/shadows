@@ -2,7 +2,7 @@ import { db } from "../server/storage";
 import { nodes } from "../shared/schema";
 import { eq, sql } from "drizzle-orm";
 
-const FIELDS = ["domain", "object", "characterTrait", "physicalCharacteristics", "symbolism", "significantEvent"] as const;
+const FIELDS = ["domain", "object", "characterTrait", "physicalCharacteristics", "symbolism", "significantEvent", "birthCircumstances", "deathCircumstances"] as const;
 type Field = typeof FIELDS[number];
 
 const COLS: Record<Field, string> = {
@@ -12,6 +12,8 @@ const COLS: Record<Field, string> = {
   physicalCharacteristics: "physical_characteristics",
   symbolism: "symbolism",
   significantEvent: "significant_event",
+  birthCircumstances: "birth_circumstances",
+  deathCircumstances: "death_circumstances",
 };
 
 const DIGRAPH_MAP: Record<string, string> = {
@@ -67,13 +69,15 @@ function clean(s: string | null | undefined): string | null {
 
 async function main() {
   const all = await db.execute(sql`
-    SELECT id, name, tradition, domain, object, character_trait, physical_characteristics, symbolism, significant_event, original_descriptions
+    SELECT id, name, tradition, domain, object, character_trait, physical_characteristics, symbolism, significant_event, birth_circumstances, death_circumstances, original_descriptions
     FROM nodes
     WHERE
       (domain ~ '[^[:ascii:]]' OR object ~ '[^[:ascii:]]' OR character_trait ~ '[^[:ascii:]]'
-       OR physical_characteristics ~ '[^[:ascii:]]' OR symbolism ~ '[^[:ascii:]]' OR significant_event ~ '[^[:ascii:]]')
+       OR physical_characteristics ~ '[^[:ascii:]]' OR symbolism ~ '[^[:ascii:]]' OR significant_event ~ '[^[:ascii:]]'
+       OR birth_circumstances ~ '[^[:ascii:]]' OR death_circumstances ~ '[^[:ascii:]]')
       OR domain LIKE '%(%' OR object LIKE '%(%' OR character_trait LIKE '%(%'
       OR physical_characteristics LIKE '%(%' OR symbolism LIKE '%(%' OR significant_event LIKE '%(%'
+      OR birth_circumstances LIKE '%(%' OR death_circumstances LIKE '%(%'
     ORDER BY tradition, name
   `);
   const rows = ((all as any).rows ?? all) as any[];
@@ -88,6 +92,8 @@ async function main() {
       physicalCharacteristics: r.physical_characteristics,
       symbolism: r.symbolism,
       significantEvent: r.significant_event,
+      birthCircumstances: r.birth_circumstances,
+      deathCircumstances: r.death_circumstances,
     };
     const updates: Record<string, string | null> = {};
     const newBackup: Record<string, string | null> = { ...(r.original_descriptions ?? {}) };
