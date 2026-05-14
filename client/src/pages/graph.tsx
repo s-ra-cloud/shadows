@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as d3 from "d3";
-import { X, Search, Filter, ArrowLeft, Network, Users, SlidersHorizontal, Split, ChevronRight, ChevronDown, TreePine, Link2, Globe, Sparkles, Compass } from "lucide-react";
+import { X, Search, Filter, ArrowLeft, Network, Users, SlidersHorizontal, Split, ChevronRight, ChevronDown, TreePine, Link2, Globe, Sparkles, Compass, Layers, GitBranch } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -2891,6 +2891,778 @@ function d4ColorMap(t: number): string {
 }
 
 
+function FCAView({
+  figures,
+  onSelectNode,
+  onHoverNode,
+  selectedNodeIds,
+  useSupersets,
+  enabledCategories,
+  minSupport,
+  maxConcepts,
+  onStatsComputed,
+}: {
+  figures: Node[];
+  onSelectNode: (node: Node | null) => void;
+  onHoverNode: (node: any) => void;
+  selectedNodeIds: Set<number>;
+  useSupersets?: Set<string>;
+  enabledCategories?: Set<string>;
+  minSupport: number;
+  maxConcepts: number;
+  onStatsComputed?: (stats: { total: number; shown: number; layers: number }) => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const selectedNodeIdsRef = useRef(selectedNodeIds);
+  selectedNodeIdsRef.current = selectedNodeIds;
+  const [computing, setComputing] = useState(true);
+
+  type Concept = {
+    extent: number[];          // figure indices (sorted)
+    intent: string[];          // trait keys
+    extentKey: string;
+    layer: number;             // intent size
+    x: number; y: number;
+  };
+  const [concepts, setConcepts] = useState<Concept[]>([]);
+  const [usableFigures, setUsableFigures] = useState<Node[]>([]);
+  const [hasseEdges, setHasseEdges] = useState<{ a: number; b: number }[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setComputing(true);
+    const handle = setTimeout(() => {
+      if (cancelled) return;
+
+      const usable = figures.filter(f => getTraitsForFigure(f, enabledCategories, useSupersets).length > 0);
+      if (usable.length < 4) {
+        setConcepts([]); setUsableFigures([]); setHasseEdges([]);
+        onStatsComputed?.({ total: 0, shown: 0, layers: 0 });
+        setComputing(false); return;
+      }
+      const n = usable.length;
+      const traitArr = usable.map(f => getTraitsForFigure(f, enabledCategories, useSupersets));
+      const traitSet = traitArr.map(a => new Set(a));
+
+      // Trait frequencies
+      const freq = new Map<string, number>();
+      traitArr.forEach(arr => arr.forEach(t => freq.set(t, (freq.get(t) || 0) + 1)));
+
+      // Keep traits in [minSupport, n-1]
+      const traits = [...freq.entries()]
+        .filter(([_, c]) => c >= minSupport && c < n)
+        .map(([t]) => t);
+      if (traits.length === 0) {
+        setConcepts([]); setUsableFigures(usable); setHasseEdges([]);
+        onStatsComputed?.({ total: 0, shown: 0, layers: 0 });
+        setComputing(false); return;
+      }
+
+      // Extent of a trait
+      const traitExt = new Map<string, number[]>();
+      for (const t of traits) {
+        const ext: number[] = [];
+        for (let i = 0; i < n; i++) if (traitSet[i].has(t)) ext.push(i);
+        traitExt.set(t, ext);
+      }
+
+      // Closure: intent of an extent = traits shared by ALL figures in extent
+      function closure(ext: number[]): string[] {
+        if (ext.length === 0) return traits.slice();
+        const first = traitSet[ext[0]];
+        const cand: string[] = [];
+        first.forEach(t => { if (freq.get(t)! < n) cand.push(t); }); // skip universal
+        const result: string[] = [];
+        for (const t of cand) {
+          let ok = true;
+          for (let k = 1; k < ext.length; k++) {
+            if (!traitSet[ext[k]].has(t)) { ok = false; break; }
+          }
+          if (ok) result.push(t);
+        }
+        return result.sort();
+      }
+
+      function extentKey(ext: number[]): string {
+        return ext.join(",");
+      }
+
+      const seen = new Map<string, Concept>();
+
+      // Top concept (universe)
+      const universe = Array.from({ length: n }, (_, i) => i);
+      const topInt = closure(universe);
+      seen.set(extentKey(universe), {
+        extent: universe, intent: topInt, extentKey: extentKey(universe),
+        layer: topInt.length, x: 0, y: 0,
+      });
+
+      // Seed: singleton concepts for each kept trait
+      for (const t of traits) {
+        const ext = traitExt.get(t)!;
+        if (ext.length < minSupport) continue;
+        const key = extentKey(ext);
+        if (seen.has(key)) continue;
+        const intent = closure(ext);
+        seen.set(key, { extent: ext, intent, extentKey: key, layer: intent.length, x: 0, y: 0 });
+      }
+
+      // Pairwise intersections (one round)
+      const seedConcepts = [...seen.values()];
+      const MAX_GENERATED = Math.max(maxConcepts * 6, 400);
+      outer: for (let i = 0; i < seedConcepts.length; i++) {
+        const ai = seedConcepts[i];
+        for (let j = i + 1; j < seedConcepts.length; j++) {
+          if (seen.size >= MAX_GENERATED) break outer;
+          const bj = seedConcepts[j];
+          // Intersection of sorted arrays
+          const a = ai.extent, b = bj.extent;
+          const inter: number[] = [];
+          let p = 0, q = 0;
+          while (p < a.length && q < b.length) {
+            if (a[p] === b[q]) { inter.push(a[p]); p++; q++; }
+            else if (a[p] < b[q]) p++; else q++;
+          }
+          if (inter.length < minSupport) continue;
+          const key = extentKey(inter);
+          if (seen.has(key)) continue;
+          const intent = closure(inter);
+          seen.set(key, { extent: inter, intent, extentKey: key, layer: intent.length, x: 0, y: 0 });
+        }
+      }
+
+      // Pick top-N concepts by support (extent size), tie-break by intent size descending
+      let all = [...seen.values()].sort((a, b) =>
+        (b.extent.length - a.extent.length) || (b.intent.length - a.intent.length)
+      );
+      // Drop the bottom-most extent=0 if any slipped in
+      all = all.filter(c => c.extent.length >= minSupport || c.extent.length === n);
+      const picked = all.slice(0, maxConcepts);
+
+      // Build subset relation: a ≤ b iff a.extent ⊆ b.extent (i.e., a more specific via intent superset)
+      // Then transitive reduction → Hasse covering edges
+      const M = picked.length;
+      const subsetOf: number[][] = picked.map(() => []); // subsetOf[i] = indices j s.t. picked[i].ext ⊂ picked[j].ext (strict)
+      const extSets = picked.map(c => new Set(c.extent));
+      for (let i = 0; i < M; i++) {
+        for (let j = 0; j < M; j++) {
+          if (i === j) continue;
+          if (picked[i].extent.length >= picked[j].extent.length) continue;
+          // is picked[i].extent strict subset of picked[j].extent?
+          let ok = true;
+          for (const x of picked[i].extent) if (!extSets[j].has(x)) { ok = false; break; }
+          if (ok) subsetOf[i].push(j);
+        }
+      }
+      // Transitive reduction: keep only direct covers
+      const edges: { a: number; b: number }[] = [];
+      for (let i = 0; i < M; i++) {
+        const supers = subsetOf[i];
+        for (const j of supers) {
+          let isCover = true;
+          for (const k of supers) {
+            if (k === j) continue;
+            // if picked[k].extent ⊂ picked[j].extent then j is not direct cover of i
+            if (picked[k].extent.length < picked[j].extent.length) {
+              let ok = true;
+              for (const x of picked[k].extent) if (!extSets[j].has(x)) { ok = false; break; }
+              if (ok) { isCover = false; break; }
+            }
+          }
+          if (isCover) edges.push({ a: i, b: j });
+        }
+      }
+
+      // Layered layout by intent size; group identical layers, sort within layer by extent size desc
+      const layers = new Map<number, number[]>();
+      picked.forEach((c, i) => {
+        if (!layers.has(c.layer)) layers.set(c.layer, []);
+        layers.get(c.layer)!.push(i);
+      });
+      const sortedLayers = [...layers.keys()].sort((a, b) => a - b);
+      sortedLayers.forEach(layerKey => {
+        const ids = layers.get(layerKey)!;
+        ids.sort((a, b) => picked[b].extent.length - picked[a].extent.length);
+        const w = ids.length;
+        ids.forEach((id, k) => {
+          picked[id].x = (k + 1) / (w + 1); // 0..1
+          picked[id].y = sortedLayers.indexOf(layerKey) / Math.max(1, sortedLayers.length - 1);
+        });
+      });
+
+      if (cancelled) return;
+      setUsableFigures(usable);
+      setConcepts(picked);
+      setHasseEdges(edges);
+      onStatsComputed?.({ total: seen.size, shown: M, layers: sortedLayers.length });
+      setComputing(false);
+    }, 30);
+    return () => { cancelled = true; clearTimeout(handle); };
+  }, [figures, useSupersets, enabledCategories, minSupport, maxConcepts]);
+
+  // Render
+  useEffect(() => {
+    if (!canvasRef.current || concepts.length === 0) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const container = canvas.parentElement;
+    if (!container) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const W = container.clientWidth;
+    const H = container.clientHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const padX = 60, padY = 60;
+    let zoom = 1, panX = 0, panY = 0;
+    let isDragging = false, lastMx = 0, lastMy = 0, didDrag = false;
+    let hovered: number | null = null;
+
+    function project(c: { x: number; y: number }) {
+      const baseX = padX + c.x * (W - padX * 2);
+      const baseY = padY + c.y * (H - padY * 2);
+      return {
+        sx: W / 2 + (baseX - W / 2) * zoom + panX,
+        sy: H / 2 + (baseY - H / 2) * zoom + panY,
+      };
+    }
+
+    function nodeRadius(c: typeof concepts[0]) {
+      return Math.max(4, Math.min(22, 4 + Math.log10(c.extent.length + 1) * 5)) * Math.min(2, Math.max(0.7, zoom * 0.85));
+    }
+
+    const selIds = selectedNodeIdsRef.current;
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      const grad = ctx.createLinearGradient(0, 0, W, H);
+      grad.addColorStop(0, "#0B0626"); grad.addColorStop(1, "#0C0042");
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+      // Edges
+      ctx.strokeStyle = "rgba(143,0,255,0.25)";
+      ctx.lineWidth = 1;
+      for (const e of hasseEdges) {
+        const a = project(concepts[e.a]);
+        const b = project(concepts[e.b]);
+        ctx.beginPath();
+        ctx.moveTo(a.sx, a.sy); ctx.lineTo(b.sx, b.sy);
+        ctx.stroke();
+      }
+
+      // Nodes
+      for (let i = 0; i < concepts.length; i++) {
+        const c = concepts[i];
+        const { sx, sy } = project(c);
+        const r = nodeRadius(c);
+        const isHovered = hovered === i;
+        // selection: highlight if any selected figure is in this concept's extent
+        const hasSelected = c.extent.some(idx => selIds.has(usableFigures[idx].id));
+        ctx.fillStyle = hasSelected ? "rgba(255,215,0,0.85)" : "rgba(143,0,255,0.55)";
+        ctx.globalAlpha = hovered !== null && !isHovered ? 0.3 : 1;
+        ctx.beginPath();
+        ctx.arc(sx, sy, isHovered ? r * 1.3 : r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(11,6,38,0.9)";
+        ctx.lineWidth = 1; ctx.stroke();
+        if (hasSelected) {
+          ctx.strokeStyle = "#FFD700"; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(sx, sy, r * 1.6, 0, Math.PI * 2); ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+
+      // Hover tooltip
+      if (hovered !== null) {
+        const c = concepts[hovered];
+        const { sx, sy } = project(c);
+        const lines = [
+          `${c.extent.length} figure${c.extent.length === 1 ? "" : "s"} · ${c.intent.length} trait${c.intent.length === 1 ? "" : "s"}`,
+          ...c.intent.slice(0, 8).map(t => {
+            const parts = t.split("::");
+            return `· ${parts[1] || parts[0]}`;
+          }),
+          ...(c.intent.length > 8 ? [`… +${c.intent.length - 8} more`] : []),
+          "",
+          ...c.extent.slice(0, 6).map(idx => `▸ ${usableFigures[idx].name}`),
+          ...(c.extent.length > 6 ? [`… +${c.extent.length - 6} more`] : []),
+        ];
+        ctx.font = "11px 'DM Sans', sans-serif";
+        const widest = Math.max(...lines.map(l => ctx.measureText(l).width));
+        const boxW = widest + 16, boxH = lines.length * 15 + 10;
+        const bx = Math.min(W - boxW - 4, sx + 12);
+        const by = Math.min(H - boxH - 4, sy - boxH / 2);
+        ctx.fillStyle = "rgba(11,6,38,0.97)";
+        ctx.fillRect(bx, by, boxW, boxH);
+        ctx.strokeStyle = "rgba(143,0,255,0.6)"; ctx.lineWidth = 1;
+        ctx.strokeRect(bx, by, boxW, boxH);
+        ctx.fillStyle = "#E0DCE6"; ctx.textAlign = "left"; ctx.textBaseline = "top";
+        lines.forEach((l, k) => {
+          ctx.fillStyle = k === 0 ? "#03FF9B" : (l.startsWith("▸") ? "#E0DCE6" : "rgba(224,220,230,0.65)");
+          ctx.fillText(l, bx + 8, by + 5 + k * 15);
+        });
+      }
+    }
+    draw();
+
+    function findHover(mx: number, my: number) {
+      let best = -1, bestD = Infinity;
+      for (let i = 0; i < concepts.length; i++) {
+        const { sx, sy } = project(concepts[i]);
+        const r = nodeRadius(concepts[i]) + 4;
+        const dx = sx - mx, dy = sy - my;
+        const d = dx * dx + dy * dy;
+        if (d < r * r && d < bestD) { best = i; bestD = d; }
+      }
+      return best === -1 ? null : best;
+    }
+
+    canvas.onmousedown = (e) => { isDragging = true; didDrag = false; lastMx = e.clientX; lastMy = e.clientY; };
+    canvas.onmousemove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      if (isDragging) {
+        const dx = e.clientX - lastMx, dy = e.clientY - lastMy;
+        if (Math.abs(dx) + Math.abs(dy) > 3) didDrag = true;
+        panX += dx; panY += dy; lastMx = e.clientX; lastMy = e.clientY; draw();
+      } else {
+        const h = findHover(mx, my);
+        if (h !== hovered) {
+          hovered = h;
+          onHoverNode(h !== null ? { isCharacter: false, label: `Concept (${concepts[h].extent.length} figures)`, category: "" } : null);
+          draw();
+        }
+      }
+    };
+    canvas.onmouseup = () => { isDragging = false; };
+    canvas.onmouseleave = () => { isDragging = false; hovered = null; onHoverNode(null); draw(); };
+    canvas.onclick = (e) => {
+      if (didDrag) return;
+      const rect = canvas.getBoundingClientRect();
+      const h = findHover(e.clientX - rect.left, e.clientY - rect.top);
+      if (h !== null) {
+        // Open the first figure of the concept's extent in the side panel
+        const f = usableFigures[concepts[h].extent[0]];
+        if (f) onSelectNode(f);
+      }
+    };
+    canvas.onwheel = (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.15 : 0.87;
+      const newZoom = Math.max(0.4, Math.min(6, zoom * factor));
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const cx = W / 2 + panX, cy = H / 2 + panY;
+      panX = mx - (mx - cx) * (newZoom / zoom) - W / 2;
+      panY = my - (my - cy) * (newZoom / zoom) - H / 2;
+      zoom = newZoom; draw();
+    };
+    return () => {
+      canvas.onmousedown = null; canvas.onmousemove = null; canvas.onmouseup = null;
+      canvas.onmouseleave = null; canvas.onclick = null; canvas.onwheel = null;
+    };
+  }, [concepts, hasseEdges, usableFigures]);
+
+  return (
+    <div className="absolute inset-0">
+      <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-fca" />
+      {computing && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="text-shadows-text/50 text-sm" data-testid="text-fca-computing">Computing concept lattice…</span>
+        </div>
+      )}
+      {!computing && concepts.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="text-shadows-text/40 text-sm" data-testid="text-fca-empty">No concepts found — try lowering min support or enabling more trait categories.</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+function HClustView({
+  figures,
+  onSelectNode,
+  onHoverNode,
+  selectedNodeIds,
+  useSupersets,
+  enabledCategories,
+  maxFigures,
+  linkage,
+  cutClusters,
+  onStatsComputed,
+}: {
+  figures: Node[];
+  onSelectNode: (node: Node | null) => void;
+  onHoverNode: (node: any) => void;
+  selectedNodeIds: Set<number>;
+  useSupersets?: Set<string>;
+  enabledCategories?: Set<string>;
+  maxFigures: number;
+  linkage: "average" | "single" | "complete";
+  cutClusters: number;
+  onStatsComputed?: (stats: { n: number; maxDist: number }) => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const selectedNodeIdsRef = useRef(selectedNodeIds);
+  selectedNodeIdsRef.current = selectedNodeIds;
+  const [computing, setComputing] = useState(true);
+
+  type DNode = { id: number; height: number; size: number; left?: number; right?: number; figureIdx?: number };
+  const [tree, setTree] = useState<DNode[]>([]);
+  const [rootId, setRootId] = useState<number>(-1);
+  const [leafOrder, setLeafOrder] = useState<number[]>([]);
+  const [usable, setUsable] = useState<Node[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setComputing(true);
+    const handle = setTimeout(() => {
+      if (cancelled) return;
+
+      const candidate = figures.filter(f => getTraitsForFigure(f, enabledCategories, useSupersets).length > 0);
+      if (candidate.length < 4) {
+        setTree([]); setRootId(-1); setLeafOrder([]); setUsable([]);
+        onStatsComputed?.({ n: 0, maxDist: 0 });
+        setComputing(false); return;
+      }
+      // Take top by mention count, fallback alphabetical
+      const sorted = [...candidate].sort((a, b) =>
+        ((b.mentionCount || 0) - (a.mentionCount || 0)) || a.name.localeCompare(b.name)
+      );
+      const figs = sorted.slice(0, Math.min(maxFigures, sorted.length));
+      const N = figs.length;
+      const traits = figs.map(f => new Set(getTraitsForFigure(f, enabledCategories, useSupersets)));
+
+      // Pairwise Jaccard distance matrix (flat upper triangle stored as full for simplicity)
+      const D = new Float32Array(N * N);
+      for (let i = 0; i < N; i++) {
+        for (let j = i + 1; j < N; j++) {
+          let inter = 0;
+          const a = traits[i], b = traits[j];
+          a.forEach(t => { if (b.has(t)) inter++; });
+          const uni = a.size + b.size - inter;
+          const d = uni === 0 ? 1 : 1 - inter / uni;
+          D[i * N + j] = d; D[j * N + i] = d;
+        }
+      }
+
+      // Agglomerative with Lance-Williams update on full N×N distance matrix
+      const active = new Uint8Array(N + N); active.fill(1, 0, N);
+      const sizes = new Int32Array(N + N);
+      for (let i = 0; i < N; i++) sizes[i] = 1;
+      // Allocate larger D for new clusters: extend to (2N-1) × (2N-1)
+      const M = 2 * N - 1;
+      const Dx = new Float32Array(M * M);
+      for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) Dx[i * M + j] = D[i * N + j];
+
+      const nodes: DNode[] = [];
+      for (let i = 0; i < N; i++) nodes.push({ id: i, height: 0, size: 1, figureIdx: i });
+
+      let nextId = N;
+      let activeCount = N;
+      let maxH = 0;
+      while (activeCount > 1) {
+        // Find closest pair among active
+        let bi = -1, bj = -1, bd = Infinity;
+        for (let i = 0; i < nextId; i++) {
+          if (!active[i]) continue;
+          for (let j = i + 1; j < nextId; j++) {
+            if (!active[j]) continue;
+            const d = Dx[i * M + j];
+            if (d < bd) { bd = d; bi = i; bj = j; }
+          }
+        }
+        if (bi === -1) break;
+        const ni = sizes[bi], nj = sizes[bj];
+        const newId = nextId++;
+        nodes.push({ id: newId, height: bd, size: ni + nj, left: bi, right: bj });
+        sizes[newId] = ni + nj;
+        active[newId] = 1;
+        active[bi] = 0; active[bj] = 0;
+        maxH = Math.max(maxH, bd);
+        // Lance-Williams update for newId vs each remaining l
+        for (let l = 0; l < newId; l++) {
+          if (!active[l]) continue;
+          const dil = Dx[bi * M + l], djl = Dx[bj * M + l];
+          let dnew = 0;
+          if (linkage === "single") dnew = Math.min(dil, djl);
+          else if (linkage === "complete") dnew = Math.max(dil, djl);
+          else dnew = (ni * dil + nj * djl) / (ni + nj); // average
+          Dx[newId * M + l] = dnew; Dx[l * M + newId] = dnew;
+        }
+        activeCount--;
+      }
+
+      const root = nextId - 1;
+      // In-order traversal to get leaf order
+      const order: number[] = [];
+      function walk(id: number) {
+        const nd = nodes[id];
+        if (nd.figureIdx !== undefined) { order.push(nd.figureIdx); return; }
+        if (nd.left !== undefined) walk(nd.left);
+        if (nd.right !== undefined) walk(nd.right);
+      }
+      walk(root);
+
+      if (cancelled) return;
+      setUsable(figs);
+      setTree(nodes);
+      setRootId(root);
+      setLeafOrder(order);
+      onStatsComputed?.({ n: N, maxDist: maxH });
+      setComputing(false);
+    }, 30);
+    return () => { cancelled = true; clearTimeout(handle); };
+  }, [figures, useSupersets, enabledCategories, maxFigures, linkage]);
+
+  // Render dendrogram (horizontal: leaves on right, root on left)
+  useEffect(() => {
+    if (!canvasRef.current || tree.length === 0 || rootId < 0) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const container = canvas.parentElement;
+    if (!container) return;
+
+    const N = leafOrder.length;
+    const dpr = window.devicePixelRatio || 1;
+    const W = container.clientWidth;
+    // Make canvas tall enough for all leaves
+    const leafH = Math.max(11, Math.min(20, Math.floor((container.clientHeight - 40) / N)));
+    const H = Math.max(container.clientHeight, N * leafH + 40);
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const padTop = 20, padBottom = 20, padLeft = 30, padRight = 220;
+    const plotW = W - padLeft - padRight;
+    const plotH = H - padTop - padBottom;
+    const maxH = tree[rootId].height || 1;
+
+    // Compute y for each leaf and y for each internal node (mean of children)
+    const yMap = new Map<number, number>();
+    leafOrder.forEach((figIdx, k) => {
+      // find the leaf node id with this figureIdx
+      const leafNode = tree.find(n => n.figureIdx === figIdx)!;
+      yMap.set(leafNode.id, padTop + (k + 0.5) * (plotH / N));
+    });
+    function computeY(id: number): number {
+      if (yMap.has(id)) return yMap.get(id)!;
+      const n = tree[id];
+      const yl = computeY(n.left!), yr = computeY(n.right!);
+      const y = (yl + yr) / 2;
+      yMap.set(id, y); return y;
+    }
+    computeY(rootId);
+
+    function xOf(height: number) {
+      // root (max height) at left, leaves (height=0) at right
+      return padLeft + plotW * (1 - height / maxH);
+    }
+
+    // Determine cluster assignment for cut at K clusters
+    // Find the cut height: the height of the (N-K)th merge from the top
+    const merges = tree.filter(n => n.figureIdx === undefined).sort((a, b) => b.height - a.height);
+    const cutHeight = (cutClusters > 1 && cutClusters <= N && merges[cutClusters - 2])
+      ? merges[cutClusters - 2].height
+      : -1;
+
+    // Build cluster id per leaf by traversing top-down
+    const leafCluster = new Map<number, number>();
+    if (cutHeight >= 0) {
+      let cid = 0;
+      function assign(id: number, currentCid: number | null) {
+        const n = tree[id];
+        if (n.figureIdx !== undefined) {
+          leafCluster.set(n.figureIdx, currentCid !== null ? currentCid : cid++);
+          return;
+        }
+        if (currentCid === null && n.height <= cutHeight) {
+          const newCid = cid++;
+          assign(n.left!, newCid); assign(n.right!, newCid);
+        } else {
+          assign(n.left!, currentCid); assign(n.right!, currentCid);
+        }
+      }
+      assign(rootId, null);
+    }
+
+    // Cluster palette
+    const clusterColors = [
+      "#8F00FF", "#03FF9B", "#FFD700", "#FF69B4", "#00BCD4",
+      "#FF8A65", "#B71C1C", "#9B59B6", "#DAA520", "#E53935",
+      "#4CAF50", "#3F51B5", "#FF6F00", "#1DE9B6", "#EC407A",
+    ];
+
+    // Pan & zoom (vertical scroll/zoom)
+    let panY = 0;
+    let zoom = 1;
+    let hoveredLeafIdx = -1;
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      const grad = ctx.createLinearGradient(0, 0, W, H);
+      grad.addColorStop(0, "#0B0626"); grad.addColorStop(1, "#0C0042");
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+      // Cut line
+      if (cutHeight >= 0) {
+        const cx = xOf(cutHeight);
+        ctx.strokeStyle = "rgba(3,255,155,0.35)";
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(cx, padTop); ctx.lineTo(cx, H - padBottom); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "rgba(3,255,155,0.7)";
+        ctx.font = "10px 'DM Sans', sans-serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+        ctx.fillText(`cut · ${cutClusters} clusters`, cx, padTop - 4);
+      }
+
+      // Draw branches (recursive)
+      ctx.strokeStyle = "rgba(143,0,255,0.55)";
+      ctx.lineWidth = 1.2;
+      function drawNode(id: number) {
+        const n = tree[id];
+        if (n.figureIdx !== undefined) return;
+        const x = xOf(n.height);
+        const yl = yMap.get(n.left!)!, yr = yMap.get(n.right!)!;
+        const xl = n.left! < N ? xOf(0) : xOf(tree[n.left!].height);
+        const xr = n.right! < N ? xOf(0) : xOf(tree[n.right!].height);
+        // Color edges by cluster if both descendants share one
+        const lf = collectLeaves(n.left!); const rf = collectLeaves(n.right!);
+        const cidL = lf.length > 0 ? leafCluster.get(lf[0]) : undefined;
+        const cidR = rf.length > 0 ? leafCluster.get(rf[0]) : undefined;
+        const colL = cidL !== undefined ? clusterColors[cidL % clusterColors.length] : "rgba(143,0,255,0.55)";
+        const colR = cidR !== undefined ? clusterColors[cidR % clusterColors.length] : "rgba(143,0,255,0.55)";
+        // Vertical connector at x
+        ctx.strokeStyle = "rgba(143,0,255,0.35)";
+        ctx.beginPath(); ctx.moveTo(x, yl); ctx.lineTo(x, yr); ctx.stroke();
+        // Horizontal to children, colored by cluster only if below cut
+        ctx.strokeStyle = (cutHeight >= 0 && n.height <= cutHeight) ? colL : "rgba(143,0,255,0.55)";
+        ctx.beginPath(); ctx.moveTo(x, yl); ctx.lineTo(xl, yl); ctx.stroke();
+        ctx.strokeStyle = (cutHeight >= 0 && n.height <= cutHeight) ? colR : "rgba(143,0,255,0.55)";
+        ctx.beginPath(); ctx.moveTo(x, yr); ctx.lineTo(xr, yr); ctx.stroke();
+        drawNode(n.left!); drawNode(n.right!);
+      }
+      function collectLeaves(id: number): number[] {
+        const n = tree[id];
+        if (n.figureIdx !== undefined) return [n.figureIdx];
+        return collectLeaves(n.left!).concat(collectLeaves(n.right!));
+      }
+      drawNode(rootId);
+
+      // Draw leaves: dot + label
+      const selIds = selectedNodeIdsRef.current;
+      ctx.font = `${Math.max(9, leafH - 3)}px 'DM Sans', sans-serif`;
+      ctx.textBaseline = "middle";
+      leafOrder.forEach((figIdx, k) => {
+        const f = usable[figIdx];
+        const leafNode = tree.find(n => n.figureIdx === figIdx)!;
+        const y = yMap.get(leafNode.id)!;
+        const x = xOf(0);
+        const cid = leafCluster.get(figIdx);
+        const baseColor = TRADITION_COLORS[f.tradition || ""] || "#E0DCE6";
+        const cidColor = cid !== undefined ? clusterColors[cid % clusterColors.length] : null;
+        const isSelected = selIds.has(f.id);
+        const isHovered = hoveredLeafIdx === k;
+        // Dot (tradition color)
+        ctx.fillStyle = baseColor;
+        ctx.beginPath(); ctx.arc(x + 4, y, isHovered ? 4 : 2.5, 0, Math.PI * 2); ctx.fill();
+        if (cidColor) {
+          // Small cluster swatch
+          ctx.fillStyle = cidColor;
+          ctx.fillRect(x + 9, y - 3, 5, 6);
+        }
+        // Label
+        ctx.fillStyle = isSelected ? "#FFD700" : (isHovered ? "#03FF9B" : "rgba(224,220,230,0.85)");
+        ctx.textAlign = "left";
+        ctx.fillText(f.name, x + 18, y);
+        if (isSelected) {
+          ctx.strokeStyle = "#FFD700"; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(x + 4, y, 5.5, 0, Math.PI * 2); ctx.stroke();
+        }
+      });
+
+      // X axis (distance)
+      ctx.strokeStyle = "rgba(224,220,230,0.15)";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(padLeft, H - padBottom + 2); ctx.lineTo(padLeft + plotW, H - padBottom + 2); ctx.stroke();
+      ctx.fillStyle = "rgba(224,220,230,0.4)";
+      ctx.font = "9px 'DM Sans', sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "top";
+      for (let k = 0; k <= 4; k++) {
+        const h = (k / 4) * maxH;
+        const x = xOf(h);
+        ctx.fillText(h.toFixed(2), x, H - padBottom + 5);
+      }
+      ctx.textAlign = "right";
+      ctx.fillText("Jaccard distance", padLeft + plotW, H - 4);
+    }
+    draw();
+
+    function findHover(my: number) {
+      // Find leaf with closest y
+      let best = -1, bestD = Infinity;
+      leafOrder.forEach((figIdx, k) => {
+        const leafNode = tree.find(n => n.figureIdx === figIdx)!;
+        const y = yMap.get(leafNode.id)!;
+        const d = Math.abs(y - my);
+        if (d < bestD && d < leafH * 0.7) { bestD = d; best = k; }
+      });
+      return best;
+    }
+
+    canvas.onmousemove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const my = e.clientY - rect.top;
+      const h = findHover(my);
+      if (h !== hoveredLeafIdx) {
+        hoveredLeafIdx = h;
+        const f = h >= 0 ? usable[leafOrder[h]] : null;
+        onHoverNode(f);
+        draw();
+      }
+    };
+    canvas.onmouseleave = () => { hoveredLeafIdx = -1; onHoverNode(null); draw(); };
+    canvas.onclick = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const my = e.clientY - rect.top;
+      const h = findHover(my);
+      if (h >= 0) {
+        const f = usable[leafOrder[h]];
+        onSelectNode(f);
+      }
+    };
+
+    return () => {
+      canvas.onmousemove = null; canvas.onmouseleave = null; canvas.onclick = null;
+    };
+  }, [tree, rootId, leafOrder, usable, cutClusters]);
+
+  return (
+    <div className="absolute inset-0 overflow-auto">
+      <canvas ref={canvasRef} className="block" data-testid="canvas-hclust" />
+      {computing && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="text-shadows-text/50 text-sm" data-testid="text-hclust-computing">Computing dendrogram…</span>
+        </div>
+      )}
+      {!computing && tree.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="text-shadows-text/40 text-sm" data-testid="text-hclust-empty">Not enough figures with traits.</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 function MCAView({
   figures,
   onSelectNode,
@@ -4921,7 +5693,7 @@ export default function GraphPage() {
   const [hierarchySelections, setHierarchySelections] = useState<Map<string, Set<string>>>(new Map());
   const [hoveredNode, setHoveredNode] = useState<any>(null);
   const [selectedTraditions, setSelectedTraditions] = useState<Set<string> | null>(null);
-  const [viewMode, setViewMode] = useState<"network" | "direct" | "umap" | "dichotomy" | "ca" | "relations">("network");
+  const [viewMode, setViewMode] = useState<"network" | "direct" | "umap" | "dichotomy" | "ca" | "fca" | "hclust" | "relations">("network");
   const [dichotomyDepth, setDichotomyDepth] = useState(1);
   const [dichotomyThreshold, setDichotomyThreshold] = useState(0.9);
   const [caAxisX, setCaAxisX] = useState(0);
@@ -4929,6 +5701,13 @@ export default function GraphPage() {
   const [caMinTraitFreq, setCaMinTraitFreq] = useState(3);
   const [caShowTraitLabels, setCaShowTraitLabels] = useState(true);
   const [caVariance, setCaVariance] = useState<number[]>([]);
+  const [fcaMinSupport, setFcaMinSupport] = useState(8);
+  const [fcaMaxConcepts, setFcaMaxConcepts] = useState(60);
+  const [fcaStats, setFcaStats] = useState<{ total: number; shown: number; layers: number }>({ total: 0, shown: 0, layers: 0 });
+  const [hclustMaxFigures, setHclustMaxFigures] = useState(150);
+  const [hclustLinkage, setHclustLinkage] = useState<"average" | "single" | "complete">("average");
+  const [hclustCut, setHclustCut] = useState(6);
+  const [hclustStats, setHclustStats] = useState<{ n: number; maxDist: number }>({ n: 0, maxDist: 0 });
   const [minTraits, setMinTraits] = useState(2);
   const [minSharedTraits, setMinSharedTraits] = useState(4);
   const [focalCharacterId, setFocalCharacterId] = useState<number | null>(null);
@@ -5324,6 +6103,8 @@ export default function GraphPage() {
                 : viewMode === "umap" ? <Sparkles size={18} />
                 : viewMode === "dichotomy" ? <Split size={18} />
                 : viewMode === "ca" ? <Compass size={18} />
+                : viewMode === "fca" ? <Layers size={18} />
+                : viewMode === "hclust" ? <GitBranch size={18} />
                 : <Link2 size={18} />}
             </button>
           </DropdownMenuTrigger>
@@ -5342,6 +6123,12 @@ export default function GraphPage() {
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setViewMode("ca")} data-testid="option-view-ca">
               <Compass size={14} className="mr-2" /> Correspondence (MCA)
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setViewMode("fca")} data-testid="option-view-fca">
+              <Layers size={14} className="mr-2" /> Concept lattice (FCA)
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setViewMode("hclust")} data-testid="option-view-hclust">
+              <GitBranch size={14} className="mr-2" /> Hierarchical (Jaccard)
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setViewMode("relations")} data-testid="option-view-relations">
               <Link2 size={14} className="mr-2" /> Relations
@@ -5490,6 +6277,111 @@ export default function GraphPage() {
           </div>
         )}
       </div>)}
+
+      {viewMode === "fca" && (
+        <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[85vh] overflow-y-auto w-56">
+          <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">Concept lattice (FCA)</span>
+          <p className="text-[9px] text-shadows-text/35 leading-tight mb-1">
+            Each node is a maximal pair (figures, traits) such that the figures share exactly those traits and only those figures share them. Edges show the subconcept (more general → more specific) relation. Node size = number of figures.
+          </p>
+          <div className="space-y-2">
+            <div>
+              <span className="text-[9px] text-shadows-text/40 block mb-1">Min support: {fcaMinSupport} figures</span>
+              <Slider
+                min={2}
+                max={40}
+                step={1}
+                value={[fcaMinSupport]}
+                onValueChange={([v]) => setFcaMinSupport(v)}
+                className="w-full"
+                data-testid="slider-fca-minsupport"
+              />
+              <p className="text-[8px] text-shadows-text/25 mt-0.5 leading-tight">Concepts must apply to at least this many figures.</p>
+            </div>
+            <div>
+              <span className="text-[9px] text-shadows-text/40 block mb-1">Max concepts shown: {fcaMaxConcepts}</span>
+              <Slider
+                min={20}
+                max={200}
+                step={10}
+                value={[fcaMaxConcepts]}
+                onValueChange={([v]) => setFcaMaxConcepts(v)}
+                className="w-full"
+                data-testid="slider-fca-maxconcepts"
+              />
+            </div>
+            {fcaStats.shown > 0 && (
+              <div className="pt-1 border-t border-shadows-text/10 text-[10px] text-shadows-text/60 leading-tight">
+                <div>Shown: <span className="text-shadows-text/85">{fcaStats.shown}</span> / generated {fcaStats.total}</div>
+                <div>Layers: <span className="text-shadows-text/85">{fcaStats.layers}</span></div>
+                <div className="text-[9px] text-shadows-text/35 mt-1">Hover a node to see its figures &amp; traits. Click to open the first figure in the side panel.</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {viewMode === "hclust" && (
+        <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[85vh] overflow-y-auto w-56">
+          <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">Hierarchical clustering</span>
+          <p className="text-[9px] text-shadows-text/35 leading-tight mb-1">
+            Agglomerative clustering of figures using Jaccard distance on their trait sets. Figures merging at low distance share many traits. Cuts at higher distance produce coarser clusters.
+          </p>
+          <div className="space-y-2">
+            <div>
+              <span className="text-[9px] text-shadows-text/40 block mb-1">Figures: top {hclustMaxFigures} by mention</span>
+              <Slider
+                min={30}
+                max={400}
+                step={10}
+                value={[hclustMaxFigures]}
+                onValueChange={([v]) => setHclustMaxFigures(v)}
+                className="w-full"
+                data-testid="slider-hclust-max"
+              />
+              <p className="text-[8px] text-shadows-text/25 mt-0.5 leading-tight">Larger sets reveal more structure but get cluttered fast.</p>
+            </div>
+            <div>
+              <span className="text-[9px] text-shadows-text/40 block mb-1">Linkage</span>
+              <div className="flex gap-1" data-testid="hclust-linkage">
+                {(["average", "single", "complete"] as const).map(l => (
+                  <button
+                    key={l}
+                    onClick={() => setHclustLinkage(l)}
+                    className={`flex-1 text-[10px] py-1 rounded border transition-colors ${
+                      hclustLinkage === l
+                        ? "bg-[#8F00FF]/30 border-[#8F00FF]/60 text-shadows-text"
+                        : "border-shadows-text/15 text-shadows-text/60 hover:border-[#8F00FF]/40"
+                    }`}
+                    data-testid={`button-hclust-linkage-${l}`}
+                  >{l}</button>
+                ))}
+              </div>
+              <p className="text-[8px] text-shadows-text/25 mt-0.5 leading-tight">
+                avg = balanced · single = chains · complete = compact
+              </p>
+            </div>
+            <div>
+              <span className="text-[9px] text-shadows-text/40 block mb-1">Cut into K clusters: {hclustCut}</span>
+              <Slider
+                min={2}
+                max={20}
+                step={1}
+                value={[hclustCut]}
+                onValueChange={([v]) => setHclustCut(v)}
+                className="w-full"
+                data-testid="slider-hclust-cut"
+              />
+            </div>
+            {hclustStats.n > 0 && (
+              <div className="pt-1 border-t border-shadows-text/10 text-[10px] text-shadows-text/60 leading-tight">
+                <div>Figures: <span className="text-shadows-text/85">{hclustStats.n}</span></div>
+                <div>Max distance: <span className="text-shadows-text/85">{hclustStats.maxDist.toFixed(3)}</span></div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {viewMode === "ca" && (
         <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[85vh] overflow-y-auto w-56">
@@ -5724,6 +6616,31 @@ export default function GraphPage() {
             minTraitFreq={caMinTraitFreq}
             showTraitLabels={caShowTraitLabels}
             onVarianceComputed={setCaVariance}
+          />
+        ) : viewMode === "fca" ? (
+          <FCAView
+            figures={effectiveNodes}
+            onSelectNode={(n) => handleGraphNodeSelect(n)}
+            onHoverNode={setHoveredNode}
+            selectedNodeIds={selectedNodeIds}
+            useSupersets={activeSupersets}
+            enabledCategories={enabledCategoriesSet}
+            minSupport={fcaMinSupport}
+            maxConcepts={fcaMaxConcepts}
+            onStatsComputed={setFcaStats}
+          />
+        ) : viewMode === "hclust" ? (
+          <HClustView
+            figures={effectiveNodes}
+            onSelectNode={(n) => handleGraphNodeSelect(n)}
+            onHoverNode={setHoveredNode}
+            selectedNodeIds={selectedNodeIds}
+            useSupersets={activeSupersets}
+            enabledCategories={enabledCategoriesSet}
+            maxFigures={hclustMaxFigures}
+            linkage={hclustLinkage}
+            cutClusters={hclustCut}
+            onStatsComputed={setHclustStats}
           />
         ) : (
           <RelationsView
