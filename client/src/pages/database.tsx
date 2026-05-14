@@ -1538,155 +1538,154 @@ function SuggestionsTab({ isEditor }: { isEditor: boolean }) {
   );
 }
 
-function SourcesTab({ isEditor }: { isEditor: boolean }) {
-  const [showAdd, setShowAdd] = useState(false);
-  const [title, setTitle] = useState("");
-  const [author, setAuthor] = useState("");
-  const [url, setUrl] = useState("");
-  const [description, setDescription] = useState("");
-  const { toast } = useToast();
+const SOURCE_FIELD_LABELS: Record<string, string> = {
+  domain: "Domain",
+  animals: "Animals",
+  object: "Object",
+  characterTrait: "Character trait",
+  physicalCharacteristics: "Physical characteristics",
+  significantEvent: "Significant event",
+  eventTypes: "Event types",
+  birthTypes: "Birth types",
+  birthCircumstances: "Birth circumstances",
+};
 
-  const { data: sourcesList = [], isLoading } = useQuery<Source[]>({
-    queryKey: ["/api/sources"],
+function SourcesTab({ isEditor: _isEditor }: { isEditor: boolean }) {
+  const [search, setSearch] = useState("");
+  const [tradition, setTradition] = useState<string>("all");
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+
+  const { data: nodesList = [], isLoading } = useQuery<Node[]>({
+    queryKey: ["/api/nodes"],
   });
 
-  const addMutation = useMutation({
-    mutationFn: () =>
-      apiRequest("POST", "/api/editor/sources", {
-        title,
-        author: author || null,
-        url: url || null,
-        description: description || null,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/sources"] });
-      setTitle(""); setAuthor(""); setUrl(""); setDescription("");
-      setShowAdd(false);
-      toast({ title: "Source added" });
-    },
-    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
-  });
+  const figuresWithSources = useMemo(() => {
+    return nodesList.filter(
+      (n) => n.sourceAttributions && Object.keys(n.sourceAttributions as any).length > 0
+    );
+  }, [nodesList]);
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiRequest("DELETE", `/api/editor/sources/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/sources"] });
-      toast({ title: "Source deleted" });
-    },
-  });
+  const traditions = useMemo(() => {
+    const set = new Set<string>();
+    for (const n of figuresWithSources) if (n.tradition) set.add(n.tradition);
+    return Array.from(set).sort();
+  }, [figuresWithSources]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return figuresWithSources.filter((n) => {
+      if (tradition !== "all" && n.tradition !== tradition) return false;
+      if (!q) return true;
+      if (n.name.toLowerCase().includes(q)) return true;
+      const attrs = (n.sourceAttributions as Record<string, string>) || {};
+      return Object.values(attrs).some((v) => v.toLowerCase().includes(q));
+    });
+  }, [figuresWithSources, search, tradition]);
+
+  function toggle(id: number) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   if (isLoading) return <LoadingState />;
 
   return (
     <div>
-      {isEditor && (
-        <div className="mb-4">
-          {!showAdd ? (
-            <button
-              onClick={() => setShowAdd(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#350A8C]/30 border border-[#350A8C]/40 text-sm text-[#E0DCE6]/70 hover:border-[#8F00FF]/50 transition-colors"
-              data-testid="button-add-source"
-            >
-              <Plus size={14} /> Add Source
-            </button>
-          ) : (
-            <div className="border border-[#350A8C]/30 rounded-xl p-4 bg-[#130D30]/30 space-y-2">
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Title *"
-                className="w-full px-3 py-2 rounded-lg bg-[#0B0626] border border-[#350A8C]/40 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60"
-                data-testid="input-source-title"
-              />
-              <input
-                type="text"
-                value={author}
-                onChange={(e) => setAuthor(e.target.value)}
-                placeholder="Author"
-                className="w-full px-3 py-2 rounded-lg bg-[#0B0626] border border-[#350A8C]/40 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60"
-                data-testid="input-source-author"
-              />
-              <input
-                type="text"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="URL"
-                className="w-full px-3 py-2 rounded-lg bg-[#0B0626] border border-[#350A8C]/40 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60"
-                data-testid="input-source-url"
-              />
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Description"
-                rows={2}
-                className="w-full px-3 py-2 rounded-lg bg-[#0B0626] border border-[#350A8C]/40 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60 resize-none"
-                data-testid="input-source-description"
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={() => addMutation.mutate()}
-                  disabled={!title || addMutation.isPending}
-                  className="px-4 py-1.5 rounded-lg bg-[#8F00FF] text-white text-sm font-medium hover:bg-[#7B00E0] disabled:opacity-50 transition-colors"
-                  data-testid="button-save-source"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => setShowAdd(false)}
-                  className="px-4 py-1.5 rounded-lg text-[#E0DCE6]/50 text-sm hover:text-[#E0DCE6] transition-colors"
-                  data-testid="button-cancel-source"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      <div className="mb-4 text-xs text-[#E0DCE6]/50 leading-relaxed">
+        Per-figure source attributions. Each entry shows the citations attached to individual fields of that figure (domain, animals, object, etc).{" "}
+        <span className="text-[#E0DCE6]/70">{figuresWithSources.length} figures</span> with sourced data.
+      </div>
 
-      {sourcesList.length === 0 ? (
+      <div className="flex gap-2 mb-4">
+        <div className="flex-1 relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#E0DCE6]/40" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search figure name or citation…"
+            className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#0B0626] border border-[#350A8C]/40 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60"
+            data-testid="input-source-search"
+          />
+        </div>
+        <select
+          value={tradition}
+          onChange={(e) => setTradition(e.target.value)}
+          className="px-3 py-2 rounded-lg bg-[#0B0626] border border-[#350A8C]/40 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60"
+          data-testid="select-source-tradition"
+        >
+          <option value="all">All Traditions</option>
+          {traditions.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+      </div>
+
+      {filtered.length === 0 ? (
         <div className="text-center py-16 text-[#E0DCE6]/40">
           <BookOpen size={32} className="mx-auto mb-3 opacity-40" />
-          <p className="text-sm">No sources listed yet</p>
+          <p className="text-sm">No matching figures with sources</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {sourcesList.map((src) => (
-            <div
-              key={src.id}
-              className="border border-[#350A8C]/20 rounded-xl p-4 bg-[#130D30]/30 flex items-start justify-between gap-3"
-              data-testid={`card-source-${src.id}`}
-            >
-              <div>
-                <h4 className="text-sm font-medium text-[#E0DCE6]">{src.title}</h4>
-                {src.author && <p className="text-xs text-[#E0DCE6]/50 mt-0.5">{src.author}</p>}
-                {src.description && <p className="text-xs text-[#E0DCE6]/60 mt-1">{src.description}</p>}
-                {src.url && (
-                  <a
-                    href={src.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-[#8F00FF] hover:underline mt-1 flex items-center gap-1"
-                    data-testid={`link-source-${src.id}`}
-                  >
-                    <ExternalLink size={11} /> {src.url}
-                  </a>
+        <div className="space-y-2">
+          {filtered.map((fig) => {
+            const attrs = (fig.sourceAttributions as Record<string, string>) || {};
+            const fields = Object.keys(attrs);
+            const isOpen = expanded.has(fig.id);
+            return (
+              <div
+                key={fig.id}
+                className="border border-[#350A8C]/20 rounded-lg bg-[#130D30]/30 overflow-hidden"
+                data-testid={`card-figure-sources-${fig.id}`}
+              >
+                <button
+                  onClick={() => toggle(fig.id)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#350A8C]/15 transition-colors"
+                  data-testid={`button-toggle-sources-${fig.id}`}
+                >
+                  {isOpen ? <ChevronDown size={14} className="text-[#8F00FF] shrink-0" /> : <ChevronRight size={14} className="text-[#E0DCE6]/40 shrink-0" />}
+                  <span className="text-sm font-medium text-[#E0DCE6]">{fig.name}</span>
+                  {fig.tradition && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#350A8C]/40 text-[#E0DCE6]/60">{fig.tradition}</span>
+                  )}
+                  <span className="ml-auto text-[10px] text-[#E0DCE6]/40">{fields.length} field{fields.length > 1 ? "s" : ""}</span>
+                </button>
+                {isOpen && (
+                  <div className="px-4 py-3 border-t border-[#350A8C]/20 space-y-2">
+                    {fields.map((field) => {
+                      const citation = attrs[field];
+                      const isUrl = /^https?:\/\//i.test(citation);
+                      return (
+                        <div key={field} className="grid grid-cols-[160px_1fr] gap-3 text-xs">
+                          <div className="text-[#E0DCE6]/50 font-medium">
+                            {SOURCE_FIELD_LABELS[field] || field}
+                          </div>
+                          <div className="text-[#E0DCE6]/80 leading-relaxed">
+                            {isUrl ? (
+                              <a
+                                href={citation}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[#8F00FF] hover:underline inline-flex items-center gap-1 break-all"
+                              >
+                                <ExternalLink size={10} /> {citation}
+                              </a>
+                            ) : (
+                              <span className="break-words">{citation}</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
-              {isEditor && (
-                <button
-                  onClick={() => {
-                    if (confirm("Delete this source?")) deleteMutation.mutate(src.id);
-                  }}
-                  className="p-1 rounded hover:bg-red-500/20 text-[#E0DCE6]/40 hover:text-red-400 transition-colors shrink-0"
-                  data-testid={`button-delete-source-${src.id}`}
-                >
-                  <Trash2 size={14} />
-                </button>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -20,6 +20,7 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 ## Database Schema
 - `projects` - Research modules (title, slug, description)
 - `nodes` - Mythological figures with attributes:
+  - sourceAttributions (jsonb) — per-field citations (e.g. `{domain: "Skáldskaparmál 25", animals: "...", ...}`). 462 figures populated. Surfaced in the `/database` Sources tab grouped by figure.
   - name, tradition, gender, domain, object, animals
   - characterTrait, physicalCharacteristics
   - significantEvent, symbolism, neumannArchetype, mentionCount

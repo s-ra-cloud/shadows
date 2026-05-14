@@ -39,6 +39,7 @@ export const nodes = pgTable("nodes", {
   deathCircumstances: text("death_circumstances"),
   objectProvenance: text("object_provenance"),
   originalDescriptions: jsonb("original_descriptions"),
+  sourceAttributions: jsonb("source_attributions").$type<Record<string, string>>(),
 });
 
 export const edges = pgTable("edges", {
