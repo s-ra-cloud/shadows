@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, serial, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -38,6 +38,7 @@ export const nodes = pgTable("nodes", {
   birthCircumstances: text("birth_circumstances"),
   deathCircumstances: text("death_circumstances"),
   objectProvenance: text("object_provenance"),
+  originalDescriptions: jsonb("original_descriptions"),
 });
 
 export const edges = pgTable("edges", {
