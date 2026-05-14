@@ -3109,69 +3109,39 @@ function FCAView({
         const baseCol = colorFor(c);
         const universeRoot = isUniverse(c);
 
-        // Outer glow halo
-        const glowR = r * (universeRoot ? 3.5 : (isHovered ? 2.6 : 1.9));
-        const glow = ctx.createRadialGradient(sx, sy, r * 0.4, sx, sy, glowR);
-        glow.addColorStop(0, hexToRgba(baseCol, dim ? 0.05 : (universeRoot ? 0.55 : (isHovered ? 0.6 : 0.32))));
-        glow.addColorStop(1, hexToRgba(baseCol, 0));
-        ctx.fillStyle = glow;
-        ctx.beginPath(); ctx.arc(sx, sy, glowR, 0, Math.PI * 2); ctx.fill();
-
-        // Body — radial fill (lighter center → category color edge)
-        const body = ctx.createRadialGradient(sx - r * 0.3, sy - r * 0.3, r * 0.1, sx, sy, r);
-        body.addColorStop(0, hexToRgba("#FFFFFF", dim ? 0.08 : 0.55));
-        body.addColorStop(0.45, hexToRgba(baseCol, dim ? 0.15 : 0.95));
-        body.addColorStop(1, hexToRgba(baseCol, dim ? 0.10 : 0.7));
-        ctx.fillStyle = body;
-        ctx.beginPath(); ctx.arc(sx, sy, isHovered ? r * 1.15 : r, 0, Math.PI * 2); ctx.fill();
-
-        // Crisp ring
-        ctx.strokeStyle = hexToRgba(baseCol, dim ? 0.2 : 1);
-        ctx.lineWidth = isHovered ? 2 : 1.2;
-        ctx.stroke();
-
-        // Category-mix ring segments (small donut around the node showing the trait category mix)
-        if (c.categoryMix.length > 1 && r > 6 && !dim) {
-          const totalCount = c.categoryMix.reduce((s, m) => s + m.count, 0);
-          let a0 = -Math.PI / 2;
-          ctx.lineWidth = Math.max(2, r * 0.22);
-          for (const m of c.categoryMix) {
-            const arc = (m.count / totalCount) * Math.PI * 2;
-            ctx.strokeStyle = hexToRgba(CATEGORY_COLORS[m.category] || "#8F00FF", 0.95);
-            ctx.beginPath();
-            ctx.arc(sx, sy, r + ctx.lineWidth / 2 + 2, a0, a0 + arc);
-            ctx.stroke();
-            a0 += arc;
-          }
+        // Soft halo (only on hover, on the universe root, or selected)
+        if (isHovered || universeRoot || hasSelected) {
+          const glowR = r * (universeRoot ? 2.4 : 1.8);
+          const glow = ctx.createRadialGradient(sx, sy, r * 0.5, sx, sy, glowR);
+          glow.addColorStop(0, hexToRgba(baseCol, universeRoot ? 0.35 : 0.4));
+          glow.addColorStop(1, hexToRgba(baseCol, 0));
+          ctx.fillStyle = glow;
+          ctx.beginPath(); ctx.arc(sx, sy, glowR, 0, Math.PI * 2); ctx.fill();
         }
 
-        // Special marker for the universe (root) concept: 4-pointed star
+        // Body — light radial gradient for subtle depth
+        const body = ctx.createRadialGradient(sx - r * 0.25, sy - r * 0.25, r * 0.1, sx, sy, r);
+        body.addColorStop(0, hexToRgba(baseCol, dim ? 0.18 : 0.95));
+        body.addColorStop(1, hexToRgba(baseCol, dim ? 0.12 : 0.7));
+        ctx.fillStyle = body;
+        ctx.beginPath(); ctx.arc(sx, sy, isHovered ? r * 1.1 : r, 0, Math.PI * 2); ctx.fill();
+
+        // Thin ring
+        ctx.strokeStyle = hexToRgba(baseCol, dim ? 0.25 : 0.9);
+        ctx.lineWidth = isHovered ? 1.5 : 1;
+        ctx.stroke();
+
+        // Universe root: small white dot in center to mark it
         if (universeRoot && !dim) {
-          ctx.save();
-          ctx.translate(sx, sy);
-          ctx.fillStyle = "rgba(255,255,255,0.85)";
-          ctx.beginPath();
-          for (let k = 0; k < 8; k++) {
-            const ang = (k * Math.PI) / 4;
-            const rr = k % 2 === 0 ? r * 0.55 : r * 0.18;
-            const px = Math.cos(ang) * rr, py = Math.sin(ang) * rr;
-            if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-          }
-          ctx.closePath(); ctx.fill();
-          ctx.restore();
-        } else if (r > 10 && !dim) {
-          // Extent count inside node
-          ctx.font = `${Math.max(9, Math.min(13, r * 0.7))}px 'DM Sans', sans-serif`;
-          ctx.fillStyle = "rgba(11,6,38,0.85)";
-          ctx.textAlign = "center"; ctx.textBaseline = "middle";
-          ctx.fillText(String(c.extent.length), sx, sy);
+          ctx.fillStyle = "rgba(255,255,255,0.9)";
+          ctx.beginPath(); ctx.arc(sx, sy, Math.max(2, r * 0.25), 0, Math.PI * 2); ctx.fill();
         }
 
         // Selection ring
         if (hasSelected) {
           ctx.strokeStyle = "#FFD700";
-          ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.arc(sx, sy, r * 1.55, 0, Math.PI * 2); ctx.stroke();
+          ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(sx, sy, r * 1.5, 0, Math.PI * 2); ctx.stroke();
         }
       }
 
