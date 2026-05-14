@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -89,9 +89,11 @@ export default function DatabasePage() {
     ...(editorMode ? [{ key: "dichotomy" as Tab, label: "Dichotomy" }] : []),
   ];
 
-  if (activeTab === "dichotomy" && !editorMode && authStatus) {
-    setActiveTab("nodes");
-  }
+  useEffect(() => {
+    if (activeTab === "dichotomy" && !editorMode && authStatus) {
+      setActiveTab("nodes");
+    }
+  }, [activeTab, editorMode, authStatus]);
 
   function openSuggestion(target: typeof suggestionTarget) {
     setSuggestionTarget(target);
@@ -1699,6 +1701,11 @@ function LoadingState() {
   );
 }
 
+const EMPTY_SELECTED_IDS = new Set<number>();
+const EMPTY_SUPERSETS = new Set<string>();
+const EMPTY_RELATION_EDGES: any[] = [];
+const NOOP = () => {};
+
 function DichotomyTab() {
   const { data: nodes = [], isLoading } = useQuery<Node[]>({
     queryKey: ["/api/nodes"],
@@ -1707,6 +1714,9 @@ function DichotomyTab() {
   const [threshold, setThreshold] = useState(0.9);
 
   if (isLoading) return <LoadingState />;
+  if (!nodes || nodes.length === 0) {
+    return <div className="text-shadows-text/50 text-sm py-10">No figures to analyze.</div>;
+  }
 
   return (
     <div className="space-y-4">
@@ -1749,16 +1759,16 @@ function DichotomyTab() {
           </div>
         </div>
       </div>
-      <div className="w-full rounded-md border border-[#350A8C]/30 overflow-hidden" style={{ height: "calc(100vh - 280px)", minHeight: 500 }}>
+      <div className="w-full rounded-md border border-[#350A8C]/30 overflow-hidden bg-[#0B0626]/40" style={{ height: 700 }}>
         <DichotomyView
           figures={nodes}
           dichotomyDepth={depth}
           dichotomyThreshold={threshold}
-          onSelectNode={() => {}}
-          onHoverNode={() => {}}
-          selectedNodeIds={new Set()}
-          useSupersets={new Set()}
-          relationEdges={[]}
+          onSelectNode={NOOP}
+          onHoverNode={NOOP}
+          selectedNodeIds={EMPTY_SELECTED_IDS}
+          useSupersets={EMPTY_SUPERSETS}
+          relationEdges={EMPTY_RELATION_EDGES}
         />
       </div>
     </div>
