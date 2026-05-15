@@ -459,9 +459,15 @@ function normalizeToken(token: string): string {
     }
   }
   if (SYNONYMS[t]) return SYNONYMS[t];
-  t = t.replace(/s$/, "");
-  if (SYNONYMS[t]) return SYNONYMS[t];
-  return t.replace(/s$/, "");
+  // Strip a single trailing "s" for naive plural handling (gods → god, trees → tree).
+  // Only do this when the result is at least 4 chars, to avoid mangling words ending
+  // in -ness / -ess / -ous / -ess / etc. (forgiveness → forgivene was the old bug).
+  if (t.length >= 5 && /s$/.test(t) && !/(ss|us|is|os|as)$/.test(t)) {
+    const stripped = t.slice(0, -1);
+    if (SYNONYMS[stripped]) return SYNONYMS[stripped];
+    return stripped;
+  }
+  return t;
 }
 
 function tokenize(text: string | null): string[] {
