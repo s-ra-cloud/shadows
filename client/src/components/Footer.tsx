@@ -30,7 +30,24 @@ export default function Footer() {
         </div>
         <div className="mt-10 pt-6 border-t border-[#350A8C]/10 text-center">
           <p className="text-shadows-text/30 text-xs">
-            &copy; {new Date().getFullYear()} SHADOWS Research Project. All rights reserved.
+            &copy; {new Date().getFullYear()} SHADOWS Research Project. The project is open source under the{" "}
+            <a
+              href="https://creativecommons.org/licenses/by/4.0/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline decoration-dotted hover:text-shadows-green transition-colors"
+              data-testid="link-footer-license"
+            >
+              CC-BY 4.0
+            </a>{" "}
+            license.{" "}
+            <span
+              className="text-shadows-text/40"
+              data-testid="text-footer-download-code"
+              title="Coming soon"
+            >
+              Download code (coming soon)
+            </span>
           </p>
         </div>
       </div>
