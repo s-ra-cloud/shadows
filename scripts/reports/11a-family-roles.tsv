@@ -1,0 +1,1236 @@
+id	name	tradition	value	action	bare	of_whom	duplicated_in	suggested_move_to	reason
+6156	Quetzalcoatl	Aztec	son	KEEP					bare kinship term
+6156	Quetzalcoatl	Aztec	twin	KEEP					bare kinship term
+6140	Dionysus	Greek	son of Zeus and Semele	STRIP_TO_BARE	son	Zeus and Semele			"son of X" pattern
+6140	Dionysus	Greek	twice-born (from Semele's incineration, then from Zeus's thigh)	TITLE_MOVE				domain	title not present in any other field
+6140	Dionysus	Greek	sometimes counted as the 12th Olympian (replacing Hestia)	TITLE_MOVE				domain	title not present in any other field
+6140	Dionysus	Greek	husband of Ariadne (after Theseus abandoned her on Naxos)	STRIP_TO_BARE	husband	Ariadne (after Theseus abandoned her on Naxos)			"husband of X" pattern
+7345	Azazel	Abrahamic	chief of the Watchers (in 1 Enoch)	TITLE_MOVE				domain	title not present in any other field
+7345	Azazel	Abrahamic	wilderness-demon (in Leviticus tradition)	TITLE_MOVE				domain	title not present in any other field
+7402	Apep	Egyptian	cosmic adversary of Ra	TITLE_MOVE				domain	title not present in any other field
+7402	Apep	Egyptian	embodiment of isfet	TITLE_MOVE				domain	title not present in any other field
+7343	Asmodeus	Abrahamic	demon-king	TITLE_MOVE				character_trait	title not present in any other field
+7458	Cupid	Roman	identified with Eros	TITLE_MOVE				domain	title not present in any other field
+7458	Cupid	Roman	son of Venus and Mars	STRIP_TO_BARE	son	Venus and Mars			"son of X" pattern
+7458	Cupid	Roman	husband of Psyche	STRIP_TO_BARE	husband	Psyche			"husband of X" pattern
+6878	Glenr	Norse	husband of Sól	STRIP_TO_BARE	husband	Sól			"husband of X" pattern
+7415	Ebisu	Shinto	one of the Seven Lucky Gods	TITLE_MOVE				domain	title not present in any other field
+7415	Ebisu	Shinto	identified with Hiruko or Kotoshironushi	TITLE_MOVE				domain	title not present in any other field
+7415	Ebisu	Shinto	often paired with Daikokuten	TITLE_MOVE				domain	title not present in any other field
+7317	Gilgamesh	Mesopotamian	son	KEEP					bare kinship term
+7317	Gilgamesh	Mesopotamian	king	TITLE_DUP			domain		full string already in domain
+7317	Gilgamesh	Mesopotamian	companion	TITLE_MOVE				domain	title not present in any other field
+7340	God-the-Father	Abrahamic	Father of the Son (eternally begotten)	STRIP_TO_BARE	father	the Son (eternally begotten)			"father of X" pattern
+7340	God-the-Father	Abrahamic	Father of believers (adoption)	STRIP_TO_BARE	father	believers (adoption)			"father of X" pattern
+6634	Zhurong	Chinese	god of fire and the south	TITLE_DUP			domain		"south" already in domain
+6634	Zhurong	Chinese	adversary and victor over Gonggong	TITLE_MOVE				domain	title not present in any other field
+7397	Hiranyakashipu	Hindu	demon-king	TITLE_MOVE				character_trait	title not present in any other field
+7397	Hiranyakashipu	Hindu	brother of Hiraṇyākṣa	STRIP_TO_BARE	brother	Hiraṇyākṣa			"brother of X" pattern
+7397	Hiranyakashipu	Hindu	father of Prahlāda	STRIP_TO_BARE	father	Prahlāda			"father of X" pattern
+7397	Hiranyakashipu	Hindu	son of Diti and Kaśyapa	STRIP_TO_BARE	son	Diti and Kaśyapa			"son of X" pattern
+7208	Igigi	Mesopotamian	younger gods	TITLE_MOVE				domain	title not present in any other field
+7208	Igigi	Mesopotamian	laborers	TITLE_MOVE				domain	title not present in any other field
+6100	Tiamat	Mesopotamian	spouse	KEEP					bare kinship term
+7483	Laozi	Chinese	semi-legendary founder of philosophical Daoism	TITLE_DUP			domain		"daoism" already in domain
+7483	Laozi	Chinese	deified as Taishang Laojun	TITLE_MOVE				domain	title not present in any other field
+7483	Laozi	Chinese	identified with Daode Tianzun (third of the Three Pure Ones)	TITLE_MOVE				domain	title not present in any other field
+7428	Erebus	Greek	son of Chaos	STRIP_TO_BARE	son	Chaos			"son of X" pattern
+7428	Erebus	Greek	mate of Nyx	TITLE_MOVE				domain	title not present in any other field
+7428	Erebus	Greek	father of Aether and Hemera	STRIP_TO_BARE	father	Aether and Hemera			"father of X" pattern
+7504	Maitreya	Buddhist	the future Buddha	TITLE_MOVE				identification	title not present in any other field
+7504	Maitreya	Buddhist	the bodhisattva awaiting his final birth in the Tuṣita heaven	TITLE_MOVE				domain	title not present in any other field
+7287	Mary	Abrahamic	wife	KEEP					bare kinship term
+7287	Mary	Abrahamic	virgin	TITLE_DUP			domain		full string already in domain
+7434	Nereus	Greek	son of Pontus and Gaia	STRIP_TO_BARE	son	Pontus and Gaia			"son of X" pattern
+7434	Nereus	Greek	husband of Doris	STRIP_TO_BARE	husband	Doris			"husband of X" pattern
+7434	Nereus	Greek	father of the fifty Nereids (including Amphitrite, Thetis, Galatea)	STRIP_TO_BARE	father	the fifty Nereids (including Amphitrite, Thetis, Galatea)			"father of X" pattern
+7229	Agdistis	Phrygian	primordial androgynous daemon	TITLE_MOVE				domain	title not present in any other field
+7229	Agdistis	Phrygian	the being from whose castration Attis ultimately springs	TITLE_MOVE				domain	title not present in any other field
+7229	Agdistis	Phrygian	sometimes identified with a wild aspect of Cybele	TITLE_MOVE				identification	title not present in any other field
+7476	Nanahuatzin	Aztec	transformed into Tonatiuh	TITLE_MOVE				domain	title not present in any other field
+7384	Nandi	Hindu	mount and chief devotee of Śiva	TITLE_MOVE				domain	title not present in any other field
+7384	Nandi	Hindu	chief of the gaṇas	TITLE_MOVE				domain	title not present in any other field
+7384	Nandi	Hindu	gatekeeper of Kailāśa	TITLE_MOVE				domain	title not present in any other field
+7261	The Alcis	Germanic	sibling	KEEP					bare kinship term
+6838	Nehalennia	Germanic	Germanic North Sea coast goddess	TITLE_MOVE				domain	title not present in any other field
+6838	Nehalennia	Germanic	protectress of seafarers and merchants	TITLE_MOVE				domain	title not present in any other field
+7091	Baldr	Norse	son	KEEP					bare kinship term
+7091	Baldr	Norse	husband	KEEP					bare kinship term
+7506	Vairocana	Buddhist	the cosmic/primordial Buddha	TITLE_MOVE				identification	title not present in any other field
+7506	Vairocana	Buddhist	centre of the Five Wisdom Buddhas	TITLE_MOVE				identification	title not present in any other field
+7506	Vairocana	Buddhist	embodiment of the Dharmakāya	TITLE_MOVE				domain	title not present in any other field
+6784	Tammuz	Mesopotamian	son	KEEP					bare kinship term
+6784	Tammuz	Mesopotamian	husband	KEEP					bare kinship term
+7519	Hunahpu	Maya	one of the Hero Twins	TITLE_MOVE				character_trait	title not present in any other field
+7519	Hunahpu	Maya	son of Hun Hunahpu	STRIP_TO_BARE	son	Hun Hunahpu			"son of X" pattern
+7519	Hunahpu	Maya	twin of Xbalanque	STRIP_TO_BARE	sister	Xbalanque			"sister of X" pattern
+7519	Hunahpu	Maya	raised to become the sun	TITLE_MOVE				domain	title not present in any other field
+6786	Nerthus	Germanic	continental Germanic earth-mother goddess	TITLE_MOVE				domain	title not present in any other field
+6786	Nerthus	Germanic	the etymological counterpart of the Norse Njörðr	TITLE_MOVE				domain	title not present in any other field
+6236	Kvasir	Norse	wisdom-being	TITLE_MOVE				domain	title not present in any other field
+6236	Kvasir	Norse	victim	TITLE_MOVE				domain	title not present in any other field
+7104	Móði and Magni	Norse	sons of Thor	TITLE_DUP			domain		"thor" already in domain
+7104	Móði and Magni	Norse	brothers	TITLE_MOVE				domain	title not present in any other field
+7104	Móði and Magni	Norse	inheritors	TITLE_MOVE				domain	title not present in any other field
+7430	Oceanus	Greek	eldest Titan	TITLE_MOVE				domain	title not present in any other field
+7430	Oceanus	Greek	son of Ouranos and Gaia	STRIP_TO_BARE	son	Ouranos and Gaia			"son of X" pattern
+7430	Oceanus	Greek	husband of Tethys	STRIP_TO_BARE	husband	Tethys			"husband of X" pattern
+7430	Oceanus	Greek	father of all rivers and Oceanids	STRIP_TO_BARE	father	all rivers and Oceanids			"father of X" pattern
+6759	Shiva	Hindu	husband	KEEP					bare kinship term
+6736	Sophia	Gnostic	the youngest aeon of the Pleroma	TITLE_MOVE				domain	title not present in any other field
+6736	Sophia	Gnostic	an emanation within the line proceeding from Barbelo	TITLE_MOVE				identification	title not present in any other field
+6736	Sophia	Gnostic	the unwitting mother of the demiurge Yaldabaoth	TITLE_MOVE				domain	title not present in any other field
+7427	Tartarus	Greek	primordial deity and abyssal place	TITLE_DUP			character_trait		"place" already in character_trait
+7427	Tartarus	Greek	mate of Gaia	TITLE_MOVE				domain	title not present in any other field
+7427	Tartarus	Greek	father of Typhon	STRIP_TO_BARE	father	Typhon			"father of X" pattern
+7361	Audhumla	Norse	primordial cow	TITLE_DUP			domain		full string already in domain
+7361	Audhumla	Norse	progenitrix-by-licking of Búri	TITLE_MOVE				character_trait	title not present in any other field
+6404	Taiyi Zhenren	Chinese	spouse	KEEP					bare kinship term
+6306	Hundun	Chinese	primordial chaos personified	TITLE_MOVE				domain	title not present in any other field
+6306	Hundun	Chinese	the emperor of the center (in Zhuangzi)	TITLE_MOVE				domain	title not present in any other field
+6403	Kuimulang	Chinese	spouse	KEEP					bare kinship term
+6615	Tychon	Greek	spouse	KEEP					bare kinship term
+7163	Nāga	Hindu	serpent-beings descended from Kadrū	TITLE_MOVE				domain	title not present in any other field
+7163	Nāga	Hindu	rulers of Pātāla	TITLE_MOVE				domain	title not present in any other field
+7163	Nāga	Hindu	enemies of Garuḍa	TITLE_MOVE				domain	title not present in any other field
+7477	Tecuciztecatl	Aztec	transformed into Metztli	TITLE_MOVE				domain	title not present in any other field
+7474	Tonatiuh	Aztec	the fifth sun	TITLE_MOVE				domain	title not present in any other field
+7474	Tonatiuh	Aztec	identified with Nanahuatzin (the diseased god who became him)	TITLE_MOVE				domain	title not present in any other field
+7474	Tonatiuh	Aztec	presides over the warrior-paradise Tonatiuh Ichan	TITLE_MOVE				character_trait	title not present in any other field
+6101	Valkyrie	Norse	warrior-maidens	TITLE_MOVE				character_trait	title not present in any other field
+6101	Valkyrie	Norse	divine servants of Odin	TITLE_MOVE				domain	title not present in any other field
+7096	Njörðr	Norse	husband	KEEP					bare kinship term
+7096	Njörðr	Norse	Vanir hostage	TITLE_MOVE				domain	title not present in any other field
+7096	Njörðr	Norse	god of the sea, wind, and wealth	TITLE_DUP			domain		"wealth" already in domain
+7518	Ix Chel	Maya	Maya goddess of the moon, childbirth, weaving, and medicine	TITLE_DUP			domain		"medicine" already in domain
+7518	Ix Chel	Maya	consort of Itzamna	STRIP_TO_BARE	consort	Itzamna			"consort of X" pattern
+7354	Sif	Norse	wife of Thor	STRIP_TO_BARE	wife	Thor			"wife of X" pattern
+7354	Sif	Norse	mother of Þrúðr	STRIP_TO_BARE	mother	Þrúðr			"mother of X" pattern
+7354	Sif	Norse	mother of Ullr (from earlier union)	STRIP_TO_BARE	mother	Ullr (from earlier union)			"mother of X" pattern
+7222	Vajrapani	Buddhist	bodhisattva of power	TITLE_DUP			domain		"power" already in domain
+7222	Vajrapani	Buddhist	protector of the Buddha and the Dharma	TITLE_MOVE				identification	title not present in any other field
+7222	Vajrapani	Buddhist	one of the three family-protectors with Avalokiteśvara and Mañjuśrī	TITLE_MOVE				domain	title not present in any other field
+7509	Mahakala	Buddhist	great wrathful protector (dharmapāla)	TITLE_MOVE				domain	title not present in any other field
+7509	Mahakala	Buddhist	wrathful emanation (often of Avalokiteśvara)	TITLE_MOVE				identification	title not present in any other field
+7509	Mahakala	Buddhist	Buddhist transformation of the Hindu Shiva-Mahākāla	TITLE_MOVE				domain	title not present in any other field
+7509	Mahakala	Buddhist	East Asian form: Daikokuten	TITLE_MOVE				domain	title not present in any other field
+7447	Vulcan	Roman	identified with Hephaestus	TITLE_MOVE				domain	title not present in any other field
+7447	Vulcan	Roman	son of Jupiter and Juno (or of Juno alone parthenogenetically, importing the Greek narrative)	STRIP_TO_BARE	son	Jupiter and Juno (or of Juno alone parthenogenetically, importing the Greek narrative)			"son of X" pattern
+7447	Vulcan	Roman	husband of Venus (importing the Greek)	STRIP_TO_BARE	husband	Venus (importing the Greek)			"husband of X" pattern
+7486	Yandi	Chinese	the Yan Emperor	TITLE_MOVE				domain	title not present in any other field
+7486	Yandi	Chinese	often identified with Shennong	TITLE_MOVE				domain	title not present in any other field
+7486	Yandi	Chinese	co-ancestor (with Huangdi) of the Chinese people	TITLE_MOVE				domain	title not present in any other field
+7486	Yandi	Chinese	ancestor of Chiyou in some traditions	TITLE_MOVE				domain	title not present in any other field
+7524	Vucub-Came	Maya	one of the two paramount lords of Xibalba	TITLE_MOVE				domain (or identification)	title not present in any other field
+7524	Vucub-Came	Maya	co-ruler with Hun-Came	TITLE_MOVE				domain	title not present in any other field
+7524	Vucub-Came	Maya	adversary of the Hero Twins	TITLE_MOVE				character_trait	title not present in any other field
+7425	Chaos	Greek	the first of all things	TITLE_MOVE				domain	title not present in any other field
+7425	Chaos	Greek	parent of Erebus and Nyx	TITLE_MOVE				domain	title not present in any other field
+6139	Gabriel	Abrahamic	archangel	TITLE_MOVE				domain	title not present in any other field
+6139	Gabriel	Abrahamic	divine messenger	TITLE_MOVE				domain	title not present in any other field
+6139	Gabriel	Abrahamic	angel of revelation	TITLE_DUP			domain		"revelation" already in domain
+7350	Leviathan	Abrahamic	cosmic adversary	TITLE_MOVE				domain	title not present in any other field
+7350	Leviathan	Abrahamic	primordial monster	TITLE_MOVE				domain	title not present in any other field
+6767	Lilith	Abrahamic	first wife (former)	TITLE_MOVE				domain	title not present in any other field
+7338	YHWH	Abrahamic	father (creator-father of all, covenant-father of Israel)	TITLE_MOVE				domain	title not present in any other field
+7338	YHWH	Abrahamic	king	TITLE_MOVE				character_trait	title not present in any other field
+6104	Eve	Abrahamic	first woman	TITLE_MOVE				domain	title not present in any other field
+6104	Eve	Abrahamic	wife	KEEP					bare kinship term
+6104	Eve	Abrahamic	mother of all living	STRIP_TO_BARE	mother	all living			"mother of X" pattern
+6105	Agreus and Nomios	Greek	spouse	KEEP					bare kinship term
+7256	Yaldabaoth	Gnostic	the demiurge of the Gnostic systems	TITLE_MOVE				domain	title not present in any other field
+7256	Yaldabaoth	Gnostic	the malformed offspring of Sophia	TITLE_MOVE				domain	title not present in any other field
+7256	Yaldabaoth	Gnostic	the false god and jailer of the material cosmos	TITLE_DUP			domain		"material cosmos" already in domain
+6106	Muzha	Chinese	spouse	KEEP					bare kinship term
+7527	Ixtab	Maya	Yucatec Maya goddess associated with the rope and with those who died by hanging	TITLE_DUP			domain		"hanging" already in domain
+7295	Kingu	Mesopotamian	spouse	KEEP					bare kinship term
+7246	Loki	Norse	blood-brother of Odin	TITLE_MOVE				domain	title not present in any other field
+7246	Loki	Norse	father of Fenrir, Jǫrmungandr, Hel (with Angrboða)	STRIP_TO_BARE	father	Fenrir, Jǫrmungandr, Hel (with Angrboða)			"father of X" pattern
+7246	Loki	Norse	mother of Sleipnir (in mare-form)	STRIP_TO_BARE	mother	Sleipnir (in mare-form)			"mother of X" pattern
+7246	Loki	Norse	husband of Sigyn (with sons Narfi and Váli)	STRIP_TO_BARE	husband	Sigyn (with sons Narfi and Váli)			"husband of X" pattern
+7246	Loki	Norse	adversary of the Æsir	TITLE_MOVE				domain	title not present in any other field
+6439	Lingbao Tianzun	Chinese	second of the Three Pure Ones	TITLE_MOVE				domain	title not present in any other field
+6439	Lingbao Tianzun	Chinese	dwells in the Supreme Pure heaven (Shangqing)	TITLE_MOVE				domain	title not present in any other field
+7213	Barong	Balinese	the protective beast-spirit of Bali	TITLE_MOVE				domain	title not present in any other field
+7213	Barong	Balinese	the "king of the spirits"	TITLE_MOVE				character_trait	title not present in any other field
+7213	Barong	Balinese	the eternal adversary of Rangda	TITLE_MOVE				domain	title not present in any other field
+7508	Samantabhadra	Buddhist	bodhisattva of practice and vows	TITLE_MOVE				domain	title not present in any other field
+7508	Samantabhadra	Buddhist	paired with Mañjuśrī as an attendant of the Buddha	TITLE_MOVE				identification	title not present in any other field
+7508	Samantabhadra	Buddhist	in Nyingma, the primordial Buddha	TITLE_MOVE				identification	title not present in any other field
+7510	Vaisravana	Buddhist	chief of the Four Heavenly Kings	TITLE_MOVE				character_trait	title not present in any other field
+7510	Vaisravana	Buddhist	guardian of the north	TITLE_MOVE				domain	title not present in any other field
+7510	Vaisravana	Buddhist	god of wealth (linked with Kubera)	TITLE_MOVE				domain	title not present in any other field
+7510	Vaisravana	Buddhist	East Asian form: Bishamonten	TITLE_MOVE				domain	title not present in any other field
+7220	Manjushri	Buddhist	bodhisattva of wisdom	TITLE_DUP			domain		full string already in domain
+7346	Samael	Abrahamic	angel of death	TITLE_DUP			domain		"death" already in domain
+7346	Samael	Abrahamic	accuser	TITLE_MOVE				domain	title not present in any other field
+7346	Samael	Abrahamic	consort of Lilith (Kabbalah)	STRIP_TO_BARE	consort	Lilith (Kabbalah)			"consort of X" pattern
+7346	Samael	Abrahamic	head of the demonic order	TITLE_MOVE				domain	title not present in any other field
+6111	Ishtar	Mesopotamian	daughter	KEEP					bare kinship term
+6111	Ishtar	Mesopotamian	wife	KEEP					bare kinship term
+7326	Arsay	Canaanite	daughter	KEEP					bare kinship term
+7331	Baal-Hammon	Canaanite	king	TITLE_DUP			domain		full string already in domain
+7331	Baal-Hammon	Canaanite	consort	KEEP					bare kinship term
+6756	Odin	Norse	son	KEEP					bare kinship term
+6756	Odin	Norse	husband	KEEP					bare kinship term
+7335	Danel	Canaanite	king	TITLE_DUP			domain		full string already in domain
+7335	Danel	Canaanite	patriarch	TITLE_DUP			domain		full string already in domain
+7334	Kirta	Canaanite	king	TITLE_DUP			domain		full string already in domain
+7334	Kirta	Canaanite	husband	KEEP					bare kinship term
+7333	Milcom	Canaanite	national god	TITLE_DUP			domain		full string already in domain
+6117	Hermes	Greek	son of Zeus and Maia (the eldest Pleiad)	STRIP_TO_BARE	son	Zeus and Maia (the eldest Pleiad)			"son of X" pattern
+6117	Hermes	Greek	messenger of the gods	TITLE_MOVE				domain	title not present in any other field
+6117	Hermes	Greek	psychopomp (escorts souls to Hades)	TITLE_MOVE				domain	title not present in any other field
+6117	Hermes	Greek	god of trade, thieves, travelers, heralds	TITLE_MOVE				domain	title not present in any other field
+6117	Hermes	Greek	father of Pan (by various accounts)	STRIP_TO_BARE	father	Pan (by various accounts)			"father of X" pattern
+6117	Hermes	Greek	father of Hermaphroditus (by Aphrodite)	STRIP_TO_BARE	father	Hermaphroditus (by Aphrodite)			"father of X" pattern
+7414	Daikokuten	Shinto	one of the Seven Lucky Gods	TITLE_MOVE				domain	title not present in any other field
+7414	Daikokuten	Shinto	syncretic combination of Mahākāla, Daikoku, Ōkuninushi	TITLE_MOVE				domain	title not present in any other field
+7414	Daikokuten	Shinto	often paired with Ebisu	TITLE_MOVE				domain	title not present in any other field
+7190	Aengus	Celtic	son	KEEP					bare kinship term
+7184	Brigid	Celtic	daughter	KEEP					bare kinship term
+7184	Brigid	Celtic	spouse	KEEP					bare kinship term
+7498	Cao Guojiu	Chinese	one of the Eight Immortals (the most recently added)	TITLE_MOVE				domain	title not present in any other field
+7498	Cao Guojiu	Chinese	brother of a Song empress	STRIP_TO_BARE	brother	a Song empress			"brother of X" pattern
+7498	Cao Guojiu	Chinese	patron of actors	TITLE_MOVE				domain	title not present in any other field
+7487	Chang'e	Chinese	goddess of the moon	TITLE_DUP			domain		"moon" already in domain
+7487	Chang'e	Chinese	wife of the archer Hou Yi	STRIP_TO_BARE	wife	the archer Hou Yi			"wife of X" pattern
+7487	Chang'e	Chinese	dweller in the moon-palace	TITLE_MOVE				domain	title not present in any other field
+6831	Fangfeng	Chinese	spouse	KEEP					bare kinship term
+6665	Fuxi	Chinese	first of the Three Sovereigns (San Huang)	TITLE_MOVE				domain (or identification)	title not present in any other field
+6665	Fuxi	Chinese	brother-husband of Nüwa	TITLE_MOVE				domain	title not present in any other field
+6665	Fuxi	Chinese	culture-hero and inventor	TITLE_MOVE				character_trait	title not present in any other field
+6671	Gonggong	Chinese	water-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+6671	Gonggong	Chinese	adversary of Zhurong (and/or Zhuanxu)	TITLE_MOVE				domain	title not present in any other field
+6671	Gonggong	Chinese	his destruction of Mount Buzhou necessitated Nüwa's cosmic repair	TITLE_MOVE				domain	title not present in any other field
+7493	Guanyin	Chinese	bodhisattva-goddess of compassion	TITLE_DUP			domain		"compassion" already in domain
+7493	Guanyin	Chinese	Chinese form of Avalokiteśvara	TITLE_MOVE				domain	title not present in any other field
+7493	Guanyin	Chinese	in the Miaoshan legend, the third daughter of King Miaozhuang	TITLE_MOVE				character_trait	title not present in any other field
+6935	Heng and Ha	Chinese	spouse	KEEP					bare kinship term
+7446	Mercury	Roman	identified with Hermes	TITLE_MOVE				domain	title not present in any other field
+7446	Mercury	Roman	son of Jupiter and Maia	STRIP_TO_BARE	son	Jupiter and Maia			"son of X" pattern
+7446	Mercury	Roman	psychopomp	TITLE_DUP			character_trait		full string already in character_trait
+7446	Mercury	Roman	messenger of the gods	TITLE_MOVE				domain	title not present in any other field
+7446	Mercury	Roman	patron of merchants and thieves	TITLE_DUP			domain		"thieves" already in domain
+7457	Vertumnus	Roman	Etruscan Voltumna imported	TITLE_MOVE				domain	title not present in any other field
+7457	Vertumnus	Roman	husband of Pomona	STRIP_TO_BARE	husband	Pomona			"husband of X" pattern
+7499	Lan Caihe	Chinese	one of the Eight Immortals	TITLE_MOVE				domain	title not present in any other field
+7499	Lan Caihe	Chinese	the ambiguously-gendered eccentric of the group	TITLE_MOVE				domain	title not present in any other field
+7499	Lan Caihe	Chinese	patron of florists	TITLE_MOVE				domain	title not present in any other field
+6515	Ma Yuan	Chinese	spouse	KEEP					bare kinship term
+6624	Niulang	Chinese	spouse	KEEP					bare kinship term
+6650	Pangu	Chinese	primordial cosmic giant	TITLE_MOVE				domain	title not present in any other field
+6650	Pangu	Chinese	the first being	TITLE_MOVE				domain	title not present in any other field
+6650	Pangu	Chinese	his body became the physical world	TITLE_MOVE				domain	title not present in any other field
+6945	Qu Yuan	Chinese	spouse	KEEP					bare kinship term
+6258	Randeng Daoren	Chinese	spouse	KEEP					bare kinship term
+7489	Yao	Chinese	one of the Five Emperors / sage-kings	TITLE_MOVE				character_trait	title not present in any other field
+7489	Yao	Chinese	father of the unworthy Danzhu	STRIP_TO_BARE	father	the unworthy Danzhu			"father of X" pattern
+7489	Yao	Chinese	abdicated to Shun (gave him his two daughters in marriage)	TITLE_MOVE				domain	title not present in any other field
+6914	The Divine Twins	Cross-cultural	sibling	KEEP					bare kinship term
+6552	Zhenyuan Daxian	Chinese	spouse	KEEP					bare kinship term
+6123	Semachos	Greek	spouse	KEEP					bare kinship term
+7470	Chalchiuhtlicue	Aztec	sister-wife of Tlaloc	TITLE_MOVE				domain	title not present in any other field
+7470	Chalchiuhtlicue	Aztec	goddess of fresh water	TITLE_DUP			domain		"water" already in domain
+7470	Chalchiuhtlicue	Aztec	fourth sun in the Five Suns	TITLE_MOVE				domain	title not present in any other field
+7403	Ammit	Egyptian	judgment-hall-attendant	TITLE_MOVE				domain	title not present in any other field
+7403	Ammit	Egyptian	annihilator of the unjustified	TITLE_MOVE				domain	title not present in any other field
+7471	Coyolxauhqui	Aztec	daughter of Coatlicue	STRIP_TO_BARE	daughter	Coatlicue			"daughter of X" pattern
+7471	Coyolxauhqui	Aztec	sister of Huitzilopochtli	STRIP_TO_BARE	sister	Huitzilopochtli			"sister of X" pattern
+7471	Coyolxauhqui	Aztec	sister of the 400 Centzon Huitznahua	STRIP_TO_BARE	sister	the 400 Centzon Huitznahua			"sister of X" pattern
+7471	Coyolxauhqui	Aztec	moon-goddess	TITLE_MOVE				domain (or identification)	title not present in any other field
+7407	Kauket	Egyptian	Ogdoad pair-member with Kuk	TITLE_MOVE				domain	title not present in any other field
+7407	Kauket	Egyptian	primordial darkness	TITLE_DUP			domain		full string already in domain
+6574	Nezha	Chinese	son of General Li Jing and Lady Yin	STRIP_TO_BARE	son	General Li Jing and Lady Yin			"son of X" pattern
+6574	Nezha	Chinese	disciple of Taiyi Zhenren	TITLE_MOVE				domain	title not present in any other field
+6574	Nezha	Chinese	marshal of the celestial army	TITLE_MOVE				domain	title not present in any other field
+6574	Nezha	Chinese	resurrected with a lotus-body	TITLE_MOVE				domain	title not present in any other field
+7400	Nephthys	Egyptian	daughter of Geb and Nut	STRIP_TO_BARE	daughter	Geb and Nut			"daughter of X" pattern
+7400	Nephthys	Egyptian	sister-wife of Set	TITLE_MOVE				domain	title not present in any other field
+7400	Nephthys	Egyptian	sister of Isis and Osiris	STRIP_TO_BARE	sister	Isis and Osiris			"sister of X" pattern
+7400	Nephthys	Egyptian	mother of Anubis (by Osiris in Plutarch; by Set in other versions)	STRIP_TO_BARE	mother	Anubis (by Osiris in Plutarch; by Set in other versions)			"mother of X" pattern
+7400	Nephthys	Egyptian	canopic-jar protectress	TITLE_MOVE				domain	title not present in any other field
+7294	Mummu	Mesopotamian	vizier	TITLE_DUP			domain		full string already in domain
+7294	Mummu	Mesopotamian	advisor	TITLE_MOVE				domain	title not present in any other field
+7371	Brahma	Hindu	creator-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7371	Brahma	Hindu	husband of Sarasvatī	STRIP_TO_BARE	husband	Sarasvatī			"husband of X" pattern
+7371	Brahma	Hindu	father of the Saptaṛṣis	STRIP_TO_BARE	father	the Saptaṛṣis			"father of X" pattern
+7371	Brahma	Hindu	Trimūrti member	TITLE_MOVE				domain	title not present in any other field
+6906	Ptah	Egyptian	supreme creator (Memphite theology)	TITLE_MOVE				domain	title not present in any other field
+6906	Ptah	Egyptian	husband of Sekhmet	STRIP_TO_BARE	husband	Sekhmet			"husband of X" pattern
+6906	Ptah	Egyptian	father of Nefertem	STRIP_TO_BARE	father	Nefertem			"father of X" pattern
+6906	Ptah	Egyptian	member of the Memphite triad	TITLE_MOVE				domain	title not present in any other field
+7422	Ares	Greek	son of Zeus and Hera	STRIP_TO_BARE	son	Zeus and Hera			"son of X" pattern
+7422	Ares	Greek	lover of Aphrodite	TITLE_MOVE				domain	title not present in any other field
+7422	Ares	Greek	father of Eros, Phobos, Deimos, Harmonia (by Aphrodite)	STRIP_TO_BARE	father	Eros, Phobos, Deimos, Harmonia (by Aphrodite)			"father of X" pattern
+7422	Ares	Greek	god of war	TITLE_MOVE				domain	title not present in any other field
+7432	Amphitrite	Greek	daughter of Nereus and Doris	STRIP_TO_BARE	daughter	Nereus and Doris			"daughter of X" pattern
+7432	Amphitrite	Greek	one of the fifty Nereids	TITLE_DUP			domain		full string already in domain
+7432	Amphitrite	Greek	wife of Poseidon	STRIP_TO_BARE	wife	Poseidon			"wife of X" pattern
+7432	Amphitrite	Greek	mother of Triton	STRIP_TO_BARE	mother	Triton			"mother of X" pattern
+6127	Demeter	Greek	daughter of Cronus and Rhea	STRIP_TO_BARE	daughter	Cronus and Rhea			"daughter of X" pattern
+6127	Demeter	Greek	sister of Zeus, Hera, Poseidon, Hades, Hestia	STRIP_TO_BARE	sister	Zeus, Hera, Poseidon, Hades, Hestia			"sister of X" pattern
+6127	Demeter	Greek	mother of Persephone (by Zeus)	STRIP_TO_BARE	mother	Persephone (by Zeus)			"mother of X" pattern
+6127	Demeter	Greek	mother of Plutus (by Iasion)	STRIP_TO_BARE	mother	Plutus (by Iasion)			"mother of X" pattern
+6127	Demeter	Greek	mother of Despoina and the horse Areion (by Poseidon)	STRIP_TO_BARE	mother	Despoina and the horse Areion (by Poseidon)			"mother of X" pattern
+6099	Cronus	Greek	youngest son of Ouranos and Gaia	TITLE_MOVE				domain	title not present in any other field
+6099	Cronus	Greek	husband of Rhea (his sister)	STRIP_TO_BARE	husband	Rhea (his sister)			"husband of X" pattern
+6099	Cronus	Greek	father of the first six Olympians	STRIP_TO_BARE	father	the first six Olympians			"father of X" pattern
+6099	Cronus	Greek	Titan king before Zeus	TITLE_MOVE				character_trait	title not present in any other field
+6632	Erlang Shen	Chinese	nephew of the Jade Emperor	TITLE_MOVE				domain	title not present in any other field
+6632	Erlang Shen	Chinese	master of the Howling Celestial Dog	TITLE_MOVE				domain	title not present in any other field
+6632	Erlang Shen	Chinese	three-eyed warrior-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7484	Xiwangmu	Chinese	Queen Mother of the West	TITLE_MOVE				character_trait	title not present in any other field
+7484	Xiwangmu	Chinese	goddess of Mount Kunlun and the western paradise	TITLE_DUP			domain		"paradise" already in domain
+7484	Xiwangmu	Chinese	keeper of the peaches of immortality	TITLE_DUP			domain		"immortality" already in domain
+7484	Xiwangmu	Chinese	ruler of the female immortals	TITLE_MOVE				domain	title not present in any other field
+7484	Xiwangmu	Chinese	consort of the Jade Emperor (popular tradition)	STRIP_TO_BARE	consort	the Jade Emperor (popular tradition)			"consort of X" pattern
+7480	Centeotl	Aztec	son of Tlazolteotl in some accounts; son of Piltzintecuhtli and Xochiquetzal in others	STRIP_TO_BARE	son	Tlazolteotl in some accounts; son of Piltzintecuhtli and Xochiquetzal in others			"son of X" pattern
+7480	Centeotl	Aztec	maize-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7426	Ouranos	Greek	primordial sky-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7426	Ouranos	Greek	parthenogenetic son of Gaia	TITLE_MOVE				domain	title not present in any other field
+7426	Ouranos	Greek	mate of Gaia	TITLE_MOVE				domain	title not present in any other field
+7426	Ouranos	Greek	father of the Titans, Cyclopes, Hekatonkheires; from his castration the Erinyes, Giants, and Aphrodite emerged	STRIP_TO_BARE	father	the Titans, Cyclopes, Hekatonkheires; from his castration the Erinyes, Giants, and Aphrodite emerged			"father of X" pattern
+7436	Tyche	Greek	daughter of Oceanus (Hesiod) or of Zeus (Pindar)	STRIP_TO_BARE	daughter	Oceanus (Hesiod) or of Zeus (Pindar)			"daughter of X" pattern
+7436	Tyche	Greek	Hellenistic-age cosmic-fortune-deity	TITLE_MOVE				domain (or identification)	title not present in any other field
+7514	Q'uq'umatz	Maya	the Feathered Serpent of the K'iche' Maya	TITLE_MOVE				domain	title not present in any other field
+7514	Q'uq'umatz	Maya	a creator-deity of the Popol Vuh	TITLE_MOVE				domain (or identification)	title not present in any other field
+7514	Q'uq'umatz	Maya	cognate of Kukulkan and Quetzalcoatl	TITLE_MOVE				domain	title not present in any other field
+7386	Agni	Hindu	fire-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7386	Agni	Hindu	one of the eight Vasus	TITLE_MOVE				domain	title not present in any other field
+7386	Agni	Hindu	grandson of the waters	TITLE_MOVE				domain	title not present in any other field
+7386	Agni	Hindu	priest of the gods	TITLE_MOVE				character_trait	title not present in any other field
+6681	Set	Egyptian	son	KEEP					bare kinship term
+6681	Set	Egyptian	husband	KEEP					bare kinship term
+6679	Goumang	Chinese	spouse	KEEP					bare kinship term
+6132	Durga	Hindu	supreme goddess	TITLE_MOVE				domain	title not present in any other field
+6132	Durga	Hindu	consort of Śiva	STRIP_TO_BARE	consort	Śiva			"consort of X" pattern
+6132	Durga	Hindu	mother of Gaṇeśa and Skanda	STRIP_TO_BARE	mother	Gaṇeśa and Skanda			"mother of X" pattern
+7375	Ganesha	Hindu	son of Śiva and Pārvatī	STRIP_TO_BARE	son	Śiva and Pārvatī			"son of X" pattern
+7375	Ganesha	Hindu	brother of Skanda/Kārtikeya	STRIP_TO_BARE	brother	Skanda/Kārtikeya			"brother of X" pattern
+7375	Ganesha	Hindu	lord of the gaṇas	TITLE_MOVE				domain (or identification)	title not present in any other field
+7375	Ganesha	Hindu	first-worshipped at every Hindu rite	TITLE_MOVE				domain	title not present in any other field
+7382	Hanuman	Hindu	son of Añjanā and Vāyu	STRIP_TO_BARE	son	Añjanā and Vāyu			"son of X" pattern
+7382	Hanuman	Hindu	vānara general	TITLE_MOVE				domain	title not present in any other field
+7382	Hanuman	Hindu	supreme devotee of Rāma	TITLE_MOVE				domain	title not present in any other field
+7382	Hanuman	Hindu	Cirañjīvī	TITLE_MOVE				domain	title not present in any other field
+7370	Vishnu	Hindu	supreme being	TITLE_DUP			domain		full string already in domain
+7370	Vishnu	Hindu	husband of Lakṣmī	STRIP_TO_BARE	husband	Lakṣmī			"husband of X" pattern
+7370	Vishnu	Hindu	father of countless avatars	STRIP_TO_BARE	father	countless avatars			"father of X" pattern
+7370	Vishnu	Hindu	Trimūrti member	TITLE_MOVE				domain	title not present in any other field
+6438	Azure Dragon	Chinese	spouse	KEEP					bare kinship term
+6541	Daode Tianzun	Chinese	third of the Three Pure Ones	TITLE_MOVE				domain	title not present in any other field
+6541	Daode Tianzun	Chinese	identified with the deified Laozi (Taishang Laojun)	TITLE_MOVE				domain	title not present in any other field
+6541	Daode Tianzun	Chinese	dwells in the Grand Pure heaven (Taiqing)	TITLE_MOVE				domain	title not present in any other field
+7166	Ishtadevata	Hindu	chosen personal deity	TITLE_DUP			domain		"personal deity" already in domain
+7377	Krishna	Hindu	eighth avatar of Viṣṇu	TITLE_MOVE				domain	title not present in any other field
+7377	Krishna	Hindu	son of Devakī and Vasudeva	STRIP_TO_BARE	son	Devakī and Vasudeva			"son of X" pattern
+7377	Krishna	Hindu	foster-son of Yaśodā and Nanda	TITLE_MOVE				domain	title not present in any other field
+7377	Krishna	Hindu	brother of Balarāma	STRIP_TO_BARE	brother	Balarāma			"brother of X" pattern
+7377	Krishna	Hindu	beloved of Rādhā	TITLE_MOVE				domain	title not present in any other field
+7377	Krishna	Hindu	husband of Rukmiṇī	STRIP_TO_BARE	husband	Rukmiṇī			"husband of X" pattern
+7395	Kurma	Hindu	second avatar of Viṣṇu	TITLE_MOVE				domain	title not present in any other field
+7395	Kurma	Hindu	cosmic-foundation-supporter	TITLE_MOVE				domain	title not present in any other field
+7380	Sita	Hindu	wife of Rāma	STRIP_TO_BARE	wife	Rāma			"wife of X" pattern
+7380	Sita	Hindu	daughter of Earth-mother/King Janaka	STRIP_TO_BARE	daughter	Earth-mother/King Janaka			"daughter of X" pattern
+7380	Sita	Hindu	mother of Lava and Kuśa	STRIP_TO_BARE	mother	Lava and Kuśa			"mother of X" pattern
+7380	Sita	Hindu	avatar of Lakṣmī	TITLE_MOVE				domain	title not present in any other field
+7170	Surya Majapahit	Hindu	solar emblem of Majapahit royalty	TITLE_DUP			domain		"royalty" already in domain
+7485	Huangdi	Chinese	the Yellow Emperor	TITLE_MOVE				domain	title not present in any other field
+7485	Huangdi	Chinese	first of the Five Emperors	TITLE_MOVE				domain	title not present in any other field
+7485	Huangdi	Chinese	legendary ancestor of the Han Chinese	TITLE_MOVE				domain	title not present in any other field
+7485	Huangdi	Chinese	husband of Leizu (inventor of silk)	STRIP_TO_BARE	husband	Leizu (inventor of silk)			"husband of X" pattern
+7391	Ushas	Hindu	dawn-goddess	TITLE_MOVE				domain (or identification)	title not present in any other field
+7391	Ushas	Hindu	daughter of Dyaus	STRIP_TO_BARE	daughter	Dyaus			"daughter of X" pattern
+7391	Ushas	Hindu	sister/companion of Aśvin-twins	TITLE_MOVE				domain	title not present in any other field
+7307	Ninurta	Mesopotamian	son	KEEP					bare kinship term
+7307	Ninurta	Mesopotamian	warrior	TITLE_DUP			domain		full string already in domain
+7439	Echidna	Greek	daughter of Phorcys and Ceto (Hesiod) or Tartarus and Gaia (alternative)	STRIP_TO_BARE	daughter	Phorcys and Ceto (Hesiod) or Tartarus and Gaia (alternative)			"daughter of X" pattern
+7439	Echidna	Greek	mate of Typhon	TITLE_DUP			domain		full string already in domain
+7439	Echidna	Greek	mother of most Greek monsters	STRIP_TO_BARE	mother	most Greek monsters			"mother of X" pattern
+6797	Myiagros	Greek	spouse	KEEP					bare kinship term
+6880	Lýtir	Norse	spouse	KEEP					bare kinship term
+6446	Lycurgus	Greek	spouse	KEEP					bare kinship term
+7442	Chimera	Greek	daughter of Typhon and Echidna	STRIP_TO_BARE	daughter	Typhon and Echidna			"daughter of X" pattern
+7442	Chimera	Greek	sibling of Hydra, Cerberus, Orthus, Nemean lion	STRIP_TO_BARE	sibling	Hydra, Cerberus, Orthus, Nemean lion			"sibling of X" pattern
+7442	Chimera	Greek	slain by Bellerophon	TITLE_MOVE				domain	title not present in any other field
+7513	Kukulkan	Maya	the Feathered Serpent of the Yucatec Maya	TITLE_MOVE				domain	title not present in any other field
+7513	Kukulkan	Maya	cognate of the Aztec Quetzalcoatl and the K'iche' Q'uq'umatz	TITLE_MOVE				domain	title not present in any other field
+7311	Asalluhi	Mesopotamian	son	KEEP					bare kinship term
+7300	Damkina	Mesopotamian	wife	KEEP					bare kinship term
+7443	Minotaur	Greek	son of Pasiphae (queen of Crete) and the Cretan Bull	STRIP_TO_BARE	son	Pasiphae (queen of Crete) and the Cretan Bull			"son of X" pattern
+7443	Minotaur	Greek	step-son of King Minos	TITLE_MOVE				character_trait	title not present in any other field
+7443	Minotaur	Greek	slain by Theseus	TITLE_MOVE				domain	title not present in any other field
+7322	Shahar	Canaanite	son	KEEP					bare kinship term
+7322	Shahar	Canaanite	twin	KEEP					bare kinship term
+7299	Enki	Mesopotamian	son	KEEP					bare kinship term
+7299	Enki	Mesopotamian	husband	KEEP					bare kinship term
+6135	Mei Bo	Chinese	spouse	KEEP					bare kinship term
+7318	Enkidu	Mesopotamian	companion	TITLE_MOVE				domain	title not present in any other field
+6137	Aruru	Mesopotamian	creator	TITLE_MOVE				domain	title not present in any other field
+7301	Ninhursag	Mesopotamian	spouse	KEEP					bare kinship term
+7105	Annar	Norse	husband of Nótt	STRIP_TO_BARE	husband	Nótt			"husband of X" pattern
+7105	Annar	Norse	father of Jǫrð	STRIP_TO_BARE	father	Jǫrð			"father of X" pattern
+7186	Manannán mac Lir	Celtic	son	KEEP					bare kinship term
+7119	Bound monster	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+7119	Bound monster	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+7093	Freyja	Norse	daughter	KEEP					bare kinship term
+7093	Freyja	Norse	wife	KEEP					bare kinship term
+7099	Forseti	Norse	son	KEEP					bare kinship term
+7099	Forseti	Norse	god of justice	TITLE_DUP			domain		"justice" already in domain
+7094	Freyr	Norse	son	KEEP					bare kinship term
+7094	Freyr	Norse	husband	KEEP					bare kinship term
+7094	Freyr	Norse	god of fertility and prosperity	TITLE_DUP			domain		"prosperity" already in domain
+7255	Batara Kala	Balinese	son	KEEP					bare kinship term
+6322	Jade Emperor	Chinese	supreme ruler of Heaven	TITLE_DUP			domain		"heaven" already in domain
+6322	Jade Emperor	Chinese	head of the celestial bureaucracy	TITLE_MOVE				domain	title not present in any other field
+6322	Jade Emperor	Chinese	formally subordinate to the Three Pure Ones	TITLE_MOVE				domain	title not present in any other field
+6322	Jade Emperor	Chinese	husband of the Queen Mother of the West in popular tradition	STRIP_TO_BARE	husband	the Queen Mother of the West in popular tradition			"husband of X" pattern
+7231	Men	Phrygian	Anatolian/Phrygian moon-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7231	Men	Phrygian	governor of the months	TITLE_MOVE				domain	title not present in any other field
+6324	Wufang Guidi	Chinese	spouse	KEEP					bare kinship term
+7394	Matsya	Hindu	first avatar of Viṣṇu	TITLE_MOVE				domain	title not present in any other field
+7394	Matsya	Hindu	protector of Manu	TITLE_MOVE				domain	title not present in any other field
+7394	Matsya	Hindu	preserver of the Vedas	TITLE_MOVE				domain	title not present in any other field
+7269	Vesta	Roman	identified with Hestia	TITLE_MOVE				domain	title not present in any other field
+7269	Vesta	Roman	first-born of Saturn and Ops; first-swallowed	TITLE_MOVE				domain	title not present in any other field
+7269	Vesta	Roman	virgin goddess (her vow guarded by the Vestal Virgins on earth)	TITLE_MOVE				domain	title not present in any other field
+7269	Vesta	Roman	indigenous Roman as Latin Vesta predating the Hestia-interpretatio	TITLE_MOVE				domain	title not present in any other field
+7363	Surt	Norse	fire-giant	TITLE_MOVE				domain	title not present in any other field
+7363	Surt	Norse	eschatological adversary	TITLE_MOVE				domain	title not present in any other field
+6749	Norns	Norse	fate-spinners	TITLE_MOVE				domain	title not present in any other field
+6749	Norns	Norse	collective	TITLE_MOVE				domain	title not present in any other field
+7360	Ymir	Norse	primordial ancestor of giants	TITLE_DUP			domain		"giants" already in domain
+7360	Ymir	Norse	sacrificial cosmos-body	TITLE_MOVE				domain	title not present in any other field
+7491	Mazu	Chinese	goddess of the sea	TITLE_MOVE				domain	title not present in any other field
+7491	Mazu	Chinese	deified from the historical/legendary Lin Moniang	TITLE_MOVE				domain	title not present in any other field
+7491	Mazu	Chinese	commander of Qianliyan and Shunfeng'er	TITLE_MOVE				domain	title not present in any other field
+7491	Mazu	Chinese	titled Tianhou, Empress of Heaven	TITLE_MOVE				domain	title not present in any other field
+6241	Khonsu	Egyptian	son of Amun and Mut	STRIP_TO_BARE	son	Amun and Mut			"son of X" pattern
+6241	Khonsu	Egyptian	Theban triad member	TITLE_MOVE				domain	title not present in any other field
+6241	Khonsu	Egyptian	moon-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7451	Bacchus	Roman	identified with Dionysus and Liber	TITLE_MOVE				domain	title not present in any other field
+7451	Bacchus	Roman	son of Jupiter and Semele	STRIP_TO_BARE	son	Jupiter and Semele			"son of X" pattern
+7451	Bacchus	Roman	twice-born	TITLE_MOVE				domain	title not present in any other field
+7451	Bacchus	Roman	husband of Ariadne	STRIP_TO_BARE	husband	Ariadne			"husband of X" pattern
+6716	Guan Yu	Chinese	spouse	KEEP					bare kinship term
+6783	Asherah	Canaanite	wife	KEEP					bare kinship term
+6783	Asherah	Canaanite	creatress	TITLE_MOVE				domain	title not present in any other field
+6783	Asherah	Canaanite	queen	TITLE_DUP			character_trait		full string already in character_trait
+6090	Hathor	Egyptian	daughter of Ra (in some genealogies)	STRIP_TO_BARE	daughter	Ra (in some genealogies)			"daughter of X" pattern
+6090	Hathor	Egyptian	consort of Horus (especially at Edfu)	STRIP_TO_BARE	consort	Horus (especially at Edfu)			"consort of X" pattern
+6090	Hathor	Egyptian	mother of Ihy (the sistrum-rattler)	STRIP_TO_BARE	mother	Ihy (the sistrum-rattler)			"mother of X" pattern
+6090	Hathor	Egyptian	Eye of Ra	TITLE_MOVE				domain	title not present in any other field
+6752	Tuisto	Germanic	the earth-born primordial god of the Germanic peoples	TITLE_MOVE				domain	title not present in any other field
+6752	Tuisto	Germanic	father of Mannus	STRIP_TO_BARE	father	Mannus			"father of X" pattern
+7219	Avalokiteshvara	Buddhist	bodhisattva of compassion	TITLE_DUP			domain		"compassion" already in domain
+7219	Avalokiteshvara	Buddhist	spiritual son of the Buddha Amitābha	TITLE_MOVE				identification	title not present in any other field
+7219	Avalokiteshvara	Buddhist	East Asian form: Guanyin/Kannon	TITLE_MOVE				domain	title not present in any other field
+7455	Faunus	Roman	indigenous Italic god	TITLE_MOVE				domain	title not present in any other field
+7455	Faunus	Roman	identified with Pan	TITLE_MOVE				domain	title not present in any other field
+7455	Faunus	Roman	grandfather of Latinus (Virgil)	TITLE_MOVE				domain	title not present in any other field
+7455	Faunus	Roman	sometimes called son of Picus (the woodpecker-deity)	TITLE_MOVE				domain (or identification)	title not present in any other field
+6119	Ra	Egyptian	spouse	KEEP					bare kinship term
+6856	Phra Kalachai Si	Hindu	time-deity in Thai Hindu syncretism	TITLE_MOVE				domain (or identification)	title not present in any other field
+7169	Kuladevata	Hindu	family/lineage deity	TITLE_DUP			domain		"deity" already in domain
+7450	Saturn	Roman	identified with Cronus	TITLE_MOVE				domain	title not present in any other field
+7450	Saturn	Roman	husband-brother of Ops	TITLE_MOVE				domain	title not present in any other field
+7450	Saturn	Roman	father of Jupiter, Juno, Neptune, Pluto, Ceres, Vesta	STRIP_TO_BARE	father	Jupiter, Juno, Neptune, Pluto, Ceres, Vesta			"father of X" pattern
+7450	Saturn	Roman	Italic ruler of Latium during the Golden Age (uniquely Roman tradition)	TITLE_MOVE				domain	title not present in any other field
+6528	Victoria	Roman	spouse	KEEP					bare kinship term
+7441	Cerberus	Greek	son of Typhon and Echidna	STRIP_TO_BARE	son	Typhon and Echidna			"son of X" pattern
+7441	Cerberus	Greek	sibling of Hydra, Chimera, Orthus, Nemean lion	STRIP_TO_BARE	sibling	Hydra, Chimera, Orthus, Nemean lion			"sibling of X" pattern
+7441	Cerberus	Greek	guardian of Hades	TITLE_MOVE				domain	title not present in any other field
+7456	Silvanus	Roman	indigenous Italic god	TITLE_MOVE				domain	title not present in any other field
+7456	Silvanus	Roman	not in the state-cult	TITLE_DUP			character_trait		"state-cult" already in character_trait
+7456	Silvanus	Roman	popular among common people	TITLE_DUP			character_trait		"people" already in character_trait
+7378	Radha	Hindu	eternal beloved of Kṛṣṇa	TITLE_MOVE				domain	title not present in any other field
+7378	Radha	Hindu	chief gopī	TITLE_MOVE				domain	title not present in any other field
+7378	Radha	Hindu	wife of the cowherd Āyana	STRIP_TO_BARE	wife	the cowherd Āyana			"wife of X" pattern
+7448	Neptune	Roman	identified with Poseidon	TITLE_MOVE				domain	title not present in any other field
+7448	Neptune	Roman	son of Saturn and Ops	STRIP_TO_BARE	son	Saturn and Ops			"son of X" pattern
+7448	Neptune	Roman	brother of Jupiter, Pluto, Juno, Ceres, Vesta	STRIP_TO_BARE	brother	Jupiter, Pluto, Juno, Ceres, Vesta			"brother of X" pattern
+7413	Jimmu	Shinto	son of Ugayafukiaezu and Tamayori-hime	STRIP_TO_BARE	son	Ugayafukiaezu and Tamayori-hime			"son of X" pattern
+7413	Jimmu	Shinto	great-grandson of Ninigi	TITLE_MOVE				domain	title not present in any other field
+7413	Jimmu	Shinto	legendary first emperor	TITLE_DUP			character_trait		"emperor" already in character_trait
+7413	Jimmu	Shinto	founder of the Yamato imperial dynasty	TITLE_MOVE				domain	title not present in any other field
+6246	Hera	Greek	queen of the gods	TITLE_MOVE				character_trait	title not present in any other field
+6246	Hera	Greek	youngest daughter of Cronus and Rhea	TITLE_MOVE				domain	title not present in any other field
+6246	Hera	Greek	wife of Zeus (and his sister)	STRIP_TO_BARE	wife	Zeus (and his sister)			"wife of X" pattern
+6246	Hera	Greek	mother of Ares, Hebe, Eileithyia, Hephaestus	STRIP_TO_BARE	mother	Ares, Hebe, Eileithyia, Hephaestus			"mother of X" pattern
+7268	Amun	Egyptian	Hermopolitan Ogdoad pair-member (with Amunet)	TITLE_MOVE				domain	title not present in any other field
+7268	Amun	Egyptian	Theban triad father (with Mut and Khonsu)	TITLE_MOVE				domain	title not present in any other field
+7268	Amun	Egyptian	supreme imperial god of New Kingdom Egypt	TITLE_MOVE				character_trait	title not present in any other field
+6148	Visvedevas	Hindu	all-gods collective	TITLE_DUP			domain		"collective" already in domain
+7505	Ksitigarbha	Buddhist	bodhisattva of the hell-beings and of vows	TITLE_DUP			domain		"vows" already in domain
+7505	Ksitigarbha	Buddhist	East Asian forms: Dizang (Chinese), Jizō (Japanese)	TITLE_MOVE				domain	title not present in any other field
+7226	Barbelo	Gnostic	the first emanation of the Monad	TITLE_MOVE				identification	title not present in any other field
+7226	Barbelo	Gnostic	the supreme feminine principle of Sethian Gnosticism	TITLE_MOVE				domain	title not present in any other field
+7226	Barbelo	Gnostic	the source of the further aeons (including, ultimately, Sophia)	TITLE_MOVE				domain	title not present in any other field
+7507	Bhaisajyaguru	Buddhist	the Medicine Buddha	TITLE_MOVE				identification	title not present in any other field
+7507	Bhaisajyaguru	Buddhist	presiding Buddha of the eastern pure land	TITLE_MOVE				identification	title not present in any other field
+7253	Mot	Canaanite	son	KEEP					bare kinship term
+7253	Mot	Canaanite	adversary	TITLE_MOVE				domain	title not present in any other field
+7253	Mot	Canaanite	king of the dead	TITLE_DUP			character_trait		"the dead" already in character_trait
+6154	Heracles	Greek	son of Zeus and Alcmene	STRIP_TO_BARE	son	Zeus and Alcmene			"son of X" pattern
+6154	Heracles	Greek	step-son of Amphitryon	TITLE_MOVE				domain	title not present in any other field
+6154	Heracles	Greek	married three times (Megara, Deianeira, Hebe)	TITLE_MOVE				domain	title not present in any other field
+6154	Heracles	Greek	greatest of Greek heroes	TITLE_MOVE				character_trait	title not present in any other field
+6154	Heracles	Greek	deified at death — ascended to Olympus	TITLE_MOVE				domain	title not present in any other field
+7347	Mastema	Abrahamic	prince of evil spirits	TITLE_DUP			domain		"evil spirits" already in domain
+7525	Camazotz	Maya	the Death Bat of Xibalba	TITLE_DUP			domain		"xibalba" already in domain
+7525	Camazotz	Maya	the danger of the House of Bats	TITLE_DUP			domain		"bats" already in domain
+6157	Venus	Roman	identified with Aphrodite	TITLE_MOVE				domain	title not present in any other field
+6157	Venus	Roman	mother of Cupid	STRIP_TO_BARE	mother	Cupid			"mother of X" pattern
+6157	Venus	Roman	mother of Aeneas (by Anchises)	STRIP_TO_BARE	mother	Aeneas (by Anchises)			"mother of X" pattern
+6157	Venus	Roman	divine ancestress of the Julian gens (Caesar, Augustus)	TITLE_MOVE				domain	title not present in any other field
+6254	Satan	Abrahamic	adversary	TITLE_MOVE				domain	title not present in any other field
+6254	Satan	Abrahamic	accuser	TITLE_MOVE				domain	title not present in any other field
+6254	Satan	Abrahamic	prince of demons (in NT terminology)	TITLE_MOVE				character_trait	title not present in any other field
+6254	Satan	Abrahamic	fallen angel (in Christian theology)	TITLE_MOVE				identification	title not present in any other field
+6633	Old Man of the South Pole	Chinese	spouse	KEEP					bare kinship term
+7212	Acintya	Balinese	the supreme formless god of Balinese Hinduism	TITLE_MOVE				domain	title not present in any other field
+7212	Acintya	Balinese	the source from whom all other gods emanate	TITLE_MOVE				domain	title not present in any other field
+7196	Baal	Canaanite	son	KEEP					bare kinship term
+7196	Baal	Canaanite	spouse	KEEP					bare kinship term
+7176	Village deities of South India	Hindu	village-goddess collective	TITLE_MOVE				domain (or identification)	title not present in any other field
+6159	Maori Xingguan	Chinese	spouse	KEEP					bare kinship term
+7218	Mara	Buddhist	the adversary of awakening	TITLE_MOVE				domain	title not present in any other field
+7218	Mara	Buddhist	father of Taṇhā, Arati, and Rāga	STRIP_TO_BARE	father	Taṇhā, Arati, and Rāga			"father of X" pattern
+7392	Narasimha	Hindu	fourth avatar of Viṣṇu	TITLE_MOVE				domain	title not present in any other field
+7438	Typhon	Greek	son of Gaia and Tartarus	STRIP_TO_BARE	son	Gaia and Tartarus			"son of X" pattern
+7438	Typhon	Greek	mate of Echidna	TITLE_MOVE				domain	title not present in any other field
+7438	Typhon	Greek	father (with Echidna) of Cerberus, Hydra, Chimera, Sphinx, Nemean lion	TITLE_MOVE				domain	title not present in any other field
+7195	El	Canaanite	king	TITLE_DUP			domain		full string already in domain
+7195	El	Canaanite	patriarch	TITLE_MOVE				domain	title not present in any other field
+7195	El	Canaanite	spouse	KEEP					bare kinship term
+7494	Lu Dongbin	Chinese	de facto leader of the Eight Immortals	TITLE_MOVE				domain	title not present in any other field
+7494	Lu Dongbin	Chinese	disciple of Zhongli Quan	TITLE_MOVE				domain	title not present in any other field
+7494	Lu Dongbin	Chinese	patriarch of the Quanzhen Daoist school	TITLE_MOVE				domain	title not present in any other field
+6240	Mut	Egyptian	consort of Amun	STRIP_TO_BARE	consort	Amun			"consort of X" pattern
+6240	Mut	Egyptian	mother of Khonsu	STRIP_TO_BARE	mother	Khonsu			"mother of X" pattern
+6240	Mut	Egyptian	Theban triad member	TITLE_MOVE				domain	title not present in any other field
+7188	Macha	Celtic	daughter	KEEP					bare kinship term
+6160	Uriel	Abrahamic	archangel	TITLE_MOVE				domain	title not present in any other field
+6421	Šanta	Greek	spouse	KEEP					bare kinship term
+6302	Sekhmet	Egyptian	Eye of Ra	TITLE_MOVE				domain	title not present in any other field
+6302	Sekhmet	Egyptian	consort of Ptah	STRIP_TO_BARE	consort	Ptah			"consort of X" pattern
+6302	Sekhmet	Egyptian	mother of Nefertem	STRIP_TO_BARE	mother	Nefertem			"mother of X" pattern
+6302	Sekhmet	Egyptian	Memphite triad member	TITLE_MOVE				domain	title not present in any other field
+6302	Sekhmet	Egyptian	plague-and-healing patron	TITLE_MOVE				domain	title not present in any other field
+6161	Persephone (Kore)	Greek	daughter of Demeter and Zeus	STRIP_TO_BARE	daughter	Demeter and Zeus			"daughter of X" pattern
+6161	Persephone (Kore)	Greek	wife of Hades	STRIP_TO_BARE	wife	Hades			"wife of X" pattern
+6161	Persephone (Kore)	Greek	Queen of the Underworld for half the year	TITLE_MOVE				character_trait	title not present in any other field
+6161	Persephone (Kore)	Greek	Kore (Maiden) for the other half	TITLE_MOVE				domain	title not present in any other field
+6654	Atum	Egyptian	spouse	KEEP					bare kinship term
+7460	Aesculapius	Roman	identified with Asclepius	TITLE_MOVE				domain	title not present in any other field
+7460	Aesculapius	Roman	son of Apollo	STRIP_TO_BARE	son	Apollo			"son of X" pattern
+7460	Aesculapius	Roman	father of Hygieia, Panacea, Iaso	STRIP_TO_BARE	father	Hygieia, Panacea, Iaso			"father of X" pattern
+7228	Norea	Gnostic	daughter of Adam and Eve	STRIP_TO_BARE	daughter	Adam and Eve			"daughter of X" pattern
+7228	Norea	Gnostic	sister or wife of Seth	TITLE_MOVE				domain	title not present in any other field
+7228	Norea	Gnostic	a redeemed and revelation-bearing figure of the Sethian texts	TITLE_MOVE				domain	title not present in any other field
+7526	Yum Kaax	Maya	Yucatec Maya god of the forest and of maize	TITLE_DUP			domain		"maize" already in domain
+7526	Yum Kaax	Maya	the youthful Maize God	TITLE_MOVE				domain	title not present in any other field
+7526	Yum Kaax	Maya	related to Hun Hunahpu the resurrected Maize God	TITLE_MOVE				domain	title not present in any other field
+7308	Adad	Mesopotamian	son	KEEP					bare kinship term
+7308	Adad	Mesopotamian	warrior	TITLE_MOVE				character_trait	title not present in any other field
+7308	Adad	Mesopotamian	storm-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7479	Itzpapalotl	Aztec	ruler of the Tzitzimimeh	TITLE_DUP			character_trait		"tzitzimimeh" already in character_trait
+7479	Itzpapalotl	Aztec	patroness of women who died in childbirth	TITLE_MOVE				domain	title not present in any other field
+7159	Adityas	Hindu	sons of Aditi	TITLE_MOVE				domain	title not present in any other field
+7159	Adityas	Hindu	solar collective	TITLE_MOVE				domain	title not present in any other field
+7180	The Dagda	Celtic	spouse	KEEP					bare kinship term
+6689	Cybele	Phrygian	the Phrygian Great Mother	TITLE_DUP			domain		"mother" already in domain
+6689	Cybele	Phrygian	the Mother of the Gods	STRIP_TO_BARE	mother	the Gods			"mother of X" pattern
+6689	Cybele	Phrygian	bound in myth to Attis	TITLE_MOVE				domain	title not present in any other field
+6689	Cybele	Phrygian	identified by the Greeks with Rhea, and at Rome as Magna Mater	TITLE_MOVE				domain	title not present in any other field
+6144	Pothos	Greek	spouse	KEEP					bare kinship term
+6835	Hok Tek Cheng Sin	Chinese	spouse	KEEP					bare kinship term
+6841	Baimei Shen	Chinese	spouse	KEEP					bare kinship term
+6740	Tara	Buddhist	bodhisattva-goddess of compassion and swift help	TITLE_DUP			domain		"help" already in domain
+6740	Tara	Buddhist	born from the tears of Avalokiteśvara	TITLE_MOVE				domain	title not present in any other field
+7304	Utu	Mesopotamian	son	KEEP					bare kinship term
+7416	Bishamonten	Shinto	one of the Seven Lucky Gods	TITLE_MOVE				domain	title not present in any other field
+7416	Bishamonten	Shinto	one of the Four Heavenly Kings of Buddhism	TITLE_MOVE				character_trait	title not present in any other field
+7416	Bishamonten	Shinto	Japanese form of Vaiśravaṇa/Kubera	TITLE_MOVE				domain	title not present in any other field
+6171	Peirous	Greek	spouse	KEEP					bare kinship term
+6094	Ceto	Greek	spouse	KEEP					bare kinship term
+6175	Zeus	Greek	father of gods and men	STRIP_TO_BARE	father	gods and men			"father of X" pattern
+6175	Zeus	Greek	youngest son of Cronus and Rhea	TITLE_MOVE				domain	title not present in any other field
+6175	Zeus	Greek	husband of Hera	STRIP_TO_BARE	husband	Hera			"husband of X" pattern
+6175	Zeus	Greek	one of the three brothers (Zeus-Poseidon-Hades) who divided the cosmos	TITLE_MOVE				domain	title not present in any other field
+6175	Zeus	Greek	father of countless Olympians and heroes	STRIP_TO_BARE	father	countless Olympians and heroes			"father of X" pattern
+7396	Ravana	Hindu	son of Viśravas and Kaikasī	STRIP_TO_BARE	son	Viśravas and Kaikasī			"son of X" pattern
+7396	Ravana	Hindu	grandson of Pulastya	TITLE_MOVE				domain	title not present in any other field
+7396	Ravana	Hindu	king of Laṅkā	TITLE_MOVE				character_trait	title not present in any other field
+7396	Ravana	Hindu	half-brother of Kubera	TITLE_MOVE				domain	title not present in any other field
+7396	Ravana	Hindu	brother of Vibhīṣaṇa, Kumbhakarṇa, Śūrpaṇakhā	STRIP_TO_BARE	brother	Vibhīṣaṇa, Kumbhakarṇa, Śūrpaṇakhā			"brother of X" pattern
+7396	Ravana	Hindu	husband of Mandodarī	STRIP_TO_BARE	husband	Mandodarī			"husband of X" pattern
+7396	Ravana	Hindu	father of Indrajit	STRIP_TO_BARE	father	Indrajit			"father of X" pattern
+6542	Miaozhuang Wang	Chinese	spouse	KEEP					bare kinship term
+6586	Alala	Greek	spouse	KEEP					bare kinship term
+6592	Thrasos	Greek	spouse	KEEP					bare kinship term
+6607	Bendis	Greek	spouse	KEEP					bare kinship term
+6706	Ekecheiria	Greek	spouse	KEEP					bare kinship term
+6714	Eleutheria	Greek	spouse	KEEP					bare kinship term
+6828	Pandion	Greek	spouse	KEEP					bare kinship term
+6933	Podalirius	Greek	spouse	KEEP					bare kinship term
+6190	Smicrus	Greek	spouse	KEEP					bare kinship term
+6191	Aceso	Greek	spouse	KEEP					bare kinship term
+7168	Kimpurushas	Hindu	horse-headed celestials	TITLE_MOVE				domain	title not present in any other field
+7172	Vaikuntha Kamalaja	Hindu	joint icon of Viṣṇu and Lakṣmī	TITLE_MOVE				domain	title not present in any other field
+7290	Lahmu	Mesopotamian	son	KEEP					bare kinship term
+7290	Lahmu	Mesopotamian	spouse	KEEP					bare kinship term
+7303	Ningal	Mesopotamian	daughter	KEEP					bare kinship term
+7303	Ningal	Mesopotamian	wife	KEEP					bare kinship term
+7521	Hun Hunahpu	Maya	father of the Hero Twins Hunahpu and Xbalanque	STRIP_TO_BARE	father	the Hero Twins Hunahpu and Xbalanque			"father of X" pattern
+7521	Hun Hunahpu	Maya	identified with the Maya Maize God	TITLE_DUP			character_trait		"maize god" already in character_trait
+7352	Asherah (Israelite)	Abrahamic	consort (per epigraphic evidence, contested)	TITLE_MOVE				domain	title not present in any other field
+7352	Asherah (Israelite)	Abrahamic	popular Iron-Age goddess	TITLE_DUP			domain		"goddess" already in domain
+6133	Michael	Abrahamic	archangel	TITLE_MOVE				domain	title not present in any other field
+6133	Michael	Abrahamic	prince of the heavenly armies	TITLE_MOVE				character_trait	title not present in any other field
+6108	Adam	Abrahamic	first man	TITLE_DUP			domain		full string already in domain
+6108	Adam	Abrahamic	husband	KEEP					bare kinship term
+6108	Adam	Abrahamic	progenitor of humanity	TITLE_MOVE				domain	title not present in any other field
+6245	Moses	Abrahamic	prophet	TITLE_MOVE				domain	title not present in any other field
+6245	Moses	Abrahamic	lawgiver	TITLE_MOVE				domain	title not present in any other field
+6245	Moses	Abrahamic	husband	KEEP					bare kinship term
+6245	Moses	Abrahamic	leader	TITLE_DUP			domain		full string already in domain
+7296	Anu	Mesopotamian	son	KEEP					bare kinship term
+7296	Anu	Mesopotamian	king	TITLE_DUP			domain		full string already in domain
+7215	Dewi Sri	Balinese	the Balinese-Javanese goddess of rice and fertility	TITLE_DUP			domain		"fertility" already in domain
+7520	Xbalanque	Maya	one of the Hero Twins	TITLE_MOVE				character_trait	title not present in any other field
+7520	Xbalanque	Maya	son of Hun Hunahpu	STRIP_TO_BARE	son	Hun Hunahpu			"son of X" pattern
+7520	Xbalanque	Maya	twin of Hunahpu	STRIP_TO_BARE	sister	Hunahpu			"sister of X" pattern
+7520	Xbalanque	Maya	raised to become the moon	TITLE_MOVE				domain	title not present in any other field
+6252	Fortuna	Roman	identified with Greek Tyche	TITLE_MOVE				domain	title not present in any other field
+6252	Fortuna	Roman	indigenous Italic origin	TITLE_MOVE				domain	title not present in any other field
+6252	Fortuna	Roman	in Praeneste tradition, mother of Jupiter and Juno (uniquely Italic)	TITLE_MOVE				domain	title not present in any other field
+6252	Fortuna	Roman	many cult-aspects (Primigenia, Virilis, Muliebris, Redux, Augusta)	TITLE_MOVE				identification	title not present in any other field
+6136	Inanna	Mesopotamian	daughter	KEEP					bare kinship term
+6136	Inanna	Mesopotamian	wife	KEEP					bare kinship term
+7223	Yama	Buddhist	lord of death and judge of the dead	TITLE_MOVE				domain (or identification)	title not present in any other field
+7223	Yama	Buddhist	the Buddhist development of the Vedic/Hindu Yama	TITLE_MOVE				domain	title not present in any other field
+7401	Anubis	Egyptian	son of Nephthys (by Osiris in Plutarch 14, by Set in other versions)	STRIP_TO_BARE	son	Nephthys (by Osiris in Plutarch 14, by Set in other versions)			"son of X" pattern
+7401	Anubis	Egyptian	adopted by Isis (who raised him as her own)	TITLE_MOVE				domain	title not present in any other field
+7401	Anubis	Egyptian	grave-god, psychopomp	TITLE_DUP			domain		"psychopomp" already in domain
+7503	Siddhartha Gautama	Buddhist	the historical Buddha	TITLE_MOVE				identification	title not present in any other field
+7503	Siddhartha Gautama	Buddhist	prince of the Śākya clan	TITLE_MOVE				character_trait	title not present in any other field
+7503	Siddhartha Gautama	Buddhist	son of Śuddhodana and Māyā	STRIP_TO_BARE	son	Śuddhodana and Māyā			"son of X" pattern
+7503	Siddhartha Gautama	Buddhist	founder of Buddhism	TITLE_MOVE				domain	title not present in any other field
+7512	Itzamna	Maya	supreme creator-god of the Yucatec Maya	TITLE_MOVE				domain (or identification)	title not present in any other field
+7512	Itzamna	Maya	consort of Ix Chel	STRIP_TO_BARE	consort	Ix Chel			"consort of X" pattern
+7512	Itzamna	Maya	patron of writing and learning	TITLE_DUP			domain		"learning" already in domain
+7259	Mannus	Germanic	founder-figure of the Germanic peoples	TITLE_MOVE				domain	title not present in any other field
+7259	Mannus	Germanic	son of Tuisto	STRIP_TO_BARE	son	Tuisto			"son of X" pattern
+7259	Mannus	Germanic	father of the eponymous ancestors of the Germanic groupings	STRIP_TO_BARE	father	the eponymous ancestors of the Germanic groupings			"father of X" pattern
+7369	Saga	Norse	Aesir-goddess	TITLE_MOVE				domain (or identification)	title not present in any other field
+7369	Saga	Norse	companion of Odin	TITLE_MOVE				domain	title not present in any other field
+7107	Váli	Norse	son	KEEP					bare kinship term
+7107	Váli	Norse	avenger	TITLE_MOVE				domain	title not present in any other field
+7107	Váli	Norse	survivor	TITLE_MOVE				domain	title not present in any other field
+6475	Aristaeus	Greek	spouse	KEEP					bare kinship term
+7204	Attar	Canaanite	son	KEEP					bare kinship term
+7516	Chaac	Maya	the Maya rain-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7516	Chaac	Maya	quadrupled into the four directional Chaacs	TITLE_MOVE				domain	title not present in any other field
+7516	Chaac	Maya	cognate of the Aztec Tlaloc	TITLE_MOVE				domain	title not present in any other field
+7289	Apsu	Mesopotamian	spouse	KEEP					bare kinship term
+7230	Sabazios	Phrygian	Phrygian-Thracian sky- and father-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7230	Sabazios	Phrygian	a mystery-cult deity	TITLE_MOVE				domain (or identification)	title not present in any other field
+7230	Sabazios	Phrygian	identified by the Greeks with Zeus and with Dionysus	TITLE_MOVE				domain	title not present in any other field
+7102	Hermóðr	Norse	son	KEEP					bare kinship term
+7102	Hermóðr	Norse	divine messenger	TITLE_DUP			domain		full string already in domain
+6331	Shenshu and Yulü	Chinese	spouse	KEEP					bare kinship term
+7517	Kinich Ahau	Maya	the Maya sun-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7517	Kinich Ahau	Maya	patron of kingship	TITLE_DUP			domain		"kingship" already in domain
+7517	Kinich Ahau	Maya	sometimes the solar aspect of Itzamna	TITLE_MOVE				identification	title not present in any other field
+7517	Kinich Ahau	Maya	cognate of the Aztec Tonatiuh	TITLE_MOVE				domain	title not present in any other field
+7383	Garuda	Hindu	son of Kaśyapa and Vinatā	STRIP_TO_BARE	son	Kaśyapa and Vinatā			"son of X" pattern
+7383	Garuda	Hindu	enemy of his serpent-cousins	TITLE_MOVE				domain	title not present in any other field
+7383	Garuda	Hindu	mount of Viṣṇu	TITLE_MOVE				domain	title not present in any other field
+7383	Garuda	Hindu	king of birds	TITLE_DUP			domain		full string already in domain
+7522	Vucub Caquix	Maya	the bird-monster Seven Macaw	TITLE_MOVE				domain	title not present in any other field
+7522	Vucub Caquix	Maya	the false sun of the age before the true sun	TITLE_MOVE				domain	title not present in any other field
+7522	Vucub Caquix	Maya	adversary of the Hero Twins	TITLE_MOVE				character_trait	title not present in any other field
+6450	Yuanshi Tianzun	Chinese	first and highest of the Three Pure Ones	TITLE_MOVE				domain	title not present in any other field
+6450	Yuanshi Tianzun	Chinese	dwells in the Jade Pure heaven (Yuqing)	TITLE_MOVE				domain	title not present in any other field
+6478	Mama	Mesopotamian	creator	TITLE_MOVE				domain	title not present in any other field
+7292	Anshar	Mesopotamian	son	KEEP					bare kinship term
+7292	Anshar	Mesopotamian	spouse	KEEP					bare kinship term
+7306	Nergal	Mesopotamian	son	KEEP					bare kinship term
+7306	Nergal	Mesopotamian	husband	KEEP					bare kinship term
+7306	Nergal	Mesopotamian	king	TITLE_DUP			domain		full string already in domain
+7227	Abraxas	Gnostic	a cosmic ruler-power of the Gnostic systems (especially Basilidian)	TITLE_MOVE				domain	title not present in any other field
+7227	Abraxas	Gnostic	the ruler of the 365 heavens	TITLE_MOVE				domain	title not present in any other field
+7321	Nikkal	Canaanite	wife	KEEP					bare kinship term
+7321	Nikkal	Canaanite	daughter	KEEP					bare kinship term
+7092	Thor	Norse	son	KEEP					bare kinship term
+7092	Thor	Norse	husband	KEEP					bare kinship term
+7092	Thor	Norse	protector of Asgard	TITLE_MOVE				domain	title not present in any other field
+6134	Marduk	Mesopotamian	son	KEEP					bare kinship term
+6134	Marduk	Mesopotamian	husband	KEEP					bare kinship term
+6134	Marduk	Mesopotamian	king	TITLE_DUP			domain		full string already in domain
+7473	Mictlancihuatl	Aztec	queen of Mictlan	TITLE_DUP			domain		"mictlan" already in domain
+7473	Mictlancihuatl	Aztec	wife of Mictlantecuhtli	STRIP_TO_BARE	wife	Mictlantecuhtli			"wife of X" pattern
+7323	Shalim	Canaanite	son	KEEP					bare kinship term
+7323	Shalim	Canaanite	twin	KEEP					bare kinship term
+7348	Shekhinah	Abrahamic	feminine aspect of divinity	TITLE_MOVE				identification	title not present in any other field
+7348	Shekhinah	Abrahamic	bride of Tiferet (Kabbalah)	TITLE_MOVE				domain	title not present in any other field
+7348	Shekhinah	Abrahamic	mother of the people of Israel	STRIP_TO_BARE	mother	the people of Israel			"mother of X" pattern
+7319	Utnapishtim	Mesopotamian	flood-survivor	TITLE_MOVE				domain	title not present in any other field
+7319	Utnapishtim	Mesopotamian	wise man	TITLE_MOVE				domain	title not present in any other field
+6261	Isis	Egyptian	spouse	KEEP					bare kinship term
+6261	Isis	Egyptian	daughter	KEEP					bare kinship term
+7464	Penates	Roman	tutelary household spirits	TITLE_MOVE				domain	title not present in any other field
+7464	Penates	Roman	state-cult Penates publici	TITLE_MOVE				domain	title not present in any other field
+7464	Penates	Roman	brought from Troy by Aeneas	TITLE_MOVE				domain	title not present in any other field
+6778	Groa	Norse	wife of Aurvandill	STRIP_TO_BARE	wife	Aurvandill			"wife of X" pattern
+6778	Groa	Norse	mother of Svipdagr	STRIP_TO_BARE	mother	Svipdagr			"mother of X" pattern
+6778	Groa	Norse	seeress	TITLE_DUP			domain		full string already in domain
+7236	Jörmungandr	Norse	spouse	KEEP					bare kinship term
+6323	Shennong	Chinese	one of the Three Sovereigns	TITLE_MOVE				domain (or identification)	title not present in any other field
+6323	Shennong	Chinese	often identified with the Yan Emperor (Yandi)	TITLE_MOVE				domain	title not present in any other field
+6323	Shennong	Chinese	culture-hero of agriculture and medicine	TITLE_DUP			domain		"medicine" already in domain
+7101	Mímir	Norse	counselor	TITLE_MOVE				domain	title not present in any other field
+7101	Mímir	Norse	wise being	TITLE_MOVE				domain	title not present in any other field
+7366	Ran	Norse	wife of Ægir	STRIP_TO_BARE	wife	Ægir			"wife of X" pattern
+7366	Ran	Norse	mother of the nine wave-maidens	STRIP_TO_BARE	mother	the nine wave-maidens			"mother of X" pattern
+7366	Ran	Norse	sea-giantess	TITLE_MOVE				domain	title not present in any other field
+7120	Troll	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+7120	Troll	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+7461	Romulus	Roman	son of Mars and Rhea Silvia (Vestal)	STRIP_TO_BARE	son	Mars and Rhea Silvia (Vestal)			"son of X" pattern
+7461	Romulus	Roman	twin of Remus	STRIP_TO_BARE	sister	Remus			"sister of X" pattern
+7461	Romulus	Roman	grand-nephew of Amulius	TITLE_MOVE				domain	title not present in any other field
+7461	Romulus	Roman	grandson of Numitor	TITLE_MOVE				domain	title not present in any other field
+7461	Romulus	Roman	first king of Rome	TITLE_MOVE				character_trait	title not present in any other field
+7461	Romulus	Roman	deified as Quirinus	TITLE_MOVE				domain	title not present in any other field
+6152	Raphael	Abrahamic	archangel	TITLE_MOVE				domain	title not present in any other field
+6152	Raphael	Abrahamic	divine messenger	TITLE_MOVE				domain	title not present in any other field
+6152	Raphael	Abrahamic	one of the seven who stand before God	TITLE_MOVE				domain	title not present in any other field
+7353	Frigg	Norse	queen	TITLE_DUP			character_trait		full string already in character_trait
+7353	Frigg	Norse	wife of Odin	STRIP_TO_BARE	wife	Odin			"wife of X" pattern
+7353	Frigg	Norse	mother of Baldr and Hǫðr	STRIP_TO_BARE	mother	Baldr and Hǫðr			"mother of X" pattern
+7353	Frigg	Norse	foster-mother of various Aesir	TITLE_MOVE				domain	title not present in any other field
+7211	Shuqamuna and Shumaliya	Mesopotamian	paired deities	TITLE_MOVE				domain	title not present in any other field
+7211	Shuqamuna and Shumaliya	Mesopotamian	divine couple of the Kassite dynasty	TITLE_MOVE				domain	title not present in any other field
+7200	Shapash	Canaanite	daughter	KEEP					bare kinship term
+7200	Shapash	Canaanite	divine messenger	TITLE_DUP			domain		"messenger" already in domain
+7200	Shapash	Canaanite	solar deity	TITLE_MOVE				domain (or identification)	title not present in any other field
+6730	Cian	Celtic	son	KEEP					bare kinship term
+6730	Cian	Celtic	spouse	KEEP					bare kinship term
+6760	Astarte	Canaanite	daughter	KEEP					bare kinship term
+6760	Astarte	Canaanite	consort	KEEP					bare kinship term
+6760	Astarte	Canaanite	queen	TITLE_MOVE				character_trait	title not present in any other field
+7039	Amaterasu	Shinto	daughter	KEEP					bare kinship term
+6826	Orestes	Greek	spouse	KEEP					bare kinship term
+7158	Ardhanarishvara	Hindu	Śiva-Pārvatī united icon	TITLE_MOVE				domain	title not present in any other field
+7158	Ardhanarishvara	Hindu	cosmic androgyne	TITLE_MOVE				domain	title not present in any other field
+6722	Ethniu	Celtic	daughter	KEEP					bare kinship term
+6722	Ethniu	Celtic	spouse	KEEP					bare kinship term
+6735	Dactyls	Greek	spouse	KEEP					bare kinship term
+6341	Shi Gandang	Chinese	spouse	KEEP					bare kinship term
+7298	Ninlil	Mesopotamian	wife	KEEP					bare kinship term
+7305	Ereshkigal	Mesopotamian	queen	TITLE_MOVE				character_trait	title not present in any other field
+7305	Ereshkigal	Mesopotamian	wife	KEEP					bare kinship term
+7511	Hariti	Buddhist	protector-goddess of children and childbirth	TITLE_DUP			domain		"childbirth" already in domain
+7511	Hariti	Buddhist	a converted child-devouring yakṣiṇī	TITLE_MOVE				domain	title not present in any other field
+7511	Hariti	Buddhist	East Asian form: Kishimojin	TITLE_MOVE				domain	title not present in any other field
+7341	Holy Spirit	Abrahamic	third person of the Trinity	TITLE_MOVE				domain	title not present in any other field
+7523	Hun-Came	Maya	one of the two paramount lords of Xibalba	TITLE_MOVE				domain (or identification)	title not present in any other field
+7523	Hun-Came	Maya	co-ruler with Vucub-Came	TITLE_MOVE				domain	title not present in any other field
+7523	Hun-Came	Maya	adversary of the Hero Twins	TITLE_MOVE				character_trait	title not present in any other field
+6781	Attis	Phrygian	the youthful consort of Cybele	TITLE_MOVE				domain	title not present in any other field
+6781	Attis	Phrygian	born of (or bound to) Agdistis	TITLE_MOVE				domain	title not present in any other field
+6781	Attis	Phrygian	the dying-and-mourned vegetation-figure of the Mother-cult	TITLE_MOVE				domain	title not present in any other field
+7515	Huracan	Maya	the Heart of Sky	TITLE_MOVE				domain	title not present in any other field
+7515	Huracan	Maya	storm- and creator-god of the K'iche' Maya	TITLE_MOVE				domain (or identification)	title not present in any other field
+7515	Huracan	Maya	a trinity-in-one (the three Thunderbolts)	TITLE_MOVE				domain	title not present in any other field
+7411	Takemikazuchi	Shinto	emerged from Izanagi's sword Ame-no-Ohabari	TITLE_MOVE				domain	title not present in any other field
+7411	Takemikazuchi	Shinto	partner-warrior of Futsunushi	TITLE_MOVE				character_trait	title not present in any other field
+7411	Takemikazuchi	Shinto	kami of Kashima Jingū	TITLE_MOVE				domain	title not present in any other field
+7075	Bragi	Norse	husband (of Iðunn)	TITLE_MOVE				domain	title not present in any other field
+7075	Bragi	Norse	god of poetry	TITLE_DUP			domain		"poetry" already in domain
+6484	Rangda	Balinese	the demon-queen of Balinese myth	TITLE_MOVE				character_trait	title not present in any other field
+6484	Rangda	Balinese	leader of the leyak	TITLE_MOVE				domain	title not present in any other field
+6484	Rangda	Balinese	the eternal adversary of Barong	TITLE_MOVE				domain	title not present in any other field
+7225	The Monad	Gnostic	the supreme transcendent Godhead of the Gnostic systems	TITLE_MOVE				domain	title not present in any other field
+7225	The Monad	Gnostic	the ultimate source of the Pleroma of aeons	TITLE_MOVE				domain	title not present in any other field
+7372	Lakshmi	Hindu	wife of Viṣṇu	STRIP_TO_BARE	wife	Viṣṇu			"wife of X" pattern
+7372	Lakshmi	Hindu	mother of Kāma	STRIP_TO_BARE	mother	Kāma			"mother of X" pattern
+7372	Lakshmi	Hindu	one of the Tridevī	TITLE_MOVE				domain	title not present in any other field
+7349	Sandalphon	Abrahamic	archangel	TITLE_MOVE				domain	title not present in any other field
+7349	Sandalphon	Abrahamic	twin/companion of Metatron	TITLE_MOVE				domain	title not present in any other field
+7349	Sandalphon	Abrahamic	possibly the ascended prophet Elijah	TITLE_DUP			identification		"elijah" already in identification
+6351	Shunfeng'er	Chinese	spouse	KEEP					bare kinship term
+7423	Hestia	Greek	eldest daughter of Cronus and Rhea	TITLE_MOVE				domain	title not present in any other field
+7423	Hestia	Greek	sister of Zeus, Hera, Poseidon, Hades, Demeter	STRIP_TO_BARE	sister	Zeus, Hera, Poseidon, Hades, Demeter			"sister of X" pattern
+7423	Hestia	Greek	one of the three virgin goddesses (with Athena and Artemis)	TITLE_MOVE				domain	title not present in any other field
+7423	Hestia	Greek	sometimes the twelfth Olympian (sometimes replaced by Dionysus)	TITLE_MOVE				domain	title not present in any other field
+7454	Sol	Roman	identified with Helios	TITLE_MOVE				domain	title not present in any other field
+7454	Sol	Roman	indigenous Italic Sol Indiges (pre-Greek)	TITLE_MOVE				domain	title not present in any other field
+7454	Sol	Roman	Sol Invictus from 274 CE	TITLE_MOVE				domain	title not present in any other field
+7496	He Xiangu	Chinese	the (usually only) female of the Eight Immortals	TITLE_MOVE				domain	title not present in any other field
+7496	He Xiangu	Chinese	patroness of unmarried women	TITLE_DUP			domain		"women" already in domain
+7501	Meng Po	Chinese	the Lady of Forgetfulness	TITLE_DUP			domain		"forgetfulness" already in domain
+7501	Meng Po	Chinese	underworld deity at the threshold of reincarnation	TITLE_MOVE				domain (or identification)	title not present in any other field
+6364	Nebethetepet	Egyptian	spouse	KEEP					bare kinship term
+6362	Nefertem	Egyptian	son of Ptah and Sekhmet	STRIP_TO_BARE	son	Ptah and Sekhmet			"son of X" pattern
+6362	Nefertem	Egyptian	Memphite triad member	TITLE_MOVE				domain	title not present in any other field
+6362	Nefertem	Egyptian	god of the blue lotus	TITLE_DUP			domain		"lotus" already in domain
+6361	Xiyue Dadi	Chinese	spouse	KEEP					bare kinship term
+6486	Bu Luotuo	Chinese	spouse	KEEP					bare kinship term
+6491	Vallonia	Roman	spouse	KEEP					bare kinship term
+6369	King Father of the East	Chinese	spouse	KEEP					bare kinship term
+6533	Marshal Tianpeng	Chinese	spouse	KEEP					bare kinship term
+6377	Sun Wukong	Chinese	the Monkey King	TITLE_MOVE				character_trait	title not present in any other field
+6377	Sun Wukong	Chinese	born from a stone egg	TITLE_MOVE				domain	title not present in any other field
+6377	Sun Wukong	Chinese	foremost disciple of Xuanzang	TITLE_MOVE				domain	title not present in any other field
+6377	Sun Wukong	Chinese	attained Buddhahood as the Victorious Fighting Buddha	TITLE_MOVE				identification	title not present in any other field
+6565	Gelos	Greek	spouse	KEEP					bare kinship term
+6493	Caishen	Chinese	spouse	KEEP					bare kinship term
+6847	Poh Seng Tai Tay	Chinese	spouse	KEEP					bare kinship term
+6568	Kratos	Greek	spouse	KEEP					bare kinship term
+6497	Cangdi	Chinese	spouse	KEEP					bare kinship term
+6498	Ma Chao	Chinese	spouse	KEEP					bare kinship term
+6569	Hyperion	Greek	spouse	KEEP					bare kinship term
+6263	Jesus	Abrahamic	son	KEEP					bare kinship term
+6263	Jesus	Abrahamic	rabbi	TITLE_MOVE				domain	title not present in any other field
+6263	Jesus	Abrahamic	messiah	TITLE_MOVE				identification	title not present in any other field
+6263	Jesus	Abrahamic	only-begotten of the Father (in Christian theology)	TITLE_MOVE				identification	title not present in any other field
+6263	Jesus	Abrahamic	prophet (in Islamic theology)	TITLE_MOVE				domain	title not present in any other field
+6264	Sanxing	Chinese	spouse	KEEP					bare kinship term
+6269	Azrael	Abrahamic	angel of death	TITLE_DUP			domain		"death" already in domain
+6275	Hou Yi	Chinese	the divine archer	TITLE_DUP			domain		"archer" already in domain
+6275	Hou Yi	Chinese	husband of Chang'e	STRIP_TO_BARE	husband	Chang'e			"husband of X" pattern
+6275	Hou Yi	Chinese	shooter of the nine suns	TITLE_MOVE				domain	title not present in any other field
+6274	Ptocheia	Greek	spouse	KEEP					bare kinship term
+6281	Wenchang Wang	Chinese	spouse	KEEP					bare kinship term
+6208	Metatron	Abrahamic	heavenly scribe	TITLE_DUP			domain		full string already in domain
+6208	Metatron	Abrahamic	prince of the divine presence	TITLE_DUP			domain		"divine presence" already in domain
+6208	Metatron	Abrahamic	exalted patriarch (transformed Enoch)	TITLE_MOVE				domain	title not present in any other field
+6213	Half-elf	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+6213	Half-elf	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+6215	Abraham	Abrahamic	patriarch	TITLE_MOVE				domain	title not present in any other field
+6215	Abraham	Abrahamic	husband	KEEP					bare kinship term
+6215	Abraham	Abrahamic	grandfather	KEEP					bare kinship term
+6218	Hephaestus	Greek	son of Hera (and Zeus in some accounts, parthenogenetic in others)	STRIP_TO_BARE	son	Hera (and Zeus in some accounts, parthenogenetic in others)			"son of X" pattern
+6218	Hephaestus	Greek	husband of Aphrodite (in Homer) or Aglaia (in Hesiod)	STRIP_TO_BARE	husband	Aphrodite (in Homer) or Aglaia (in Hesiod)			"husband of X" pattern
+6218	Hephaestus	Greek	only physically-imperfect Olympian (lame)	TITLE_MOVE				domain	title not present in any other field
+6219	Gaia	Greek	primordial earth-goddess	TITLE_MOVE				domain (or identification)	title not present in any other field
+6219	Gaia	Greek	mother (with Ouranos) of the Titans, Cyclopes, Hekatonkheires	TITLE_MOVE				domain	title not present in any other field
+6219	Gaia	Greek	mother of Typhon (with Tartarus)	STRIP_TO_BARE	mother	Typhon (with Tartarus)			"mother of X" pattern
+6219	Gaia	Greek	grandmother of the Olympians	TITLE_MOVE				domain	title not present in any other field
+6288	Horme	Greek	spouse	KEEP					bare kinship term
+6085	Morrigan	Celtic	daughter	KEEP					bare kinship term
+6085	Morrigan	Celtic	spouse	KEEP					bare kinship term
+6089	Pun Tao Kong	Chinese	spouse	KEEP					bare kinship term
+6098	San Yisheng	Chinese	spouse	KEEP					bare kinship term
+6097	Puti Zushi	Chinese	spouse	KEEP					bare kinship term
+6596	Silenus	Greek	spouse	KEEP					bare kinship term
+6307	Shen Gongbao	Chinese	spouse	KEEP					bare kinship term
+6467	Kourotrophos	Greek	spouse	KEEP					bare kinship term
+6514	Chitou Furen	Chinese	spouse	KEEP					bare kinship term
+6521	Morpheus	Greek	spouse	KEEP					bare kinship term
+6546	Diana	Roman	identified with Artemis	TITLE_MOVE				domain	title not present in any other field
+6546	Diana	Roman	daughter of Jupiter and Latona	STRIP_TO_BARE	daughter	Jupiter and Latona			"daughter of X" pattern
+6546	Diana	Roman	twin of Apollo	STRIP_TO_BARE	sister	Apollo			"sister of X" pattern
+6546	Diana	Roman	virgin goddess	TITLE_MOVE				domain	title not present in any other field
+6555	Juno	Roman	daughter of Saturn and Ops	STRIP_TO_BARE	daughter	Saturn and Ops			"daughter of X" pattern
+6555	Juno	Roman	sister-wife of Jupiter	TITLE_MOVE				domain	title not present in any other field
+6555	Juno	Roman	sister of Neptune, Pluto, Ceres, Vesta	STRIP_TO_BARE	sister	Neptune, Pluto, Ceres, Vesta			"sister of X" pattern
+6555	Juno	Roman	mother of Mars, Vulcan, Juventas	STRIP_TO_BARE	mother	Mars, Vulcan, Juventas			"mother of X" pattern
+6555	Juno	Roman	one of the Capitoline Triad (Jupiter-Juno-Minerva)	TITLE_MOVE				domain	title not present in any other field
+6578	Minerva	Roman	daughter of Jupiter (in Roman tradition, often without the Metis swallowing narrative)	STRIP_TO_BARE	daughter	Jupiter (in Roman tradition, often without the Metis swallowing narrative)			"daughter of X" pattern
+6578	Minerva	Roman	one of the Capitoline Triad	TITLE_MOVE				domain	title not present in any other field
+6578	Minerva	Roman	virgin goddess	TITLE_MOVE				domain	title not present in any other field
+6579	Týr	Norse	warrior-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+6579	Týr	Norse	god of justice and oaths	TITLE_DUP			domain		"oaths" already in domain
+6606	Charis	Greek	spouse	KEEP					bare kinship term
+6641	Pang Juan	Chinese	spouse	KEEP					bare kinship term
+6653	Ops	Roman	identified with Rhea	TITLE_MOVE				domain	title not present in any other field
+6653	Ops	Roman	wife-sister of Saturn	TITLE_DUP			domain		"saturn" already in domain
+6653	Ops	Roman	mother of Jupiter, Juno, Neptune, Pluto, Ceres, Vesta	STRIP_TO_BARE	mother	Jupiter, Juno, Neptune, Pluto, Ceres, Vesta			"mother of X" pattern
+6653	Ops	Roman	indigenous Italic before the Rhea-interpretatio	TITLE_MOVE				domain	title not present in any other field
+6683	Atlas	Greek	spouse	KEEP					bare kinship term
+6721	Beasts of battle	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+6721	Beasts of battle	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+6727	Guang Chengzi	Chinese	spouse	KEEP					bare kinship term
+6737	Yaksha	Hindu	nature-spirits	TITLE_MOVE				domain	title not present in any other field
+6737	Yaksha	Hindu	attendants of Kubera	TITLE_MOVE				domain	title not present in any other field
+6742	Aphrodite	Greek	born from sea-foam; pre-Olympian generation in Hesiodic genealogy (an alternative tradition makes her daughter of Zeus and Dione)	TITLE_MOVE				domain	title not present in any other field
+6742	Aphrodite	Greek	wife of Hephaestus	STRIP_TO_BARE	wife	Hephaestus			"wife of X" pattern
+6742	Aphrodite	Greek	lover of Ares	TITLE_MOVE				domain	title not present in any other field
+6742	Aphrodite	Greek	mother of Eros, Anteros, Phobos, Deimos, Harmonia (by Ares); Aeneas (by Anchises); Hermaphroditus (by Hermes)	STRIP_TO_BARE	mother	Eros, Anteros, Phobos, Deimos, Harmonia (by Ares); Aeneas (by Anchises); Hermaphroditus (by Hermes)			"mother of X" pattern
+6748	Diana of Ephesus	Greek	spouse	KEEP					bare kinship term
+6750	Maya	Hindu	cosmic principle	TITLE_MOVE				domain	title not present in any other field
+6750	Maya	Hindu	goddess	TITLE_MOVE				domain	title not present in any other field
+6754	Hecate	Greek	daughter of Perses and Asteria (Titanic generation)	STRIP_TO_BARE	daughter	Perses and Asteria (Titanic generation)			"daughter of X" pattern
+6754	Hecate	Greek	goddess of crossroads, magic, ghosts	TITLE_MOVE				domain	title not present in any other field
+6754	Hecate	Greek	threefold-aspect deity in late tradition	TITLE_MOVE				domain (or identification)	title not present in any other field
+6758	Hel	Norse	queen of the underworld	TITLE_MOVE				character_trait	title not present in any other field
+6758	Hel	Norse	daughter	KEEP					bare kinship term
+6765	Maat	Egyptian	daughter of Ra	STRIP_TO_BARE	daughter	Ra			"daughter of X" pattern
+6765	Maat	Egyptian	cosmic principle	TITLE_MOVE				domain	title not present in any other field
+6765	Maat	Egyptian	consort of Thoth (in some traditions)	STRIP_TO_BARE	consort	Thoth (in some traditions)			"consort of X" pattern
+6773	Ceres	Roman	identified with Demeter	TITLE_MOVE				domain	title not present in any other field
+6773	Ceres	Roman	daughter of Saturn and Ops	STRIP_TO_BARE	daughter	Saturn and Ops			"daughter of X" pattern
+6773	Ceres	Roman	mother of Proserpina	STRIP_TO_BARE	mother	Proserpina			"mother of X" pattern
+6773	Ceres	Roman	plebeian patron-goddess of the Aventine Triad (with Liber and Libera)	TITLE_MOVE				domain (or identification)	title not present in any other field
+6775	Shakti	Hindu	cosmic-feminine principle	TITLE_MOVE				domain	title not present in any other field
+6775	Shakti	Hindu	consort of every male god	STRIP_TO_BARE	consort	every male god			"consort of X" pattern
+6780	Rhea	Greek	daughter of Ouranos and Gaia	STRIP_TO_BARE	daughter	Ouranos and Gaia			"daughter of X" pattern
+6780	Rhea	Greek	sister-wife of Cronus	TITLE_MOVE				domain	title not present in any other field
+6780	Rhea	Greek	mother of Hestia, Demeter, Hera, Hades, Poseidon, Zeus	STRIP_TO_BARE	mother	Hestia, Demeter, Hera, Hades, Poseidon, Zeus			"mother of X" pattern
+6822	Nepr	Norse	father of Nanna	STRIP_TO_BARE	father	Nanna			"father of X" pattern
+6816	Aulis	Greek	spouse	KEEP					bare kinship term
+6823	Phalanthus	Greek	spouse	KEEP					bare kinship term
+6833	Hu Ye	Chinese	spouse	KEEP					bare kinship term
+6832	Jinjia Yinsuo	Chinese	spouse	KEEP					bare kinship term
+6877	Meili	Norse	spouse	KEEP					bare kinship term
+6865	Tianlong	Chinese	spouse	KEEP					bare kinship term
+6871	Yuding Zhenren	Chinese	spouse	KEEP					bare kinship term
+6889	The Dying God	Cross-cultural	son	KEEP					bare kinship term
+6905	Phosphorus	Greek	spouse	KEEP					bare kinship term
+6907	Theban Triad	Egyptian	spouse	KEEP					bare kinship term
+6944	Holy Mother the Original Lord	Chinese	spouse	KEEP					bare kinship term
+7046	Hachiman	Shinto	war-kami	TITLE_MOVE				domain	title not present in any other field
+7046	Hachiman	Shinto	identified with Emperor Ōjin	TITLE_MOVE				domain	title not present in any other field
+7046	Hachiman	Shinto	protector of the Minamoto clan	TITLE_MOVE				domain	title not present in any other field
+7095	Heimdall	Norse	watchman of the gods	TITLE_MOVE				domain	title not present in any other field
+7095	Heimdall	Norse	father (as Ríg) of the three social classes	TITLE_MOVE				domain	title not present in any other field
+7095	Heimdall	Norse	son of nine mothers	STRIP_TO_BARE	son	nine mothers			"son of X" pattern
+7097	Ullr	Norse	stepson of Thor	TITLE_MOVE				domain	title not present in any other field
+7097	Ullr	Norse	archer-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7100	Höðr	Norse	son	KEEP					bare kinship term
+7100	Höðr	Norse	victim	TITLE_DUP			character_trait		full string already in character_trait
+7098	Víðarr	Norse	son	KEEP					bare kinship term
+7098	Víðarr	Norse	avenger	TITLE_MOVE				domain	title not present in any other field
+7098	Víðarr	Norse	survivor	TITLE_MOVE				domain	title not present in any other field
+7124	Hafgufa	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+7124	Hafgufa	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+7106	Vili and Vé	Norse	brothers of Odin	TITLE_DUP			domain		"odin" already in domain
+7106	Vili and Vé	Norse	sons of Borr and Bestla	TITLE_MOVE				domain	title not present in any other field
+7106	Vili and Vé	Norse	co-creators	TITLE_MOVE				domain	title not present in any other field
+7103	Hœnir	Norse	creator	TITLE_MOVE				domain	title not present in any other field
+7103	Hœnir	Norse	Vanir-hostage	TITLE_MOVE				domain	title not present in any other field
+7103	Hœnir	Norse	companion of Odin	TITLE_MOVE				domain	title not present in any other field
+7109	Ægir	Norse	sea-giant	TITLE_MOVE				domain	title not present in any other field
+7109	Ægir	Norse	host	TITLE_MOVE				domain	title not present in any other field
+7109	Ægir	Norse	husband	KEEP					bare kinship term
+7109	Ægir	Norse	father of wave-maidens	STRIP_TO_BARE	father	wave-maidens			"father of X" pattern
+7115	Draugr	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+7115	Draugr	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+7111	Nidhogg	Norse	cosmic-tree gnawer	TITLE_MOVE				domain	title not present in any other field
+7111	Nidhogg	Norse	corpse-feeder	TITLE_MOVE				domain	title not present in any other field
+7112	Lóðurr	Norse	creator	TITLE_MOVE				domain	title not present in any other field
+7116	Fylgja	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+7116	Fylgja	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+7117	Hamingja	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+7117	Hamingja	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+7123	Landvættir	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+7123	Landvættir	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+7118	Vörðr	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+7118	Vörðr	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+7122	Nixie	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+7122	Nixie	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+7121	Lindworm	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+7121	Lindworm	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+7126	Selkolla	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+7126	Selkolla	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+7128	Óðr	Norse	husband of Freyja	STRIP_TO_BARE	husband	Freyja			"husband of X" pattern
+7128	Óðr	Norse	father of Hnoss and Gersemi	STRIP_TO_BARE	father	Hnoss and Gersemi			"father of X" pattern
+7127	Germanic dragon	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+7127	Germanic dragon	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+7125	Lyngbakr	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+7125	Lyngbakr	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+7162	Ayudhapurusha	Hindu	personified divine weapons	TITLE_DUP			domain		"divine weapons" already in domain
+7164	Vahana	Hindu	category — collective entry for divine mounts	TITLE_DUP			domain		"mounts" already in domain
+7167	Radha Krishna	Hindu	joint-icon of Kṛṣṇa and Rādhā	TITLE_MOVE				domain	title not present in any other field
+7167	Radha Krishna	Hindu	divine beloved-pair	TITLE_MOVE				domain	title not present in any other field
+7171	Shmashana Adhipati	Hindu	lord of the cremation-ground	TITLE_DUP			character_trait		"cremation-ground" already in character_trait
+7177	Vajreshwari (Vajreśvarī)	Hindu	Śakti-form	TITLE_MOVE				domain	title not present in any other field
+7177	Vajreshwari (Vajreśvarī)	Hindu	tantric goddess	TITLE_MOVE				domain	title not present in any other field
+7175	Vasu	Hindu	the eight Vasus	TITLE_DUP			domain		"eight vasus" already in domain
+7182	Lugh	Celtic	son	KEEP					bare kinship term
+7187	Badb	Celtic	daughter	KEEP					bare kinship term
+7189	Nemain	Celtic	daughter	KEEP					bare kinship term
+7193	Bres	Celtic	spouse	KEEP					bare kinship term
+7199	Dagon	Canaanite	grain-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7194	Cú Chulainn	Celtic	son	KEEP					bare kinship term
+7203	Horon	Canaanite	cursing god	TITLE_MOVE				domain	title not present in any other field
+7203	Horon	Canaanite	healing god	TITLE_MOVE				domain	title not present in any other field
+7207	Ancestors of Enlil	Mesopotamian	ancestors	TITLE_MOVE				domain	title not present in any other field
+7207	Ancestors of Enlil	Mesopotamian	divine lineage	TITLE_DUP			domain		full string already in domain
+7206	Apkallu	Mesopotamian	sage	TITLE_DUP			character_trait		full string already in character_trait
+7206	Apkallu	Mesopotamian	culture-bearer	TITLE_MOVE				domain	title not present in any other field
+7224	Amitabha	Buddhist	the Buddha of Infinite Light	TITLE_DUP			domain		"light" already in domain
+7224	Amitabha	Buddhist	presiding Buddha of the Western Pure Land	TITLE_DUP			domain		"pure land" already in domain
+7224	Amitabha	Buddhist	spiritual father of Avalokiteśvara	TITLE_MOVE				domain	title not present in any other field
+7252	Mrtyu	Hindu	cosmic principle	TITLE_MOVE				domain	title not present in any other field
+7252	Mrtyu	Hindu	related to Yama and Kāla	TITLE_MOVE				domain	title not present in any other field
+7247	Marmennill	Norse	supernatural being (category)	TITLE_MOVE				domain	title not present in any other field
+7247	Marmennill	Norse	folkloric type	TITLE_MOVE				domain	title not present in any other field
+7257	Proserpina	Roman	identified with Persephone	TITLE_MOVE				domain	title not present in any other field
+7257	Proserpina	Roman	daughter of Ceres and Jupiter	STRIP_TO_BARE	daughter	Ceres and Jupiter			"daughter of X" pattern
+7257	Proserpina	Roman	wife of Pluto	STRIP_TO_BARE	wife	Pluto			"wife of X" pattern
+7265	Despoina	Greek	spouse	KEEP					bare kinship term
+7270	Inari Ōkami	Shinto	rice and harvest kami	TITLE_MOVE				domain	title not present in any other field
+7270	Inari Ōkami	Shinto	patron of merchants and craftsmen	TITLE_MOVE				domain	title not present in any other field
+7270	Inari Ōkami	Shinto	master of foxes	TITLE_MOVE				domain	title not present in any other field
+7274	Apollo	Greek	son of Zeus and Leto	STRIP_TO_BARE	son	Zeus and Leto			"son of X" pattern
+7274	Apollo	Greek	twin of Artemis	STRIP_TO_BARE	sister	Artemis			"sister of X" pattern
+7274	Apollo	Greek	leader of the Muses (Apollo Mousagetes)	TITLE_MOVE				character_trait	title not present in any other field
+7274	Apollo	Greek	god of Delphi, Delos, Didyma, Klaros oracles	TITLE_MOVE				domain	title not present in any other field
+7277	Artemis	Greek	daughter of Zeus and Leto	STRIP_TO_BARE	daughter	Zeus and Leto			"daughter of X" pattern
+7277	Artemis	Greek	twin of Apollo	STRIP_TO_BARE	sister	Apollo			"sister of X" pattern
+7277	Artemis	Greek	virgin-goddess	TITLE_MOVE				domain (or identification)	title not present in any other field
+7277	Artemis	Greek	patroness of childbirth, hunting, wild animals, the moon	TITLE_DUP			domain		"moon" already in domain
+7278	Sphinx	Greek	spouse	KEEP					bare kinship term
+7285	Athena	Greek	virgin-goddess (one of the three Παρθένοι — Athena, Artemis, Hestia)	TITLE_MOVE				domain (or identification)	title not present in any other field
+7285	Athena	Greek	daughter of Zeus and Metis	STRIP_TO_BARE	daughter	Zeus and Metis			"daughter of X" pattern
+7285	Athena	Greek	patroness of Athens	TITLE_MOVE				domain	title not present in any other field
+7288	Janus	Roman	indigenous Italic god (predates the Greek interpretatio)	TITLE_MOVE				domain	title not present in any other field
+7288	Janus	Roman	no Greek equivalent — uniquely Roman	TITLE_MOVE				domain	title not present in any other field
+7288	Janus	Roman	first invoked in every prayer-sequence	TITLE_MOVE				domain	title not present in any other field
+7291	Lahamu	Mesopotamian	daughter	KEEP					bare kinship term
+7291	Lahamu	Mesopotamian	spouse	KEEP					bare kinship term
+7293	Kishar	Mesopotamian	daughter	KEEP					bare kinship term
+7293	Kishar	Mesopotamian	spouse	KEEP					bare kinship term
+7302	Nanna	Mesopotamian	son	KEEP					bare kinship term
+7302	Nanna	Mesopotamian	husband	KEEP					bare kinship term
+7297	Enlil	Mesopotamian	son	KEEP					bare kinship term
+7297	Enlil	Mesopotamian	husband	KEEP					bare kinship term
+7312	Dumuzi	Mesopotamian	son	KEEP					bare kinship term
+7312	Dumuzi	Mesopotamian	husband	KEEP					bare kinship term
+7310	Nabu	Mesopotamian	son	KEEP					bare kinship term
+7310	Nabu	Mesopotamian	husband	KEEP					bare kinship term
+7309	Sarpanitu	Mesopotamian	wife	KEEP					bare kinship term
+7315	Lamashtu	Mesopotamian	daughter	KEEP					bare kinship term
+7314	Gula	Mesopotamian	consort of Ninurta in some traditions	STRIP_TO_BARE	consort	Ninurta in some traditions			"consort of X" pattern
+7314	Gula	Mesopotamian	divine physician	TITLE_MOVE				domain	title not present in any other field
+7316	Pazuzu	Mesopotamian	demon	TITLE_DUP			domain		full string already in domain
+7316	Pazuzu	Mesopotamian	counter-demonic protector	TITLE_MOVE				domain	title not present in any other field
+7320	Yarikh	Canaanite	husband	KEEP					bare kinship term
+7320	Yarikh	Canaanite	suitor	TITLE_DUP			character_trait		full string already in character_trait
+7327	Lotan	Canaanite	cosmic adversary	TITLE_MOVE				domain	title not present in any other field
+7324	Pidray	Canaanite	daughter	KEEP					bare kinship term
+7325	Tallay	Canaanite	daughter	KEEP					bare kinship term
+7328	Eshmun	Canaanite	son	KEEP					bare kinship term
+7328	Eshmun	Canaanite	healer	TITLE_MOVE				domain	title not present in any other field
+7330	Tanit	Canaanite	consort	KEEP					bare kinship term
+7330	Tanit	Canaanite	queen	TITLE_MOVE				character_trait	title not present in any other field
+7329	Melqart	Canaanite	king	TITLE_DUP			domain		full string already in domain
+7329	Melqart	Canaanite	patron	TITLE_MOVE				domain	title not present in any other field
+7332	Chemosh	Canaanite	national god	TITLE_DUP			domain		full string already in domain
+7336	Aqhat	Canaanite	son	KEEP					bare kinship term
+7336	Aqhat	Canaanite	hunter	TITLE_DUP			domain		full string already in domain
+7337	Pughat	Canaanite	daughter	KEEP					bare kinship term
+7344	Beelzebub	Abrahamic	prince of demons	TITLE_DUP			domain		"demons" already in domain
+7342	Iblis	Abrahamic	ancestor of the shayāṭīn (devils)	TITLE_MOVE				domain	title not present in any other field
+7342	Iblis	Abrahamic	adversary	TITLE_MOVE				domain	title not present in any other field
+7358	Eir	Norse	healing goddess	TITLE_MOVE				domain	title not present in any other field
+7358	Eir	Norse	possibly valkyrie	TITLE_MOVE				domain	title not present in any other field
+7359	Fenrir	Norse	son of Loki and Angrboða	STRIP_TO_BARE	son	Loki and Angrboða			"son of X" pattern
+7359	Fenrir	Norse	sibling of Jörmungandr and Hel	STRIP_TO_BARE	sibling	Jörmungandr and Hel			"sibling of X" pattern
+7359	Fenrir	Norse	father of the wolves Sköll and Hati (in some genealogies)	STRIP_TO_BARE	father	the wolves Sköll and Hati (in some genealogies)			"father of X" pattern
+7351	Behemoth	Abrahamic	cosmic primordial beast	TITLE_MOVE				domain	title not present in any other field
+7351	Behemoth	Abrahamic	paired with Leviathan	TITLE_MOVE				domain	title not present in any other field
+7356	Skadi	Norse	wife of Njǫrðr (then separated)	STRIP_TO_BARE	wife	Njǫrðr (then separated)			"wife of X" pattern
+7356	Skadi	Norse	daughter of Þjazi	STRIP_TO_BARE	daughter	Þjazi			"daughter of X" pattern
+7356	Skadi	Norse	Jǫtunn-goddess	TITLE_MOVE				domain (or identification)	title not present in any other field
+7355	Idun	Norse	wife of Bragi	STRIP_TO_BARE	wife	Bragi			"wife of X" pattern
+7355	Idun	Norse	keeper of the apples	TITLE_MOVE				domain	title not present in any other field
+7357	Sigyn	Norse	wife of Loki	STRIP_TO_BARE	wife	Loki			"wife of X" pattern
+7357	Sigyn	Norse	mother of Narfi and the wolf-Váli	STRIP_TO_BARE	mother	Narfi and the wolf-Váli			"mother of X" pattern
+7362	Búri	Norse	father of Borr	STRIP_TO_BARE	father	Borr			"father of X" pattern
+7362	Búri	Norse	grandfather of Odin	TITLE_DUP			domain		full string already in domain
+7362	Búri	Norse	first of the Aesir	TITLE_MOVE				domain	title not present in any other field
+7365	Nanna (Norse)	Norse	wife of Baldr	STRIP_TO_BARE	wife	Baldr			"wife of X" pattern
+7365	Nanna (Norse)	Norse	mother of Forseti	STRIP_TO_BARE	mother	Forseti			"mother of X" pattern
+7365	Nanna (Norse)	Norse	daughter of Nepr	STRIP_TO_BARE	daughter	Nepr			"daughter of X" pattern
+7364	Sól	Norse	sun-goddess	TITLE_MOVE				domain (or identification)	title not present in any other field
+7364	Sól	Norse	daughter of Mundilfari	STRIP_TO_BARE	daughter	Mundilfari			"daughter of X" pattern
+7364	Sól	Norse	wife of Glenr	STRIP_TO_BARE	wife	Glenr			"wife of X" pattern
+7364	Sól	Norse	sister of Máni	STRIP_TO_BARE	sister	Máni			"sister of X" pattern
+7364	Sól	Norse	mother of the new sun	STRIP_TO_BARE	mother	the new sun			"mother of X" pattern
+7368	Andvari	Norse	dwarf	TITLE_DUP			domain		full string already in domain
+7368	Andvari	Norse	cursed-treasure-keeper	TITLE_MOVE				domain	title not present in any other field
+7367	Gefjun	Norse	plower of Zealand	TITLE_MOVE				domain	title not present in any other field
+7367	Gefjun	Norse	virgin-goddess	TITLE_MOVE				domain (or identification)	title not present in any other field
+7367	Gefjun	Norse	mother of giant-oxen children	STRIP_TO_BARE	mother	giant-oxen children			"mother of X" pattern
+7374	Parvati	Hindu	wife of Śiva	STRIP_TO_BARE	wife	Śiva			"wife of X" pattern
+7374	Parvati	Hindu	daughter of Himavān and Menā	STRIP_TO_BARE	daughter	Himavān and Menā			"daughter of X" pattern
+7374	Parvati	Hindu	mother of Gaṇeśa and Skanda	STRIP_TO_BARE	mother	Gaṇeśa and Skanda			"mother of X" pattern
+7374	Parvati	Hindu	sister of Gaṅgā	STRIP_TO_BARE	sister	Gaṅgā			"sister of X" pattern
+7374	Parvati	Hindu	one of the Tridevī	TITLE_MOVE				domain	title not present in any other field
+7373	Saraswati	Hindu	wife of Brahmā	STRIP_TO_BARE	wife	Brahmā			"wife of X" pattern
+7373	Saraswati	Hindu	daughter of Brahmā	STRIP_TO_BARE	daughter	Brahmā			"daughter of X" pattern
+7373	Saraswati	Hindu	one of the Tridevī	TITLE_MOVE				domain	title not present in any other field
+7373	Saraswati	Hindu	goddess of all learning	TITLE_DUP			domain		"learning" already in domain
+7376	Kartikeya	Hindu	son of Śiva and Pārvatī	STRIP_TO_BARE	son	Śiva and Pārvatī			"son of X" pattern
+7376	Kartikeya	Hindu	brother of Gaṇeśa	STRIP_TO_BARE	brother	Gaṇeśa			"brother of X" pattern
+7376	Kartikeya	Hindu	foster-son of the six Kṛttikās	TITLE_MOVE				domain	title not present in any other field
+7376	Kartikeya	Hindu	divine general	TITLE_MOVE				domain	title not present in any other field
+7376	Kartikeya	Hindu	husband of Vaḷḷi and Devasenā	STRIP_TO_BARE	husband	Vaḷḷi and Devasenā			"husband of X" pattern
+7379	Rama	Hindu	seventh avatar of Viṣṇu	TITLE_MOVE				domain	title not present in any other field
+7379	Rama	Hindu	eldest son of Daśaratha and Kausalyā	TITLE_MOVE				domain	title not present in any other field
+7379	Rama	Hindu	husband of Sītā	STRIP_TO_BARE	husband	Sītā			"husband of X" pattern
+7379	Rama	Hindu	brother of Lakṣmaṇa, Bharata, Śatrughna	STRIP_TO_BARE	brother	Lakṣmaṇa, Bharata, Śatrughna			"brother of X" pattern
+7379	Rama	Hindu	father of Lava and Kuśa	STRIP_TO_BARE	father	Lava and Kuśa			"father of X" pattern
+7379	Rama	Hindu	king of Ayodhyā	TITLE_MOVE				character_trait	title not present in any other field
+7381	Lakshmana	Hindu	son of Daśaratha and Sumitrā	STRIP_TO_BARE	son	Daśaratha and Sumitrā			"son of X" pattern
+7381	Lakshmana	Hindu	younger half-brother of Rāma	TITLE_MOVE				domain	title not present in any other field
+7381	Lakshmana	Hindu	twin of Śatrughna	STRIP_TO_BARE	sister	Śatrughna			"sister of X" pattern
+7381	Lakshmana	Hindu	avatar of Śeṣa	TITLE_MOVE				domain	title not present in any other field
+7387	Surya	Hindu	sun-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7387	Surya	Hindu	one of the Ādityas	TITLE_MOVE				domain	title not present in any other field
+7387	Surya	Hindu	husband of Saṃjñā and Chāyā	STRIP_TO_BARE	husband	Saṃjñā and Chāyā			"husband of X" pattern
+7387	Surya	Hindu	father of Yama, Yamunā, Karṇa, the Aśvin-twins, Manu	STRIP_TO_BARE	father	Yama, Yamunā, Karṇa, the Aśvin-twins, Manu			"father of X" pattern
+7388	Varuna	Hindu	Āditya	TITLE_MOVE				domain	title not present in any other field
+7388	Varuna	Hindu	lokapāla of the west	TITLE_DUP			domain		"west" already in domain
+7388	Varuna	Hindu	water-deity	TITLE_MOVE				domain (or identification)	title not present in any other field
+7385	Indra	Hindu	king of devas	TITLE_MOVE				character_trait	title not present in any other field
+7385	Indra	Hindu	husband of Indrāṇī	STRIP_TO_BARE	husband	Indrāṇī			"husband of X" pattern
+7385	Indra	Hindu	father of Jayanta and Arjuna	STRIP_TO_BARE	father	Jayanta and Arjuna			"father of X" pattern
+7385	Indra	Hindu	one of the Ādityas	TITLE_MOVE				domain	title not present in any other field
+7389	Vayu	Hindu	wind-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7389	Vayu	Hindu	lokapāla of the northwest	TITLE_MOVE				domain	title not present in any other field
+7389	Vayu	Hindu	father of Hanumān and Bhīma	STRIP_TO_BARE	father	Hanumān and Bhīma			"father of X" pattern
+7390	Soma	Hindu	moon-god	TITLE_MOVE				domain (or identification)	title not present in any other field
+7390	Soma	Hindu	husband of 27 nakṣatras	STRIP_TO_BARE	husband	27 nakṣatras			"husband of X" pattern
+7390	Soma	Hindu	favorite of Rohiṇī	TITLE_MOVE				domain	title not present in any other field
+7390	Soma	Hindu	ancestor of Soma-vaṃśa	TITLE_MOVE				domain	title not present in any other field
+7393	Varaha	Hindu	third avatar of Viṣṇu	TITLE_MOVE				domain	title not present in any other field
+7393	Varaha	Hindu	rescuer of Bhū-devi	TITLE_MOVE				domain	title not present in any other field
+7399	Yama (Hindu)	Hindu	lord of the dead	TITLE_DUP			domain		full string already in domain
+7399	Yama (Hindu)	Hindu	son of Sūrya and Saṃjñā	STRIP_TO_BARE	son	Sūrya and Saṃjñā			"son of X" pattern
+7399	Yama (Hindu)	Hindu	twin of Yamī	STRIP_TO_BARE	sister	Yamī			"sister of X" pattern
+7399	Yama (Hindu)	Hindu	lokapāla of the south	TITLE_DUP			domain		"south" already in domain
+7398	Mahishasura	Hindu	buffalo-demon king	TITLE_MOVE				character_trait	title not present in any other field
+7398	Mahishasura	Hindu	asura/daitya	TITLE_MOVE				domain	title not present in any other field
+7405	Hauhet	Egyptian	Ogdoad pair-member with Heh	TITLE_MOVE				domain	title not present in any other field
+7405	Hauhet	Egyptian	primordial infinity	TITLE_DUP			domain		full string already in domain
+7406	Kuk	Egyptian	Ogdoad pair-member with Kauket	TITLE_DUP			domain		"kauket" already in domain
+7406	Kuk	Egyptian	primordial darkness	TITLE_DUP			domain		full string already in domain
+7404	Naunet	Egyptian	Ogdoad pair-member with Nun	TITLE_MOVE				domain	title not present in any other field
+7404	Naunet	Egyptian	primordial waters	TITLE_DUP			domain		full string already in domain
+7412	Kotoshironushi	Shinto	son of Ōkuninushi	STRIP_TO_BARE	son	Ōkuninushi			"son of X" pattern
+7412	Kotoshironushi	Shinto	brother of Takeminakata	STRIP_TO_BARE	brother	Takeminakata			"brother of X" pattern
+7412	Kotoshironushi	Shinto	earthly-kami	TITLE_MOVE				domain	title not present in any other field
+7412	Kotoshironushi	Shinto	later identified with Ebisu	TITLE_MOVE				domain	title not present in any other field
+7417	Hotei	Shinto	one of the Seven Lucky Gods	TITLE_MOVE				domain	title not present in any other field
+7417	Hotei	Shinto	incarnation of Maitreya (future Buddha)	TITLE_MOVE				identification	title not present in any other field
+7417	Hotei	Shinto	historically the Chinese Chan monk Budai	TITLE_MOVE				domain	title not present in any other field
+7418	Jurojin	Shinto	one of the Seven Lucky Gods	TITLE_MOVE				domain	title not present in any other field
+7418	Jurojin	Shinto	Japanese form of Shou-lao	TITLE_DUP			identification		"shou-lao" already in identification
+7418	Jurojin	Shinto	often paired/merged with Fukurokuju	TITLE_MOVE				domain	title not present in any other field
+7420	Poseidon	Greek	son of Cronus and Rhea	STRIP_TO_BARE	son	Cronus and Rhea			"son of X" pattern
+7420	Poseidon	Greek	brother of Zeus, Hades, Hera, Demeter, Hestia	STRIP_TO_BARE	brother	Zeus, Hades, Hera, Demeter, Hestia			"brother of X" pattern
+7420	Poseidon	Greek	husband of Amphitrite (the Nereid sea-queen)	STRIP_TO_BARE	husband	Amphitrite (the Nereid sea-queen)			"husband of X" pattern
+7420	Poseidon	Greek	father of Triton (by Amphitrite), Polyphemus, Theseus, Pegasus, and many others	STRIP_TO_BARE	father	Triton (by Amphitrite), Polyphemus, Theseus, Pegasus, and many others			"father of X" pattern
+7419	Fukurokuju	Shinto	one of the Seven Lucky Gods	TITLE_MOVE				domain	title not present in any other field
+7419	Fukurokuju	Shinto	Daoist Three Stars of Fortune combined	TITLE_MOVE				domain	title not present in any other field
+7419	Fukurokuju	Shinto	often paired/merged with Jurojin	TITLE_MOVE				domain	title not present in any other field
+7421	Hades	Greek	son of Cronus and Rhea	STRIP_TO_BARE	son	Cronus and Rhea			"son of X" pattern
+7421	Hades	Greek	brother of Zeus, Poseidon, Hera, Demeter, Hestia	STRIP_TO_BARE	brother	Zeus, Poseidon, Hera, Demeter, Hestia			"brother of X" pattern
+7421	Hades	Greek	husband of Persephone	STRIP_TO_BARE	husband	Persephone			"husband of X" pattern
+7429	Pontus	Greek	primordial sea-god	TITLE_DUP			character_trait		"sea-god" already in character_trait
+7429	Pontus	Greek	parthenogenetic son of Gaia	TITLE_DUP			domain		"gaia" already in domain
+7429	Pontus	Greek	father (with Gaia) of Nereus, Thaumas, Phorcys, Ceto, Eurybia	TITLE_MOVE				domain	title not present in any other field
+7424	Thanatos	Greek	son of Nyx (Night), parthenogenetically	STRIP_TO_BARE	son	Nyx (Night), parthenogenetically			"son of X" pattern
+7424	Thanatos	Greek	twin of Hypnos	STRIP_TO_BARE	sister	Hypnos			"sister of X" pattern
+7424	Thanatos	Greek	sibling of Moirai, Keres, Nemesis, Eris, and many other dark-children of Night	STRIP_TO_BARE	sibling	Moirai, Keres, Nemesis, Eris, and many other dark-children of Night			"sibling of X" pattern
+7431	Tethys	Greek	Titaness	TITLE_DUP			domain		full string already in domain
+7431	Tethys	Greek	daughter of Ouranos and Gaia	STRIP_TO_BARE	daughter	Ouranos and Gaia			"daughter of X" pattern
+7431	Tethys	Greek	sister-wife of Oceanus	TITLE_DUP			domain		full string already in domain
+7431	Tethys	Greek	mother of all rivers and Oceanids	STRIP_TO_BARE	mother	all rivers and Oceanids			"mother of X" pattern
+7431	Tethys	Greek	foster-mother of Hera (Homer)	TITLE_MOVE				domain	title not present in any other field
+7435	Eros	Greek	(primordial) one of the first cosmic beings emerging from Chaos	TITLE_MOVE				domain	title not present in any other field
+7435	Eros	Greek	(Olympian) son of Aphrodite, often by Ares	TITLE_MOVE				domain	title not present in any other field
+7433	Triton	Greek	son of Poseidon and Amphitrite	STRIP_TO_BARE	son	Poseidon and Amphitrite			"son of X" pattern
+7433	Triton	Greek	herald-merman of the sea	TITLE_DUP			domain		"the sea" already in domain
+7440	Hydra	Greek	daughter of Typhon and Echidna	STRIP_TO_BARE	daughter	Typhon and Echidna			"daughter of X" pattern
+7440	Hydra	Greek	raised by Hera	TITLE_MOVE				domain	title not present in any other field
+7440	Hydra	Greek	slain by Heracles	TITLE_MOVE				domain	title not present in any other field
+7437	Moirai	Greek	the three Fates: Clotho, Lachesis, Atropos	TITLE_MOVE				domain	title not present in any other field
+7437	Moirai	Greek	either daughters of Nyx (parthenogenetically) or of Zeus and Themis	TITLE_MOVE				domain	title not present in any other field
+7444	Jupiter	Roman	identified with Zeus	TITLE_MOVE				domain	title not present in any other field
+7444	Jupiter	Roman	son of Saturn and Ops	STRIP_TO_BARE	son	Saturn and Ops			"son of X" pattern
+7444	Jupiter	Roman	sister-brother to Juno (and husband)	TITLE_MOVE				domain	title not present in any other field
+7444	Jupiter	Roman	head of the Capitoline Triad	TITLE_MOVE				domain	title not present in any other field
+7444	Jupiter	Roman	father of Mars, Vulcan, Mercury, Minerva, Apollo, Diana, Bacchus, Hercules, Castor, Pollux, and many more (importing the Zeus-genealogy)	STRIP_TO_BARE	father	Mars, Vulcan, Mercury, Minerva, Apollo, Diana, Bacchus, Hercules, Castor, Pollux, and many more (importing the Zeus-genealogy)			"father of X" pattern
+7445	Mars	Roman	identified with Ares	TITLE_MOVE				domain	title not present in any other field
+7445	Mars	Roman	son of Juno (parthenogenetically in some Roman traditions, e.g. Ovid Fasti 5.229-258 — Juno conceives him touching a flower without Jupiter)	STRIP_TO_BARE	son	Juno (parthenogenetically in some Roman traditions, e.g. Ovid Fasti 5.229-258 — Juno conceives him touching a flower without Jupiter)			"son of X" pattern
+7445	Mars	Roman	father of Romulus and Remus by Rhea Silvia	STRIP_TO_BARE	father	Romulus and Remus by Rhea Silvia			"father of X" pattern
+7452	Liber	Roman	indigenous Italic deity	TITLE_MOVE				domain (or identification)	title not present in any other field
+7452	Liber	Roman	identified with Bacchus	TITLE_MOVE				domain	title not present in any other field
+7452	Liber	Roman	one of the Aventine Triad with Ceres and Libera	TITLE_MOVE				domain	title not present in any other field
+7449	Pluto	Roman	identified with Hades	TITLE_MOVE				domain	title not present in any other field
+7449	Pluto	Roman	syncretized with Dis Pater (the Italic underworld-wealth deity)	TITLE_MOVE				domain (or identification)	title not present in any other field
+7449	Pluto	Roman	son of Saturn and Ops	STRIP_TO_BARE	son	Saturn and Ops			"son of X" pattern
+7449	Pluto	Roman	brother of Jupiter, Neptune, Juno, Ceres, Vesta	STRIP_TO_BARE	brother	Jupiter, Neptune, Juno, Ceres, Vesta			"brother of X" pattern
+7449	Pluto	Roman	husband of Proserpina	STRIP_TO_BARE	husband	Proserpina			"husband of X" pattern
+7453	Quirinus	Roman	Sabine war-deity	TITLE_MOVE				domain (or identification)	title not present in any other field
+7453	Quirinus	Roman	identified with deified Romulus	TITLE_DUP			character_trait		"romulus" already in character_trait
+7453	Quirinus	Roman	one of the Archaic Triad (Jupiter-Mars-Quirinus)	TITLE_MOVE				domain	title not present in any other field
+7459	Hercules	Roman	identified with Heracles	TITLE_MOVE				domain	title not present in any other field
+7459	Hercules	Roman	son of Jupiter and Alcmena	STRIP_TO_BARE	son	Jupiter and Alcmena			"son of X" pattern
+7459	Hercules	Roman	indigenous Italic Ara Maxima cult predates the interpretatio	TITLE_DUP			character_trait		"interpretatio" already in character_trait
+7463	Lares	Roman	tutelary household spirits	TITLE_DUP			domain		"spirits" already in domain
+7463	Lares	Roman	sometimes treated as deified ancestors	TITLE_MOVE				domain	title not present in any other field
+7463	Lares	Roman	linked to Mania (the Lares-mother in some traditions)	TITLE_MOVE				domain	title not present in any other field
+7462	Remus	Roman	son of Mars and Rhea Silvia (Vestal)	STRIP_TO_BARE	son	Mars and Rhea Silvia (Vestal)			"son of X" pattern
+7462	Remus	Roman	twin of Romulus	STRIP_TO_BARE	sister	Romulus			"sister of X" pattern
+7462	Remus	Roman	killed by Romulus or his men	TITLE_MOVE				domain	title not present in any other field
+7465	Ometeotl	Aztec	supreme creator-deity in unified-duality aspect	TITLE_MOVE				domain (or identification)	title not present in any other field
+7465	Ometeotl	Aztec	parent of the four directional Tezcatlipocas	TITLE_MOVE				domain	title not present in any other field
+7465	Ometeotl	Aztec	dwells in Omeyocan	TITLE_MOVE				domain	title not present in any other field
+7468	Tonacacihuatl	Aztec	feminine half of supreme creator-duality	TITLE_MOVE				domain	title not present in any other field
+7468	Tonacacihuatl	Aztec	wife of Tonacatecuhtli	STRIP_TO_BARE	wife	Tonacatecuhtli			"wife of X" pattern
+7468	Tonacacihuatl	Aztec	mother of the four Tezcatlipocas	STRIP_TO_BARE	mother	the four Tezcatlipocas			"mother of X" pattern
+7468	Tonacacihuatl	Aztec	sometimes identified with Omecihuatl	TITLE_MOVE				domain	title not present in any other field
+7469	Tlaloc	Aztec	co-supreme with Huitzilopochtli at Tenochtitlan	TITLE_MOVE				domain	title not present in any other field
+7469	Tlaloc	Aztec	husband of Chalchiuhtlicue	STRIP_TO_BARE	husband	Chalchiuhtlicue			"husband of X" pattern
+7469	Tlaloc	Aztec	master of the Tlaloque (rain-helpers)	TITLE_MOVE				domain	title not present in any other field
+7467	Omecihuatl	Aztec	feminine half of Ometeotl	TITLE_MOVE				domain	title not present in any other field
+7467	Omecihuatl	Aztec	wife of Ometecuhtli	STRIP_TO_BARE	wife	Ometecuhtli			"wife of X" pattern
+7467	Omecihuatl	Aztec	mother of the four Tezcatlipocas	STRIP_TO_BARE	mother	the four Tezcatlipocas			"mother of X" pattern
+7466	Ometecuhtli	Aztec	masculine half of Ometeotl	TITLE_MOVE				domain	title not present in any other field
+7466	Ometecuhtli	Aztec	husband of Omecihuatl	STRIP_TO_BARE	husband	Omecihuatl			"husband of X" pattern
+7466	Ometecuhtli	Aztec	father of the four Tezcatlipocas	STRIP_TO_BARE	father	the four Tezcatlipocas			"father of X" pattern
+7475	Metztli	Aztec	the moon	TITLE_DUP			domain		"moon" already in domain
+7475	Metztli	Aztec	identified with Tecuciztecatl	TITLE_MOVE				domain	title not present in any other field
+7472	Mictlantecuhtli	Aztec	lord of Mictlan	TITLE_MOVE				domain (or identification)	title not present in any other field
+7472	Mictlantecuhtli	Aztec	co-ruler with Mictlancihuatl (his consort)	TITLE_MOVE				domain	title not present in any other field
+7481	Tonantzin	Aztec	title-aspect of the mother-goddess complex	TITLE_MOVE				domain (or identification)	title not present in any other field
+7481	Tonantzin	Aztec	pre-Conquest goddess of Tepeyac	TITLE_MOVE				domain	title not present in any other field
+7481	Tonantzin	Aztec	source of Guadalupe syncretism	TITLE_MOVE				domain	title not present in any other field
+7478	Mayahuel	Aztec	mother of the 400 Centzon Totochtin (pulque-rabbit gods)	STRIP_TO_BARE	mother	the 400 Centzon Totochtin (pulque-rabbit gods)			"mother of X" pattern
+7478	Mayahuel	Aztec	rescued by Quetzalcoatl from her grandmother Tzitzimitl	TITLE_MOVE				domain	title not present in any other field
+7482	Nuwa	Chinese	creator-goddess and mother of humanity	TITLE_MOVE				domain (or identification)	title not present in any other field
+7482	Nuwa	Chinese	one of the Three Sovereigns	TITLE_MOVE				domain (or identification)	title not present in any other field
+7482	Nuwa	Chinese	sister-wife of Fuxi	TITLE_MOVE				domain	title not present in any other field
+7482	Nuwa	Chinese	repairer of the cosmos	TITLE_DUP			character_trait		"cosmos" already in character_trait
+7490	Shun	Chinese	one of the Five Emperors / sage-kings	TITLE_MOVE				character_trait	title not present in any other field
+7490	Shun	Chinese	son of the Blind Man (Gusou)	STRIP_TO_BARE	son	the Blind Man (Gusou)			"son of X" pattern
+7490	Shun	Chinese	son-in-law of Yao (married Yao's two daughters)	TITLE_MOVE				domain	title not present in any other field
+7490	Shun	Chinese	abdicated to Yu	TITLE_MOVE				domain	title not present in any other field
+7488	Yu the Great	Chinese	last of the sage-kings	TITLE_MOVE				character_trait	title not present in any other field
+7488	Yu the Great	Chinese	son of Gun	STRIP_TO_BARE	son	Gun			"son of X" pattern
+7488	Yu the Great	Chinese	founder of the Xia dynasty	TITLE_MOVE				domain	title not present in any other field
+7488	Yu the Great	Chinese	father of Qi (to whom he passed the throne, ending the abdication tradition)	STRIP_TO_BARE	father	Qi (to whom he passed the throne, ending the abdication tradition)			"father of X" pattern
+7492	Zao Jun	Chinese	the Kitchen God / Stove God	TITLE_MOVE				domain	title not present in any other field
+7492	Zao Jun	Chinese	household-resident deity	TITLE_MOVE				domain (or identification)	title not present in any other field
+7492	Zao Jun	Chinese	annual reporter to the Jade Emperor	TITLE_MOVE				domain	title not present in any other field
+7495	Zhongli Quan	Chinese	one of the Eight Immortals (often the eldest)	TITLE_MOVE				domain	title not present in any other field
+7495	Zhongli Quan	Chinese	the master who initiated Lu Dongbin	TITLE_MOVE				domain	title not present in any other field
+7500	Dizang	Chinese	bodhisattva of the underworld	TITLE_DUP			domain		"underworld" already in domain
+7500	Dizang	Chinese	Chinese form of Kṣitigarbha	TITLE_MOVE				domain	title not present in any other field
+7500	Dizang	Chinese	savior of beings in the hell-realms	TITLE_MOVE				domain	title not present in any other field
+7497	Han Xiangzi	Chinese	one of the Eight Immortals	TITLE_MOVE				domain	title not present in any other field
+7497	Han Xiangzi	Chinese	relative of the historical Han Yu	TITLE_MOVE				domain	title not present in any other field
+7497	Han Xiangzi	Chinese	disciple of Lü Dongbin	TITLE_MOVE				domain	title not present in any other field
+7497	Han Xiangzi	Chinese	patron of musicians	TITLE_MOVE				domain	title not present in any other field
+7502	Doumu	Chinese	Mother of the Great Dipper	STRIP_TO_BARE	mother	the Great Dipper			"mother of X" pattern
+7502	Doumu	Chinese	mother of the nine Dipper-star gods	STRIP_TO_BARE	mother	the nine Dipper-star gods			"mother of X" pattern
+7502	Doumu	Chinese	high Daoist astral deity	TITLE_MOVE				domain (or identification)	title not present in any other field

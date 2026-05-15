@@ -1,0 +1,1629 @@
+id	name	tradition	value	action	bucket	reason
+6156	Quetzalcoatl	Aztec	exile	KEEP	1-2 hyphens	narrow event-type
+6156	Quetzalcoatl	Aztec	gift to humanity	KEEP	1-2 hyphens	narrow event-type
+6156	Quetzalcoatl	Aztec	creation	KEEP	1-2 hyphens	narrow event-type
+6156	Quetzalcoatl	Aztec	descent to underworld	KEEP	1-2 hyphens	narrow event-type
+6156	Quetzalcoatl	Aztec	self-sacrifice	KEEP	1-2 hyphens	narrow event-type
+6774	Holda	Germanic	the Wild Hunt	KEEP	1-2 hyphens	narrow event-type
+6774	Holda	Germanic	seasonal transformation	KEEP	1-2 hyphens	narrow event-type
+6774	Holda	Germanic	reward and punishment	KEEP	1-2 hyphens	narrow event-type
+6140	Dionysus	Greek	miraculous birth	KEEP	1-2 hyphens	narrow event-type
+6140	Dionysus	Greek	descent to underworld	KEEP	1-2 hyphens	narrow event-type
+6140	Dionysus	Greek	epiphany	KEEP	1-2 hyphens	narrow event-type
+7345	Azazel	Abrahamic	fall	KEEP	1-2 hyphens	narrow event-type
+7345	Azazel	Abrahamic	transgressive teaching	KEEP	1-2 hyphens	narrow event-type
+7345	Azazel	Abrahamic	imprisonment	KEEP	1-2 hyphens	narrow event-type
+7345	Azazel	Abrahamic	eschatological judgment	KEEP	1-2 hyphens	narrow event-type
+7402	Apep	Egyptian	nightly-attack-on-the-sun	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7402	Apep	Egyptian	eternal-defeat-and-reformation	REVIEW	3 hyphens	borderline — manual check
+7402	Apep	Egyptian	embodiment-of-chaos	KEEP	1-2 hyphens	narrow event-type
+7343	Asmodeus	Abrahamic	serial murder	KEEP	1-2 hyphens	narrow event-type
+7343	Asmodeus	Abrahamic	exorcism	KEEP	1-2 hyphens	narrow event-type
+7343	Asmodeus	Abrahamic	kingship-substitution (Talmud)	KEEP	1-2 hyphens	narrow event-type
+7458	Cupid	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+7458	Cupid	Roman	marriage	KEEP	1-2 hyphens	narrow event-type
+7458	Cupid	Roman	Dido-disguise	KEEP	1-2 hyphens	narrow event-type
+7415	Ebisu	Shinto	syncretism	KEEP	1-2 hyphens	narrow event-type
+7415	Ebisu	Shinto	patronage	KEEP	1-2 hyphens	narrow event-type
+7415	Ebisu	Shinto	merchant-prosperity	KEEP	1-2 hyphens	narrow event-type
+7317	Gilgamesh	Mesopotamian	heroic quest	KEEP	1-2 hyphens	narrow event-type
+7317	Gilgamesh	Mesopotamian	cosmic battle	KEEP	1-2 hyphens	narrow event-type
+7317	Gilgamesh	Mesopotamian	descent to the eastern garden	KEEP	1-2 hyphens	narrow event-type
+7317	Gilgamesh	Mesopotamian	failed immortality-quest	KEEP	1-2 hyphens	narrow event-type
+7340	God-the-Father	Abrahamic	creation	KEEP	1-2 hyphens	narrow event-type
+7340	God-the-Father	Abrahamic	covenant	KEEP	1-2 hyphens	narrow event-type
+7340	God-the-Father	Abrahamic	sending of the Son	KEEP	1-2 hyphens	narrow event-type
+7340	God-the-Father	Abrahamic	outpouring of the Spirit	KEEP	1-2 hyphens	narrow event-type
+7340	God-the-Father	Abrahamic	final consummation	KEEP	1-2 hyphens	narrow event-type
+7214	Bedawang Nala	Balinese	world creation	KEEP	1-2 hyphens	narrow event-type
+6316	Khepri	Egyptian	world creation	KEEP	1-2 hyphens	narrow event-type
+6634	Zhurong	Chinese	fire-deity	REJECT	identity-keyword	contains identity keyword
+6634	Zhurong	Chinese	victory-over-Gonggong	KEEP	1-2 hyphens	narrow event-type
+6634	Zhurong	Chinese	bringing-fire-to-humanity	REVIEW	3 hyphens	borderline — manual check
+7397	Hiranyakashipu	Hindu	tapas-boon-acquisition	KEEP	1-2 hyphens	narrow event-type
+7397	Hiranyakashipu	Hindu	apotheosis	KEEP	1-2 hyphens	narrow event-type
+7397	Hiranyakashipu	Hindu	son-persecution	KEEP	1-2 hyphens	narrow event-type
+7397	Hiranyakashipu	Hindu	being slain by Narasiṃha	KEEP	1-2 hyphens	narrow event-type
+7208	Igigi	Mesopotamian	rebellion	KEEP	1-2 hyphens	narrow event-type
+7208	Igigi	Mesopotamian	laboring	KEEP	1-2 hyphens	narrow event-type
+7208	Igigi	Mesopotamian	replacement	KEEP	1-2 hyphens	narrow event-type
+6100	Tiamat	Mesopotamian	primordial existence	KEEP	1-2 hyphens	narrow event-type
+6100	Tiamat	Mesopotamian	cosmic battle	KEEP	1-2 hyphens	narrow event-type
+6100	Tiamat	Mesopotamian	death by combat	KEEP	1-2 hyphens	narrow event-type
+6100	Tiamat	Mesopotamian	transformation at death	KEEP	1-2 hyphens	narrow event-type
+7483	Laozi	Chinese	authorship-of-the-Daodejing	REVIEW	3 hyphens	borderline — manual check
+7483	Laozi	Chinese	departure-west-on-the-ox	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7483	Laozi	Chinese	apotheosis	KEEP	1-2 hyphens	narrow event-type
+7428	Erebus	Greek	cosmic-primal-being	REJECT	identity-keyword	contains identity keyword
+7428	Erebus	Greek	generation-of-Aether-and-Hemera	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7504	Maitreya	Buddhist	awaiting-in-the-Tushita-heaven	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7504	Maitreya	Buddhist	the-future-Buddhahood	REJECT	the-prefix	identity-statement disguised as event
+7504	Maitreya	Buddhist	the-re-establishment-of-the-Dharma	REJECT	the-prefix	identity-statement disguised as event
+7287	Mary	Abrahamic	annunciation	KEEP	1-2 hyphens	narrow event-type
+7287	Mary	Abrahamic	virginal conception	KEEP	1-2 hyphens	narrow event-type
+7287	Mary	Abrahamic	childbirth	KEEP	1-2 hyphens	narrow event-type
+7287	Mary	Abrahamic	flight	KEEP	1-2 hyphens	narrow event-type
+7287	Mary	Abrahamic	intercession	KEEP	1-2 hyphens	narrow event-type
+7287	Mary	Abrahamic	witness to crucifixion	KEEP	1-2 hyphens	narrow event-type
+7287	Mary	Abrahamic	assumption (in Catholic tradition)	KEEP	1-2 hyphens	narrow event-type
+7434	Nereus	Greek	Nereid-fathering	KEEP	1-2 hyphens	narrow event-type
+7434	Nereus	Greek	shapeshifting-wrestling-with-Heracles	REVIEW	3 hyphens	borderline — manual check
+7434	Nereus	Greek	prophetic-truth-telling	KEEP	1-2 hyphens	narrow event-type
+7229	Agdistis	Phrygian	androgynous-birth-from-the-seed-of-Zeus	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7229	Agdistis	Phrygian	the-castration-by-the-gods	REJECT	the-prefix	identity-statement disguised as event
+7229	Agdistis	Phrygian	the-engendering-of-Attis-through-the-almond	REJECT	the-prefix	identity-statement disguised as event
+7229	Agdistis	Phrygian	the-driving-of-Attis-to-madness	REJECT	the-prefix	identity-statement disguised as event
+7476	Nanahuatzin	Aztec	self-immolation-at-Teotihuacan	REVIEW	3 hyphens	borderline — manual check
+7476	Nanahuatzin	Aztec	transformation-into-fifth-sun	REVIEW	3 hyphens	borderline — manual check
+6739	Kali	Hindu	emergence	KEEP	1-2 hyphens	narrow event-type
+6739	Kali	Hindu	slays monster	KEEP	1-2 hyphens	narrow event-type
+6739	Kali	Hindu	blood-drinking	KEEP	1-2 hyphens	narrow event-type
+6739	Kali	Hindu	cosmic battle	KEEP	1-2 hyphens	narrow event-type
+7384	Nandi	Hindu	devotional service	KEEP	1-2 hyphens	narrow event-type
+7384	Nandi	Hindu	gatekeeping	KEEP	1-2 hyphens	narrow event-type
+7384	Nandi	Hindu	teaching-reception	KEEP	1-2 hyphens	narrow event-type
+7384	Nandi	Hindu	mount-bearing	KEEP	1-2 hyphens	narrow event-type
+7261	The Alcis	Germanic	sacred ritual	KEEP	1-2 hyphens	narrow event-type
+6838	Nehalennia	Germanic	the-protectress-of-North-Sea-seafarers-and-merchants	REJECT	the-prefix	identity-statement disguised as event
+6838	Nehalennia	Germanic	known-entirely-from-votive-altars	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7091	Baldr	Norse	prophetic dream	KEEP	1-2 hyphens	narrow event-type
+7091	Baldr	Norse	divine-omen	KEEP	1-2 hyphens	narrow event-type
+7091	Baldr	Norse	death-by-trick	KEEP	1-2 hyphens	narrow event-type
+7091	Baldr	Norse	funeral	KEEP	1-2 hyphens	narrow event-type
+7091	Baldr	Norse	underworld-journey-(by Hermóðr)	KEEP	1-2 hyphens	narrow event-type
+7091	Baldr	Norse	post-Ragnarok return	KEEP	1-2 hyphens	narrow event-type
+7506	Vairocana	Buddhist	embodiment-of-the-Dharmakaya	REVIEW	3 hyphens	borderline — manual check
+7506	Vairocana	Buddhist	centre-of-the-Five-Tathagata-mandala	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7506	Vairocana	Buddhist	the-cosmos-as-self-expression	REJECT	the-prefix	identity-statement disguised as event
+6784	Tammuz	Mesopotamian	descent to underworld	KEEP	1-2 hyphens	narrow event-type
+7519	Hunahpu	Maya	the-trials-of-Xibalba	REJECT	the-prefix	identity-statement disguised as event
+7519	Hunahpu	Maya	restoration	KEEP	1-2 hyphens	narrow event-type
+7519	Hunahpu	Maya	the-defeat-of-the-underworld-lords	REJECT	the-prefix	identity-statement disguised as event
+7519	Hunahpu	Maya	the-ascent-to-become-the-sun	REJECT	the-prefix	identity-statement disguised as event
+6786	Nerthus	Germanic	the-Terra-Mater-of-the-Germanic-tribes	REJECT	the-prefix	identity-statement disguised as event
+6786	Nerthus	Germanic	the-processional-cart-and-the-season-of-peace	REJECT	the-prefix	identity-statement disguised as event
+6786	Nerthus	Germanic	the-secret-washing-in-the-lake	REJECT	the-prefix	identity-statement disguised as event
+6236	Kvasir	Norse	peacemaking birth	KEEP	1-2 hyphens	narrow event-type
+6236	Kvasir	Norse	murder	KEEP	1-2 hyphens	narrow event-type
+6236	Kvasir	Norse	transformation of body into mead	KEEP	1-2 hyphens	narrow event-type
+7104	Móði and Magni	Norse	ragnarok survival	KEEP	1-2 hyphens	narrow event-type
+7104	Móði and Magni	Norse	inheritance	KEEP	1-2 hyphens	narrow event-type
+7430	Oceanus	Greek	Titanic-firstborn	KEEP	1-2 hyphens	narrow event-type
+7430	Oceanus	Greek	massive-progeny-generation	KEEP	1-2 hyphens	narrow event-type
+7430	Oceanus	Greek	aloof-from-Titanomachy	KEEP	1-2 hyphens	narrow event-type
+6759	Shiva	Hindu	cosmic battle	KEEP	1-2 hyphens	narrow event-type
+6759	Shiva	Hindu	boon-granting	KEEP	1-2 hyphens	narrow event-type
+6759	Shiva	Hindu	destruction	KEEP	1-2 hyphens	narrow event-type
+6759	Shiva	Hindu	ascetic withdrawal	KEEP	1-2 hyphens	narrow event-type
+6759	Shiva	Hindu	transformation	KEEP	1-2 hyphens	narrow event-type
+6759	Shiva	Hindu	manifestation	KEEP	1-2 hyphens	narrow event-type
+6736	Sophia	Gnostic	the-fall-or-presumption-of-Sophia	REJECT	the-prefix	identity-statement disguised as event
+6736	Sophia	Gnostic	the-bringing-forth-of-Yaldabaoth	REJECT	the-prefix	identity-statement disguised as event
+6736	Sophia	Gnostic	the-repentance-and-redemption	REJECT	the-prefix	identity-statement disguised as event
+6320	Caryatis	Greek	seduction	KEEP	1-2 hyphens	narrow event-type
+7427	Tartarus	Greek	cosmic-primal-being	REJECT	identity-keyword	contains identity keyword
+7427	Tartarus	Greek	Titan-imprisonment	KEEP	1-2 hyphens	narrow event-type
+7427	Tartarus	Greek	generation-of-Typhon	KEEP	1-2 hyphens	narrow event-type
+7361	Audhumla	Norse	primordial emergence	KEEP	1-2 hyphens	narrow event-type
+7361	Audhumla	Norse	nourishing	KEEP	1-2 hyphens	narrow event-type
+7361	Audhumla	Norse	revelation of Búri	KEEP	1-2 hyphens	narrow event-type
+6306	Hundun	Chinese	primordial-undifferentiation	KEEP	1-2 hyphens	narrow event-type
+6306	Hundun	Chinese	death-by-the-boring-of-orifices	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7163	Nāga	Hindu	ancestral enmity with Garuḍa	KEEP	1-2 hyphens	narrow event-type
+7163	Nāga	Hindu	treasure-guardianship	KEEP	1-2 hyphens	narrow event-type
+7163	Nāga	Hindu	underworld-rule	KEEP	1-2 hyphens	narrow event-type
+7477	Tecuciztecatl	Aztec	hesitation-at-Teotihuacan	KEEP	1-2 hyphens	narrow event-type
+7477	Tecuciztecatl	Aztec	transformation-into-moon	KEEP	1-2 hyphens	narrow event-type
+7477	Tecuciztecatl	Aztec	rabbit-thrown-to-dim	REVIEW	3 hyphens	borderline — manual check
+7474	Tonatiuh	Aztec	fifth-sun-emergence-at-Teotihuacan	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7474	Tonatiuh	Aztec	Nanahuatzin-transformation	KEEP	1-2 hyphens	narrow event-type
+7474	Tonatiuh	Aztec	presidency	KEEP	1-2 hyphens	narrow event-type
+7474	Tonatiuh	Aztec	daily-blood-demand	KEEP	1-2 hyphens	narrow event-type
+6101	Valkyrie	Norse	battle-choosing	KEEP	1-2 hyphens	narrow event-type
+6101	Valkyrie	Norse	mead-serving	KEEP	1-2 hyphens	narrow event-type
+6101	Valkyrie	Norse	sacred betrothal (Sigrdrífa)	KEEP	1-2 hyphens	narrow event-type
+7096	Njörðr	Norse	Vanir-hostage-exchange	KEEP	1-2 hyphens	narrow event-type
+7096	Njörðr	Norse	sea-god patronage	KEEP	1-2 hyphens	narrow event-type
+7096	Njörðr	Norse	failed marriage	KEEP	1-2 hyphens	narrow event-type
+7096	Njörðr	Norse	choosing-by-feet	KEEP	1-2 hyphens	narrow event-type
+7518	Ix Chel	Maya	the-moon-and-childbirth-goddess	REJECT	the-prefix	identity-statement disguised as event
+7518	Ix Chel	Maya	cult	KEEP	1-2 hyphens	narrow event-type
+7518	Ix Chel	Maya	the-aged-flood-pouring-aspect	REJECT	the-prefix	identity-statement disguised as event
+7354	Sif	Norse	hair-cutting and dwarven re-creation	KEEP	1-2 hyphens	narrow event-type
+7354	Sif	Norse	marriage	KEEP	1-2 hyphens	narrow event-type
+7354	Sif	Norse	motherhood	KEEP	1-2 hyphens	narrow event-type
+7222	Vajrapani	Buddhist	embodiment-of-the-Buddhas'-power	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7222	Vajrapani	Buddhist	protection	KEEP	1-2 hyphens	narrow event-type
+7509	Mahakala	Buddhist	principal-dharmapala-protector	KEEP	1-2 hyphens	narrow event-type
+7509	Mahakala	Buddhist	derivation-from-the-Hindu-Mahakala	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7509	Mahakala	Buddhist	the-East-Asian-development-as-Daikokuten	REJECT	the-prefix	identity-statement disguised as event
+7447	Vulcan	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+7447	Vulcan	Roman	indigenous-Volcanus-origin	KEEP	1-2 hyphens	narrow event-type
+7447	Vulcan	Roman	cult	KEEP	1-2 hyphens	narrow event-type
+7447	Vulcan	Roman	post-fire-shrine-expansion	REVIEW	3 hyphens	borderline — manual check
+7486	Yandi	Chinese	battle-of-Banquan	KEEP	1-2 hyphens	narrow event-type
+7486	Yandi	Chinese	merger-with-the-Yellow-Emperor's-people	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7486	Yandi	Chinese	identification-with-Shennong	KEEP	1-2 hyphens	narrow event-type
+6621	Asteria	Greek	exile	KEEP	1-2 hyphens	narrow event-type
+6623	Emperor Taizu of Song	Chinese	overthrows ruler	KEEP	1-2 hyphens	narrow event-type
+6625	Zhunti Daoren	Chinese	slays monster	KEEP	1-2 hyphens	narrow event-type
+7524	Vucub-Came	Maya	paramount-lord-of-Xibalba	REJECT	identity-keyword	contains identity keyword
+7524	Vucub-Came	Maya	co-presiding-over-the-trials	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7524	Vucub-Came	Maya	the-defeat-by-the-Hero-Twins	REJECT	the-prefix	identity-statement disguised as event
+7425	Chaos	Greek	cosmic-primal-being	REJECT	identity-keyword	contains identity keyword
+7425	Chaos	Greek	source-of-Erebus-and-Nyx	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6957	Pales	Roman	founding	KEEP	1-2 hyphens	narrow event-type
+7339	Allah	Abrahamic	creation	KEEP	1-2 hyphens	narrow event-type
+7339	Allah	Abrahamic	revelation	KEEP	1-2 hyphens	narrow event-type
+7339	Allah	Abrahamic	covenant	KEEP	1-2 hyphens	narrow event-type
+7339	Allah	Abrahamic	judgment	KEEP	1-2 hyphens	narrow event-type
+7339	Allah	Abrahamic	providence	KEEP	1-2 hyphens	narrow event-type
+6139	Gabriel	Abrahamic	revelation	KEEP	1-2 hyphens	narrow event-type
+6139	Gabriel	Abrahamic	interpretation	KEEP	1-2 hyphens	narrow event-type
+6139	Gabriel	Abrahamic	annunciation	KEEP	1-2 hyphens	narrow event-type
+7350	Leviathan	Abrahamic	messianic feast	KEEP	1-2 hyphens	narrow event-type
+7350	Leviathan	Abrahamic	primordial defeat	KEEP	1-2 hyphens	narrow event-type
+7350	Leviathan	Abrahamic	cosmic combat	KEEP	1-2 hyphens	narrow event-type
+6767	Lilith	Abrahamic	origin	KEEP	1-2 hyphens	narrow event-type
+6767	Lilith	Abrahamic	exile	KEEP	1-2 hyphens	narrow event-type
+6767	Lilith	Abrahamic	curse	KEEP	1-2 hyphens	narrow event-type
+6767	Lilith	Abrahamic	demon-binding	KEEP	1-2 hyphens	narrow event-type
+7338	YHWH	Abrahamic	creation	KEEP	1-2 hyphens	narrow event-type
+7338	YHWH	Abrahamic	covenant	KEEP	1-2 hyphens	narrow event-type
+7338	YHWH	Abrahamic	theophany	KEEP	1-2 hyphens	narrow event-type
+7338	YHWH	Abrahamic	revelation	KEEP	1-2 hyphens	narrow event-type
+7338	YHWH	Abrahamic	judgment	KEEP	1-2 hyphens	narrow event-type
+7338	YHWH	Abrahamic	deliverance	KEEP	1-2 hyphens	narrow event-type
+7338	YHWH	Abrahamic	exile	KEEP	1-2 hyphens	narrow event-type
+7338	YHWH	Abrahamic	restoration	KEEP	1-2 hyphens	narrow event-type
+6697	Phoroneus	Greek	founding	KEEP	1-2 hyphens	narrow event-type
+7041	Izanami-no-Mikoto	Shinto	world creation	KEEP	1-2 hyphens	narrow event-type
+7142	Centzonhuītznāhua	Aztec	slays kin	KEEP	1-2 hyphens	narrow event-type
+7142	Centzonhuītznāhua	Aztec	betrayal	KEEP	1-2 hyphens	narrow event-type
+6104	Eve	Abrahamic	creation	KEEP	1-2 hyphens	narrow event-type
+6104	Eve	Abrahamic	transgression	KEEP	1-2 hyphens	narrow event-type
+6104	Eve	Abrahamic	primordial parenthood	KEEP	1-2 hyphens	narrow event-type
+6104	Eve	Abrahamic	first mourning	KEEP	1-2 hyphens	narrow event-type
+6105	Agreus and Nomios	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+6105	Agreus and Nomios	Greek	gift to humanity	KEEP	1-2 hyphens	narrow event-type
+7256	Yaldabaoth	Gnostic	being-brought-forth-by-Sophia-alone	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7256	Yaldabaoth	Gnostic	the-fashioning-of-the-material-cosmos	REJECT	the-prefix	identity-statement disguised as event
+7256	Yaldabaoth	Gnostic	the-false-proclamation-of-sole-divinity	REJECT	the-prefix	identity-statement disguised as event
+7256	Yaldabaoth	Gnostic	the-imprisoning-of-the-divine-spark	REJECT	the-prefix	identity-statement disguised as event
+6630	Brimo	Greek	descent to underworld	KEEP	1-2 hyphens	narrow event-type
+6629	Chicomecoatl	Aztec	gift to humanity	KEEP	1-2 hyphens	narrow event-type
+6631	Othryoneus	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+7527	Ixtab	Maya	the-conducting-of-a-particular-class-of-the-dead-to-paradise	REJECT	the-prefix	identity-statement disguised as event
+7129	Huītzilōpōchtli	Aztec	gift to humanity	KEEP	1-2 hyphens	narrow event-type
+7133	Tezcatlipoca	Aztec	cosmic-conflict-with-Quetzalcoatl	REVIEW	3 hyphens	borderline — manual check
+7133	Tezcatlipoca	Aztec	first-sun	KEEP	1-2 hyphens	narrow event-type
+7133	Tezcatlipoca	Aztec	jaguar-transformation	KEEP	1-2 hyphens	narrow event-type
+7133	Tezcatlipoca	Aztec	foot-loss-to-Tlaltecuhtli	REVIEW	3 hyphens	borderline — manual check
+7251	Nanāhuātzin	Aztec	humanity creation	KEEP	1-2 hyphens	narrow event-type
+7295	Kingu	Mesopotamian	kingship	KEEP	1-2 hyphens	narrow event-type
+7295	Kingu	Mesopotamian	defeat	KEEP	1-2 hyphens	narrow event-type
+7295	Kingu	Mesopotamian	sacrifice	KEEP	1-2 hyphens	narrow event-type
+7246	Loki	Norse	shape-shifting	KEEP	1-2 hyphens	narrow event-type
+7246	Loki	Norse	treachery	KEEP	1-2 hyphens	narrow event-type
+7246	Loki	Norse	wager-and-trickery	KEEP	1-2 hyphens	narrow event-type
+7246	Loki	Norse	Baldr's death	KEEP	1-2 hyphens	narrow event-type
+7246	Loki	Norse	binding	KEEP	1-2 hyphens	narrow event-type
+7246	Loki	Norse	Ragnarok release and combat	KEEP	1-2 hyphens	narrow event-type
+6439	Lingbao Tianzun	Chinese	scripture-transmission	KEEP	1-2 hyphens	narrow event-type
+6439	Lingbao Tianzun	Chinese	second-of-the-Three-Pure-Ones	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6107	Tu'er Shen	Chinese	punishment	KEEP	1-2 hyphens	narrow event-type
+7213	Barong	Balinese	the-protective-beast-spirit	REJECT	the-prefix	identity-statement disguised as event
+7213	Barong	Balinese	the-eternal-battle-with-Rangda	REJECT	the-prefix	identity-statement disguised as event
+7213	Barong	Balinese	the-enacting-of-rwa-bhineda	REJECT	the-prefix	identity-statement disguised as event
+7508	Samantabhadra	Buddhist	embodiment-of-the-bodhisattva-practice	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7508	Samantabhadra	Buddhist	the-ten-great-vows	REJECT	the-prefix	identity-statement disguised as event
+7508	Samantabhadra	Buddhist	the-Nyingma-primordial-Buddha	REJECT	the-prefix	identity-statement disguised as event
+7510	Vaisravana	Buddhist	chief-of-the-Four-Heavenly-Kings	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7510	Vaisravana	Buddhist	guardian-of-the-north	REVIEW	3 hyphens	borderline — manual check
+7510	Vaisravana	Buddhist	god-of-wealth	KEEP	1-2 hyphens	narrow event-type
+7510	Vaisravana	Buddhist	the-East-Asian-development-as-Bishamonten	REJECT	the-prefix	identity-statement disguised as event
+7220	Manjushri	Buddhist	embodiment-of-transcendent-wisdom	REVIEW	3 hyphens	borderline — manual check
+7220	Manjushri	Buddhist	the-great-sutra-interlocutor	REJECT	the-prefix	identity-statement disguised as event
+7346	Samael	Abrahamic	seduction (in Eden)	KEEP	1-2 hyphens	narrow event-type
+7346	Samael	Abrahamic	accusation	KEEP	1-2 hyphens	narrow event-type
+7346	Samael	Abrahamic	death	KEEP	1-2 hyphens	narrow event-type
+7346	Samael	Abrahamic	demonic kingship (Kabbalah)	KEEP	1-2 hyphens	narrow event-type
+6111	Ishtar	Mesopotamian	descent to underworld	KEEP	1-2 hyphens	narrow event-type
+6111	Ishtar	Mesopotamian	cosmic battle	KEEP	1-2 hyphens	narrow event-type
+6111	Ishtar	Mesopotamian	courtship rejected	KEEP	1-2 hyphens	narrow event-type
+6111	Ishtar	Mesopotamian	king-making	KEEP	1-2 hyphens	narrow event-type
+7326	Arsay	Canaanite	divine daughter	KEEP	1-2 hyphens	narrow event-type
+7331	Baal-Hammon	Canaanite	state-cult patronage	REJECT	identity-keyword	contains identity keyword
+7331	Baal-Hammon	Canaanite	sacrifice-receiving	KEEP	1-2 hyphens	narrow event-type
+6756	Odin	Norse	world creation	KEEP	1-2 hyphens	narrow event-type
+6756	Odin	Norse	quest	KEEP	1-2 hyphens	narrow event-type
+6756	Odin	Norse	sacrifice	KEEP	1-2 hyphens	narrow event-type
+6756	Odin	Norse	theft	KEEP	1-2 hyphens	narrow event-type
+6756	Odin	Norse	cosmic battle	KEEP	1-2 hyphens	narrow event-type
+6756	Odin	Norse	death of god	KEEP	1-2 hyphens	narrow event-type
+7335	Danel	Canaanite	petition for offspring	KEEP	1-2 hyphens	narrow event-type
+7335	Danel	Canaanite	grief	KEEP	1-2 hyphens	narrow event-type
+7335	Danel	Canaanite	curse	KEEP	1-2 hyphens	narrow event-type
+7335	Danel	Canaanite	divine intercession	KEEP	1-2 hyphens	narrow event-type
+6114	Uroboros	Cross-cultural	world creation	KEEP	1-2 hyphens	narrow event-type
+6114	Uroboros	Cross-cultural	cosmic cycle	KEEP	1-2 hyphens	narrow event-type
+7334	Kirta	Canaanite	heroic quest	KEEP	1-2 hyphens	narrow event-type
+7334	Kirta	Canaanite	divine bridal-quest	KEEP	1-2 hyphens	narrow event-type
+7334	Kirta	Canaanite	dynasty-founding	KEEP	1-2 hyphens	narrow event-type
+7334	Kirta	Canaanite	restoration	KEEP	1-2 hyphens	narrow event-type
+7334	Kirta	Canaanite	dream-vision	KEEP	1-2 hyphens	narrow event-type
+7333	Milcom	Canaanite	national-royal patronage	KEEP	1-2 hyphens	narrow event-type
+6117	Hermes	Greek	descent to underworld	KEEP	1-2 hyphens	narrow event-type
+7414	Daikokuten	Shinto	syncretism	KEEP	1-2 hyphens	narrow event-type
+7414	Daikokuten	Shinto	wealth-bestowal	KEEP	1-2 hyphens	narrow event-type
+7190	Aengus	Celtic	quest	KEEP	1-2 hyphens	narrow event-type
+7190	Aengus	Celtic	seduction	KEEP	1-2 hyphens	narrow event-type
+7184	Brigid	Celtic	healing	KEEP	1-2 hyphens	narrow event-type
+7184	Brigid	Celtic	gift to humanity	KEEP	1-2 hyphens	narrow event-type
+7184	Brigid	Celtic	invention	KEEP	1-2 hyphens	narrow event-type
+6118	Lady of the Beasts	Cross-cultural	dominion over animals	KEEP	1-2 hyphens	narrow event-type
+6118	Lady of the Beasts	Cross-cultural	sacred hunt	KEEP	1-2 hyphens	narrow event-type
+7498	Cao Guojiu	Chinese	renunciation-of-imperial-rank	REVIEW	3 hyphens	borderline — manual check
+7498	Cao Guojiu	Chinese	mountain-cultivation	KEEP	1-2 hyphens	narrow event-type
+7498	Cao Guojiu	Chinese	immortality	KEEP	1-2 hyphens	narrow event-type
+6506	Che Kung	Chinese	slays monster	KEEP	1-2 hyphens	narrow event-type
+7487	Chang'e	Chinese	immortality	KEEP	1-2 hyphens	narrow event-type
+7487	Chang'e	Chinese	floating-to-the-moon	REVIEW	3 hyphens	borderline — manual check
+7487	Chang'e	Chinese	eternal-separation-from-Hou-Yi	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6665	Fuxi	Chinese	invention-of-the-trigrams	REVIEW	3 hyphens	borderline — manual check
+6665	Fuxi	Chinese	culture-hero-inventions	KEEP	1-2 hyphens	narrow event-type
+6665	Fuxi	Chinese	brother-husband-of-Nüwa	REVIEW	3 hyphens	borderline — manual check
+6665	Fuxi	Chinese	flood-survival-and-repopulation	REVIEW	3 hyphens	borderline — manual check
+6671	Gonggong	Chinese	contention-for-supremacy	KEEP	1-2 hyphens	narrow event-type
+6671	Gonggong	Chinese	smashing-Mount-Buzhou	KEEP	1-2 hyphens	narrow event-type
+6671	Gonggong	Chinese	tilting-the-cosmos	KEEP	1-2 hyphens	narrow event-type
+6671	Gonggong	Chinese	necessitating-Nüwa-sky-repair	REVIEW	3 hyphens	borderline — manual check
+7493	Guanyin	Chinese	hearing-the-cries-of-the-world	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7493	Guanyin	Chinese	gender-transformation-male-to-female	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7493	Guanyin	Chinese	the-Miaoshan-self-sacrifice	REJECT	the-prefix	identity-statement disguised as event
+7493	Guanyin	Chinese	aiding-the-Journey-to-the-West	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6419	Phaethon	Greek	loss of power	KEEP	1-2 hyphens	narrow event-type
+7446	Mercury	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+7446	Mercury	Roman	founding	KEEP	1-2 hyphens	narrow event-type
+7446	Mercury	Roman	German-interpretatio-Romana	KEEP	1-2 hyphens	narrow event-type
+7457	Vertumnus	Roman	Etruscan-Voltumna-importation	KEEP	1-2 hyphens	narrow event-type
+7457	Vertumnus	Roman	Pomona-courtship	KEEP	1-2 hyphens	narrow event-type
+7457	Vertumnus	Roman	shape-shifting	KEEP	1-2 hyphens	narrow event-type
+6413	Leigong	Chinese	apotheosis	KEEP	1-2 hyphens	narrow event-type
+6422	Li Jing	Chinese	founding	KEEP	1-2 hyphens	narrow event-type
+7499	Lan Caihe	Chinese	eccentric-wandering-minstrelsy	KEEP	1-2 hyphens	narrow event-type
+7499	Lan Caihe	Chinese	ascension-from-the-tavern	REVIEW	3 hyphens	borderline — manual check
+6515	Ma Yuan	Chinese	rescue	KEEP	1-2 hyphens	narrow event-type
+6624	Niulang	Chinese	punishment	KEEP	1-2 hyphens	narrow event-type
+6650	Pangu	Chinese	emergence-from-cosmic-egg	REVIEW	3 hyphens	borderline — manual check
+6650	Pangu	Chinese	separation-of-heaven-and-earth	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6650	Pangu	Chinese	death-becoming-the-world	REVIEW	3 hyphens	borderline — manual check
+6258	Randeng Daoren	Chinese	rescue	KEEP	1-2 hyphens	narrow event-type
+7271	Three Pure Ones	Chinese	apotheosis	KEEP	1-2 hyphens	narrow event-type
+6458	Tongtian Jiaozhu	Chinese	loss of power	KEEP	1-2 hyphens	narrow event-type
+7489	Yao	Chinese	model-sage-kingship	KEEP	1-2 hyphens	narrow event-type
+7489	Yao	Chinese	meritocratic-abdication-to-Shun	REVIEW	3 hyphens	borderline — manual check
+7470	Chalchiuhtlicue	Aztec	fourth-sun-flood	KEEP	1-2 hyphens	narrow event-type
+7470	Chalchiuhtlicue	Aztec	presidency	KEEP	1-2 hyphens	narrow event-type
+7470	Chalchiuhtlicue	Aztec	sister-wife-of-Tlaloc	REVIEW	3 hyphens	borderline — manual check
+7403	Ammit	Egyptian	judgment-hall-stationing	KEEP	1-2 hyphens	narrow event-type
+7403	Ammit	Egyptian	heart-devouring	KEEP	1-2 hyphens	narrow event-type
+7403	Ammit	Egyptian	second-death-bestowal	KEEP	1-2 hyphens	narrow event-type
+7471	Coyolxauhqui	Aztec	sister-of-Huitzilopochtli	KEEP	1-2 hyphens	narrow event-type
+7471	Coyolxauhqui	Aztec	near-matricide-attempt	KEEP	1-2 hyphens	narrow event-type
+7471	Coyolxauhqui	Aztec	dismemberment-by-Huitzilopochtli	KEEP	1-2 hyphens	narrow event-type
+7471	Coyolxauhqui	Aztec	moon-etiology	KEEP	1-2 hyphens	narrow event-type
+7471	Coyolxauhqui	Aztec	Templo-Mayor-sacrifice-prototype	REVIEW	3 hyphens	borderline — manual check
+7407	Kauket	Egyptian	primordial existence	KEEP	1-2 hyphens	narrow event-type
+7407	Kauket	Egyptian	Ogdoad-pair-membership	KEEP	1-2 hyphens	narrow event-type
+6574	Nezha	Chinese	birth-from-ball-of-flesh	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6574	Nezha	Chinese	slays monster	KEEP	1-2 hyphens	narrow event-type
+6574	Nezha	Chinese	flesh-and-bones-return-to-parents	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6574	Nezha	Chinese	lotus-body-resurrection	KEEP	1-2 hyphens	narrow event-type
+7400	Nephthys	Egyptian	mourning-of-Osiris	KEEP	1-2 hyphens	narrow event-type
+7400	Nephthys	Egyptian	conception of Anubis (in most traditions)	KEEP	1-2 hyphens	narrow event-type
+7400	Nephthys	Egyptian	canopic-jar guardianship	KEEP	1-2 hyphens	narrow event-type
+7400	Nephthys	Egyptian	funerary mediation	KEEP	1-2 hyphens	narrow event-type
+7294	Mummu	Mesopotamian	vizier role	KEEP	1-2 hyphens	narrow event-type
+7294	Mummu	Mesopotamian	capture	KEEP	1-2 hyphens	narrow event-type
+6126	Nut	Egyptian	cosmic incest with Geb	KEEP	1-2 hyphens	narrow event-type
+6126	Nut	Egyptian	generation of the four (or five)	KEEP	1-2 hyphens	narrow event-type
+6126	Nut	Egyptian	daily swallowing and birthing of the sun	KEEP	1-2 hyphens	narrow event-type
+6126	Nut	Egyptian	starry sky	KEEP	1-2 hyphens	narrow event-type
+7371	Brahma	Hindu	creation	KEEP	1-2 hyphens	narrow event-type
+7371	Brahma	Hindu	Veda-recitation	KEEP	1-2 hyphens	narrow event-type
+7371	Brahma	Hindu	head-loss	KEEP	1-2 hyphens	narrow event-type
+7371	Brahma	Hindu	liṅgodbhava confrontation	KEEP	1-2 hyphens	narrow event-type
+6906	Ptah	Egyptian	creation through thought and speech	KEEP	1-2 hyphens	narrow event-type
+6906	Ptah	Egyptian	memphite-triad-headship	KEEP	1-2 hyphens	narrow event-type
+6906	Ptah	Egyptian	patronage	KEEP	1-2 hyphens	narrow event-type
+6153	Re-Hor-achti	Egyptian	world creation	KEEP	1-2 hyphens	narrow event-type
+6699	Zhao Yun	Chinese	contest	KEEP	1-2 hyphens	narrow event-type
+6698	Sangarius	Greek	punishment	KEEP	1-2 hyphens	narrow event-type
+7422	Ares	Greek	adulterous-affair-with-Aphrodite	REVIEW	3 hyphens	borderline — manual check
+7422	Ares	Greek	wounded-by-mortal-hero	REVIEW	3 hyphens	borderline — manual check
+7422	Ares	Greek	Iliadic-Olympian-combat	KEEP	1-2 hyphens	narrow event-type
+7432	Amphitrite	Greek	Nereid-birth	KEEP	1-2 hyphens	narrow event-type
+7432	Amphitrite	Greek	marriage	KEEP	1-2 hyphens	narrow event-type
+7432	Amphitrite	Greek	queen-of-the-sea	REVIEW	3 hyphens	borderline — manual check
+6824	Ceryx	Greek	founding	KEEP	1-2 hyphens	narrow event-type
+6429	Ao Guang	Chinese	punishment	KEEP	1-2 hyphens	narrow event-type
+6429	Ao Guang	Chinese	gift to humanity	KEEP	1-2 hyphens	narrow event-type
+6127	Demeter	Greek	quest	KEEP	1-2 hyphens	narrow event-type
+6127	Demeter	Greek	withdrawal	KEEP	1-2 hyphens	narrow event-type
+6127	Demeter	Greek	sacrifice	KEEP	1-2 hyphens	narrow event-type
+6099	Cronus	Greek	overthrows ruler	KEEP	1-2 hyphens	narrow event-type
+6099	Cronus	Greek	punishment	KEEP	1-2 hyphens	narrow event-type
+6099	Cronus	Greek	descent to underworld	KEEP	1-2 hyphens	narrow event-type
+6632	Erlang Shen	Chinese	shape-shifting-duel-with-Sun-Wukong	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6632	Erlang Shen	Chinese	capture-of-Sun-Wukong	REVIEW	3 hyphens	borderline — manual check
+6632	Erlang Shen	Chinese	flood-control	KEEP	1-2 hyphens	narrow event-type
+6632	Erlang Shen	Chinese	rescue	KEEP	1-2 hyphens	narrow event-type
+7484	Xiwangmu	Chinese	immortality	KEEP	1-2 hyphens	narrow event-type
+7484	Xiwangmu	Chinese	granting-the-elixir-to-Hou-Yi	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7484	Xiwangmu	Chinese	hosting-the-peach-banquet	REVIEW	3 hyphens	borderline — manual check
+7484	Xiwangmu	Chinese	instructing-King-Mu-and-Emperor-Wu	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6130	Tefnut	Egyptian	emerged from Atum	KEEP	1-2 hyphens	narrow event-type
+6130	Tefnut	Egyptian	divine flight and return	KEEP	1-2 hyphens	narrow event-type
+6130	Tefnut	Egyptian	mother of Geb and Nut	KEEP	1-2 hyphens	narrow event-type
+6128	Eurytus and Cteatus	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+7480	Centeotl	Aztec	young-maize-personification	KEEP	1-2 hyphens	narrow event-type
+7480	Centeotl	Aztec	cult	KEEP	1-2 hyphens	narrow event-type
+7426	Ouranos	Greek	cosmic-primal-pairing-with-Gaia	REJECT	identity-keyword	contains identity keyword
+7426	Ouranos	Greek	imprisonment-of-children	KEEP	1-2 hyphens	narrow event-type
+7426	Ouranos	Greek	castration-by-Cronus	KEEP	1-2 hyphens	narrow event-type
+7426	Ouranos	Greek	blood-engendered-offspring	KEEP	1-2 hyphens	narrow event-type
+6131	Mayauel	Aztec	gift to humanity	KEEP	1-2 hyphens	narrow event-type
+7436	Tyche	Greek	Hellenistic-cult-explosion	KEEP	1-2 hyphens	narrow event-type
+7436	Tyche	Greek	city-Tyche-personifications	KEEP	1-2 hyphens	narrow event-type
+7514	Q'uq'umatz	Maya	creation	KEEP	1-2 hyphens	narrow event-type
+7514	Q'uq'umatz	Maya	one-of-the-Framers-and-Shapers	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7386	Agni	Hindu	sacrificial mediation	KEEP	1-2 hyphens	narrow event-type
+7386	Agni	Hindu	Khāṇḍava-forest burning	KEEP	1-2 hyphens	narrow event-type
+7386	Agni	Hindu	weapon-giving	KEEP	1-2 hyphens	narrow event-type
+6681	Set	Egyptian	fratricide	KEEP	1-2 hyphens	narrow event-type
+6681	Set	Egyptian	contest	KEEP	1-2 hyphens	narrow event-type
+6681	Set	Egyptian	cosmic battle	KEEP	1-2 hyphens	narrow event-type
+6681	Set	Egyptian	exile	KEEP	1-2 hyphens	narrow event-type
+6132	Durga	Hindu	emanation from divine wrath	KEEP	1-2 hyphens	narrow event-type
+6132	Durga	Hindu	slays monster	KEEP	1-2 hyphens	narrow event-type
+6132	Durga	Hindu	cosmic protection	KEEP	1-2 hyphens	narrow event-type
+7375	Ganesha	Hindu	creation from mother's body-substance	KEEP	1-2 hyphens	narrow event-type
+7375	Ganesha	Hindu	beheading and revival	KEEP	1-2 hyphens	narrow event-type
+7375	Ganesha	Hindu	elephant-head substitution	KEEP	1-2 hyphens	narrow event-type
+7375	Ganesha	Hindu	tusk-breaking	KEEP	1-2 hyphens	narrow event-type
+7375	Ganesha	Hindu	cosmic-race-with-Skanda	REVIEW	3 hyphens	borderline — manual check
+6693	Anagyros	Greek	sacrifice	KEEP	1-2 hyphens	narrow event-type
+7382	Hanuman	Hindu	miraculous infancy	KEEP	1-2 hyphens	narrow event-type
+7382	Hanuman	Hindu	jaw-breaking-naming	KEEP	1-2 hyphens	narrow event-type
+7382	Hanuman	Hindu	ocean-leaping	KEEP	1-2 hyphens	narrow event-type
+7382	Hanuman	Hindu	Laṅkā-burning	KEEP	1-2 hyphens	narrow event-type
+7382	Hanuman	Hindu	Sañjīvani-lifting	KEEP	1-2 hyphens	narrow event-type
+7382	Hanuman	Hindu	eternal-life-grant	KEEP	1-2 hyphens	narrow event-type
+7370	Vishnu	Hindu	cosmic preservation	KEEP	1-2 hyphens	narrow event-type
+7370	Vishnu	Hindu	avatar-descent	KEEP	1-2 hyphens	narrow event-type
+7370	Vishnu	Hindu	three-strides	KEEP	1-2 hyphens	narrow event-type
+7370	Vishnu	Hindu	restoration	KEEP	1-2 hyphens	narrow event-type
+6541	Daode Tianzun	Chinese	apotheosis	KEEP	1-2 hyphens	narrow event-type
+6541	Daode Tianzun	Chinese	Dao-transmission	KEEP	1-2 hyphens	narrow event-type
+6541	Daode Tianzun	Chinese	third-of-the-Three-Pure-Ones	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7166	Ishtadevata	Hindu	personal devotion	KEEP	1-2 hyphens	narrow event-type
+7377	Krishna	Hindu	prison-birth	KEEP	1-2 hyphens	narrow event-type
+7377	Krishna	Hindu	prophetic-escape	KEEP	1-2 hyphens	narrow event-type
+7377	Krishna	Hindu	butter-stealing	KEEP	1-2 hyphens	narrow event-type
+7377	Krishna	Hindu	Govardhana-lifting	KEEP	1-2 hyphens	narrow event-type
+7377	Krishna	Hindu	rāsa-līlā	KEEP	1-2 hyphens	narrow event-type
+7377	Krishna	Hindu	slays monster	KEEP	1-2 hyphens	narrow event-type
+7377	Krishna	Hindu	Bhagavad-Gītā-teaching	KEEP	1-2 hyphens	narrow event-type
+7377	Krishna	Hindu	heel-wound-death	KEEP	1-2 hyphens	narrow event-type
+7395	Kurma	Hindu	cosmic-ocean-churning	KEEP	1-2 hyphens	narrow event-type
+7395	Kurma	Hindu	mountain-supporting	KEEP	1-2 hyphens	narrow event-type
+7395	Kurma	Hindu	enabling of cosmic-treasures	KEEP	1-2 hyphens	narrow event-type
+7380	Sita	Hindu	miraculous birth from earth	KEEP	1-2 hyphens	narrow event-type
+7380	Sita	Hindu	svayaṃvara	KEEP	1-2 hyphens	narrow event-type
+7380	Sita	Hindu	exile-following	KEEP	1-2 hyphens	narrow event-type
+7380	Sita	Hindu	abduction	KEEP	1-2 hyphens	narrow event-type
+7380	Sita	Hindu	rescue	KEEP	1-2 hyphens	narrow event-type
+7380	Sita	Hindu	agni-parīkṣā	KEEP	1-2 hyphens	narrow event-type
+7380	Sita	Hindu	banishment	KEEP	1-2 hyphens	narrow event-type
+7380	Sita	Hindu	return-to-earth-mother	REVIEW	3 hyphens	borderline — manual check
+6441	Yu Shi	Chinese	contest	KEEP	1-2 hyphens	narrow event-type
+7170	Surya Majapahit	Hindu	royal solar emblem	KEEP	1-2 hyphens	narrow event-type
+7170	Surya Majapahit	Hindu	Majapahit imperial symbol	KEEP	1-2 hyphens	narrow event-type
+7485	Huangdi	Chinese	battle-of-Banquan	KEEP	1-2 hyphens	narrow event-type
+7485	Huangdi	Chinese	battle-of-Zhuolu-against-Chiyou	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7485	Huangdi	Chinese	culture-hero-inventions	KEEP	1-2 hyphens	narrow event-type
+7485	Huangdi	Chinese	ascension-to-heaven-on-a-dragon	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7391	Ushas	Hindu	daily-cosmic-appearance	KEEP	1-2 hyphens	narrow event-type
+7391	Ushas	Hindu	awakening	KEEP	1-2 hyphens	narrow event-type
+7391	Ushas	Hindu	transition	KEEP	1-2 hyphens	narrow event-type
+7307	Ninurta	Mesopotamian	cosmic battle	KEEP	1-2 hyphens	narrow event-type
+7307	Ninurta	Mesopotamian	recovery of tablets	KEEP	1-2 hyphens	narrow event-type
+7307	Ninurta	Mesopotamian	organization	KEEP	1-2 hyphens	narrow event-type
+7439	Echidna	Greek	monster-mothering	KEEP	1-2 hyphens	narrow event-type
+7439	Echidna	Greek	immortality	KEEP	1-2 hyphens	narrow event-type
+6799	Agamemnon	Greek	seduction	KEEP	1-2 hyphens	narrow event-type
+6800	Abderus	Greek	quest	KEEP	1-2 hyphens	narrow event-type
+6880	Lýtir	Norse	cult	KEEP	1-2 hyphens	narrow event-type
+7442	Chimera	Greek	fire-breathing	KEEP	1-2 hyphens	narrow event-type
+7442	Chimera	Greek	ravaging-of-Lycia	KEEP	1-2 hyphens	narrow event-type
+7513	Kukulkan	Maya	cult	KEEP	1-2 hyphens	narrow event-type
+7513	Kukulkan	Maya	the-equinox-serpent-of-Chichen-Itza	REJECT	the-prefix	identity-statement disguised as event
+7513	Kukulkan	Maya	the-bringing-of-civilisation	REJECT	the-prefix	identity-statement disguised as event
+7311	Asalluhi	Mesopotamian	exorcism	KEEP	1-2 hyphens	narrow event-type
+7311	Asalluhi	Mesopotamian	intercession	KEEP	1-2 hyphens	narrow event-type
+7300	Damkina	Mesopotamian	mother of Marduk	KEEP	1-2 hyphens	narrow event-type
+7443	Minotaur	Greek	bestial-conception	KEEP	1-2 hyphens	narrow event-type
+7443	Minotaur	Greek	Labyrinth-confinement	KEEP	1-2 hyphens	narrow event-type
+7443	Minotaur	Greek	Athenian-tribute-devouring	KEEP	1-2 hyphens	narrow event-type
+7322	Shahar	Canaanite	theogony	KEEP	1-2 hyphens	narrow event-type
+7322	Shahar	Canaanite	sacred marriage offspring	KEEP	1-2 hyphens	narrow event-type
+7322	Shahar	Canaanite	primordial cosmic event	KEEP	1-2 hyphens	narrow event-type
+7299	Enki	Mesopotamian	cosmic battle	KEEP	1-2 hyphens	narrow event-type
+7299	Enki	Mesopotamian	flood-warning	KEEP	1-2 hyphens	narrow event-type
+7299	Enki	Mesopotamian	creation	KEEP	1-2 hyphens	narrow event-type
+7299	Enki	Mesopotamian	gift to humanity	KEEP	1-2 hyphens	narrow event-type
+7299	Enki	Mesopotamian	cunning	KEEP	1-2 hyphens	narrow event-type
+6135	Mei Bo	Chinese	slays kin	KEEP	1-2 hyphens	narrow event-type
+7318	Enkidu	Mesopotamian	miraculous creation	KEEP	1-2 hyphens	narrow event-type
+7318	Enkidu	Mesopotamian	civilizing	KEEP	1-2 hyphens	narrow event-type
+7318	Enkidu	Mesopotamian	companionship	KEEP	1-2 hyphens	narrow event-type
+7318	Enkidu	Mesopotamian	death decreed by gods	KEEP	1-2 hyphens	narrow event-type
+6137	Aruru	Mesopotamian	humanity creation	KEEP	1-2 hyphens	narrow event-type
+7301	Ninhursag	Mesopotamian	creation	KEEP	1-2 hyphens	narrow event-type
+7301	Ninhursag	Mesopotamian	curse	KEEP	1-2 hyphens	narrow event-type
+7301	Ninhursag	Mesopotamian	partnership-with-Enki	KEEP	1-2 hyphens	narrow event-type
+7108	Fáfnir	Norse	slays kin	KEEP	1-2 hyphens	narrow event-type
+7186	Manannán mac Lir	Celtic	journey	KEEP	1-2 hyphens	narrow event-type
+7186	Manannán mac Lir	Celtic	gift to humanity	KEEP	1-2 hyphens	narrow event-type
+7238	Hu	Egyptian	world creation	KEEP	1-2 hyphens	narrow event-type
+7119	Bound monster	Norse	binding	KEEP	1-2 hyphens	narrow event-type
+7119	Bound monster	Norse	breaking-free at Ragnarök	KEEP	1-2 hyphens	narrow event-type
+7093	Freyja	Norse	journey	KEEP	1-2 hyphens	narrow event-type
+7093	Freyja	Norse	teaching	KEEP	1-2 hyphens	narrow event-type
+7093	Freyja	Norse	acquisition	KEEP	1-2 hyphens	narrow event-type
+7099	Forseti	Norse	judgment	KEEP	1-2 hyphens	narrow event-type
+7099	Forseti	Norse	reconciliation	KEEP	1-2 hyphens	narrow event-type
+7094	Freyr	Norse	lovesick longing	KEEP	1-2 hyphens	narrow event-type
+7094	Freyr	Norse	divine bridal-quest (by proxy)	KEEP	1-2 hyphens	narrow event-type
+7094	Freyr	Norse	disarmament-by-gift	KEEP	1-2 hyphens	narrow event-type
+7094	Freyr	Norse	Ragnarok death	KEEP	1-2 hyphens	narrow event-type
+7255	Batara Kala	Balinese	creation	KEEP	1-2 hyphens	narrow event-type
+7255	Batara Kala	Balinese	punishment	KEEP	1-2 hyphens	narrow event-type
+6745	Osiris	Egyptian	murder by Set	KEEP	1-2 hyphens	narrow event-type
+6745	Osiris	Egyptian	kingship of Egypt	KEEP	1-2 hyphens	narrow event-type
+6745	Osiris	Egyptian	agricultural teaching	KEEP	1-2 hyphens	narrow event-type
+6745	Osiris	Egyptian	posthumous fathering of Horus	KEEP	1-2 hyphens	narrow event-type
+6745	Osiris	Egyptian	underworld-rule	KEEP	1-2 hyphens	narrow event-type
+6745	Osiris	Egyptian	rescue by Isis	KEEP	1-2 hyphens	narrow event-type
+6811	Tamfana	Germanic	temple destruction	KEEP	1-2 hyphens	narrow event-type
+6811	Tamfana	Germanic	seasonal festival	KEEP	1-2 hyphens	narrow event-type
+6322	Jade Emperor	Chinese	supreme-celestial-administration	REJECT	identity-keyword	contains identity keyword
+6322	Jade Emperor	Chinese	presidency	KEEP	1-2 hyphens	narrow event-type
+6322	Jade Emperor	Chinese	Sun-Wukong-court-disruption	REVIEW	3 hyphens	borderline — manual check
+7231	Men	Phrygian	the-Anatolian-moon-god	REJECT	the-prefix	identity-statement disguised as event
+7231	Men	Phrygian	governance-of-the-months	REVIEW	3 hyphens	borderline — manual check
+7231	Men	Phrygian	protection	KEEP	1-2 hyphens	narrow event-type
+7394	Matsya	Hindu	rescue	KEEP	1-2 hyphens	narrow event-type
+7394	Matsya	Hindu	Veda-preservation	KEEP	1-2 hyphens	narrow event-type
+7394	Matsya	Hindu	exponential-growth	KEEP	1-2 hyphens	narrow event-type
+7394	Matsya	Hindu	slays monster	KEEP	1-2 hyphens	narrow event-type
+7286	Narcissus	Greek	death by wasting	KEEP	1-2 hyphens	narrow event-type
+7286	Narcissus	Greek	rejection	KEEP	1-2 hyphens	narrow event-type
+7262	Hariasa	Germanic	battle	KEEP	1-2 hyphens	narrow event-type
+7269	Vesta	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+7269	Vesta	Roman	Vestal-Virgin-institution	KEEP	1-2 hyphens	narrow event-type
+7269	Vesta	Roman	eternal-flame-maintenance	KEEP	1-2 hyphens	narrow event-type
+7363	Surt	Norse	guarding	KEEP	1-2 hyphens	narrow event-type
+7363	Surt	Norse	ragnarök conflagration	KEEP	1-2 hyphens	narrow event-type
+7363	Surt	Norse	killing of Freyr	KEEP	1-2 hyphens	narrow event-type
+7363	Surt	Norse	world-burning	KEEP	1-2 hyphens	narrow event-type
+6749	Norns	Norse	fate-assignment	KEEP	1-2 hyphens	narrow event-type
+6749	Norns	Norse	cosmic maintenance	KEEP	1-2 hyphens	narrow event-type
+7360	Ymir	Norse	primordial birth	KEEP	1-2 hyphens	narrow event-type
+7360	Ymir	Norse	generative monstrosity	KEEP	1-2 hyphens	narrow event-type
+7360	Ymir	Norse	cosmogonic killing	KEEP	1-2 hyphens	narrow event-type
+7360	Ymir	Norse	world-creation from body	KEEP	1-2 hyphens	narrow event-type
+7491	Mazu	Chinese	deification-of-Lin-Moniang	REVIEW	3 hyphens	borderline — manual check
+7491	Mazu	Chinese	rescue	KEEP	1-2 hyphens	narrow event-type
+7491	Mazu	Chinese	post-mortem-ship-rescues	REVIEW	3 hyphens	borderline — manual check
+7491	Mazu	Chinese	imperial-canonization-to-Tianhou	REVIEW	3 hyphens	borderline — manual check
+6239	Mafdet	Egyptian	punishment	KEEP	1-2 hyphens	narrow event-type
+6241	Khonsu	Egyptian	Theban-triad-son	KEEP	1-2 hyphens	narrow event-type
+6241	Khonsu	Egyptian	moon-transit	KEEP	1-2 hyphens	narrow event-type
+6241	Khonsu	Egyptian	healing	KEEP	1-2 hyphens	narrow event-type
+6241	Khonsu	Egyptian	distant-travel	KEEP	1-2 hyphens	narrow event-type
+6547	Acca Larentia	Roman	founding	KEEP	1-2 hyphens	narrow event-type
+6243	Hoori	Shinto	descent to underworld	KEEP	1-2 hyphens	narrow event-type
+7451	Bacchus	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+7451	Bacchus	Roman	186-BCE-Senate-suppression	REVIEW	3 hyphens	borderline — manual check
+7451	Bacchus	Roman	Antony-Augustus-rehabilitation	KEEP	1-2 hyphens	narrow event-type
+6716	Guan Yu	Chinese	slays kin	KEEP	1-2 hyphens	narrow event-type
+6783	Asherah	Canaanite	divine motherhood	KEEP	1-2 hyphens	narrow event-type
+6783	Asherah	Canaanite	intercession	KEEP	1-2 hyphens	narrow event-type
+6783	Asherah	Canaanite	creation	KEEP	1-2 hyphens	narrow event-type
+6783	Asherah	Canaanite	succession	KEEP	1-2 hyphens	narrow event-type
+6783	Asherah	Canaanite	divine parentage	KEEP	1-2 hyphens	narrow event-type
+6141	Pandora	Greek	humanity creation	KEEP	1-2 hyphens	narrow event-type
+6090	Hathor	Egyptian	Eye-of-Ra wrath	KEEP	1-2 hyphens	narrow event-type
+6090	Hathor	Egyptian	pacification with beer	KEEP	1-2 hyphens	narrow event-type
+6090	Hathor	Egyptian	reception of the dead	KEEP	1-2 hyphens	narrow event-type
+6090	Hathor	Egyptian	Seven-Hathor fate-pronouncement	KEEP	1-2 hyphens	narrow event-type
+6951	Di Penates	Roman	rescue	KEEP	1-2 hyphens	narrow event-type
+6752	Tuisto	Germanic	the-earth-born-primordial-god	REJECT	the-prefix	identity-statement disguised as event
+6752	Tuisto	Germanic	the-head-of-the-Germanic-ethnogonic-genealogy	REJECT	the-prefix	identity-statement disguised as event
+7219	Avalokiteshvara	Buddhist	vow-to-hear-the-cries-of-the-world	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7219	Avalokiteshvara	Buddhist	emanation-as-Guanyin-and-the-Dalai-Lamas	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7455	Faunus	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+7455	Faunus	Roman	cult	KEEP	1-2 hyphens	narrow event-type
+7455	Faunus	Roman	Albunea-oracle	KEEP	1-2 hyphens	narrow event-type
+7455	Faunus	Roman	indigenous-Italic-origin	KEEP	1-2 hyphens	narrow event-type
+6119	Ra	Egyptian	daily cosmic transit	KEEP	1-2 hyphens	narrow event-type
+6119	Ra	Egyptian	nightly battle with Apep	KEEP	1-2 hyphens	narrow event-type
+6119	Ra	Egyptian	sun-disk creation	KEEP	1-2 hyphens	narrow event-type
+6119	Ra	Egyptian	sending of the Eye	KEEP	1-2 hyphens	narrow event-type
+6856	Phra Kalachai Si	Hindu	time-deity worship	REJECT	identity-keyword	contains identity keyword
+6856	Phra Kalachai Si	Hindu	syncretism	KEEP	1-2 hyphens	narrow event-type
+6145	Sostratus of Dyme	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+7169	Kuladevata	Hindu	family-deity-worship	REJECT	identity-keyword	contains identity keyword
+7450	Saturn	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+7450	Saturn	Roman	Italic-Golden-Age-rule	REVIEW	3 hyphens	borderline — manual check
+7450	Saturn	Roman	cult	KEEP	1-2 hyphens	narrow event-type
+7450	Saturn	Roman	presidency	KEEP	1-2 hyphens	narrow event-type
+7441	Cerberus	Greek	underworld-gate-guarding	KEEP	1-2 hyphens	narrow event-type
+7441	Cerberus	Greek	being-captured-by-Heracles	REVIEW	3 hyphens	borderline — manual check
+7441	Cerberus	Greek	being-pacified-by-music-or-cakes	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6402	Trophonius	Greek	founding	KEEP	1-2 hyphens	narrow event-type
+7456	Silvanus	Roman	indigenous-Italic-rustic-deity	REJECT	identity-keyword	contains identity keyword
+7456	Silvanus	Roman	cult	KEEP	1-2 hyphens	narrow event-type
+7456	Silvanus	Roman	epigraphic-prominence	KEEP	1-2 hyphens	narrow event-type
+7378	Radha	Hindu	divine love	KEEP	1-2 hyphens	narrow event-type
+7378	Radha	Hindu	viraha	KEEP	1-2 hyphens	narrow event-type
+7378	Radha	Hindu	rāsa-līlā	KEEP	1-2 hyphens	narrow event-type
+7378	Radha	Hindu	model-of-bhakti	KEEP	1-2 hyphens	narrow event-type
+7448	Neptune	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+7448	Neptune	Roman	indigenous-freshwater-origin	KEEP	1-2 hyphens	narrow event-type
+7448	Neptune	Roman	Augustan-cult-expansion	KEEP	1-2 hyphens	narrow event-type
+7055	Iwanaga-hime	Shinto	curse	KEEP	1-2 hyphens	narrow event-type
+7113	Máni	Norse	celestial transit	KEEP	1-2 hyphens	narrow event-type
+7113	Máni	Norse	child-taking	KEEP	1-2 hyphens	narrow event-type
+7056	Hoderi	Shinto	loss of power	KEEP	1-2 hyphens	narrow event-type
+7413	Jimmu	Shinto	Eastern Expedition	KEEP	1-2 hyphens	narrow event-type
+7413	Jimmu	Shinto	golden-kite-vision	KEEP	1-2 hyphens	narrow event-type
+7413	Jimmu	Shinto	enthronement at Kashihara	KEEP	1-2 hyphens	narrow event-type
+7413	Jimmu	Shinto	founding of imperial line	KEEP	1-2 hyphens	narrow event-type
+7268	Amun	Egyptian	Hermopolitan-Ogdoad-membership	KEEP	1-2 hyphens	narrow event-type
+7268	Amun	Egyptian	Theban-imperial-rise	KEEP	1-2 hyphens	narrow event-type
+7268	Amun	Egyptian	Amun-Ra-fusion	KEEP	1-2 hyphens	narrow event-type
+7268	Amun	Egyptian	Amarna-suppression	KEEP	1-2 hyphens	narrow event-type
+7268	Amun	Egyptian	restoration	KEEP	1-2 hyphens	narrow event-type
+6148	Visvedevas	Hindu	loss of power	KEEP	1-2 hyphens	narrow event-type
+6147	Heh	Egyptian	world creation	KEEP	1-2 hyphens	narrow event-type
+7505	Ksitigarbha	Buddhist	the-vow-to-empty-the-hells	REJECT	the-prefix	identity-statement disguised as event
+7505	Ksitigarbha	Buddhist	the-past-life-vows	REJECT	the-prefix	identity-statement disguised as event
+7505	Ksitigarbha	Buddhist	the-East-Asian-development-as-Dizang-and-Jizo	REJECT	the-prefix	identity-statement disguised as event
+6995	Agdistis	Roman	punishment	KEEP	1-2 hyphens	narrow event-type
+7226	Barbelo	Gnostic	the-first-emanation-of-the-Monad	REJECT	the-prefix	identity-statement disguised as event
+7226	Barbelo	Gnostic	the-supreme-feminine-principle	REJECT	the-prefix	identity-statement disguised as event
+7226	Barbelo	Gnostic	the-mother-of-the-Pleroma	REJECT	the-prefix	identity-statement disguised as event
+7507	Bhaisajyaguru	Buddhist	the-twelve-healing-vows	REJECT	the-prefix	identity-statement disguised as event
+7507	Bhaisajyaguru	Buddhist	the-establishment-of-the-eastern-lapis-lazuli-pure-land	REJECT	the-prefix	identity-statement disguised as event
+7253	Mot	Canaanite	cosmic battle	KEEP	1-2 hyphens	narrow event-type
+7253	Mot	Canaanite	swallowing	KEEP	1-2 hyphens	narrow event-type
+7253	Mot	Canaanite	death-and-return	KEEP	1-2 hyphens	narrow event-type
+7253	Mot	Canaanite	agricultural transformation	KEEP	1-2 hyphens	narrow event-type
+7347	Mastema	Abrahamic	accusation	KEEP	1-2 hyphens	narrow event-type
+7347	Mastema	Abrahamic	testing	KEEP	1-2 hyphens	narrow event-type
+7347	Mastema	Abrahamic	adversarial action against Moses	KEEP	1-2 hyphens	narrow event-type
+7347	Mastema	Abrahamic	aid to Pharaoh	KEEP	1-2 hyphens	narrow event-type
+7525	Camazotz	Maya	the-House-of-Bats	REJECT	the-prefix	identity-statement disguised as event
+7525	Camazotz	Maya	the-decapitation-of-Hunahpu	REJECT	the-prefix	identity-statement disguised as event
+6157	Venus	Roman	mother-of-Aeneas	KEEP	1-2 hyphens	narrow event-type
+6157	Venus	Roman	Julian-ancestress	KEEP	1-2 hyphens	narrow event-type
+6157	Venus	Roman	cosmic-generative-principle (in Lucretius)	REJECT	identity-keyword	contains identity keyword
+6254	Satan	Abrahamic	accusation	KEEP	1-2 hyphens	narrow event-type
+6254	Satan	Abrahamic	temptation	KEEP	1-2 hyphens	narrow event-type
+6254	Satan	Abrahamic	rebellion	KEEP	1-2 hyphens	narrow event-type
+6254	Satan	Abrahamic	fall	KEEP	1-2 hyphens	narrow event-type
+6254	Satan	Abrahamic	final defeat	KEEP	1-2 hyphens	narrow event-type
+7212	Acintya	Balinese	the-formless-supreme-godhead	REJECT	the-prefix	identity-statement disguised as event
+7212	Acintya	Balinese	the-source-of-all-other-deities	REJECT	the-prefix	identity-statement disguised as event
+7212	Acintya	Balinese	the-empty-padmasana-shrine	REJECT	the-prefix	identity-statement disguised as event
+7196	Baal	Canaanite	founding	KEEP	1-2 hyphens	narrow event-type
+7196	Baal	Canaanite	battle	KEEP	1-2 hyphens	narrow event-type
+7176	Village deities of South India	Hindu	humanity creation	KEEP	1-2 hyphens	narrow event-type
+6159	Maori Xingguan	Chinese	apotheosis	KEEP	1-2 hyphens	narrow event-type
+7218	Mara	Buddhist	the-assault-on-the-Buddha-under-the-Bodhi-tree	REJECT	the-prefix	identity-statement disguised as event
+7218	Mara	Buddhist	the-calling-of-the-earth-to-witness	REJECT	the-prefix	identity-statement disguised as event
+7218	Mara	Buddhist	the-three-daughters	REJECT	the-prefix	identity-statement disguised as event
+7392	Narasimha	Hindu	boon-circumvention	KEEP	1-2 hyphens	narrow event-type
+7392	Narasimha	Hindu	manifestation-from-pillar	KEEP	1-2 hyphens	narrow event-type
+7392	Narasimha	Hindu	slays monster	KEEP	1-2 hyphens	narrow event-type
+7392	Narasimha	Hindu	wrath-pacification	KEEP	1-2 hyphens	narrow event-type
+7438	Typhon	Greek	cosmic-serpent-battle	KEEP	1-2 hyphens	narrow event-type
+7438	Typhon	Greek	sinew-theft	KEEP	1-2 hyphens	narrow event-type
+7438	Typhon	Greek	Zeus-near-defeat	KEEP	1-2 hyphens	narrow event-type
+7438	Typhon	Greek	imprisonment-beneath-Etna	KEEP	1-2 hyphens	narrow event-type
+7195	El	Canaanite	council of gods	KEEP	1-2 hyphens	narrow event-type
+7195	El	Canaanite	decree-giving	KEEP	1-2 hyphens	narrow event-type
+7195	El	Canaanite	divine fatherhood	KEEP	1-2 hyphens	narrow event-type
+7195	El	Canaanite	sacred marriage	KEEP	1-2 hyphens	narrow event-type
+7494	Lu Dongbin	Chinese	the-Yellow-Millet-Dream	REJECT	the-prefix	identity-statement disguised as event
+7494	Lu Dongbin	Chinese	the-ten-trials	REJECT	the-prefix	identity-statement disguised as event
+7494	Lu Dongbin	Chinese	immortality	KEEP	1-2 hyphens	narrow event-type
+7494	Lu Dongbin	Chinese	slays monster	KEEP	1-2 hyphens	narrow event-type
+6757	Horus	Egyptian	posthumous conception	KEEP	1-2 hyphens	narrow event-type
+6757	Horus	Egyptian	childhood hiding from Set	KEEP	1-2 hyphens	narrow event-type
+6757	Horus	Egyptian	80-year contest	KEEP	1-2 hyphens	narrow event-type
+6757	Horus	Egyptian	recovery of throne	KEEP	1-2 hyphens	narrow event-type
+6757	Horus	Egyptian	identification with living pharaoh	KEEP	1-2 hyphens	narrow event-type
+7144	Tlaltecuhtli	Aztec	creation	KEEP	1-2 hyphens	narrow event-type
+7144	Tlaltecuhtli	Aztec	human-sacrifice-engendering	KEEP	1-2 hyphens	narrow event-type
+7144	Tlaltecuhtli	Aztec	Tezcatlipoca-foot-loss-event	REVIEW	3 hyphens	borderline — manual check
+6240	Mut	Egyptian	Theban-triad-mother	KEEP	1-2 hyphens	narrow event-type
+6240	Mut	Egyptian	syncretic-merger-with-other-goddesses	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7188	Macha	Celtic	battle	KEEP	1-2 hyphens	narrow event-type
+7188	Macha	Celtic	curse	KEEP	1-2 hyphens	narrow event-type
+7188	Macha	Celtic	founding	KEEP	1-2 hyphens	narrow event-type
+6160	Uriel	Abrahamic	revelation	KEEP	1-2 hyphens	narrow event-type
+6160	Uriel	Abrahamic	apocalyptic interpretation	KEEP	1-2 hyphens	narrow event-type
+6415	Ying Bu英布	Chinese	overthrows ruler	KEEP	1-2 hyphens	narrow event-type
+6302	Sekhmet	Egyptian	Eye-of-Ra wrath	KEEP	1-2 hyphens	narrow event-type
+6302	Sekhmet	Egyptian	near-destruction-of-humanity	REVIEW	3 hyphens	borderline — manual check
+6302	Sekhmet	Egyptian	pacification-by-beer	KEEP	1-2 hyphens	narrow event-type
+6302	Sekhmet	Egyptian	plague-and-healing patron	KEEP	1-2 hyphens	narrow event-type
+6161	Persephone (Kore)	Greek	descent to underworld	KEEP	1-2 hyphens	narrow event-type
+6161	Persephone (Kore)	Greek	abduction	KEEP	1-2 hyphens	narrow event-type
+7249	Xolotl	Aztec	sacrifice	KEEP	1-2 hyphens	narrow event-type
+6654	Atum	Egyptian	self-engendered creation	KEEP	1-2 hyphens	narrow event-type
+6654	Atum	Egyptian	generation of the Ennead	KEEP	1-2 hyphens	narrow event-type
+6654	Atum	Egyptian	identification with the setting sun	KEEP	1-2 hyphens	narrow event-type
+7460	Aesculapius	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+7460	Aesculapius	Roman	293-BCE-importation-from-Epidaurus	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7460	Aesculapius	Roman	plague-ending	KEEP	1-2 hyphens	narrow event-type
+7460	Aesculapius	Roman	founding	KEEP	1-2 hyphens	narrow event-type
+6162	Ate	Greek	loss of power	KEEP	1-2 hyphens	narrow event-type
+6162	Ate	Greek	betrayal	KEEP	1-2 hyphens	narrow event-type
+6680	Qin Qiong秦瓊	Chinese	overthrows ruler	KEEP	1-2 hyphens	narrow event-type
+7228	Norea	Gnostic	the-resistance-to-the-archons	REJECT	the-prefix	identity-statement disguised as event
+7228	Norea	Gnostic	rescue	KEEP	1-2 hyphens	narrow event-type
+7228	Norea	Gnostic	the-receiving-of-the-Gnostic-revelation	REJECT	the-prefix	identity-statement disguised as event
+7526	Yum Kaax	Maya	the-youthful-Maize-God	REJECT	the-prefix	identity-statement disguised as event
+7526	Yum Kaax	Maya	the-god-of-the-forest-and-the-milpa	REJECT	the-prefix	identity-statement disguised as event
+7308	Adad	Mesopotamian	flood	KEEP	1-2 hyphens	narrow event-type
+7308	Adad	Mesopotamian	storm	KEEP	1-2 hyphens	narrow event-type
+7308	Adad	Mesopotamian	divine roaring	KEEP	1-2 hyphens	narrow event-type
+7479	Itzpapalotl	Aztec	Tzitzimimeh-leadership	KEEP	1-2 hyphens	narrow event-type
+7479	Itzpapalotl	Aztec	cosmic-age-end-threat	REVIEW	3 hyphens	borderline — manual check
+7479	Itzpapalotl	Aztec	patronage	KEEP	1-2 hyphens	narrow event-type
+7114	Dagr	Norse	celestial transit	KEEP	1-2 hyphens	narrow event-type
+7159	Adityas	Hindu	solar-collective rule	KEEP	1-2 hyphens	narrow event-type
+7159	Adityas	Hindu	cosmic-law upholding	KEEP	1-2 hyphens	narrow event-type
+7191	Balor	Celtic	battle	KEEP	1-2 hyphens	narrow event-type
+7183	Nuada	Celtic	battle	KEEP	1-2 hyphens	narrow event-type
+7183	Nuada	Celtic	loss of power	KEEP	1-2 hyphens	narrow event-type
+7183	Nuada	Celtic	founding	KEEP	1-2 hyphens	narrow event-type
+6508	Zhang Fei	Chinese	betrayal	KEEP	1-2 hyphens	narrow event-type
+6965	Cura	Roman	humanity creation	KEEP	1-2 hyphens	narrow event-type
+7180	The Dagda	Celtic	battle	KEEP	1-2 hyphens	narrow event-type
+7180	The Dagda	Celtic	creation	KEEP	1-2 hyphens	narrow event-type
+7180	The Dagda	Celtic	seduction	KEEP	1-2 hyphens	narrow event-type
+6689	Cybele	Phrygian	cult	KEEP	1-2 hyphens	narrow event-type
+6689	Cybele	Phrygian	the-myth-of-Attis	REJECT	the-prefix	identity-statement disguised as event
+6689	Cybele	Phrygian	the-204-BCE-transfer-to-Rome-as-Magna-Mater	REJECT	the-prefix	identity-statement disguised as event
+6146	Deng Zhong	Chinese	slays kin	KEEP	1-2 hyphens	narrow event-type
+6835	Hok Tek Cheng Sin	Chinese	founding	KEEP	1-2 hyphens	narrow event-type
+6143	Phaenon	Greek	humanity creation	KEEP	1-2 hyphens	narrow event-type
+7052	Amatsukami	Shinto	world creation	KEEP	1-2 hyphens	narrow event-type
+7260	Baduhenna	Germanic	battle	KEEP	1-2 hyphens	narrow event-type
+7260	Baduhenna	Germanic	massacre	KEEP	1-2 hyphens	narrow event-type
+7085	Ukemochi	Shinto	slays kin	KEEP	1-2 hyphens	narrow event-type
+6582	Alpheus	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+6582	Alpheus	Greek	contest	KEEP	1-2 hyphens	narrow event-type
+6158	Phanes	Greek	world creation	KEEP	1-2 hyphens	narrow event-type
+6691	Cadmus	Greek	founding	KEEP	1-2 hyphens	narrow event-type
+6167	Jason	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+6167	Jason	Greek	overthrows ruler	KEEP	1-2 hyphens	narrow event-type
+6740	Tara	Buddhist	birth-from-Avalokiteshvara's-tear	REVIEW	3 hyphens	borderline — manual check
+6740	Tara	Buddhist	the-vow-to-work-for-beings-in-female-form	REJECT	the-prefix	identity-statement disguised as event
+7304	Utu	Mesopotamian	judgement	KEEP	1-2 hyphens	narrow event-type
+7304	Utu	Mesopotamian	sunrise-cosmic	KEEP	1-2 hyphens	narrow event-type
+7304	Utu	Mesopotamian	rescue	KEEP	1-2 hyphens	narrow event-type
+6678	Carmenta	Roman	founding	KEEP	1-2 hyphens	narrow event-type
+6250	Yashimajinumi	Shinto	slays monster	KEEP	1-2 hyphens	narrow event-type
+6949	Pomona	Roman	seduction	KEEP	1-2 hyphens	narrow event-type
+6949	Pomona	Roman	betrayal	KEEP	1-2 hyphens	narrow event-type
+7416	Bishamonten	Shinto	Buddhist-Shintō-syncretic incorporation	KEEP	1-2 hyphens	narrow event-type
+7416	Bishamonten	Shinto	Four-Heavenly-Kings membership	KEEP	1-2 hyphens	narrow event-type
+7044	Kagutsuchi	Shinto	world creation	KEEP	1-2 hyphens	narrow event-type
+6169	Idomeneus	Greek	slays monster	KEEP	1-2 hyphens	narrow event-type
+7002	Lua	Roman	exile	KEEP	1-2 hyphens	narrow event-type
+6168	Peleus	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+6168	Peleus	Greek	punishment	KEEP	1-2 hyphens	narrow event-type
+6168	Peleus	Greek	exile	KEEP	1-2 hyphens	narrow event-type
+6251	Mixcoatl	Aztec	Chichimec-hunting-god	KEEP	1-2 hyphens	narrow event-type
+6251	Mixcoatl	Aztec	Milky-Way-personification	KEEP	1-2 hyphens	narrow event-type
+6251	Mixcoatl	Aztec	father-of-Topiltzin	KEEP	1-2 hyphens	narrow event-type
+6171	Peirous	Greek	loss of power	KEEP	1-2 hyphens	narrow event-type
+6175	Zeus	Greek	succession conflict	KEEP	1-2 hyphens	narrow event-type
+6175	Zeus	Greek	cosmic battle	KEEP	1-2 hyphens	narrow event-type
+6175	Zeus	Greek	miraculous birth	KEEP	1-2 hyphens	narrow event-type
+7396	Ravana	Hindu	tapas-boon-acquisition	KEEP	1-2 hyphens	narrow event-type
+7396	Ravana	Hindu	sister-abduction	KEEP	1-2 hyphens	narrow event-type
+7396	Ravana	Hindu	Sītā-abduction	KEEP	1-2 hyphens	narrow event-type
+7396	Ravana	Hindu	Puṣpaka-theft	KEEP	1-2 hyphens	narrow event-type
+7396	Ravana	Hindu	Śiva-devotion	KEEP	1-2 hyphens	narrow event-type
+7396	Ravana	Hindu	Mount-Kailāśa-pinning	KEEP	1-2 hyphens	narrow event-type
+7396	Ravana	Hindu	being slain by Rāma	KEEP	1-2 hyphens	narrow event-type
+6540	Nannacus	Greek	rescue	KEEP	1-2 hyphens	narrow event-type
+7173	Rivers in Hinduism	Hindu	curse	KEEP	1-2 hyphens	narrow event-type
+6813	Diomedes	Greek	contest	KEEP	1-2 hyphens	narrow event-type
+6821	Venus Verticordia	Roman	founding	KEEP	1-2 hyphens	narrow event-type
+6828	Pandion	Greek	founding	KEEP	1-2 hyphens	narrow event-type
+6855	Xiaoziye	Chinese	betrayal	KEEP	1-2 hyphens	narrow event-type
+6858	Zhao Yu	Chinese	founding	KEEP	1-2 hyphens	narrow event-type
+6870	Zarex	Greek	founding	KEEP	1-2 hyphens	narrow event-type
+6183	Themis	Greek	founding	KEEP	1-2 hyphens	narrow event-type
+6184	Coeus	Greek	rescue	KEEP	1-2 hyphens	narrow event-type
+6937	Succoth-benoth	Mesopotamian	punishment	KEEP	1-2 hyphens	narrow event-type
+6933	Podalirius	Greek	rescue	KEEP	1-2 hyphens	narrow event-type
+6939	Fides	Roman	punishment	KEEP	1-2 hyphens	narrow event-type
+6958	Feronia	Roman	gift to humanity	KEEP	1-2 hyphens	narrow event-type
+7139	Tlāhuizcalpantēcuhtli	Aztec	punishment	KEEP	1-2 hyphens	narrow event-type
+7136	Xochipilli	Aztec	patronage	KEEP	1-2 hyphens	narrow event-type
+7136	Xochipilli	Aztec	hallucinogenic-plant-association	KEEP	1-2 hyphens	narrow event-type
+7168	Kimpurushas	Hindu	humanity creation	KEEP	1-2 hyphens	narrow event-type
+6196	Epimetheus	Greek	gift to humanity	KEEP	1-2 hyphens	narrow event-type
+7172	Vaikuntha Kamalaja	Hindu	cosmic rest	KEEP	1-2 hyphens	narrow event-type
+7172	Vaikuntha Kamalaja	Hindu	divine couple	KEEP	1-2 hyphens	narrow event-type
+7172	Vaikuntha Kamalaja	Hindu	pralaya-floating	KEEP	1-2 hyphens	narrow event-type
+7290	Lahmu	Mesopotamian	theogony	KEEP	1-2 hyphens	narrow event-type
+7290	Lahmu	Mesopotamian	primordial existence	KEEP	1-2 hyphens	narrow event-type
+7303	Ningal	Mesopotamian	marriage	KEEP	1-2 hyphens	narrow event-type
+7303	Ningal	Mesopotamian	lamentation	KEEP	1-2 hyphens	narrow event-type
+7521	Hun Hunahpu	Maya	defeat-and-sacrifice-in-Xibalba	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7521	Hun Hunahpu	Maya	the-begetting-of-the-Hero-Twins-from-the-severed-head	REJECT	the-prefix	identity-statement disguised as event
+7521	Hun Hunahpu	Maya	the-resurrection-as-the-Maize-God	REJECT	the-prefix	identity-statement disguised as event
+7352	Asherah (Israelite)	Abrahamic	cult continuity	KEEP	1-2 hyphens	narrow event-type
+7352	Asherah (Israelite)	Abrahamic	popular consort-pairing with YHWH	KEEP	1-2 hyphens	narrow event-type
+7352	Asherah (Israelite)	Abrahamic	suppression by reform	KEEP	1-2 hyphens	narrow event-type
+7352	Asherah (Israelite)	Abrahamic	prophetic polemic	KEEP	1-2 hyphens	narrow event-type
+6133	Michael	Abrahamic	cosmic battle	KEEP	1-2 hyphens	narrow event-type
+6133	Michael	Abrahamic	contention	KEEP	1-2 hyphens	narrow event-type
+6133	Michael	Abrahamic	protection	KEEP	1-2 hyphens	narrow event-type
+6133	Michael	Abrahamic	eschatological role	KEEP	1-2 hyphens	narrow event-type
+6108	Adam	Abrahamic	creation	KEEP	1-2 hyphens	narrow event-type
+6108	Adam	Abrahamic	transgression	KEEP	1-2 hyphens	narrow event-type
+6108	Adam	Abrahamic	exile	KEEP	1-2 hyphens	narrow event-type
+6108	Adam	Abrahamic	first death (of his son)	KEEP	1-2 hyphens	narrow event-type
+6108	Adam	Abrahamic	primordial parenthood	KEEP	1-2 hyphens	narrow event-type
+6245	Moses	Abrahamic	miraculous deliverance from infancy	KEEP	1-2 hyphens	narrow event-type
+6245	Moses	Abrahamic	call (theophany)	KEEP	1-2 hyphens	narrow event-type
+6245	Moses	Abrahamic	plagues	KEEP	1-2 hyphens	narrow event-type
+6245	Moses	Abrahamic	exodus	KEEP	1-2 hyphens	narrow event-type
+6245	Moses	Abrahamic	sea-parting	KEEP	1-2 hyphens	narrow event-type
+6245	Moses	Abrahamic	law-giving	KEEP	1-2 hyphens	narrow event-type
+6245	Moses	Abrahamic	intercession	KEEP	1-2 hyphens	narrow event-type
+6245	Moses	Abrahamic	wandering	KEEP	1-2 hyphens	narrow event-type
+6245	Moses	Abrahamic	death (denied entry)	KEEP	1-2 hyphens	narrow event-type
+7135	Tōnatiuh	Aztec	world creation	KEEP	1-2 hyphens	narrow event-type
+7296	Anu	Mesopotamian	theogony	KEEP	1-2 hyphens	narrow event-type
+7296	Anu	Mesopotamian	kingship	KEEP	1-2 hyphens	narrow event-type
+7296	Anu	Mesopotamian	gift-giving	KEEP	1-2 hyphens	narrow event-type
+7215	Dewi Sri	Balinese	the-rice-goddess	REJECT	the-prefix	identity-statement disguised as event
+7215	Dewi Sri	Balinese	patronage	KEEP	1-2 hyphens	narrow event-type
+7520	Xbalanque	Maya	the-trials-of-Xibalba	REJECT	the-prefix	identity-statement disguised as event
+7520	Xbalanque	Maya	the-restoration-of-Hunahpu	REJECT	the-prefix	identity-statement disguised as event
+7520	Xbalanque	Maya	the-defeat-of-the-underworld-lords	REJECT	the-prefix	identity-statement disguised as event
+7520	Xbalanque	Maya	the-ascent-to-become-the-moon	REJECT	the-prefix	identity-statement disguised as event
+6255	Glaucus	Greek	loss of power	KEEP	1-2 hyphens	narrow event-type
+6252	Fortuna	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+6252	Fortuna	Roman	cult	KEEP	1-2 hyphens	narrow event-type
+6252	Fortuna	Roman	Augustan-imperial-cult-expansion	REVIEW	3 hyphens	borderline — manual check
+6136	Inanna	Mesopotamian	descent to underworld	KEEP	1-2 hyphens	narrow event-type
+6136	Inanna	Mesopotamian	theft	KEEP	1-2 hyphens	narrow event-type
+6136	Inanna	Mesopotamian	cosmic battle	KEEP	1-2 hyphens	narrow event-type
+6136	Inanna	Mesopotamian	substitution	KEEP	1-2 hyphens	narrow event-type
+6136	Inanna	Mesopotamian	courtship	KEEP	1-2 hyphens	narrow event-type
+6136	Inanna	Mesopotamian	death and resurrection	KEEP	1-2 hyphens	narrow event-type
+6259	Medusa	Greek	curse	KEEP	1-2 hyphens	narrow event-type
+6203	Wei Zheng	Chinese	slays kin	KEEP	1-2 hyphens	narrow event-type
+6203	Wei Zheng	Chinese	overthrows ruler	KEEP	1-2 hyphens	narrow event-type
+7223	Yama	Buddhist	judging-the-dead-by-karma	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7223	Yama	Buddhist	questioning-the-dead-on-the-divine-messengers	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7223	Yama	Buddhist	transmission-across-Buddhist-Asia	REVIEW	3 hyphens	borderline — manual check
+7401	Anubis	Egyptian	embalming of Osiris	KEEP	1-2 hyphens	narrow event-type
+7401	Anubis	Egyptian	weighing of the heart	KEEP	1-2 hyphens	narrow event-type
+7401	Anubis	Egyptian	psychopomp-guidance	KEEP	1-2 hyphens	narrow event-type
+7401	Anubis	Egyptian	Opening of the Mouth ceremony	KEEP	1-2 hyphens	narrow event-type
+7503	Siddhartha Gautama	Buddhist	the-four-sights-and-the-great-renunciation	REJECT	the-prefix	identity-statement disguised as event
+7503	Siddhartha Gautama	Buddhist	the-awakening-under-the-Bodhi-tree	REJECT	the-prefix	identity-statement disguised as event
+7503	Siddhartha Gautama	Buddhist	the-defeat-of-Mara	REJECT	the-prefix	identity-statement disguised as event
+7503	Siddhartha Gautama	Buddhist	the-first-turning-of-the-Dharma-wheel	REJECT	the-prefix	identity-statement disguised as event
+7503	Siddhartha Gautama	Buddhist	the-parinirvana	REJECT	the-prefix	identity-statement disguised as event
+7512	Itzamna	Maya	supreme-creator-and-sky-god	REJECT	identity-keyword	contains identity keyword
+7512	Itzamna	Maya	invention-of-writing-and-the-calendar	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7512	Itzamna	Maya	patronage-of-the-priesthood	REVIEW	3 hyphens	borderline — manual check
+7259	Mannus	Germanic	the-founder-of-the-Germanic-peoples	REJECT	the-prefix	identity-statement disguised as event
+7259	Mannus	Germanic	the-father-of-the-eponymous-ancestors-of-the-Germanic-groupings	REJECT	the-prefix	identity-statement disguised as event
+7369	Saga	Norse	drinking-companionship-with-Odin	REVIEW	3 hyphens	borderline — manual check
+7107	Váli	Norse	miraculous swift growth	KEEP	1-2 hyphens	narrow event-type
+7107	Váli	Norse	vengeance-killing	KEEP	1-2 hyphens	narrow event-type
+7107	Váli	Norse	post-Ragnarok survival	KEEP	1-2 hyphens	narrow event-type
+7204	Attar	Canaanite	failed succession	KEEP	1-2 hyphens	narrow event-type
+7204	Attar	Canaanite	complaint	KEEP	1-2 hyphens	narrow event-type
+7204	Attar	Canaanite	descent	KEEP	1-2 hyphens	narrow event-type
+7516	Chaac	Maya	the-rain-and-lightning-god	REJECT	the-prefix	identity-statement disguised as event
+7516	Chaac	Maya	the-four-directional-Chaacs	REJECT	the-prefix	identity-statement disguised as event
+7516	Chaac	Maya	cult	KEEP	1-2 hyphens	narrow event-type
+7289	Apsu	Mesopotamian	primordial existence	KEEP	1-2 hyphens	narrow event-type
+7289	Apsu	Mesopotamian	death by combat	KEEP	1-2 hyphens	narrow event-type
+7230	Sabazios	Phrygian	the-Phrygian-Thracian-sky-father	REJECT	the-prefix	identity-statement disguised as event
+7230	Sabazios	Phrygian	the-serpent-mystery-rite	REJECT	the-prefix	identity-statement disguised as event
+7230	Sabazios	Phrygian	identification-with-Zeus-and-Dionysus	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7102	Hermóðr	Norse	underworld journey	KEEP	1-2 hyphens	narrow event-type
+7102	Hermóðr	Norse	ransom-mission	KEEP	1-2 hyphens	narrow event-type
+7102	Hermóðr	Norse	perilous ride	KEEP	1-2 hyphens	narrow event-type
+6331	Shenshu and Yulü	Chinese	punishment	KEEP	1-2 hyphens	narrow event-type
+7517	Kinich Ahau	Maya	the-day-sun	REJECT	the-prefix	identity-statement disguised as event
+7517	Kinich Ahau	Maya	the-night-journey-as-the-Jaguar-Sun	REJECT	the-prefix	identity-statement disguised as event
+7517	Kinich Ahau	Maya	the-patron-of-Maya-kingship	REJECT	the-prefix	identity-statement disguised as event
+7383	Garuda	Hindu	miraculous birth	KEEP	1-2 hyphens	narrow event-type
+7383	Garuda	Hindu	rescue	KEEP	1-2 hyphens	narrow event-type
+7383	Garuda	Hindu	amṛta-theft	KEEP	1-2 hyphens	narrow event-type
+7383	Garuda	Hindu	serpent-enmity	KEEP	1-2 hyphens	narrow event-type
+7383	Garuda	Hindu	Viṣṇu-mount-status	KEEP	1-2 hyphens	narrow event-type
+7205	Anunnaki	Mesopotamian	council of gods	KEEP	1-2 hyphens	narrow event-type
+7205	Anunnaki	Mesopotamian	judgement	KEEP	1-2 hyphens	narrow event-type
+7205	Anunnaki	Mesopotamian	distribution to stations	KEEP	1-2 hyphens	narrow event-type
+7522	Vucub Caquix	Maya	the-false-sun-and-moon	REJECT	the-prefix	identity-statement disguised as event
+7522	Vucub Caquix	Maya	the-blowgun-ambush	REJECT	the-prefix	identity-statement disguised as event
+7522	Vucub Caquix	Maya	the-tricking-away-of-his-false-radiance	REJECT	the-prefix	identity-statement disguised as event
+6450	Yuanshi Tianzun	Chinese	primordial-origin-embodiment	KEEP	1-2 hyphens	narrow event-type
+6450	Yuanshi Tianzun	Chinese	highest-of-the-Three-Pure-Ones	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6478	Mama	Mesopotamian	humanity creation	KEEP	1-2 hyphens	narrow event-type
+7292	Anshar	Mesopotamian	theogony	KEEP	1-2 hyphens	narrow event-type
+7292	Anshar	Mesopotamian	council	KEEP	1-2 hyphens	narrow event-type
+7292	Anshar	Mesopotamian	sending of messenger	KEEP	1-2 hyphens	narrow event-type
+7306	Nergal	Mesopotamian	descent to underworld	KEEP	1-2 hyphens	narrow event-type
+7306	Nergal	Mesopotamian	divine marriage	KEEP	1-2 hyphens	narrow event-type
+7306	Nergal	Mesopotamian	rampage	KEEP	1-2 hyphens	narrow event-type
+7227	Abraxas	Gnostic	the-ruler-of-the-365-heavens	REJECT	the-prefix	identity-statement disguised as event
+7227	Abraxas	Gnostic	the-name-summing-to-365	REJECT	the-prefix	identity-statement disguised as event
+7227	Abraxas	Gnostic	the-protective-gem-magic-tradition	REJECT	the-prefix	identity-statement disguised as event
+7321	Nikkal	Canaanite	divine marriage	KEEP	1-2 hyphens	narrow event-type
+7321	Nikkal	Canaanite	blessing	KEEP	1-2 hyphens	narrow event-type
+7092	Thor	Norse	slays monster	KEEP	1-2 hyphens	narrow event-type
+7092	Thor	Norse	journey to giants	KEEP	1-2 hyphens	narrow event-type
+7092	Thor	Norse	divine-bridal-disguise	KEEP	1-2 hyphens	narrow event-type
+7092	Thor	Norse	cosmic-fishing	KEEP	1-2 hyphens	narrow event-type
+7092	Thor	Norse	Ragnarok combat	KEEP	1-2 hyphens	narrow event-type
+6134	Marduk	Mesopotamian	miraculous birth	KEEP	1-2 hyphens	narrow event-type
+6134	Marduk	Mesopotamian	cosmic battle	KEEP	1-2 hyphens	narrow event-type
+6134	Marduk	Mesopotamian	cosmogony	KEEP	1-2 hyphens	narrow event-type
+6134	Marduk	Mesopotamian	creation of humanity	KEEP	1-2 hyphens	narrow event-type
+6134	Marduk	Mesopotamian	king-making	KEEP	1-2 hyphens	narrow event-type
+7473	Mictlancihuatl	Aztec	underworld-co-rule	KEEP	1-2 hyphens	narrow event-type
+7323	Shalim	Canaanite	theogony	KEEP	1-2 hyphens	narrow event-type
+7323	Shalim	Canaanite	sacred marriage offspring	KEEP	1-2 hyphens	narrow event-type
+7348	Shekhinah	Abrahamic	indwelling	KEEP	1-2 hyphens	narrow event-type
+7348	Shekhinah	Abrahamic	exile	KEEP	1-2 hyphens	narrow event-type
+7348	Shekhinah	Abrahamic	reunion (eschatological)	KEEP	1-2 hyphens	narrow event-type
+7319	Utnapishtim	Mesopotamian	flood	KEEP	1-2 hyphens	narrow event-type
+7319	Utnapishtim	Mesopotamian	immortalization	KEEP	1-2 hyphens	narrow event-type
+7319	Utnapishtim	Mesopotamian	sage-counsel	KEEP	1-2 hyphens	narrow event-type
+6261	Isis	Egyptian	rescue	KEEP	1-2 hyphens	narrow event-type
+6261	Isis	Egyptian	divine marriage	KEEP	1-2 hyphens	narrow event-type
+6261	Isis	Egyptian	resurrection	KEEP	1-2 hyphens	narrow event-type
+6261	Isis	Egyptian	cunning	KEEP	1-2 hyphens	narrow event-type
+6261	Isis	Egyptian	mourning	KEEP	1-2 hyphens	narrow event-type
+6261	Isis	Egyptian	nursing	KEEP	1-2 hyphens	narrow event-type
+6643	Shezmu	Egyptian	slays monster	KEEP	1-2 hyphens	narrow event-type
+6643	Shezmu	Egyptian	descent to underworld	KEEP	1-2 hyphens	narrow event-type
+7464	Penates	Roman	protection	KEEP	1-2 hyphens	narrow event-type
+7464	Penates	Roman	state-cult-extension	REJECT	identity-keyword	contains identity keyword
+7464	Penates	Roman	Trojan-Penates-translation	KEEP	1-2 hyphens	narrow event-type
+6778	Groa	Norse	healing	KEEP	1-2 hyphens	narrow event-type
+6778	Groa	Norse	spell-failure (distraction)	KEEP	1-2 hyphens	narrow event-type
+6778	Groa	Norse	maternal protection	KEEP	1-2 hyphens	narrow event-type
+7236	Jörmungandr	Norse	cosmic boundary	KEEP	1-2 hyphens	narrow event-type
+7236	Jörmungandr	Norse	ragnarok	KEEP	1-2 hyphens	narrow event-type
+6262	Protesilaus	Greek	contest	KEEP	1-2 hyphens	narrow event-type
+6323	Shennong	Chinese	invention-of-agriculture	KEEP	1-2 hyphens	narrow event-type
+6323	Shennong	Chinese	herb-tasting-and-medicine-founding	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6323	Shennong	Chinese	death-by-poisonous-herb	REVIEW	3 hyphens	borderline — manual check
+7101	Mímir	Norse	guardianship of wisdom	KEEP	1-2 hyphens	narrow event-type
+7101	Mímir	Norse	beheading	KEEP	1-2 hyphens	narrow event-type
+7101	Mímir	Norse	preservation by Odin	KEEP	1-2 hyphens	narrow event-type
+7101	Mímir	Norse	prophetic counsel	KEEP	1-2 hyphens	narrow event-type
+7366	Ran	Norse	drowning	KEEP	1-2 hyphens	narrow event-type
+7366	Ran	Norse	sea-claiming	KEEP	1-2 hyphens	narrow event-type
+7366	Ran	Norse	treasure-hoarding	KEEP	1-2 hyphens	narrow event-type
+6961	Caca	Roman	quest	KEEP	1-2 hyphens	narrow event-type
+7461	Romulus	Roman	miraculous birth	KEEP	1-2 hyphens	narrow event-type
+7461	Romulus	Roman	she-wolf-suckling	KEEP	1-2 hyphens	narrow event-type
+7461	Romulus	Roman	foundation-of-Rome	KEEP	1-2 hyphens	narrow event-type
+7461	Romulus	Roman	fratricide	KEEP	1-2 hyphens	narrow event-type
+7461	Romulus	Roman	Sabine-women-rape	KEEP	1-2 hyphens	narrow event-type
+7461	Romulus	Roman	apotheosis-as-Quirinus	KEEP	1-2 hyphens	narrow event-type
+6152	Raphael	Abrahamic	healing	KEEP	1-2 hyphens	narrow event-type
+6152	Raphael	Abrahamic	accompaniment	KEEP	1-2 hyphens	narrow event-type
+6152	Raphael	Abrahamic	exorcism	KEEP	1-2 hyphens	narrow event-type
+6152	Raphael	Abrahamic	revelation of identity	KEEP	1-2 hyphens	narrow event-type
+6970	Ninigi-no-Mikoto	Shinto	founding	KEEP	1-2 hyphens	narrow event-type
+7145	Xipe-Totec	Aztec	agricultural-renewal	KEEP	1-2 hyphens	narrow event-type
+7145	Xipe-Totec	Aztec	cult	KEEP	1-2 hyphens	narrow event-type
+7145	Xipe-Totec	Aztec	flayed-skin-wearing	KEEP	1-2 hyphens	narrow event-type
+7145	Xipe-Totec	Aztec	Tezcatlipoca-Red-aspect	KEEP	1-2 hyphens	narrow event-type
+6420	Ino	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+6420	Ino	Greek	rescue	KEEP	1-2 hyphens	narrow event-type
+7353	Frigg	Norse	marriage	KEEP	1-2 hyphens	narrow event-type
+7353	Frigg	Norse	foreknowledge	KEEP	1-2 hyphens	narrow event-type
+7353	Frigg	Norse	motherhood	KEEP	1-2 hyphens	narrow event-type
+7353	Frigg	Norse	mourning	KEEP	1-2 hyphens	narrow event-type
+7353	Frigg	Norse	foreordained loss	KEEP	1-2 hyphens	narrow event-type
+7217	Naga Basuki	Balinese	world creation	KEEP	1-2 hyphens	narrow event-type
+7211	Shuqamuna and Shumaliya	Mesopotamian	royal protection	KEEP	1-2 hyphens	narrow event-type
+7200	Shapash	Canaanite	searching	KEEP	1-2 hyphens	narrow event-type
+7200	Shapash	Canaanite	mediation	KEEP	1-2 hyphens	narrow event-type
+7200	Shapash	Canaanite	oracle	KEEP	1-2 hyphens	narrow event-type
+7200	Shapash	Canaanite	solar transit	KEEP	1-2 hyphens	narrow event-type
+6730	Cian	Celtic	battle	KEEP	1-2 hyphens	narrow event-type
+6760	Astarte	Canaanite	royal patronage	KEEP	1-2 hyphens	narrow event-type
+6760	Astarte	Canaanite	divine consortship	KEEP	1-2 hyphens	narrow event-type
+6760	Astarte	Canaanite	restraint of Baal	KEEP	1-2 hyphens	narrow event-type
+7039	Amaterasu	Shinto	withdrawal	KEEP	1-2 hyphens	narrow event-type
+7039	Amaterasu	Shinto	epiphany	KEEP	1-2 hyphens	narrow event-type
+7039	Amaterasu	Shinto	cosmic restoration	KEEP	1-2 hyphens	narrow event-type
+7039	Amaterasu	Shinto	ancestral foundation	KEEP	1-2 hyphens	narrow event-type
+7161	Damayanti	Hindu	svayaṃvara	KEEP	1-2 hyphens	narrow event-type
+7161	Damayanti	Hindu	wifely devotion	KEEP	1-2 hyphens	narrow event-type
+7161	Damayanti	Hindu	reunion-after-separation	KEEP	1-2 hyphens	narrow event-type
+7158	Ardhanarishvara	Hindu	cosmic-androgynous union	KEEP	1-2 hyphens	narrow event-type
+7158	Ardhanarishvara	Hindu	sage-encounter	KEEP	1-2 hyphens	narrow event-type
+7158	Ardhanarishvara	Hindu	revelation of cosmic unity	KEEP	1-2 hyphens	narrow event-type
+6170	Memnon	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+6600	Arke	Greek	punishment	KEEP	1-2 hyphens	narrow event-type
+6600	Arke	Greek	exile	KEEP	1-2 hyphens	narrow event-type
+6600	Arke	Greek	betrayal	KEEP	1-2 hyphens	narrow event-type
+6178	Lampetia	Greek	sacrifice	KEEP	1-2 hyphens	narrow event-type
+6339	Soter	Greek	founding	KEEP	1-2 hyphens	narrow event-type
+6735	Dactyls	Greek	invention	KEEP	1-2 hyphens	narrow event-type
+7081	Takeminakata	Shinto	exile	KEEP	1-2 hyphens	narrow event-type
+7298	Ninlil	Mesopotamian	courtship	KEEP	1-2 hyphens	narrow event-type
+7298	Ninlil	Mesopotamian	condemnation	KEEP	1-2 hyphens	narrow event-type
+7298	Ninlil	Mesopotamian	child-bearing	KEEP	1-2 hyphens	narrow event-type
+7305	Ereshkigal	Mesopotamian	kingship-of-realm	KEEP	1-2 hyphens	narrow event-type
+7305	Ereshkigal	Mesopotamian	killing	KEEP	1-2 hyphens	narrow event-type
+7305	Ereshkigal	Mesopotamian	divine marriage	KEEP	1-2 hyphens	narrow event-type
+7511	Hariti	Buddhist	the-child-devouring-yakshini	REJECT	the-prefix	identity-statement disguised as event
+7511	Hariti	Buddhist	the-Buddha-hiding-her-youngest-child	REJECT	the-prefix	identity-statement disguised as event
+7511	Hariti	Buddhist	the-conversion-into-a-protector-of-children	REJECT	the-prefix	identity-statement disguised as event
+7313	Geshtinanna	Mesopotamian	descent-substitution	KEEP	1-2 hyphens	narrow event-type
+7313	Geshtinanna	Mesopotamian	prophecy	KEEP	1-2 hyphens	narrow event-type
+7313	Geshtinanna	Mesopotamian	devotion	KEEP	1-2 hyphens	narrow event-type
+7341	Holy Spirit	Abrahamic	creation	KEEP	1-2 hyphens	narrow event-type
+7341	Holy Spirit	Abrahamic	prophetic empowerment	KEEP	1-2 hyphens	narrow event-type
+7341	Holy Spirit	Abrahamic	incarnation (conception of Jesus)	KEEP	1-2 hyphens	narrow event-type
+7341	Holy Spirit	Abrahamic	baptismal anointing	KEEP	1-2 hyphens	narrow event-type
+7341	Holy Spirit	Abrahamic	Pentecost	KEEP	1-2 hyphens	narrow event-type
+7341	Holy Spirit	Abrahamic	indwelling	KEEP	1-2 hyphens	narrow event-type
+7341	Holy Spirit	Abrahamic	sanctification	KEEP	1-2 hyphens	narrow event-type
+7523	Hun-Came	Maya	paramount-lord-of-Xibalba	REJECT	identity-keyword	contains identity keyword
+7523	Hun-Came	Maya	the-summoning-and-sacrifice-of-Hun-Hunahpu	REJECT	the-prefix	identity-statement disguised as event
+7523	Hun-Came	Maya	the-defeat-by-the-Hero-Twins	REJECT	the-prefix	identity-statement disguised as event
+6781	Attis	Phrygian	the-love-of-the-Mother	REJECT	the-prefix	identity-statement disguised as event
+6781	Attis	Phrygian	the-madness-and-self-castration	REJECT	the-prefix	identity-statement disguised as event
+6781	Attis	Phrygian	death-beneath-the-pine	REVIEW	3 hyphens	borderline — manual check
+6781	Attis	Phrygian	the-annual-mourning-and-renewal	REJECT	the-prefix	identity-statement disguised as event
+7515	Huracan	Maya	the-Heart-of-Sky	REJECT	the-prefix	identity-statement disguised as event
+7515	Huracan	Maya	creation	KEEP	1-2 hyphens	narrow event-type
+7515	Huracan	Maya	the-flood-destroying-the-wooden-people	REJECT	the-prefix	identity-statement disguised as event
+7411	Takemikazuchi	Shinto	emergence-from-blood	KEEP	1-2 hyphens	narrow event-type
+7411	Takemikazuchi	Shinto	kuni-yuzuri (transfer of the land)	KEEP	1-2 hyphens	narrow event-type
+7411	Takemikazuchi	Shinto	wrestling-victory	KEEP	1-2 hyphens	narrow event-type
+7411	Takemikazuchi	Shinto	sword-on-waves	KEEP	1-2 hyphens	narrow event-type
+7075	Bragi	Norse	poetic instruction	KEEP	1-2 hyphens	narrow event-type
+7075	Bragi	Norse	formal speech	KEEP	1-2 hyphens	narrow event-type
+7075	Bragi	Norse	feast-attendance	KEEP	1-2 hyphens	narrow event-type
+6484	Rangda	Balinese	the-demon-queen-and-widow-witch	REJECT	the-prefix	identity-statement disguised as event
+6484	Rangda	Balinese	the-leadership-of-the-leyak	REJECT	the-prefix	identity-statement disguised as event
+6484	Rangda	Balinese	the-eternal-battle-with-Barong	REJECT	the-prefix	identity-statement disguised as event
+7225	The Monad	Gnostic	the-unknowable-transcendent-Godhead	REJECT	the-prefix	identity-statement disguised as event
+7225	The Monad	Gnostic	the-source-of-the-Pleroma	REJECT	the-prefix	identity-statement disguised as event
+6347	Leto	Greek	punishment	KEEP	1-2 hyphens	narrow event-type
+7372	Lakshmi	Hindu	emergence from cosmic ocean	KEEP	1-2 hyphens	narrow event-type
+7372	Lakshmi	Hindu	choosing-of-husband	KEEP	1-2 hyphens	narrow event-type
+7372	Lakshmi	Hindu	consort-avataric descent	KEEP	1-2 hyphens	narrow event-type
+7372	Lakshmi	Hindu	wealth-bestowal	KEEP	1-2 hyphens	narrow event-type
+7349	Sandalphon	Abrahamic	prayer-weaving	KEEP	1-2 hyphens	narrow event-type
+7349	Sandalphon	Abrahamic	heavenly intercession	KEEP	1-2 hyphens	narrow event-type
+7349	Sandalphon	Abrahamic	identification with Elijah (in some traditions)	KEEP	1-2 hyphens	narrow event-type
+6351	Shunfeng'er	Chinese	slays monster	KEEP	1-2 hyphens	narrow event-type
+6349	Soteria	Greek	founding	KEEP	1-2 hyphens	narrow event-type
+7423	Hestia	Greek	first-swallowed-by-Cronus	REVIEW	3 hyphens	borderline — manual check
+7423	Hestia	Greek	virginity-vow	KEEP	1-2 hyphens	narrow event-type
+7423	Hestia	Greek	presidency	KEEP	1-2 hyphens	narrow event-type
+7454	Sol	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+7454	Sol	Roman	Sol-Invictus-cult-establishment	REVIEW	3 hyphens	borderline — manual check
+7454	Sol	Roman	imperial-solar-theology	KEEP	1-2 hyphens	narrow event-type
+7496	He Xiangu	Chinese	immortality	KEEP	1-2 hyphens	narrow event-type
+7496	He Xiangu	Chinese	vow-of-celibacy	KEEP	1-2 hyphens	narrow event-type
+7496	He Xiangu	Chinese	daylight-ascension	KEEP	1-2 hyphens	narrow event-type
+7501	Meng Po	Chinese	administering-the-broth-of-oblivion	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7501	Meng Po	Chinese	presidency	KEEP	1-2 hyphens	narrow event-type
+6362	Nefertem	Egyptian	lotus-emergence	KEEP	1-2 hyphens	narrow event-type
+6362	Nefertem	Egyptian	Memphite-triad-son	KEEP	1-2 hyphens	narrow event-type
+6488	Chun Kwan	Chinese	founding	KEEP	1-2 hyphens	narrow event-type
+6489	Patriarch Ching Chwee	Chinese	apotheosis	KEEP	1-2 hyphens	narrow event-type
+6489	Patriarch Ching Chwee	Chinese	founding	KEEP	1-2 hyphens	narrow event-type
+6369	King Father of the East	Chinese	humanity creation	KEEP	1-2 hyphens	narrow event-type
+6369	King Father of the East	Chinese	divine marriage	KEEP	1-2 hyphens	narrow event-type
+6369	King Father of the East	Chinese	seduction	KEEP	1-2 hyphens	narrow event-type
+6370	Sun Bin	Chinese	punishment	KEEP	1-2 hyphens	narrow event-type
+6370	Sun Bin	Chinese	betrayal	KEEP	1-2 hyphens	narrow event-type
+6204	Thoth	Egyptian	scribal-invention	KEEP	1-2 hyphens	narrow event-type
+6204	Thoth	Egyptian	mediation	KEEP	1-2 hyphens	narrow event-type
+6204	Thoth	Egyptian	restoration	KEEP	1-2 hyphens	narrow event-type
+6204	Thoth	Egyptian	judgment-recording	KEEP	1-2 hyphens	narrow event-type
+6204	Thoth	Egyptian	rescue	KEEP	1-2 hyphens	narrow event-type
+6207	Parthenopaeus	Greek	rescue	KEEP	1-2 hyphens	narrow event-type
+6205	Xuanwu	Chinese	slays monster	KEEP	1-2 hyphens	narrow event-type
+6371	Xu Shilin	Chinese	rescue	KEEP	1-2 hyphens	narrow event-type
+6377	Sun Wukong	Chinese	birth-from-stone-egg	REVIEW	3 hyphens	borderline — manual check
+6377	Sun Wukong	Chinese	rebellion-against-Heaven	KEEP	1-2 hyphens	narrow event-type
+6377	Sun Wukong	Chinese	imprisonment-under-Five-Elements-Mountain	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6377	Sun Wukong	Chinese	protection	KEEP	1-2 hyphens	narrow event-type
+6377	Sun Wukong	Chinese	attainment-of-Buddhahood	KEEP	1-2 hyphens	narrow event-type
+6493	Caishen	Chinese	founding	KEEP	1-2 hyphens	narrow event-type
+6568	Kratos	Greek	punishment	KEEP	1-2 hyphens	narrow event-type
+6495	Angelos	Greek	betrayal	KEEP	1-2 hyphens	narrow event-type
+6386	Gorgon	Greek	curse	KEEP	1-2 hyphens	narrow event-type
+6263	Jesus	Abrahamic	passion	KEEP	1-2 hyphens	narrow event-type
+6263	Jesus	Abrahamic	miracle	KEEP	1-2 hyphens	narrow event-type
+6263	Jesus	Abrahamic	miraculous birth	KEEP	1-2 hyphens	narrow event-type
+6263	Jesus	Abrahamic	temptation	KEEP	1-2 hyphens	narrow event-type
+6263	Jesus	Abrahamic	ascension	KEEP	1-2 hyphens	narrow event-type
+6263	Jesus	Abrahamic	public ministry	KEEP	1-2 hyphens	narrow event-type
+6263	Jesus	Abrahamic	eschatological return	KEEP	1-2 hyphens	narrow event-type
+6263	Jesus	Abrahamic	baptism	KEEP	1-2 hyphens	narrow event-type
+6263	Jesus	Abrahamic	transfiguration	KEEP	1-2 hyphens	narrow event-type
+6269	Azrael	Abrahamic	extraction of souls	KEEP	1-2 hyphens	narrow event-type
+6269	Azrael	Abrahamic	escort to afterlife	KEEP	1-2 hyphens	narrow event-type
+6272	Europa	Greek	abduction	KEEP	1-2 hyphens	narrow event-type
+6275	Hou Yi	Chinese	shooting-down-the-nine-suns	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6275	Hou Yi	Chinese	immortality	KEEP	1-2 hyphens	narrow event-type
+6275	Hou Yi	Chinese	losing-Chang'e-to-the-moon	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6276	Oedipus	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+6208	Metatron	Abrahamic	ascension	KEEP	1-2 hyphens	narrow event-type
+6208	Metatron	Abrahamic	transformation	KEEP	1-2 hyphens	narrow event-type
+6208	Metatron	Abrahamic	revelation	KEEP	1-2 hyphens	narrow event-type
+6208	Metatron	Abrahamic	heavenly scribal service	KEEP	1-2 hyphens	narrow event-type
+6209	Heka	Egyptian	world creation	KEEP	1-2 hyphens	narrow event-type
+6213	Half-elf	Norse	curse	KEEP	1-2 hyphens	narrow event-type
+6213	Half-elf	Norse	rescue	KEEP	1-2 hyphens	narrow event-type
+6215	Abraham	Abrahamic	call	KEEP	1-2 hyphens	narrow event-type
+6215	Abraham	Abrahamic	covenant	KEEP	1-2 hyphens	narrow event-type
+6215	Abraham	Abrahamic	wandering	KEEP	1-2 hyphens	narrow event-type
+6215	Abraham	Abrahamic	intercession	KEEP	1-2 hyphens	narrow event-type
+6215	Abraham	Abrahamic	binding-sacrifice	KEEP	1-2 hyphens	narrow event-type
+6215	Abraham	Abrahamic	founding pilgrimage	KEEP	1-2 hyphens	narrow event-type
+6218	Hephaestus	Greek	invention	KEEP	1-2 hyphens	narrow event-type
+6395	Yidi	Chinese	invention	KEEP	1-2 hyphens	narrow event-type
+6395	Yidi	Chinese	gift to humanity	KEEP	1-2 hyphens	narrow event-type
+6230	Amphiaraus	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+6231	Eunostus	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+6233	Dongyue Dadi	Chinese	loss of power	KEEP	1-2 hyphens	narrow event-type
+6291	Theseus	Greek	slays monster	KEEP	1-2 hyphens	narrow event-type
+6295	Muses	Greek	contest	KEEP	1-2 hyphens	narrow event-type
+6295	Muses	Greek	punishment	KEEP	1-2 hyphens	narrow event-type
+6295	Muses	Greek	loss of power	KEEP	1-2 hyphens	narrow event-type
+6531	Messene	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+6531	Messene	Greek	founding	KEEP	1-2 hyphens	narrow event-type
+6570	Ophion	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+6570	Ophion	Greek	punishment	KEEP	1-2 hyphens	narrow event-type
+6301	Wenshu Guangfa Tianzun	Chinese	slays monster	KEEP	1-2 hyphens	narrow event-type
+6085	Morrigan	Celtic	sovereignty rite	KEEP	1-2 hyphens	narrow event-type
+6085	Morrigan	Celtic	prophecy	KEEP	1-2 hyphens	narrow event-type
+6085	Morrigan	Celtic	battle	KEEP	1-2 hyphens	narrow event-type
+6096	Ajax the Lesser	Greek	loss of power	KEEP	1-2 hyphens	narrow event-type
+6571	Alexanor	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+6571	Alexanor	Greek	founding	KEEP	1-2 hyphens	narrow event-type
+6593	Aphaia	Greek	founding	KEEP	1-2 hyphens	narrow event-type
+6097	Puti Zushi	Chinese	quest	KEEP	1-2 hyphens	narrow event-type
+6308	White Emperor	Chinese	slays monster	KEEP	1-2 hyphens	narrow event-type
+6308	White Emperor	Chinese	slays kin	KEEP	1-2 hyphens	narrow event-type
+6305	Seven against Thebes	Greek	slays kin	KEEP	1-2 hyphens	narrow event-type
+6305	Seven against Thebes	Greek	exile	KEEP	1-2 hyphens	narrow event-type
+6467	Kourotrophos	Greek	founding	KEEP	1-2 hyphens	narrow event-type
+6520	Roma	Roman	founding	KEEP	1-2 hyphens	narrow event-type
+6543	Zhao Gongming	Chinese	exile	KEEP	1-2 hyphens	narrow event-type
+6546	Diana	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+6546	Diana	Roman	cult	KEEP	1-2 hyphens	narrow event-type
+6546	Diana	Roman	Rex-Nemorensis-priesthood	KEEP	1-2 hyphens	narrow event-type
+6555	Juno	Roman	queen-of-the-gods	REVIEW	3 hyphens	borderline — manual check
+6555	Juno	Roman	Capitoline-Triad-membership	KEEP	1-2 hyphens	narrow event-type
+6555	Juno	Roman	Aeneas-persecution	KEEP	1-2 hyphens	narrow event-type
+6578	Minerva	Roman	Etruscan-pre-Greek-origin	REVIEW	3 hyphens	borderline — manual check
+6578	Minerva	Roman	Capitoline-Triad-membership	KEEP	1-2 hyphens	narrow event-type
+6578	Minerva	Roman	patronage	KEEP	1-2 hyphens	narrow event-type
+6579	Týr	Norse	self-sacrifice	KEEP	1-2 hyphens	narrow event-type
+6579	Týr	Norse	wolf-binding	KEEP	1-2 hyphens	narrow event-type
+6579	Týr	Norse	Ragnarok mutual combat	KEEP	1-2 hyphens	narrow event-type
+6580	Zhou Cang	Chinese	contest	KEEP	1-2 hyphens	narrow event-type
+6584	Triptolemus	Greek	apotheosis	KEEP	1-2 hyphens	narrow event-type
+6641	Pang Juan	Chinese	betrayal	KEEP	1-2 hyphens	narrow event-type
+6640	Fengbo	Chinese	slays monster	KEEP	1-2 hyphens	narrow event-type
+6640	Fengbo	Chinese	overthrows ruler	KEEP	1-2 hyphens	narrow event-type
+6646	Caeneus	Greek	seduction	KEEP	1-2 hyphens	narrow event-type
+6653	Ops	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+6653	Ops	Roman	sister-wife-of-Saturn	REVIEW	3 hyphens	borderline — manual check
+6653	Ops	Roman	patronage	KEEP	1-2 hyphens	narrow event-type
+6658	Panhu	Chinese	divine marriage	KEEP	1-2 hyphens	narrow event-type
+6666	Peng Yue	Chinese	contest	KEEP	1-2 hyphens	narrow event-type
+6674	Qianliyan	Chinese	slays monster	KEEP	1-2 hyphens	narrow event-type
+6684	Eileithyia	Greek	humanity creation	KEEP	1-2 hyphens	narrow event-type
+6686	Comus	Greek	abduction	KEEP	1-2 hyphens	narrow event-type
+6686	Comus	Greek	seduction	KEEP	1-2 hyphens	narrow event-type
+6683	Atlas	Greek	invention	KEEP	1-2 hyphens	narrow event-type
+6690	Odysseus	Greek	quest	KEEP	1-2 hyphens	narrow event-type
+6710	Charudeshna	Hindu	Yādava warrior	KEEP	1-2 hyphens	narrow event-type
+6727	Guang Chengzi	Chinese	slays monster	KEEP	1-2 hyphens	narrow event-type
+6733	Prometheus	Greek	rescue	KEEP	1-2 hyphens	narrow event-type
+6734	Pasiphaë	Greek	curse	KEEP	1-2 hyphens	narrow event-type
+6734	Pasiphaë	Greek	seduction	KEEP	1-2 hyphens	narrow event-type
+6734	Pasiphaë	Greek	sacrifice	KEEP	1-2 hyphens	narrow event-type
+6737	Yaksha	Hindu	nature-spirit attendance	KEEP	1-2 hyphens	narrow event-type
+6737	Yaksha	Hindu	treasure-guardianship	KEEP	1-2 hyphens	narrow event-type
+6737	Yaksha	Hindu	riddle-posing	KEEP	1-2 hyphens	narrow event-type
+6742	Aphrodite	Greek	seduction	KEEP	1-2 hyphens	narrow event-type
+6742	Aphrodite	Greek	contest	KEEP	1-2 hyphens	narrow event-type
+6746	Phaethusa	Greek	punishment	KEEP	1-2 hyphens	narrow event-type
+6750	Maya	Hindu	cosmic veiling	KEEP	1-2 hyphens	narrow event-type
+6750	Maya	Hindu	divine play	KEEP	1-2 hyphens	narrow event-type
+6754	Hecate	Greek	liminal mediation	KEEP	1-2 hyphens	narrow event-type
+6754	Hecate	Greek	intercession	KEEP	1-2 hyphens	narrow event-type
+6753	Adonis	Greek	sacrifice	KEEP	1-2 hyphens	narrow event-type
+6762	Baubo	Greek	rescue	KEEP	1-2 hyphens	narrow event-type
+6761	Eumenides	Greek	vengeance	KEEP	1-2 hyphens	narrow event-type
+6761	Eumenides	Greek	punishment	KEEP	1-2 hyphens	narrow event-type
+6763	Benthesikyme	Greek	rescue	KEEP	1-2 hyphens	narrow event-type
+6758	Hel	Norse	underworld-sovereignty	KEEP	1-2 hyphens	narrow event-type
+6758	Hel	Norse	reception of the dead	KEEP	1-2 hyphens	narrow event-type
+6758	Hel	Norse	ransom-refusal	KEEP	1-2 hyphens	narrow event-type
+6758	Hel	Norse	Ragnarok release of the dead	KEEP	1-2 hyphens	narrow event-type
+6772	Tlazolteotl	Aztec	sin-eating	KEEP	1-2 hyphens	narrow event-type
+6772	Tlazolteotl	Aztec	once-in-a-lifetime-confession	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6772	Tlazolteotl	Aztec	patronage	KEEP	1-2 hyphens	narrow event-type
+6769	Neith	Egyptian	world creation	KEEP	1-2 hyphens	narrow event-type
+6765	Maat	Egyptian	cosmic-order-maintenance	KEEP	1-2 hyphens	narrow event-type
+6765	Maat	Egyptian	weighing-of-the-heart	REVIEW	3 hyphens	borderline — manual check
+6765	Maat	Egyptian	42 Negative Confessions	KEEP	1-2 hyphens	narrow event-type
+6773	Ceres	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+6773	Ceres	Roman	cult	KEEP	1-2 hyphens	narrow event-type
+6768	Huitzilopochtli	Aztec	miraculous birth	KEEP	1-2 hyphens	narrow event-type
+6768	Huitzilopochtli	Aztec	sister-dismemberment	KEEP	1-2 hyphens	narrow event-type
+6768	Huitzilopochtli	Aztec	Mexica-migration-from-Aztlan	REVIEW	3 hyphens	borderline — manual check
+6768	Huitzilopochtli	Aztec	founding	KEEP	1-2 hyphens	narrow event-type
+6768	Huitzilopochtli	Aztec	heart-sacrifice-recipient	KEEP	1-2 hyphens	narrow event-type
+6770	Xochiquetzal	Aztec	stolen-from-Tlaloc-by-Tezcatlipoca	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+6770	Xochiquetzal	Aztec	patronage	KEEP	1-2 hyphens	narrow event-type
+6775	Shakti	Hindu	cosmic power	KEEP	1-2 hyphens	narrow event-type
+6775	Shakti	Hindu	union with Śiva	KEEP	1-2 hyphens	narrow event-type
+6775	Shakti	Hindu	goddess-manifestation	KEEP	1-2 hyphens	narrow event-type
+6777	Cihuacoatl	Aztec	patronage	KEEP	1-2 hyphens	narrow event-type
+6777	Cihuacoatl	Aztec	warrior-mother-status	KEEP	1-2 hyphens	narrow event-type
+6777	Cihuacoatl	Aztec	Conquest-omen-wailing	KEEP	1-2 hyphens	narrow event-type
+6779	Coatlicue	Aztec	miraculous birth	KEEP	1-2 hyphens	narrow event-type
+6779	Coatlicue	Aztec	near-murder-by-children	REVIEW	3 hyphens	borderline — manual check
+6779	Coatlicue	Aztec	mother-of-Huitzilopochtli	KEEP	1-2 hyphens	narrow event-type
+6780	Rhea	Greek	rescue	KEEP	1-2 hyphens	narrow event-type
+6807	Athis	Greek	sacrifice	KEEP	1-2 hyphens	narrow event-type
+6812	Hector	Greek	contest	KEEP	1-2 hyphens	narrow event-type
+6822	Nepr	Norse	ancestry	KEEP	1-2 hyphens	narrow event-type
+6844	Li Mu李牧	Chinese	sacrifice	KEEP	1-2 hyphens	narrow event-type
+6864	Ri Ye Youshen	Chinese	punishment	KEEP	1-2 hyphens	narrow event-type
+6871	Yuding Zhenren	Chinese	rescue	KEEP	1-2 hyphens	narrow event-type
+6925	Geb	Egyptian	cosmic incest with Nut	KEEP	1-2 hyphens	narrow event-type
+6925	Geb	Egyptian	generation of the four (Osiris-Isis-Set-Nephthys)	REVIEW	3 hyphens	borderline — manual check
+6925	Geb	Egyptian	earth-becoming	KEEP	1-2 hyphens	narrow event-type
+6924	Heidi	Chinese	slays monster	KEEP	1-2 hyphens	narrow event-type
+6924	Heidi	Chinese	apotheosis	KEEP	1-2 hyphens	narrow event-type
+6921	Shikigami	Shinto	curse	KEEP	1-2 hyphens	narrow event-type
+6938	Shu	Egyptian	emerged from Atum	KEEP	1-2 hyphens	narrow event-type
+6938	Shu	Egyptian	sky-earth separation	KEEP	1-2 hyphens	narrow event-type
+6938	Shu	Egyptian	foundational atmospheric being	KEEP	1-2 hyphens	narrow event-type
+6942	Euphorbus	Greek	contest	KEEP	1-2 hyphens	narrow event-type
+6942	Euphorbus	Greek	vengeance	KEEP	1-2 hyphens	narrow event-type
+6979	Nunakawahime	Shinto	seduction	KEEP	1-2 hyphens	narrow event-type
+7040	Izanagi-no-Mikoto	Shinto	descent to underworld	KEEP	1-2 hyphens	narrow event-type
+7053	Kotoamatsukami	Shinto	punishment	KEEP	1-2 hyphens	narrow event-type
+7054	Hitorigami	Shinto	humanity creation	KEEP	1-2 hyphens	narrow event-type
+7050	Kitsune	Shinto	betrayal	KEEP	1-2 hyphens	narrow event-type
+7062	Kodama	Shinto	curse	KEEP	1-2 hyphens	narrow event-type
+7068	Oshihomimi	Shinto	world creation	KEEP	1-2 hyphens	narrow event-type
+7067	Sarutahiko Ōkami	Shinto	founding	KEEP	1-2 hyphens	narrow event-type
+7074	Takenouchi no Sukune	Shinto	quest	KEEP	1-2 hyphens	narrow event-type
+7086	Yamato Takeru	Shinto	slays kin	KEEP	1-2 hyphens	narrow event-type
+7095	Heimdall	Norse	watching	KEEP	1-2 hyphens	narrow event-type
+7095	Heimdall	Norse	horn-summoning	KEEP	1-2 hyphens	narrow event-type
+7095	Heimdall	Norse	social-founding (as Ríg)	KEEP	1-2 hyphens	narrow event-type
+7095	Heimdall	Norse	Ragnarok mutual combat	KEEP	1-2 hyphens	narrow event-type
+7097	Ullr	Norse	patronage	KEEP	1-2 hyphens	narrow event-type
+7097	Ullr	Norse	exile-substitute kingship (Saxo)	KEEP	1-2 hyphens	narrow event-type
+7100	Höðr	Norse	unwitting killing	KEEP	1-2 hyphens	narrow event-type
+7100	Höðr	Norse	vengeance-suffered	KEEP	1-2 hyphens	narrow event-type
+7100	Höðr	Norse	post-Ragnarok return	KEEP	1-2 hyphens	narrow event-type
+7098	Víðarr	Norse	Ragnarok vengeance	KEEP	1-2 hyphens	narrow event-type
+7098	Víðarr	Norse	wolf-killing	KEEP	1-2 hyphens	narrow event-type
+7098	Víðarr	Norse	post-Ragnarok survival	KEEP	1-2 hyphens	narrow event-type
+7106	Vili and Vé	Norse	killing of Ymir	KEEP	1-2 hyphens	narrow event-type
+7106	Vili and Vé	Norse	creation	KEEP	1-2 hyphens	narrow event-type
+7106	Vili and Vé	Norse	human-creation (Snorri version)	KEEP	1-2 hyphens	narrow event-type
+7103	Hœnir	Norse	human creation	KEEP	1-2 hyphens	narrow event-type
+7103	Hœnir	Norse	hostage-exchange	KEEP	1-2 hyphens	narrow event-type
+7109	Ægir	Norse	divine feasting	KEEP	1-2 hyphens	narrow event-type
+7109	Ægir	Norse	sea-hospitality	KEEP	1-2 hyphens	narrow event-type
+7111	Nidhogg	Norse	cosmic gnawing	KEEP	1-2 hyphens	narrow event-type
+7111	Nidhogg	Norse	corpse-feeding	KEEP	1-2 hyphens	narrow event-type
+7111	Nidhogg	Norse	ragnarok survival	KEEP	1-2 hyphens	narrow event-type
+7112	Lóðurr	Norse	human creation	KEEP	1-2 hyphens	narrow event-type
+7118	Vörðr	Norse	watching	KEEP	1-2 hyphens	narrow event-type
+7118	Vörðr	Norse	protection	KEEP	1-2 hyphens	narrow event-type
+7128	Óðr	Norse	marriage	KEEP	1-2 hyphens	narrow event-type
+7128	Óðr	Norse	long absence	KEEP	1-2 hyphens	narrow event-type
+7128	Óðr	Norse	beloved-of-Freyja	KEEP	1-2 hyphens	narrow event-type
+7132	Tonacatecuhtli	Aztec	supreme-creator-duality	REJECT	identity-keyword	contains identity keyword
+7132	Tonacatecuhtli	Aztec	Omeyocan-dwelling	KEEP	1-2 hyphens	narrow event-type
+7132	Tonacatecuhtli	Aztec	world creation	KEEP	1-2 hyphens	narrow event-type
+7138	Ehecatl	Aztec	invention	KEEP	1-2 hyphens	narrow event-type
+7140	Tecciztecatl	Aztec	sacrifice	KEEP	1-2 hyphens	narrow event-type
+7146	Piltzintecuhtli	Aztec	humanity creation	KEEP	1-2 hyphens	narrow event-type
+7162	Ayudhapurusha	Hindu	weapon-personification	KEEP	1-2 hyphens	narrow event-type
+7162	Ayudhapurusha	Hindu	divine-attendant	KEEP	1-2 hyphens	narrow event-type
+7160	Ap	Hindu	cosmic primal element	KEEP	1-2 hyphens	narrow event-type
+7160	Ap	Hindu	purification	KEEP	1-2 hyphens	narrow event-type
+7164	Vahana	Hindu	mount-service	KEEP	1-2 hyphens	narrow event-type
+7164	Vahana	Hindu	divine carriage	KEEP	1-2 hyphens	narrow event-type
+7165	Gramadevata	Hindu	humanity creation	KEEP	1-2 hyphens	narrow event-type
+7167	Radha Krishna	Hindu	divine union	KEEP	1-2 hyphens	narrow event-type
+7167	Radha Krishna	Hindu	rāsa dance	KEEP	1-2 hyphens	narrow event-type
+7167	Radha Krishna	Hindu	viraha-milana	KEEP	1-2 hyphens	narrow event-type
+7167	Radha Krishna	Hindu	bhakti-archetype	KEEP	1-2 hyphens	narrow event-type
+7171	Shmashana Adhipati	Hindu	cremation-ground asceticism	KEEP	1-2 hyphens	narrow event-type
+7171	Shmashana Adhipati	Hindu	death-meditation	KEEP	1-2 hyphens	narrow event-type
+7174	Sadhyas	Hindu	ancient-deva-collective	KEEP	1-2 hyphens	narrow event-type
+7177	Vajreshwari (Vajreśvarī)	Hindu	tantric-Śākta worship	KEEP	1-2 hyphens	narrow event-type
+7177	Vajreshwari (Vajreśvarī)	Hindu	vajra-deity	REJECT	identity-keyword	contains identity keyword
+7178	Waghoba	Hindu	tiger-deity worship	REJECT	identity-keyword	contains identity keyword
+7178	Waghoba	Hindu	rural protection	KEEP	1-2 hyphens	narrow event-type
+7175	Vasu	Hindu	punishment	KEEP	1-2 hyphens	narrow event-type
+7182	Lugh	Celtic	battle	KEEP	1-2 hyphens	narrow event-type
+7182	Lugh	Celtic	founding	KEEP	1-2 hyphens	narrow event-type
+7182	Lugh	Celtic	invention	KEEP	1-2 hyphens	narrow event-type
+7181	Danu	Celtic	creation	KEEP	1-2 hyphens	narrow event-type
+7187	Badb	Celtic	prophecy	KEEP	1-2 hyphens	narrow event-type
+7187	Badb	Celtic	battle	KEEP	1-2 hyphens	narrow event-type
+7189	Nemain	Celtic	battle	KEEP	1-2 hyphens	narrow event-type
+7193	Bres	Celtic	battle	KEEP	1-2 hyphens	narrow event-type
+7193	Bres	Celtic	loss of power	KEEP	1-2 hyphens	narrow event-type
+7199	Dagon	Canaanite	divine fatherhood	KEEP	1-2 hyphens	narrow event-type
+7199	Dagon	Canaanite	idol-fall (biblical narrative)	KEEP	1-2 hyphens	narrow event-type
+7194	Cú Chulainn	Celtic	battle	KEEP	1-2 hyphens	narrow event-type
+7194	Cú Chulainn	Celtic	quest	KEEP	1-2 hyphens	narrow event-type
+7194	Cú Chulainn	Celtic	prophecy	KEEP	1-2 hyphens	narrow event-type
+7203	Horon	Canaanite	cursing	KEEP	1-2 hyphens	narrow event-type
+7203	Horon	Canaanite	healing-by-incantation	KEEP	1-2 hyphens	narrow event-type
+7203	Horon	Canaanite	exorcism	KEEP	1-2 hyphens	narrow event-type
+7202	Moloch	Canaanite	child-sacrifice cult (contested)	KEEP	1-2 hyphens	narrow event-type
+7206	Apkallu	Mesopotamian	cultural founding	KEEP	1-2 hyphens	narrow event-type
+7206	Apkallu	Mesopotamian	withdrawal	KEEP	1-2 hyphens	narrow event-type
+7209	Šulak	Mesopotamian	demonic ambush	KEEP	1-2 hyphens	narrow event-type
+7216	Leyak	Balinese	curse	KEEP	1-2 hyphens	narrow event-type
+7221	Furrina	Roman	vengeance	KEEP	1-2 hyphens	narrow event-type
+7224	Amitabha	Buddhist	the-forty-eight-vows-of-Dharmakara	REJECT	the-prefix	identity-statement disguised as event
+7224	Amitabha	Buddhist	the-establishment-of-the-Pure-Land	REJECT	the-prefix	identity-statement disguised as event
+7224	Amitabha	Buddhist	salvation-by-the-calling-of-the-name	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7234	Sia	Egyptian	humanity creation	KEEP	1-2 hyphens	narrow event-type
+7252	Mrtyu	Hindu	cosmic principle of mortality	REJECT	identity-keyword	contains identity keyword
+7252	Mrtyu	Hindu	teacher of liberation	KEEP	1-2 hyphens	narrow event-type
+7257	Proserpina	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+7257	Proserpina	Roman	Sicilian-abduction	KEEP	1-2 hyphens	narrow event-type
+7257	Proserpina	Roman	seasonal-cycle	KEEP	1-2 hyphens	narrow event-type
+7276	Scylla	Greek	descent to underworld	KEEP	1-2 hyphens	narrow event-type
+7272	Eos	Greek	curse	KEEP	1-2 hyphens	narrow event-type
+7272	Eos	Greek	seduction	KEEP	1-2 hyphens	narrow event-type
+7274	Apollo	Greek	slays monster	KEEP	1-2 hyphens	narrow event-type
+7278	Sphinx	Greek	slays monster	KEEP	1-2 hyphens	narrow event-type
+7278	Sphinx	Greek	contest	KEEP	1-2 hyphens	narrow event-type
+7284	Achilles	Greek	loss of power	KEEP	1-2 hyphens	narrow event-type
+7285	Athena	Greek	miraculous birth	KEEP	1-2 hyphens	narrow event-type
+7285	Athena	Greek	quest	KEEP	1-2 hyphens	narrow event-type
+7285	Athena	Greek	contest	KEEP	1-2 hyphens	narrow event-type
+7281	Circe	Greek	slays monster	KEEP	1-2 hyphens	narrow event-type
+7281	Circe	Greek	seduction	KEEP	1-2 hyphens	narrow event-type
+7282	Siren	Greek	seduction	KEEP	1-2 hyphens	narrow event-type
+7288	Janus	Roman	presidency	KEEP	1-2 hyphens	narrow event-type
+7288	Janus	Roman	war-and-peace-gate-keeping	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7291	Lahamu	Mesopotamian	theogony	KEEP	1-2 hyphens	narrow event-type
+7291	Lahamu	Mesopotamian	primordial existence	KEEP	1-2 hyphens	narrow event-type
+7293	Kishar	Mesopotamian	theogony	KEEP	1-2 hyphens	narrow event-type
+7302	Nanna	Mesopotamian	journey	KEEP	1-2 hyphens	narrow event-type
+7302	Nanna	Mesopotamian	kingship-of-city	KEEP	1-2 hyphens	narrow event-type
+7297	Enlil	Mesopotamian	theogony	KEEP	1-2 hyphens	narrow event-type
+7297	Enlil	Mesopotamian	flood-decreeing	KEEP	1-2 hyphens	narrow event-type
+7297	Enlil	Mesopotamian	kingship	KEEP	1-2 hyphens	narrow event-type
+7312	Dumuzi	Mesopotamian	descent to underworld	KEEP	1-2 hyphens	narrow event-type
+7312	Dumuzi	Mesopotamian	death-and-return	KEEP	1-2 hyphens	narrow event-type
+7312	Dumuzi	Mesopotamian	substitution	KEEP	1-2 hyphens	narrow event-type
+7312	Dumuzi	Mesopotamian	courtship	KEEP	1-2 hyphens	narrow event-type
+7310	Nabu	Mesopotamian	scribal patronage	KEEP	1-2 hyphens	narrow event-type
+7310	Nabu	Mesopotamian	heir to Marduk	KEEP	1-2 hyphens	narrow event-type
+7309	Sarpanitu	Mesopotamian	queenly consortship	KEEP	1-2 hyphens	narrow event-type
+7309	Sarpanitu	Mesopotamian	mother of Nabu	KEEP	1-2 hyphens	narrow event-type
+7315	Lamashtu	Mesopotamian	demonic attack	KEEP	1-2 hyphens	narrow event-type
+7314	Gula	Mesopotamian	healing	KEEP	1-2 hyphens	narrow event-type
+7314	Gula	Mesopotamian	curse	KEEP	1-2 hyphens	narrow event-type
+7314	Gula	Mesopotamian	oath-enforcement	KEEP	1-2 hyphens	narrow event-type
+7316	Pazuzu	Mesopotamian	apotropaic counter-demonic action	KEEP	1-2 hyphens	narrow event-type
+7320	Yarikh	Canaanite	divine marriage	KEEP	1-2 hyphens	narrow event-type
+7320	Yarikh	Canaanite	feast	KEEP	1-2 hyphens	narrow event-type
+7327	Lotan	Canaanite	cosmic battle	KEEP	1-2 hyphens	narrow event-type
+7327	Lotan	Canaanite	primordial monster	KEEP	1-2 hyphens	narrow event-type
+7327	Lotan	Canaanite	defeat	KEEP	1-2 hyphens	narrow event-type
+7324	Pidray	Canaanite	divine daughter	KEEP	1-2 hyphens	narrow event-type
+7324	Pidray	Canaanite	rejected bride	KEEP	1-2 hyphens	narrow event-type
+7325	Tallay	Canaanite	divine daughter	KEEP	1-2 hyphens	narrow event-type
+7328	Eshmun	Canaanite	healing	KEEP	1-2 hyphens	narrow event-type
+7328	Eshmun	Canaanite	self-castration	KEEP	1-2 hyphens	narrow event-type
+7328	Eshmun	Canaanite	death-and-resurrection	KEEP	1-2 hyphens	narrow event-type
+7330	Tanit	Canaanite	state-cult patronage	REJECT	identity-keyword	contains identity keyword
+7330	Tanit	Canaanite	sacrifice-receiving	KEEP	1-2 hyphens	narrow event-type
+7329	Melqart	Canaanite	kingship-of-city	KEEP	1-2 hyphens	narrow event-type
+7329	Melqart	Canaanite	death-and-resurrection	KEEP	1-2 hyphens	narrow event-type
+7329	Melqart	Canaanite	colonial patronage	KEEP	1-2 hyphens	narrow event-type
+7332	Chemosh	Canaanite	national-warrior patronage	KEEP	1-2 hyphens	narrow event-type
+7332	Chemosh	Canaanite	battle-sanction	KEEP	1-2 hyphens	narrow event-type
+7336	Aqhat	Canaanite	heroic quest	KEEP	1-2 hyphens	narrow event-type
+7336	Aqhat	Canaanite	rejected divine offer	KEEP	1-2 hyphens	narrow event-type
+7336	Aqhat	Canaanite	death by divine vengeance	KEEP	1-2 hyphens	narrow event-type
+7337	Pughat	Canaanite	avenging quest	KEEP	1-2 hyphens	narrow event-type
+7337	Pughat	Canaanite	disguise	KEEP	1-2 hyphens	narrow event-type
+7337	Pughat	Canaanite	approach-and-kill (incomplete in extant text)	KEEP	1-2 hyphens	narrow event-type
+7344	Beelzebub	Abrahamic	oracle-consultation (2 Kings)	KEEP	1-2 hyphens	narrow event-type
+7344	Beelzebub	Abrahamic	controversy (NT)	KEEP	1-2 hyphens	narrow event-type
+7344	Beelzebub	Abrahamic	binding by Solomon	KEEP	1-2 hyphens	narrow event-type
+7342	Iblis	Abrahamic	refusal of obeisance	KEEP	1-2 hyphens	narrow event-type
+7342	Iblis	Abrahamic	expulsion	KEEP	1-2 hyphens	narrow event-type
+7342	Iblis	Abrahamic	request of respite	KEEP	1-2 hyphens	narrow event-type
+7342	Iblis	Abrahamic	temptation of humanity	KEEP	1-2 hyphens	narrow event-type
+7342	Iblis	Abrahamic	final disavowal	KEEP	1-2 hyphens	narrow event-type
+7358	Eir	Norse	healing	KEEP	1-2 hyphens	narrow event-type
+7359	Fenrir	Norse	binding	KEEP	1-2 hyphens	narrow event-type
+7359	Fenrir	Norse	breaking-free	KEEP	1-2 hyphens	narrow event-type
+7359	Fenrir	Norse	devouring of Odin	KEEP	1-2 hyphens	narrow event-type
+7359	Fenrir	Norse	being slain by Vídar	KEEP	1-2 hyphens	narrow event-type
+7351	Behemoth	Abrahamic	primordial creation	KEEP	1-2 hyphens	narrow event-type
+7351	Behemoth	Abrahamic	divine display	KEEP	1-2 hyphens	narrow event-type
+7351	Behemoth	Abrahamic	eschatological feast	KEEP	1-2 hyphens	narrow event-type
+7356	Skadi	Norse	vengeance	KEEP	1-2 hyphens	narrow event-type
+7356	Skadi	Norse	mismatched marriage	KEEP	1-2 hyphens	narrow event-type
+7356	Skadi	Norse	binding-of-Loki	KEEP	1-2 hyphens	narrow event-type
+7355	Idun	Norse	abduction	KEEP	1-2 hyphens	narrow event-type
+7355	Idun	Norse	rescue	KEEP	1-2 hyphens	narrow event-type
+7355	Idun	Norse	restoration	KEEP	1-2 hyphens	narrow event-type
+7357	Sigyn	Norse	wifely service	KEEP	1-2 hyphens	narrow event-type
+7357	Sigyn	Norse	suffering	KEEP	1-2 hyphens	narrow event-type
+7357	Sigyn	Norse	cosmic-cause (earthquakes)	KEEP	1-2 hyphens	narrow event-type
+7362	Búri	Norse	primordial emergence	KEEP	1-2 hyphens	narrow event-type
+7362	Búri	Norse	founding ancestor	KEEP	1-2 hyphens	narrow event-type
+7365	Nanna (Norse)	Norse	marriage	KEEP	1-2 hyphens	narrow event-type
+7365	Nanna (Norse)	Norse	grief-death	KEEP	1-2 hyphens	narrow event-type
+7365	Nanna (Norse)	Norse	underworld-message	KEEP	1-2 hyphens	narrow event-type
+7364	Sól	Norse	celestial transit	KEEP	1-2 hyphens	narrow event-type
+7364	Sól	Norse	pursuit	KEEP	1-2 hyphens	narrow event-type
+7364	Sól	Norse	death at Ragnarök	KEEP	1-2 hyphens	narrow event-type
+7364	Sól	Norse	daughter-as-successor	KEEP	1-2 hyphens	narrow event-type
+7368	Andvari	Norse	treasure-loss	KEEP	1-2 hyphens	narrow event-type
+7368	Andvari	Norse	cursing of gold	KEEP	1-2 hyphens	narrow event-type
+7368	Andvari	Norse	origin of Volsung-Nibelung tragedy	KEEP	1-2 hyphens	narrow event-type
+7367	Gefjun	Norse	land-plowing	KEEP	1-2 hyphens	narrow event-type
+7367	Gefjun	Norse	cosmic-shaping	KEEP	1-2 hyphens	narrow event-type
+7367	Gefjun	Norse	patronage	KEEP	1-2 hyphens	narrow event-type
+7374	Parvati	Hindu	birth as mountain-king's daughter	KEEP	1-2 hyphens	narrow event-type
+7374	Parvati	Hindu	tapas-to-win-Śiva	REVIEW	3 hyphens	borderline — manual check
+7374	Parvati	Hindu	marriage	KEEP	1-2 hyphens	narrow event-type
+7374	Parvati	Hindu	motherhood	KEEP	1-2 hyphens	narrow event-type
+7374	Parvati	Hindu	fierce manifestations	KEEP	1-2 hyphens	narrow event-type
+7373	Saraswati	Hindu	river-goddess-to-wisdom-goddess transition	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7373	Saraswati	Hindu	consort-status	KEEP	1-2 hyphens	narrow event-type
+7373	Saraswati	Hindu	student-blessing	KEEP	1-2 hyphens	narrow event-type
+7376	Kartikeya	Hindu	miraculous birth	KEEP	1-2 hyphens	narrow event-type
+7376	Kartikeya	Hindu	slays monster	KEEP	1-2 hyphens	narrow event-type
+7376	Kartikeya	Hindu	divine generalship	KEEP	1-2 hyphens	narrow event-type
+7376	Kartikeya	Hindu	Tamil bridal narratives	KEEP	1-2 hyphens	narrow event-type
+7379	Rama	Hindu	avatar-incarnation	KEEP	1-2 hyphens	narrow event-type
+7379	Rama	Hindu	bow-stringing	KEEP	1-2 hyphens	narrow event-type
+7379	Rama	Hindu	exile	KEEP	1-2 hyphens	narrow event-type
+7379	Rama	Hindu	Sītā-abduction	KEEP	1-2 hyphens	narrow event-type
+7379	Rama	Hindu	Laṅkā-bridge	KEEP	1-2 hyphens	narrow event-type
+7379	Rama	Hindu	slays monster	KEEP	1-2 hyphens	narrow event-type
+7379	Rama	Hindu	Rāma-rājya	KEEP	1-2 hyphens	narrow event-type
+7379	Rama	Hindu	Sītā-banishment	KEEP	1-2 hyphens	narrow event-type
+7381	Lakshmana	Hindu	devoted brotherhood	KEEP	1-2 hyphens	narrow event-type
+7381	Lakshmana	Hindu	exile-following	KEEP	1-2 hyphens	narrow event-type
+7381	Lakshmana	Hindu	slays monster	KEEP	1-2 hyphens	narrow event-type
+7381	Lakshmana	Hindu	self-banishment	KEEP	1-2 hyphens	narrow event-type
+7387	Surya	Hindu	daily transit	KEEP	1-2 hyphens	narrow event-type
+7387	Surya	Hindu	radiance-grinding	KEEP	1-2 hyphens	narrow event-type
+7387	Surya	Hindu	father of Yama and Yamunā	KEEP	1-2 hyphens	narrow event-type
+7387	Surya	Hindu	father of Karṇa	KEEP	1-2 hyphens	narrow event-type
+7387	Surya	Hindu	akṣaya-pātra-gift	KEEP	1-2 hyphens	narrow event-type
+7388	Varuna	Hindu	cosmic-law upholding	KEEP	1-2 hyphens	narrow event-type
+7388	Varuna	Hindu	demotion-to-water-deity	REJECT	identity-keyword	contains identity keyword
+7388	Varuna	Hindu	weapon-giving	KEEP	1-2 hyphens	narrow event-type
+7388	Varuna	Hindu	ocean-yielding	KEEP	1-2 hyphens	narrow event-type
+7385	Indra	Hindu	slays monster	KEEP	1-2 hyphens	narrow event-type
+7385	Indra	Hindu	soma-drinking	KEEP	1-2 hyphens	narrow event-type
+7385	Indra	Hindu	king-of-gods	KEEP	1-2 hyphens	narrow event-type
+7385	Indra	Hindu	restoration	KEEP	1-2 hyphens	narrow event-type
+7389	Vayu	Hindu	wind-cosmic-presence	KEEP	1-2 hyphens	narrow event-type
+7389	Vayu	Hindu	divine fatherhood	KEEP	1-2 hyphens	narrow event-type
+7389	Vayu	Hindu	prāṇa-essence	KEEP	1-2 hyphens	narrow event-type
+7390	Soma	Hindu	ritual-offering	KEEP	1-2 hyphens	narrow event-type
+7390	Soma	Hindu	cosmic-luminary-transit	KEEP	1-2 hyphens	narrow event-type
+7390	Soma	Hindu	curse	KEEP	1-2 hyphens	narrow event-type
+7390	Soma	Hindu	Lunar-dynasty-founding	KEEP	1-2 hyphens	narrow event-type
+7393	Varaha	Hindu	rescue	KEEP	1-2 hyphens	narrow event-type
+7393	Varaha	Hindu	slays monster	KEEP	1-2 hyphens	narrow event-type
+7393	Varaha	Hindu	restoration	KEEP	1-2 hyphens	narrow event-type
+7399	Yama (Hindu)	Hindu	first-to-die	KEEP	1-2 hyphens	narrow event-type
+7399	Yama (Hindu)	Hindu	path-finding	KEEP	1-2 hyphens	narrow event-type
+7399	Yama (Hindu)	Hindu	death-teaching	KEEP	1-2 hyphens	narrow event-type
+7399	Yama (Hindu)	Hindu	Yakṣa-praśna	KEEP	1-2 hyphens	narrow event-type
+7399	Yama (Hindu)	Hindu	judgment-of-souls	KEEP	1-2 hyphens	narrow event-type
+7398	Mahishasura	Hindu	tapas-boon-acquisition	KEEP	1-2 hyphens	narrow event-type
+7398	Mahishasura	Hindu	apotheosis	KEEP	1-2 hyphens	narrow event-type
+7398	Mahishasura	Hindu	defeat of male gods	KEEP	1-2 hyphens	narrow event-type
+7398	Mahishasura	Hindu	shapeshifting-battle	KEEP	1-2 hyphens	narrow event-type
+7398	Mahishasura	Hindu	being slain by Durgā	KEEP	1-2 hyphens	narrow event-type
+7405	Hauhet	Egyptian	primordial existence	KEEP	1-2 hyphens	narrow event-type
+7405	Hauhet	Egyptian	Ogdoad-pair-membership	KEEP	1-2 hyphens	narrow event-type
+7406	Kuk	Egyptian	primordial existence	KEEP	1-2 hyphens	narrow event-type
+7406	Kuk	Egyptian	Ogdoad-pair-membership	KEEP	1-2 hyphens	narrow event-type
+7404	Naunet	Egyptian	primordial existence	KEEP	1-2 hyphens	narrow event-type
+7404	Naunet	Egyptian	Ogdoad-pair-membership	KEEP	1-2 hyphens	narrow event-type
+7412	Kotoshironushi	Shinto	kuni-yuzuri-agreement	KEEP	1-2 hyphens	narrow event-type
+7412	Kotoshironushi	Shinto	self-concealment	KEEP	1-2 hyphens	narrow event-type
+7412	Kotoshironushi	Shinto	oracular kami	KEEP	1-2 hyphens	narrow event-type
+7409	Toyotama-hime	Shinto	quest	KEEP	1-2 hyphens	narrow event-type
+7417	Hotei	Shinto	apotheosis	KEEP	1-2 hyphens	narrow event-type
+7417	Hotei	Shinto	Maitreya-incarnation tradition	KEEP	1-2 hyphens	narrow event-type
+7418	Jurojin	Shinto	Chinese-Daoist-import	KEEP	1-2 hyphens	narrow event-type
+7418	Jurojin	Shinto	patronage	KEEP	1-2 hyphens	narrow event-type
+7420	Poseidon	Greek	threefold-cosmic-division	KEEP	1-2 hyphens	narrow event-type
+7420	Poseidon	Greek	contests-for-cities	KEEP	1-2 hyphens	narrow event-type
+7420	Poseidon	Greek	persecution-of-Odysseus	KEEP	1-2 hyphens	narrow event-type
+7420	Poseidon	Greek	monster-fathering	KEEP	1-2 hyphens	narrow event-type
+7419	Fukurokuju	Shinto	Chinese-Daoist-import	KEEP	1-2 hyphens	narrow event-type
+7419	Fukurokuju	Shinto	patronage	KEEP	1-2 hyphens	narrow event-type
+7421	Hades	Greek	threefold-cosmic-division	KEEP	1-2 hyphens	narrow event-type
+7421	Hades	Greek	Persephone-abduction	KEEP	1-2 hyphens	narrow event-type
+7421	Hades	Greek	hosting of visiting heroes	KEEP	1-2 hyphens	narrow event-type
+7429	Pontus	Greek	cosmic-primal-being	REJECT	identity-keyword	contains identity keyword
+7429	Pontus	Greek	generation-of-the-old-sea-gods	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7424	Thanatos	Greek	binding-by-Sisyphus	KEEP	1-2 hyphens	narrow event-type
+7424	Thanatos	Greek	wrestled-by-Heracles	KEEP	1-2 hyphens	narrow event-type
+7424	Thanatos	Greek	psychopomp-of-Sarpedon	KEEP	1-2 hyphens	narrow event-type
+7431	Tethys	Greek	Titanic-generation	KEEP	1-2 hyphens	narrow event-type
+7431	Tethys	Greek	massive-progeny	KEEP	1-2 hyphens	narrow event-type
+7431	Tethys	Greek	foster-mother-of-Hera	REVIEW	3 hyphens	borderline — manual check
+7435	Eros	Greek	primordial-cosmic-principle (in Hesiod)	REJECT	identity-keyword	contains identity keyword
+7435	Eros	Greek	love-arrow-archery	KEEP	1-2 hyphens	narrow event-type
+7435	Eros	Greek	marriage	KEEP	1-2 hyphens	narrow event-type
+7433	Triton	Greek	sea-herald	KEEP	1-2 hyphens	narrow event-type
+7433	Triton	Greek	rescue	KEEP	1-2 hyphens	narrow event-type
+7440	Hydra	Greek	head-regeneration	KEEP	1-2 hyphens	narrow event-type
+7440	Hydra	Greek	venomous-blood-supplying	KEEP	1-2 hyphens	narrow event-type
+7437	Moirai	Greek	life-thread-spinning	KEEP	1-2 hyphens	narrow event-type
+7437	Moirai	Greek	life-measuring	KEEP	1-2 hyphens	narrow event-type
+7437	Moirai	Greek	life-cutting	KEEP	1-2 hyphens	narrow event-type
+7437	Moirai	Greek	gods-bound-by-Moira	REVIEW	3 hyphens	borderline — manual check
+7444	Jupiter	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+7444	Jupiter	Roman	Capitoline-Triad-headship	KEEP	1-2 hyphens	narrow event-type
+7444	Jupiter	Roman	spolia-opima-recipient	KEEP	1-2 hyphens	narrow event-type
+7444	Jupiter	Roman	presidency	KEEP	1-2 hyphens	narrow event-type
+7445	Mars	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+7445	Mars	Roman	indigenous-agricultural-origin	KEEP	1-2 hyphens	narrow event-type
+7445	Mars	Roman	father-of-Romulus-and-Remus	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7445	Mars	Roman	cult	KEEP	1-2 hyphens	narrow event-type
+7452	Liber	Roman	Aventine-Triad-membership	KEEP	1-2 hyphens	narrow event-type
+7452	Liber	Roman	cult	KEEP	1-2 hyphens	narrow event-type
+7452	Liber	Roman	toga-virilis-assumption-day	REVIEW	3 hyphens	borderline — manual check
+7449	Pluto	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+7449	Pluto	Roman	Plouton-aspect-emphasis	KEEP	1-2 hyphens	narrow event-type
+7453	Quirinus	Roman	Sabine-origin	KEEP	1-2 hyphens	narrow event-type
+7453	Quirinus	Roman	apotheosis	KEEP	1-2 hyphens	narrow event-type
+7453	Quirinus	Roman	Archaic-Triad-membership	KEEP	1-2 hyphens	narrow event-type
+7459	Hercules	Roman	syncretism	KEEP	1-2 hyphens	narrow event-type
+7459	Hercules	Roman	Hercules-and-Cacus-on-Aventine	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7459	Hercules	Roman	founding	KEEP	1-2 hyphens	narrow event-type
+7459	Hercules	Roman	victory-tithe-recipient	KEEP	1-2 hyphens	narrow event-type
+7463	Lares	Roman	protection	KEEP	1-2 hyphens	narrow event-type
+7463	Lares	Roman	crossroads-worship	KEEP	1-2 hyphens	narrow event-type
+7463	Lares	Roman	Augustan-cult-integration	KEEP	1-2 hyphens	narrow event-type
+7462	Remus	Roman	miraculous birth	KEEP	1-2 hyphens	narrow event-type
+7462	Remus	Roman	she-wolf-suckling	KEEP	1-2 hyphens	narrow event-type
+7462	Remus	Roman	auspice-contest	KEEP	1-2 hyphens	narrow event-type
+7462	Remus	Roman	wall-leaping	KEEP	1-2 hyphens	narrow event-type
+7462	Remus	Roman	fratricide-victim	KEEP	1-2 hyphens	narrow event-type
+7465	Ometeotl	Aztec	supreme-creator-duality	REJECT	identity-keyword	contains identity keyword
+7465	Ometeotl	Aztec	world creation	KEEP	1-2 hyphens	narrow event-type
+7465	Ometeotl	Aztec	abstract-cosmic-principle (in Nezahualcoyotl)	REJECT	identity-keyword	contains identity keyword
+7468	Tonacacihuatl	Aztec	supreme-creator-duality	REJECT	identity-keyword	contains identity keyword
+7468	Tonacacihuatl	Aztec	Omeyocan-dwelling	KEEP	1-2 hyphens	narrow event-type
+7469	Tlaloc	Aztec	Templo-Mayor-co-equality	REVIEW	3 hyphens	borderline — manual check
+7469	Tlaloc	Aztec	Tlalocan-paradise-rule	KEEP	1-2 hyphens	narrow event-type
+7469	Tlaloc	Aztec	third-sun-fire-rain	REVIEW	3 hyphens	borderline — manual check
+7469	Tlaloc	Aztec	child-sacrifice-recipient	KEEP	1-2 hyphens	narrow event-type
+7467	Omecihuatl	Aztec	feminine-creator-aspect	KEEP	1-2 hyphens	narrow event-type
+7467	Omecihuatl	Aztec	world creation	KEEP	1-2 hyphens	narrow event-type
+7466	Ometecuhtli	Aztec	masculine-creator-aspect	KEEP	1-2 hyphens	narrow event-type
+7466	Ometecuhtli	Aztec	world creation	KEEP	1-2 hyphens	narrow event-type
+7475	Metztli	Aztec	creation	KEEP	1-2 hyphens	narrow event-type
+7475	Metztli	Aztec	rabbit-thrown-to-dim-him	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7472	Mictlantecuhtli	Aztec	underworld-rule	KEEP	1-2 hyphens	narrow event-type
+7472	Mictlantecuhtli	Aztec	soul-annihilation	KEEP	1-2 hyphens	narrow event-type
+7472	Mictlantecuhtli	Aztec	Quetzalcoatl-bone-recovery-host	REVIEW	3 hyphens	borderline — manual check
+7481	Tonantzin	Aztec	mother-goddess-complex-aspect	REVIEW	3 hyphens	borderline — manual check
+7481	Tonantzin	Aztec	presidency	KEEP	1-2 hyphens	narrow event-type
+7481	Tonantzin	Aztec	Guadalupe-syncretic-continuity	KEEP	1-2 hyphens	narrow event-type
+7478	Mayahuel	Aztec	rescue	KEEP	1-2 hyphens	narrow event-type
+7478	Mayahuel	Aztec	dismemberment-by-Tzitzimitl	KEEP	1-2 hyphens	narrow event-type
+7478	Mayahuel	Aztec	transformation-into-maguey	KEEP	1-2 hyphens	narrow event-type
+7482	Nuwa	Chinese	creation	KEEP	1-2 hyphens	narrow event-type
+7482	Nuwa	Chinese	repair-of-the-broken-sky	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7482	Nuwa	Chinese	sibling-flood-survival	KEEP	1-2 hyphens	narrow event-type
+7482	Nuwa	Chinese	restoration	KEEP	1-2 hyphens	narrow event-type
+7490	Shun	Chinese	supreme-filial-piety-despite-abuse	REJECT	identity-keyword	contains identity keyword
+7490	Shun	Chinese	elevation-from-commoner-to-emperor	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7490	Shun	Chinese	abdication-to-Yu	KEEP	1-2 hyphens	narrow event-type
+7488	Yu the Great	Chinese	control-of-the-Great-Flood	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7488	Yu the Great	Chinese	dredging-rather-than-damming	REVIEW	3 hyphens	borderline — manual check
+7488	Yu the Great	Chinese	division-of-the-Nine-Provinces	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7488	Yu the Great	Chinese	founding	KEEP	1-2 hyphens	narrow event-type
+7492	Zao Jun	Chinese	household-conduct-observation	KEEP	1-2 hyphens	narrow event-type
+7492	Zao Jun	Chinese	annual-report-to-the-Jade-Emperor	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7492	Zao Jun	Chinese	the-sweetening-of-his-lips	REJECT	the-prefix	identity-statement disguised as event
+7495	Zhongli Quan	Chinese	military-defeat-and-mountain-withdrawal	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7495	Zhongli Quan	Chinese	immortality	KEEP	1-2 hyphens	narrow event-type
+7495	Zhongli Quan	Chinese	initiation-of-Lu-Dongbin	REVIEW	3 hyphens	borderline — manual check
+7500	Dizang	Chinese	the-great-vow-to-empty-the-hells	REJECT	the-prefix	identity-statement disguised as event
+7500	Dizang	Chinese	harrowing-of-the-underworld	REVIEW	3 hyphens	borderline — manual check
+7500	Dizang	Chinese	funerary-salvation	KEEP	1-2 hyphens	narrow event-type
+7497	Han Xiangzi	Chinese	rejection-of-the-Confucian-career	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7497	Han Xiangzi	Chinese	immortality	KEEP	1-2 hyphens	narrow event-type
+7497	Han Xiangzi	Chinese	the-instant-flowers-prophecy	REJECT	the-prefix	identity-statement disguised as event
+7502	Doumu	Chinese	mothering-the-Dipper-star-gods	REJECT	4+ hyphens	too many hyphenated tokens (likely overspecific)
+7502	Doumu	Chinese	cosmic-fate-regulation	KEEP	1-2 hyphens	narrow event-type
+7502	Doumu	Chinese	Marici-syncretic-development	KEEP	1-2 hyphens	narrow event-type
