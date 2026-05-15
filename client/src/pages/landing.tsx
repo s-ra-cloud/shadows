@@ -6,6 +6,8 @@ import heroVideo from "@assets/hero_1772053813686.mp4";
 import teamPhotoPath from "@assets/WhatsApp_Image_2026-04-17_at_11.14.20_1777461484318.jpeg";
 import odinImgPath from "@assets/Odin_1772207712816.png";
 import machinaLogoPath from "@assets/Machin_logo_1772208429837.jpeg";
+import telemmeLogoPath from "@assets/image_1778849116577.png";
+import irisLogoPath from "@assets/image_1778849190765.png";
 
 function useScrollReveal(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
@@ -333,6 +335,16 @@ function PartnersPreview() {
       url: "https://machina-research.net",
       visual: <img src={machinaLogoPath} alt="Machina Research Network logo" className="w-20 h-20 rounded-lg object-contain bg-white/90 p-1" />,
     },
+    {
+      name: "TELEMMe — UMR 7303",
+      url: "https://telemme.mmsh.fr/",
+      visual: <img src={telemmeLogoPath} alt="TELEMMe — UMR 7303 logo" className="w-32 h-20 rounded-lg object-contain bg-white/95 p-1.5" />,
+    },
+    {
+      name: "IRIS — EHESS",
+      url: "https://iris.ehess.fr/",
+      visual: <img src={irisLogoPath} alt="IRIS — EHESS logo" className="w-20 h-20 rounded-lg object-contain bg-white/95 p-1.5" />,
+    },
   ];
 
   return (
@@ -348,7 +360,7 @@ function PartnersPreview() {
         </RevealBlock>
 
         <RevealBlock delay={0.15}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-2xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto">
             {partners.map((partner, i) => (
               <a
                 key={i}
