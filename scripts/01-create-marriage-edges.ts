@@ -2,7 +2,7 @@ import { db } from "../server/storage";
 import { nodes, edges } from "../shared/schema";
 import { sql, eq, and, or } from "drizzle-orm";
 
-const DEFAULT_PROJECT_ID = 1;
+const DEFAULT_PROJECT_ID = 6;
 
 interface SpouseMention {
   nodeId: number;

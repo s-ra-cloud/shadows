@@ -31,10 +31,9 @@ Zeus	Greek	husband of Hera	Hera	Hera (Greek)	exact-same-tradition	EXISTS
 Sif	Norse	wife of Thor	Thor	Thor (Norse)	exact-same-tradition	EXISTS
 Loki	Norse	husband of Sigyn (with sons Narfi and Váli)	Sigyn	Sigyn (Norse)	exact-same-tradition	EXISTS
 Mictlancihuatl	Aztec	wife of Mictlantecuhtli	Mictlantecuhtli	Mictlantecuhtli (Aztec)	exact-same-tradition	EXISTS
-Hou Yi	Chinese	husband of Chang'e	Chang'e	Chang'e (Chinese)	exact-same-tradition	CREATED-MARRIED
+Hou Yi	Chinese	husband of Chang'e	Chang'e	Chang'e (Chinese)	exact-same-tradition	EXISTS
 Hephaestus	Greek	husband of Aphrodite (in Homer) or Aglaia (in Hesiod)	Aphrodite   or Aglaia		not-found	SKIP
 Ops	Roman	wife-sister of Saturn	Saturn	Saturn (Roman)	exact-same-tradition	EXISTS
-Ops	Roman	wife-sister of Saturn	Saturn	Saturn (Roman)	exact-same-tradition	CREATED-SIBLING
 Aphrodite	Greek	wife of Hephaestus	Hephaestus	Hephaestus (Greek)	exact-same-tradition	CREATED-MARRIED
 Óðr	Norse	husband of Freyja	Freyja	Freyja (Norse)	exact-same-tradition	EXISTS
 Proserpina	Roman	wife of Pluto	Pluto	Pluto (Roman)	exact-same-tradition	EXISTS

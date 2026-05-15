@@ -1,0 +1,112 @@
+group	member1	member2	action
+Eight Immortals	Lu Dongbin	Cao Guojiu	CREATED
+Eight Immortals	Lu Dongbin	Lan Caihe	CREATED
+Eight Immortals	Lu Dongbin	He Xiangu	CREATED
+Eight Immortals	Lu Dongbin	Zhongli Quan	CREATED
+Eight Immortals	Lu Dongbin	Han Xiangzi	CREATED
+Eight Immortals	Lu Dongbin	Zhang Guolao	CREATED
+Eight Immortals	Lu Dongbin	Li Tieguai	CREATED
+Eight Immortals	Cao Guojiu	Lan Caihe	CREATED
+Eight Immortals	Cao Guojiu	He Xiangu	CREATED
+Eight Immortals	Cao Guojiu	Zhongli Quan	CREATED
+Eight Immortals	Cao Guojiu	Han Xiangzi	CREATED
+Eight Immortals	Cao Guojiu	Zhang Guolao	CREATED
+Eight Immortals	Cao Guojiu	Li Tieguai	CREATED
+Eight Immortals	Lan Caihe	He Xiangu	CREATED
+Eight Immortals	Lan Caihe	Zhongli Quan	CREATED
+Eight Immortals	Lan Caihe	Han Xiangzi	CREATED
+Eight Immortals	Lan Caihe	Zhang Guolao	CREATED
+Eight Immortals	Lan Caihe	Li Tieguai	CREATED
+Eight Immortals	He Xiangu	Zhongli Quan	CREATED
+Eight Immortals	He Xiangu	Han Xiangzi	CREATED
+Eight Immortals	He Xiangu	Zhang Guolao	CREATED
+Eight Immortals	He Xiangu	Li Tieguai	CREATED
+Eight Immortals	Zhongli Quan	Han Xiangzi	CREATED
+Eight Immortals	Zhongli Quan	Zhang Guolao	CREATED
+Eight Immortals	Zhongli Quan	Li Tieguai	CREATED
+Eight Immortals	Han Xiangzi	Zhang Guolao	CREATED
+Eight Immortals	Han Xiangzi	Li Tieguai	CREATED
+Eight Immortals	Zhang Guolao	Li Tieguai	CREATED
+Three Pure Ones	Yuanshi Tianzun	Lingbao Tianzun	CREATED
+Three Pure Ones	Yuanshi Tianzun	Daode Tianzun	CREATED
+Three Pure Ones	Lingbao Tianzun	Daode Tianzun	CREATED
+Three Sovereigns	Fuxi	Shennong	CREATED
+Three Sovereigns	Fuxi	Nuwa	CREATED
+Three Sovereigns	Fuxi	Huangdi	CREATED
+Three Sovereigns	Shennong	Nuwa	CREATED
+Three Sovereigns	Shennong	Huangdi	CREATED
+Three Sovereigns	Nuwa	Huangdi	CREATED
+Seven Lucky Gods	Ebisu	Daikokuten	CREATED
+Seven Lucky Gods	Ebisu	Bishamonten	CREATED
+Seven Lucky Gods	Ebisu	Benzaiten	CREATED
+Seven Lucky Gods	Ebisu	Fukurokuju	CREATED
+Seven Lucky Gods	Ebisu	Jurojin	CREATED
+Seven Lucky Gods	Ebisu	Hotei	CREATED
+Seven Lucky Gods	Daikokuten	Bishamonten	CREATED
+Seven Lucky Gods	Daikokuten	Benzaiten	CREATED
+Seven Lucky Gods	Daikokuten	Fukurokuju	CREATED
+Seven Lucky Gods	Daikokuten	Jurojin	CREATED
+Seven Lucky Gods	Daikokuten	Hotei	CREATED
+Seven Lucky Gods	Bishamonten	Benzaiten	CREATED
+Seven Lucky Gods	Bishamonten	Fukurokuju	CREATED
+Seven Lucky Gods	Bishamonten	Jurojin	CREATED
+Seven Lucky Gods	Bishamonten	Hotei	CREATED
+Seven Lucky Gods	Benzaiten	Fukurokuju	CREATED
+Seven Lucky Gods	Benzaiten	Jurojin	CREATED
+Seven Lucky Gods	Benzaiten	Hotei	CREATED
+Seven Lucky Gods	Fukurokuju	Jurojin	CREATED
+Seven Lucky Gods	Fukurokuju	Hotei	CREATED
+Seven Lucky Gods	Jurojin	Hotei	CREATED
+Four Heavenly Kings	-	-	MISSING: Dhrtarastra, Virudhaka, Virupaksha
+Four Heavenly Kings	Vaisravana	Bishamonten	CREATED
+Hermopolitan Ogdoad	Amun	Amunet	CREATED
+Hermopolitan Ogdoad	Amun	Kuk	CREATED
+Hermopolitan Ogdoad	Amun	Kauket	CREATED
+Hermopolitan Ogdoad	Amun	Heh	CREATED
+Hermopolitan Ogdoad	Amun	Hauhet	CREATED
+Hermopolitan Ogdoad	Amun	Nun	CREATED
+Hermopolitan Ogdoad	Amun	Naunet	CREATED
+Hermopolitan Ogdoad	Amunet	Kuk	CREATED
+Hermopolitan Ogdoad	Amunet	Kauket	CREATED
+Hermopolitan Ogdoad	Amunet	Heh	CREATED
+Hermopolitan Ogdoad	Amunet	Hauhet	CREATED
+Hermopolitan Ogdoad	Amunet	Nun	CREATED
+Hermopolitan Ogdoad	Amunet	Naunet	CREATED
+Hermopolitan Ogdoad	Kuk	Kauket	CREATED
+Hermopolitan Ogdoad	Kuk	Heh	CREATED
+Hermopolitan Ogdoad	Kuk	Hauhet	CREATED
+Hermopolitan Ogdoad	Kuk	Nun	CREATED
+Hermopolitan Ogdoad	Kuk	Naunet	CREATED
+Hermopolitan Ogdoad	Kauket	Heh	CREATED
+Hermopolitan Ogdoad	Kauket	Hauhet	CREATED
+Hermopolitan Ogdoad	Kauket	Nun	CREATED
+Hermopolitan Ogdoad	Kauket	Naunet	CREATED
+Hermopolitan Ogdoad	Heh	Hauhet	CREATED
+Hermopolitan Ogdoad	Heh	Nun	CREATED
+Hermopolitan Ogdoad	Heh	Naunet	CREATED
+Hermopolitan Ogdoad	Hauhet	Nun	CREATED
+Hermopolitan Ogdoad	Hauhet	Naunet	CREATED
+Hermopolitan Ogdoad	Nun	Naunet	CREATED
+Capitoline Triad	Jupiter	Juno	CREATED
+Capitoline Triad	Jupiter	Minerva	CREATED
+Capitoline Triad	Juno	Minerva	CREATED
+Archaic Triad	Jupiter	Mars	CREATED
+Archaic Triad	Jupiter	Quirinus	CREATED
+Archaic Triad	Mars	Quirinus	CREATED
+Aventine Triad	-	-	MISSING: Libera
+Aventine Triad	Ceres	Liber	CREATED
+eight Vasus	Agni	Vasu	CREATED
+three Fates	-	-	MISSING: Clotho, Lachesis, Atropos
+three virgin goddesses	Athena	Artemis	CREATED
+three virgin goddesses	Athena	Hestia	CREATED
+three virgin goddesses	Artemis	Hestia	CREATED
+four Tezcatlipocas	-	-	MISSING: Xipe Totec
+four Tezcatlipocas	Tezcatlipoca	Quetzalcoatl	CREATED
+four Tezcatlipocas	Tezcatlipoca	Huitzilopochtli	CREATED
+four Tezcatlipocas	Tezcatlipoca	Xipe-Totec	CREATED
+four Tezcatlipocas	Quetzalcoatl	Huitzilopochtli	CREATED
+four Tezcatlipocas	Quetzalcoatl	Xipe-Totec	CREATED
+four Tezcatlipocas	Huitzilopochtli	Xipe-Totec	CREATED
+three brothers (Zeus-Poseidon-Hades)	Zeus	Poseidon	CREATED
+three brothers (Zeus-Poseidon-Hades)	Zeus	Hades	CREATED
+three brothers (Zeus-Poseidon-Hades)	Poseidon	Hades	CREATED

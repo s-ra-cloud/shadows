@@ -1,0 +1,51 @@
+source	tradition	extracted	resolved	action
+Allah	Abrahamic	the God of the Hebrew Bible	-	COLUMN
+Allah	Abrahamic	Christianity	-	COLUMN
+Tecuciztecatl	Aztec	Metztli	Metztli/Aztec	EXISTS
+Nephthys	Egyptian	-	-	NO_TARGETS
+Hun Hunahpu	Maya	Maya Maize God	-	COLUMN
+Kukulkan	Maya	Quetzalcoatl	Quetzalcoatl/Aztec	CREATE_EDGE
+Asalluhi	Mesopotamian	Marduk	Marduk/Mesopotamian	EXISTS
+Ninhursag	Mesopotamian	Ki	-	COLUMN
+Ninhursag	Mesopotamian	Mami	-	COLUMN
+Ninhursag	Mesopotamian	Aruru	Aruru/Mesopotamian	CREATE_EDGE
+Ninhursag	Mesopotamian	Belet-ili	-	COLUMN
+Ninhursag	Mesopotamian	Nintur	-	COLUMN
+Utnapishtim	Mesopotamian	-	-	NO_TARGETS
+Aesculapius	Roman	Asclepius	Asclepius/Greek	CREATE_EDGE
+Bacchus	Roman	Dionysus	Dionysus/Greek	CREATE_EDGE
+Bacchus	Roman	Liber	Liber/Roman	CREATE_EDGE
+Cupid	Roman	Greek Eros	Eros/Greek	CREATE_EDGE
+Neptune	Roman	Poseidon	Poseidon/Greek	CREATE_EDGE
+Vulcan	Roman	Hephaestus	Hephaestus/Greek	CREATE_EDGE
+Ebisu	Shinto	Kotoshironushi	Kotoshironushi/Shinto	CREATE_EDGE
+Ebisu	Shinto	Hiruko	-	COLUMN
+Mastema	Abrahamic	Satan	Satan/Abrahamic	EXISTS
+Šanta	Greek	-	-	NO_TARGETS
+Jūzenji	Shinto	-	-	NO_TARGETS
+Atago Gongen	Shinto	-	-	NO_TARGETS
+Attar	Canaanite	-	-	NO_TARGETS
+Anshar	Mesopotamian	Ashshur	-	COLUMN
+Samael	Abrahamic	identified with Satan	-	COLUMN
+Hermanubis	Egyptian	-	-	NO_TARGETS
+Hermes Trismegistus	Egyptian	-	-	NO_TARGETS
+Arensnuphis	Egyptian	-	-	NO_TARGETS
+God-the-Father	Abrahamic	YHWH	YHWH/Abrahamic	EXISTS
+Sandalphon	Abrahamic	-	-	NO_TARGETS
+Daikokuten	Shinto	Mahakala	Mahakala/Buddhist	CREATE_EDGE
+Daikokuten	Shinto	Okuninushi	Ōkuninushi/Shinto	CREATE_EDGE
+Jurojin	Shinto	Shou-lao	-	COLUMN
+Jurojin	Shinto	Fukurokuju	Fukurokuju/Shinto	CREATE_EDGE
+Hades	Greek	Plouton	-	COLUMN
+Mercury	Roman	Hermes	Hermes/Greek	CREATE_EDGE
+Liber	Roman	Bacchus	Bacchus/Roman	EXISTS
+Pluto	Roman	Hades	Hades/Greek	CREATE_EDGE
+Quirinus	Roman	deified Romulus	Romulus/Roman	EXISTS
+Sol	Roman	Helios	Helios/Greek	CREATE_EDGE
+Sol	Roman	Sol Invictus	-	COLUMN
+Hercules	Roman	Heracles	Heracles/Greek	CREATE_EDGE
+Hercules	Roman	Hercules Invictus	-	COLUMN
+Omecihuatl	Aztec	-	-	NO_TARGETS
+Ometecuhtli	Aztec	-	-	NO_TARGETS
+Metztli	Aztec	Tecuciztecatl	Tecuciztecatl/Aztec	EXISTS
+Yandi	Chinese	Shennong	Shennong/Chinese	CREATE_EDGE

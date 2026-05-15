@@ -77,7 +77,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   familyRoles: "Family Role",
 };
 
-const RELATION_TYPES = ["parent of", "child of", "sibling of", "married to", "trinity", "adversary of"] as const;
+const RELATION_TYPES = ["parent of", "child of", "sibling of", "married to", "trinity", "group", "identified with", "adversary of"] as const;
 type RelationType = typeof RELATION_TYPES[number];
 
 const RELATION_COLORS: Record<RelationType, string> = {
@@ -86,6 +86,8 @@ const RELATION_COLORS: Record<RelationType, string> = {
   "sibling of": "#B3E5FC",
   "married to": "#FF80AB",
   "trinity": "#FFD600",
+  "group": "#FFB300",
+  "identified with": "#26C6DA",
   "adversary of": "#EF5350",
 };
 
@@ -95,6 +97,8 @@ const RELATION_LABELS: Record<RelationType, string> = {
   "sibling of": "Sibling Of",
   "married to": "Married To",
   "trinity": "Trinity",
+  "group": "Group",
+  "identified with": "Identified With",
   "adversary of": "Adversary Of",
 };
 
@@ -102,6 +106,8 @@ const RELATION_GROUP_LABELS: Record<string, string> = {
   kinship: "Kinship",
   bond: "Bond",
   spiritual: "Spiritual",
+  collective: "Collective",
+  syncretism: "Syncretism",
   conflict: "Conflict",
 };
 
@@ -109,6 +115,8 @@ const RELATION_GROUPS: Record<string, RelationType[]> = {
   kinship: ["parent of", "child of", "sibling of"],
   bond: ["married to"],
   spiritual: ["trinity"],
+  collective: ["group"],
+  syncretism: ["identified with"],
   conflict: ["adversary of"],
 };
 

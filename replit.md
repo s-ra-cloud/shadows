@@ -24,6 +24,7 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
   - name, tradition, gender, domain, object, animals
   - characterTrait, physicalCharacteristics
   - significantEvent, symbolism (stored but NOT displayed in UI — kept for future use), neumannArchetype, mentionCount
+  - identification (text array) — names of deities this figure is syncretically identified/equated with that are NOT present as separate nodes in the DB (e.g. "God of the Hebrew Bible", "Maya Maize God", "Ki", "Mami"). Cross-tradition identifications where the target IS a node are stored as `identified with` edges instead. Populated May 2026.
   - eventTypes (text array) - 23 types: rescue, sacrifice, descent_to_underworld, quest, etc.
   - birthTypes (text array) - 10 types: divine_parentage, born_from_body, miraculous_conception, etc.
   - deathTypes (text array) - 13 types: dismemberment, killed_by_kin, resurrection, etc.
