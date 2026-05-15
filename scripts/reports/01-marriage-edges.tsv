@@ -1,0 +1,67 @@
+nodeName	tradition	rawValue	spouseHint	match	confidence	action
+Glenr	Norse	husband of Sól	Sól	Sól (Norse)	exact-same-tradition	EXISTS
+Chang'e	Chinese	wife of the archer Hou Yi	Hou Yi	Hou Yi (Chinese)	exact-same-tradition	CREATED-MARRIED
+Ptah	Egyptian	husband of Sekhmet	Sekhmet	Sekhmet (Egyptian)	exact-same-tradition	CREATED-MARRIED
+Amphitrite	Greek	wife of Poseidon	Poseidon	Poseidon (Greek)	exact-same-tradition	EXISTS
+Cronus	Greek	husband of Rhea (his sister)	Rhea	Rhea (Greek)	exact-same-tradition	CREATED-MARRIED
+Cronus	Greek	husband of Rhea (his sister)	Rhea	Rhea (Greek)	exact-same-tradition	CREATED-SIBLING
+Nereus	Greek	husband of Doris	Doris	Doris (Greek)	exact-same-tradition	CREATED-MARRIED
+Brahma	Hindu	husband of Sarasvatī	Sarasvatī	Saraswati (Hindu)	diacritic-match	EXISTS
+Krishna	Hindu	husband of Rukmiṇī	Rukmiṇī		not-found	SKIP
+Radha	Hindu	wife of the cowherd Āyana	Āyana		not-found	SKIP
+Sita	Hindu	wife of Rāma	Rāma	Rama (Hindu)	diacritic-match	EXISTS
+Huangdi	Chinese	husband of Leizu (inventor of silk)	Leizu		not-found	SKIP
+Annar	Norse	husband of Nótt	Nótt		not-found	SKIP
+Groa	Norse	wife of Aurvandill	Aurvandill		not-found	SKIP
+Jade Emperor	Chinese	husband of the Queen Mother of the West in popular tradition	Queen Mother of the West in popular tradition		not-found	SKIP
+Ran	Norse	wife of Ægir	Ægir	Ægir (Norse)	exact-same-tradition	EXISTS
+Bacchus	Roman	husband of Ariadne	Ariadne	Ariadne (Greek)	exact-other-tradition	CREATED-MARRIED
+Dionysus	Greek	husband of Ariadne (after Theseus abandoned her on Naxos)	Ariadne	Ariadne (Greek)	exact-same-tradition	EXISTS
+Cupid	Roman	husband of Psyche	Psyche	Psyche (Roman)	exact-same-tradition	CREATED-MARRIED
+Saturn	Roman	husband-brother of Ops	Ops	Ops (Roman)	exact-same-tradition	EXISTS
+Saturn	Roman	husband-brother of Ops	Ops	Ops (Roman)	exact-same-tradition	CREATED-SIBLING
+Vulcan	Roman	husband of Venus (importing the Greek)	Venus	Venus (Roman)	exact-same-tradition	EXISTS
+Hera	Greek	wife of Zeus (and his sister)	Zeus	Zeus (Greek)	exact-same-tradition	EXISTS
+Heracles	Greek	married three times (Megara, Deianeira, Hebe)	Megara		not-found	SKIP
+Heracles	Greek	married three times (Megara, Deianeira, Hebe)	Deianeira		not-found	SKIP
+Heracles	Greek	married three times (Megara, Deianeira, Hebe)	Hebe	Hebe (Greek)	exact-same-tradition	CREATED-MARRIED
+Frigg	Norse	wife of Odin	Odin	Odin (Norse)	exact-same-tradition	EXISTS
+Persephone (Kore)	Greek	wife of Hades	Hades	Hades (Greek)	exact-same-tradition	EXISTS
+Zeus	Greek	husband of Hera	Hera	Hera (Greek)	exact-same-tradition	EXISTS
+Sif	Norse	wife of Thor	Thor	Thor (Norse)	exact-same-tradition	EXISTS
+Loki	Norse	husband of Sigyn (with sons Narfi and Váli)	Sigyn	Sigyn (Norse)	exact-same-tradition	EXISTS
+Mictlancihuatl	Aztec	wife of Mictlantecuhtli	Mictlantecuhtli	Mictlantecuhtli (Aztec)	exact-same-tradition	EXISTS
+Hou Yi	Chinese	husband of Chang'e	Chang'e	Chang'e (Chinese)	exact-same-tradition	CREATED-MARRIED
+Hephaestus	Greek	husband of Aphrodite (in Homer) or Aglaia (in Hesiod)	Aphrodite   or Aglaia		not-found	SKIP
+Ops	Roman	wife-sister of Saturn	Saturn	Saturn (Roman)	exact-same-tradition	EXISTS
+Ops	Roman	wife-sister of Saturn	Saturn	Saturn (Roman)	exact-same-tradition	CREATED-SIBLING
+Aphrodite	Greek	wife of Hephaestus	Hephaestus	Hephaestus (Greek)	exact-same-tradition	CREATED-MARRIED
+Óðr	Norse	husband of Freyja	Freyja	Freyja (Norse)	exact-same-tradition	EXISTS
+Proserpina	Roman	wife of Pluto	Pluto	Pluto (Roman)	exact-same-tradition	EXISTS
+Idun	Norse	wife of Bragi	Bragi	Bragi (Norse)	exact-same-tradition	EXISTS
+Sigyn	Norse	wife of Loki	Loki	Loki (Norse)	exact-same-tradition	EXISTS
+Skadi	Norse	wife of Njǫrðr (then separated)	Njǫrðr	Njörðr (Norse)	diacritic-match	EXISTS
+Nanna (Norse)	Norse	wife of Baldr	Baldr	Baldr (Norse)	exact-same-tradition	EXISTS
+Sól	Norse	wife of Glenr	Glenr	Glenr (Norse)	exact-same-tradition	EXISTS
+Lakshmi	Hindu	wife of Viṣṇu	Viṣṇu	Vishnu (Hindu)	diacritic-match	EXISTS
+Vishnu	Hindu	husband of Lakṣmī	Lakṣmī	Lakshmi (Hindu)	diacritic-match	EXISTS
+Kartikeya	Hindu	husband of Vaḷḷi and Devasenā	Vaḷḷi		not-found	SKIP
+Kartikeya	Hindu	husband of Vaḷḷi and Devasenā	Devasenā		not-found	SKIP
+Parvati	Hindu	wife of Śiva	Śiva	Shiva (Hindu)	diacritic-match	EXISTS
+Saraswati	Hindu	wife of Brahmā	Brahmā	Brahma (Hindu)	diacritic-match	EXISTS
+Rama	Hindu	husband of Sītā	Sītā	Sita (Hindu)	diacritic-match	EXISTS
+Indra	Hindu	husband of Indrāṇī	Indrāṇī		not-found	SKIP
+Surya	Hindu	husband of Saṃjñā and Chāyā	Saṃjñā		not-found	SKIP
+Surya	Hindu	husband of Saṃjñā and Chāyā	Chāyā		not-found	SKIP
+Soma	Hindu	husband of 27 nakṣatras	27 nakṣatras		not-found	SKIP
+Ravana	Hindu	husband of Mandodarī	Mandodarī		not-found	SKIP
+Hades	Greek	husband of Persephone	Persephone	Persephone (Kore) (Greek)	loose-prefix-match	EXISTS
+Poseidon	Greek	husband of Amphitrite (the Nereid sea-queen)	Amphitrite	Amphitrite (Greek)	exact-same-tradition	EXISTS
+Oceanus	Greek	husband of Tethys	Tethys	Tethys (Greek)	exact-same-tradition	EXISTS
+Jupiter	Roman	sister-brother to Juno (and husband)	Juno	Juno (Roman)	exact-same-tradition	EXISTS
+Pluto	Roman	husband of Proserpina	Proserpina	Proserpina (Roman)	exact-same-tradition	EXISTS
+Vertumnus	Roman	husband of Pomona	Pomona	Pomona (Roman)	exact-same-tradition	CREATED-MARRIED
+Omecihuatl	Aztec	wife of Ometecuhtli	Ometecuhtli	Ometecuhtli (Aztec)	exact-same-tradition	EXISTS
+Ometecuhtli	Aztec	husband of Omecihuatl	Omecihuatl	Omecihuatl (Aztec)	exact-same-tradition	EXISTS
+Tlaloc	Aztec	husband of Chalchiuhtlicue	Chalchiuhtlicue	Chalchiuhtlicue (Aztec)	exact-same-tradition	EXISTS
+Tonacacihuatl	Aztec	wife of Tonacatecuhtli	Tonacatecuhtli	Tonacatecuhtli (Aztec)	exact-same-tradition	EXISTS
