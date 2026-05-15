@@ -1,0 +1,1066 @@
+[
+  {
+    "id": 7504,
+    "value": "the future Buddha",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "future Buddha"
+  },
+  {
+    "id": 7218,
+    "value": "the adversary of awakening",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "adversary"
+      },
+      {
+        "target": "domain",
+        "new_value": "awakening"
+      }
+    ]
+  },
+  {
+    "id": 7508,
+    "value": "bodhisattva of practice and vows",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "bodhisattva"
+      },
+      {
+        "target": "domain",
+        "new_value": "practice and vows"
+      }
+    ]
+  },
+  {
+    "id": 7508,
+    "value": "in Nyingma, the primordial Buddha",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "primordial Buddha"
+  },
+  {
+    "id": 7508,
+    "value": "paired with Mañjuśrī as an attendant of the Buddha",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "attendant"
+      },
+      {
+        "target": "domain",
+        "new_value": "Buddha"
+      }
+    ]
+  },
+  {
+    "id": 7503,
+    "value": "founder of Buddhism",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "founder"
+      },
+      {
+        "target": "domain",
+        "new_value": "Buddhism"
+      }
+    ]
+  },
+  {
+    "id": 7503,
+    "value": "prince of the Śākya clan",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "prince"
+      },
+      {
+        "target": "domain",
+        "new_value": "Śākya clan"
+      }
+    ]
+  },
+  {
+    "id": 7503,
+    "value": "the historical Buddha",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "historical Buddha"
+  },
+  {
+    "id": 6740,
+    "value": "bodhisattva-goddess of compassion and swift help",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "bodhisattva-goddess"
+      },
+      {
+        "target": "domain",
+        "new_value": "compassion and swift help"
+      }
+    ]
+  },
+  {
+    "id": 6740,
+    "value": "born from the tears of Avalokiteśvara",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "birth"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "born from the tears of Avalokiteśvara"
+      }
+    ]
+  },
+  {
+    "id": 7506,
+    "value": "centre of the Five Wisdom Buddhas",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "centre"
+      },
+      {
+        "target": "domain",
+        "new_value": "Five Wisdom Buddhas"
+      }
+    ]
+  },
+  {
+    "id": 7506,
+    "value": "embodiment of the Dharmakāya",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "embodiment"
+      },
+      {
+        "target": "domain",
+        "new_value": "Dharmakāya"
+      }
+    ]
+  },
+  {
+    "id": 7506,
+    "value": "the cosmic/primordial Buddha",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "cosmic/primordial Buddha"
+  },
+  {
+    "id": 7510,
+    "value": "East Asian form: Bishamonten",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Bishamonten"
+  },
+  {
+    "id": 7510,
+    "value": "chief of the Four Heavenly Kings",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "chief"
+      },
+      {
+        "target": "domain",
+        "new_value": "Four Heavenly Kings"
+      }
+    ]
+  },
+  {
+    "id": 7510,
+    "value": "god of wealth (linked with Kubera)",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "domain",
+        "new_value": "wealth"
+      },
+      {
+        "target": "identification",
+        "new_value": "Kubera"
+      }
+    ]
+  },
+  {
+    "id": 7510,
+    "value": "guardian of the north",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "guardian"
+      },
+      {
+        "target": "domain",
+        "new_value": "north"
+      }
+    ]
+  },
+  {
+    "id": 7222,
+    "value": "bodhisattva of power",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "bodhisattva"
+      },
+      {
+        "target": "domain",
+        "new_value": "power"
+      }
+    ]
+  },
+  {
+    "id": 7222,
+    "value": "one of the three family-protectors with Avalokiteśvara and Mañjuśrī",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "family-protector"
+  },
+  {
+    "id": 7222,
+    "value": "protector of the Buddha and the Dharma",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "protector"
+      },
+      {
+        "target": "domain",
+        "new_value": "Buddha"
+      },
+      {
+        "target": "domain",
+        "new_value": "Dharma"
+      }
+    ]
+  },
+  {
+    "id": 7223,
+    "value": "the Buddhist development of the Vedic/Hindu Yama",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Vedic/Hindu Yama"
+  },
+  {
+    "id": 6783,
+    "value": "creatress",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "creatress"
+  },
+  {
+    "id": 6760,
+    "value": "queen",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "queen"
+  },
+  {
+    "id": 7199,
+    "value": "grain-god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "grain"
+  },
+  {
+    "id": 7328,
+    "value": "healer",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "healer"
+  },
+  {
+    "id": 7203,
+    "value": "cursing god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "cursing"
+  },
+  {
+    "id": 7203,
+    "value": "healing god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "healing"
+  },
+  {
+    "id": 7327,
+    "value": "cosmic adversary",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "cosmic adversary"
+  },
+  {
+    "id": 7329,
+    "value": "patron",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "patron"
+  },
+  {
+    "id": 7253,
+    "value": "adversary",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "adversary"
+  },
+  {
+    "id": 7200,
+    "value": "divine messenger",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "divine messenger"
+  },
+  {
+    "id": 7200,
+    "value": "solar deity",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "sun"
+  },
+  {
+    "id": 7330,
+    "value": "queen",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "queen"
+  },
+  {
+    "id": 7498,
+    "value": "one of the Eight Immortals (the most recently added)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the Eight Immortals"
+  },
+  {
+    "id": 7498,
+    "value": "patron of actors",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "patron"
+      },
+      {
+        "target": "domain",
+        "new_value": "actors"
+      }
+    ]
+  },
+  {
+    "id": 7487,
+    "value": "dweller in the moon-palace",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "moon-palace"
+  },
+  {
+    "id": 7487,
+    "value": "goddess of the moon",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "goddess"
+      },
+      {
+        "target": "domain",
+        "new_value": "moon"
+      }
+    ]
+  },
+  {
+    "id": 6541,
+    "value": "dwells in the Grand Pure heaven (Taiqing)",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "Grand Pure heaven (Taiqing)"
+  },
+  {
+    "id": 6541,
+    "value": "identified with the deified Laozi (Taishang Laojun)",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Taishang Laojun"
+  },
+  {
+    "id": 6541,
+    "value": "third of the Three Pure Ones",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "third of the Three Pure Ones"
+  },
+  {
+    "id": 7500,
+    "value": "Chinese form of Kṣitigarbha",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Kṣitigarbha"
+  },
+  {
+    "id": 7500,
+    "value": "bodhisattva of the underworld",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "bodhisattva"
+      },
+      {
+        "target": "domain",
+        "new_value": "underworld"
+      }
+    ]
+  },
+  {
+    "id": 7500,
+    "value": "savior of beings in the hell-realms",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "savior"
+      },
+      {
+        "target": "domain",
+        "new_value": "hell-realms"
+      }
+    ]
+  },
+  {
+    "id": 7502,
+    "value": "high Daoist astral deity",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "Daoist deity"
+      },
+      {
+        "target": "domain",
+        "new_value": "astral"
+      }
+    ]
+  },
+  {
+    "id": 6632,
+    "value": "master of the Howling Celestial Dog",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "master"
+      },
+      {
+        "target": "domain",
+        "new_value": "Howling Celestial Dog"
+      }
+    ]
+  },
+  {
+    "id": 6632,
+    "value": "nephew of the Jade Emperor",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "nephew of the Jade Emperor"
+  },
+  {
+    "id": 6632,
+    "value": "three-eyed warrior-god",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "three-eyed"
+      },
+      {
+        "target": "domain",
+        "new_value": "war"
+      }
+    ]
+  },
+  {
+    "id": 6665,
+    "value": "brother-husband of Nüwa",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "husband"
+  },
+  {
+    "id": 6665,
+    "value": "culture-hero and inventor",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "culture-hero and inventor"
+  },
+  {
+    "id": 6665,
+    "value": "first of the Three Sovereigns (San Huang)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "first of the Three Sovereigns"
+  },
+  {
+    "id": 6671,
+    "value": "adversary of Zhurong (and/or Zhuanxu)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "adversary of Zhurong (and/or Zhuanxu)"
+  },
+  {
+    "id": 6671,
+    "value": "his destruction of Mount Buzhou necessitated Nüwa's cosmic repair",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "theomachy"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "his destruction of Mount Buzhou necessitated Nüwa's cosmic repair"
+      }
+    ]
+  },
+  {
+    "id": 6671,
+    "value": "water-god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "water"
+  },
+  {
+    "id": 7493,
+    "value": "Chinese form of Avalokiteśvara",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Avalokiteśvara"
+  },
+  {
+    "id": 7493,
+    "value": "bodhisattva-goddess of compassion",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "bodhisattva-goddess"
+      },
+      {
+        "target": "domain",
+        "new_value": "compassion"
+      }
+    ]
+  },
+  {
+    "id": 7493,
+    "value": "in the Miaoshan legend, the third daughter of King Miaozhuang",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "daughter"
+  },
+  {
+    "id": 7497,
+    "value": "disciple of Lü Dongbin",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "disciple of Lü Dongbin"
+  },
+  {
+    "id": 7497,
+    "value": "one of the Eight Immortals",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the Eight Immortals"
+  },
+  {
+    "id": 7497,
+    "value": "patron of musicians",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "patron"
+      },
+      {
+        "target": "domain",
+        "new_value": "musicians"
+      }
+    ]
+  },
+  {
+    "id": 7497,
+    "value": "relative of the historical Han Yu",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "relative of the historical Han Yu"
+  },
+  {
+    "id": 7496,
+    "value": "patroness of unmarried women",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "patroness"
+      },
+      {
+        "target": "domain",
+        "new_value": "unmarried women"
+      }
+    ]
+  },
+  {
+    "id": 7496,
+    "value": "the (usually only) female of the Eight Immortals",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "female member of the Eight Immortals"
+  },
+  {
+    "id": 6275,
+    "value": "shooter of the nine suns",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "shooter"
+      },
+      {
+        "target": "domain",
+        "new_value": "nine suns"
+      }
+    ]
+  },
+  {
+    "id": 6275,
+    "value": "the divine archer",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "divine archer"
+  },
+  {
+    "id": 7485,
+    "value": "first of the Five Emperors",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "first"
+      },
+      {
+        "target": "domain",
+        "new_value": "Five Emperors"
+      }
+    ]
+  },
+  {
+    "id": 7485,
+    "value": "legendary ancestor of the Han Chinese",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "ancestor"
+  },
+  {
+    "id": 7485,
+    "value": "the Yellow Emperor",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "emperor"
+  },
+  {
+    "id": 6306,
+    "value": "primordial chaos personified",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "primordial chaos personified"
+  },
+  {
+    "id": 6306,
+    "value": "the emperor of the center (in Zhuangzi)",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "emperor"
+      },
+      {
+        "target": "domain",
+        "new_value": "center"
+      }
+    ]
+  },
+  {
+    "id": 6322,
+    "value": "formally subordinate to the Three Pure Ones",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "subordinate to the Three Pure Ones"
+  },
+  {
+    "id": 6322,
+    "value": "head of the celestial bureaucracy",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "head"
+      },
+      {
+        "target": "domain",
+        "new_value": "celestial bureaucracy"
+      }
+    ]
+  },
+  {
+    "id": 6322,
+    "value": "supreme ruler of Heaven",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "supreme ruler"
+      },
+      {
+        "target": "domain",
+        "new_value": "Heaven"
+      }
+    ]
+  },
+  {
+    "id": 7499,
+    "value": "one of the Eight Immortals",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the Eight Immortals"
+  },
+  {
+    "id": 7499,
+    "value": "patron of florists",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "patron"
+      },
+      {
+        "target": "domain",
+        "new_value": "florists"
+      }
+    ]
+  },
+  {
+    "id": 7499,
+    "value": "the ambiguously-gendered eccentric of the group",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "ambiguously gendered eccentric"
+  },
+  {
+    "id": 7483,
+    "value": "deified as Taishang Laojun",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Taishang Laojun"
+  },
+  {
+    "id": 7483,
+    "value": "identified with Daode Tianzun (third of the Three Pure Ones)",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Daode Tianzun"
+  },
+  {
+    "id": 7483,
+    "value": "semi-legendary founder of philosophical Daoism",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "semi-legendary founder"
+      },
+      {
+        "target": "domain",
+        "new_value": "philosophical Daoism"
+      }
+    ]
+  },
+  {
+    "id": 6439,
+    "value": "dwells in the Supreme Pure heaven (Shangqing)",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "Supreme Pure heaven (Shangqing)"
+  },
+  {
+    "id": 6439,
+    "value": "second of the Three Pure Ones",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "second"
+      },
+      {
+        "target": "domain",
+        "new_value": "Three Pure Ones"
+      }
+    ]
+  },
+  {
+    "id": 7494,
+    "value": "de facto leader of the Eight Immortals",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "leader"
+      },
+      {
+        "target": "domain",
+        "new_value": "Eight Immortals"
+      }
+    ]
+  },
+  {
+    "id": 7494,
+    "value": "disciple of Zhongli Quan",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "disciple of Zhongli Quan"
+  },
+  {
+    "id": 7494,
+    "value": "patriarch of the Quanzhen Daoist school",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "patriarch"
+      },
+      {
+        "target": "domain",
+        "new_value": "Quanzhen Daoist school"
+      }
+    ]
+  },
+  {
+    "id": 7491,
+    "value": "commander of Qianliyan and Shunfeng'er",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "commander of Qianliyan and Shunfeng'er"
+  },
+  {
+    "id": 7491,
+    "value": "deified from the historical/legendary Lin Moniang",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Lin Moniang"
+  },
+  {
+    "id": 7491,
+    "value": "goddess of the sea",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "sea"
+  },
+  {
+    "id": 7491,
+    "value": "titled Tianhou, Empress of Heaven",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "Tianhou"
+      },
+      {
+        "target": "character_trait",
+        "new_value": "empress"
+      },
+      {
+        "target": "domain",
+        "new_value": "heaven"
+      }
+    ]
+  },
+  {
+    "id": 7501,
+    "value": "the Lady of Forgetfulness",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "lady"
+      },
+      {
+        "target": "domain",
+        "new_value": "forgetfulness"
+      }
+    ]
+  },
+  {
+    "id": 7501,
+    "value": "underworld deity at the threshold of reincarnation",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "domain",
+        "new_value": "underworld"
+      },
+      {
+        "target": "domain",
+        "new_value": "reincarnation"
+      }
+    ]
+  },
+  {
+    "id": 6574,
+    "value": "disciple of Taiyi Zhenren",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "disciple of Taiyi Zhenren"
+  },
+  {
+    "id": 6574,
+    "value": "marshal of the celestial army",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "marshal"
+      },
+      {
+        "target": "domain",
+        "new_value": "celestial army"
+      }
+    ]
+  },
+  {
+    "id": 6574,
+    "value": "resurrected with a lotus-body",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "resurrection"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "resurrected with a lotus-body"
+      }
+    ]
+  },
+  {
+    "id": 7482,
+    "value": "creator-goddess and mother of humanity",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "domain",
+        "new_value": "creator"
+      },
+      {
+        "target": "character_trait",
+        "new_value": "mother"
+      },
+      {
+        "target": "domain",
+        "new_value": "humanity"
+      }
+    ]
+  },
+  {
+    "id": 7482,
+    "value": "one of the Three Sovereigns",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the Three Sovereigns"
+  },
+  {
+    "id": 7482,
+    "value": "repairer of the cosmos",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "repairer"
+      },
+      {
+        "target": "domain",
+        "new_value": "cosmos"
+      }
+    ]
+  },
+  {
+    "id": 7482,
+    "value": "sister-wife of Fuxi",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "wife"
+  },
+  {
+    "id": 6650,
+    "value": "his body became the physical world",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "creation"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "his body became the physical world"
+      }
+    ]
+  },
+  {
+    "id": 6650,
+    "value": "primordial cosmic giant",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "primordial cosmic giant"
+  },
+  {
+    "id": 6323,
+    "value": "culture-hero of agriculture and medicine",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "culture-hero"
+      },
+      {
+        "target": "domain",
+        "new_value": "agriculture"
+      },
+      {
+        "target": "domain",
+        "new_value": "medicine"
+      }
+    ]
+  },
+  {
+    "id": 6323,
+    "value": "often identified with the Yan Emperor (Yandi)",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Yan Emperor"
+  }
+]

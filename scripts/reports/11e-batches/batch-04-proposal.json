@@ -1,0 +1,875 @@
+[
+  {
+    "id": 6246,
+    "value": "queen of the gods",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "queen"
+      },
+      {
+        "target": "domain",
+        "new_value": "gods"
+      }
+    ]
+  },
+  {
+    "id": 6246,
+    "value": "youngest daughter of Cronus and Rhea",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "daughter"
+  },
+  {
+    "id": 6154,
+    "value": "deified at death — ascended to Olympus",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "ascent_to_heaven"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "deified at death — ascended to Olympus"
+      }
+    ]
+  },
+  {
+    "id": 6154,
+    "value": "greatest of Greek heroes",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "greatest of Greek heroes"
+  },
+  {
+    "id": 6154,
+    "value": "married three times (Megara, Deianeira, Hebe)",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "marriage"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "married three times (Megara, Deianeira, Hebe)"
+      }
+    ]
+  },
+  {
+    "id": 6154,
+    "value": "step-son of Amphitryon",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "step-son"
+  },
+  {
+    "id": 6117,
+    "value": "god of trade, thieves, travelers, heralds",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "god"
+      },
+      {
+        "target": "domain",
+        "new_value": "trade, thieves, travelers, heralds"
+      }
+    ]
+  },
+  {
+    "id": 6117,
+    "value": "messenger of the gods",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "messenger"
+      },
+      {
+        "target": "domain",
+        "new_value": "gods"
+      }
+    ]
+  },
+  {
+    "id": 6117,
+    "value": "psychopomp (escorts souls to Hades)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "psychopomp"
+  },
+  {
+    "id": 7423,
+    "value": "eldest daughter of Cronus and Rhea",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "daughter"
+  },
+  {
+    "id": 7423,
+    "value": "one of the three virgin goddesses (with Athena and Artemis)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "virgin goddess"
+  },
+  {
+    "id": 7423,
+    "value": "sometimes the twelfth Olympian (sometimes replaced by Dionysus)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "twelfth Olympian"
+  },
+  {
+    "id": 7440,
+    "value": "raised by Hera",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "creation"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "raised by Hera"
+      }
+    ]
+  },
+  {
+    "id": 7440,
+    "value": "slain by Heracles",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "death"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "slain by Heracles"
+      }
+    ]
+  },
+  {
+    "id": 7443,
+    "value": "slain by Theseus",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "death"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "slain by Theseus"
+      }
+    ]
+  },
+  {
+    "id": 7443,
+    "value": "step-son of King Minos",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "step-son"
+  },
+  {
+    "id": 7437,
+    "value": "either daughters of Nyx (parthenogenetically) or of Zeus and Themis",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "daughter"
+  },
+  {
+    "id": 7437,
+    "value": "the three Fates: Clotho, Lachesis, Atropos",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "the three Fates"
+  },
+  {
+    "id": 7430,
+    "value": "eldest Titan",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "eldest Titan"
+  },
+  {
+    "id": 7426,
+    "value": "mate of Gaia",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "consort"
+  },
+  {
+    "id": 7426,
+    "value": "parthenogenetic son of Gaia",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "son"
+  },
+  {
+    "id": 7426,
+    "value": "primordial sky-god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "sky"
+  },
+  {
+    "id": 6161,
+    "value": "Kore (Maiden) for the other half",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Kore"
+  },
+  {
+    "id": 6161,
+    "value": "Queen of the Underworld for half the year",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "queen"
+      },
+      {
+        "target": "domain",
+        "new_value": "underworld"
+      }
+    ]
+  },
+  {
+    "id": 7429,
+    "value": "father (with Gaia) of Nereus, Thaumas, Phorcys, Ceto, Eurybia",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "father"
+  },
+  {
+    "id": 7429,
+    "value": "parthenogenetic son of Gaia",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "son"
+  },
+  {
+    "id": 7429,
+    "value": "primordial sea-god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "sea"
+  },
+  {
+    "id": 6780,
+    "value": "sister-wife of Cronus",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "wife"
+  },
+  {
+    "id": 7427,
+    "value": "mate of Gaia",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "consort"
+  },
+  {
+    "id": 7427,
+    "value": "primordial deity and abyssal place",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "primordial deity and abyssal place"
+  },
+  {
+    "id": 7431,
+    "value": "foster-mother of Hera (Homer)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "mother"
+  },
+  {
+    "id": 7436,
+    "value": "Hellenistic-age cosmic-fortune-deity",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "fortune"
+  },
+  {
+    "id": 7438,
+    "value": "father (with Echidna) of Cerberus, Hydra, Chimera, Sphinx, Nemean lion",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "father"
+  },
+  {
+    "id": 7438,
+    "value": "mate of Echidna",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "husband"
+  },
+  {
+    "id": 6175,
+    "value": "one of the three brothers (Zeus-Poseidon-Hades) who divided the cosmos",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "brother"
+  },
+  {
+    "id": 6175,
+    "value": "youngest son of Cronus and Rhea",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "son"
+  },
+  {
+    "id": 7159,
+    "value": "solar collective",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "domain",
+        "new_value": "sun"
+      },
+      {
+        "target": "character_trait",
+        "new_value": "collective"
+      }
+    ]
+  },
+  {
+    "id": 7159,
+    "value": "sons of Aditi",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "son"
+  },
+  {
+    "id": 7386,
+    "value": "fire-god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "fire"
+  },
+  {
+    "id": 7386,
+    "value": "grandson of the waters",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "descendant"
+  },
+  {
+    "id": 7386,
+    "value": "one of the eight Vasus",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the eight Vasus"
+  },
+  {
+    "id": 7386,
+    "value": "priest of the gods",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "priest"
+      },
+      {
+        "target": "domain",
+        "new_value": "gods"
+      }
+    ]
+  },
+  {
+    "id": 7158,
+    "value": "cosmic androgyne",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "cosmic androgyne"
+  },
+  {
+    "id": 7158,
+    "value": "Śiva-Pārvatī united icon",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Śiva-Pārvatī united icon"
+  },
+  {
+    "id": 7371,
+    "value": "Trimūrti member",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Trimūrti member"
+  },
+  {
+    "id": 7371,
+    "value": "creator-god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "creation"
+  },
+  {
+    "id": 6132,
+    "value": "supreme goddess",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "supreme goddess"
+  },
+  {
+    "id": 7375,
+    "value": "first-worshipped at every Hindu rite",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "first-worshipped at every Hindu rite"
+  },
+  {
+    "id": 7375,
+    "value": "lord of the gaṇas",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "lord"
+      },
+      {
+        "target": "domain",
+        "new_value": "gaṇas"
+      }
+    ]
+  },
+  {
+    "id": 7383,
+    "value": "enemy of his serpent-cousins",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "enemy"
+      },
+      {
+        "target": "domain",
+        "new_value": "serpents"
+      }
+    ]
+  },
+  {
+    "id": 7383,
+    "value": "mount of Viṣṇu",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "mount of Viṣṇu"
+  },
+  {
+    "id": 7382,
+    "value": "Cirañjīvī",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Cirañjīvī"
+  },
+  {
+    "id": 7382,
+    "value": "supreme devotee of Rāma",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "supreme devotee of Rāma"
+  },
+  {
+    "id": 7382,
+    "value": "vānara general",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "vānara general"
+  },
+  {
+    "id": 7397,
+    "value": "demon-king",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "demon-king"
+  },
+  {
+    "id": 7385,
+    "value": "king of devas",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "king"
+      },
+      {
+        "target": "domain",
+        "new_value": "devas"
+      }
+    ]
+  },
+  {
+    "id": 7385,
+    "value": "one of the Ādityas",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the Ādityas"
+  },
+  {
+    "id": 7376,
+    "value": "divine general",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "divine general"
+  },
+  {
+    "id": 7376,
+    "value": "foster-son of the six Kṛttikās",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "son"
+  },
+  {
+    "id": 7168,
+    "value": "horse-headed celestials",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "horse-headed celestials"
+  },
+  {
+    "id": 7377,
+    "value": "beloved of Rādhā",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "consort"
+  },
+  {
+    "id": 7377,
+    "value": "eighth avatar of Viṣṇu",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Viṣṇu"
+  },
+  {
+    "id": 7377,
+    "value": "foster-son of Yaśodā and Nanda",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "son"
+  },
+  {
+    "id": 7169,
+    "value": "family/lineage deity",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "domain",
+        "new_value": "family"
+      },
+      {
+        "target": "domain",
+        "new_value": "lineage"
+      }
+    ]
+  },
+  {
+    "id": 7395,
+    "value": "cosmic-foundation-supporter",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "cosmic foundation supporter"
+  },
+  {
+    "id": 7395,
+    "value": "second avatar of Viṣṇu",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Viṣṇu"
+  },
+  {
+    "id": 7381,
+    "value": "avatar of Śeṣa",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Śeṣa"
+  },
+  {
+    "id": 7381,
+    "value": "younger half-brother of Rāma",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "half-brother"
+  },
+  {
+    "id": 7372,
+    "value": "one of the Tridevī",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "member of the Tridevī"
+  },
+  {
+    "id": 7398,
+    "value": "asura/daitya",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "asura"
+      },
+      {
+        "target": "character_trait",
+        "new_value": "daitya"
+      }
+    ]
+  },
+  {
+    "id": 7398,
+    "value": "buffalo-demon king",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "buffalo-demon king"
+  },
+  {
+    "id": 7394,
+    "value": "first avatar of Viṣṇu",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Viṣṇu"
+  },
+  {
+    "id": 7394,
+    "value": "preserver of the Vedas",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "preserver"
+      },
+      {
+        "target": "domain",
+        "new_value": "Vedas"
+      }
+    ]
+  },
+  {
+    "id": 7394,
+    "value": "protector of Manu",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "protector"
+      },
+      {
+        "target": "domain",
+        "new_value": "Manu"
+      }
+    ]
+  },
+  {
+    "id": 6750,
+    "value": "cosmic principle",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "cosmic principle"
+  },
+  {
+    "id": 6750,
+    "value": "goddess",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "goddess"
+  },
+  {
+    "id": 7252,
+    "value": "cosmic principle",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "cosmic principle"
+  },
+  {
+    "id": 7252,
+    "value": "related to Yama and Kāla",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "identification",
+        "new_value": "Yama"
+      },
+      {
+        "target": "identification",
+        "new_value": "Kāla"
+      }
+    ]
+  },
+  {
+    "id": 7384,
+    "value": "chief of the gaṇas",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "chief"
+      },
+      {
+        "target": "domain",
+        "new_value": "gaṇas"
+      }
+    ]
+  },
+  {
+    "id": 7384,
+    "value": "gatekeeper of Kailāśa",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "gatekeeper"
+      },
+      {
+        "target": "domain",
+        "new_value": "Kailāśa"
+      }
+    ]
+  },
+  {
+    "id": 7384,
+    "value": "mount and chief devotee of Śiva",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "mount of Śiva"
+      },
+      {
+        "target": "character_trait",
+        "new_value": "chief devotee of Śiva"
+      }
+    ]
+  },
+  {
+    "id": 7392,
+    "value": "fourth avatar of Viṣṇu",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Viṣṇu"
+  },
+  {
+    "id": 7163,
+    "value": "enemies of Garuḍa",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "enemies of Garuḍa"
+  },
+  {
+    "id": 7163,
+    "value": "rulers of Pātāla",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "ruler"
+      },
+      {
+        "target": "domain",
+        "new_value": "Pātāla"
+      }
+    ]
+  },
+  {
+    "id": 7163,
+    "value": "serpent-beings descended from Kadrū",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "descendant"
+  },
+  {
+    "id": 7374,
+    "value": "one of the Tridevī",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the Tridevī"
+  },
+  {
+    "id": 6856,
+    "value": "time-deity in Thai Hindu syncretism",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "time"
+  },
+  {
+    "id": 7378,
+    "value": "chief gopī",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "chief gopī"
+  },
+  {
+    "id": 7378,
+    "value": "eternal beloved of Kṛṣṇa",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "consort"
+  },
+  {
+    "id": 7167,
+    "value": "divine beloved-pair",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "divine beloved-pair"
+  },
+  {
+    "id": 7167,
+    "value": "joint-icon of Kṛṣṇa and Rādhā",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "joint-icon of Kṛṣṇa and Rādhā"
+  },
+  {
+    "id": 7379,
+    "value": "eldest son of Daśaratha and Kausalyā",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "son"
+  },
+  {
+    "id": 7379,
+    "value": "king of Ayodhyā",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "king"
+      },
+      {
+        "target": "domain",
+        "new_value": "Ayodhyā"
+      }
+    ]
+  },
+  {
+    "id": 7379,
+    "value": "seventh avatar of Viṣṇu",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Viṣṇu"
+  },
+  {
+    "id": 7396,
+    "value": "grandson of Pulastya",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "descendant"
+  },
+  {
+    "id": 7396,
+    "value": "half-brother of Kubera",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "half-brother"
+  },
+  {
+    "id": 7396,
+    "value": "king of Laṅkā",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "king"
+      },
+      {
+        "target": "domain",
+        "new_value": "Laṅkā"
+      }
+    ]
+  },
+  {
+    "id": 7373,
+    "value": "goddess of all learning",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "learning"
+  },
+  {
+    "id": 7373,
+    "value": "one of the Tridevī",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the Tridevī"
+  },
+  {
+    "id": 6775,
+    "value": "cosmic-feminine principle",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "cosmic-feminine principle"
+  }
+]

@@ -1,0 +1,928 @@
+[
+  {
+    "id": 6215,
+    "value": "patriarch",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "patriarch"
+  },
+  {
+    "id": 6108,
+    "value": "progenitor of humanity",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "ancestor"
+  },
+  {
+    "id": 7352,
+    "value": "consort (per epigraphic evidence, contested)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "consort"
+  },
+  {
+    "id": 7352,
+    "value": "popular Iron-Age goddess",
+    "action": "DELETE"
+  },
+  {
+    "id": 7343,
+    "value": "demon-king",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "demon-king"
+  },
+  {
+    "id": 7345,
+    "value": "chief of the Watchers (in 1 Enoch)",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "chief"
+      },
+      {
+        "target": "domain",
+        "new_value": "Watchers"
+      }
+    ]
+  },
+  {
+    "id": 7345,
+    "value": "wilderness-demon (in Leviticus tradition)",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "wilderness"
+  },
+  {
+    "id": 6269,
+    "value": "angel of death",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "angel"
+      },
+      {
+        "target": "domain",
+        "new_value": "death"
+      }
+    ]
+  },
+  {
+    "id": 7344,
+    "value": "prince of demons",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "prince"
+      },
+      {
+        "target": "domain",
+        "new_value": "demons"
+      }
+    ]
+  },
+  {
+    "id": 7351,
+    "value": "cosmic primordial beast",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "cosmic primordial beast"
+  },
+  {
+    "id": 7351,
+    "value": "paired with Leviathan",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "paired with Leviathan"
+  },
+  {
+    "id": 6104,
+    "value": "first woman",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "first woman"
+  },
+  {
+    "id": 6139,
+    "value": "angel of revelation",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "angel"
+      },
+      {
+        "target": "domain",
+        "new_value": "revelation"
+      }
+    ]
+  },
+  {
+    "id": 6139,
+    "value": "archangel",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "archangel"
+  },
+  {
+    "id": 7341,
+    "value": "third person of the Trinity",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "third person of the Trinity"
+  },
+  {
+    "id": 7342,
+    "value": "adversary",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "adversary"
+  },
+  {
+    "id": 7342,
+    "value": "ancestor of the shayāṭīn (devils)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "ancestor"
+  },
+  {
+    "id": 6263,
+    "value": "messiah",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "messiah"
+  },
+  {
+    "id": 6263,
+    "value": "only-begotten of the Father (in Christian theology)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "son"
+  },
+  {
+    "id": 6263,
+    "value": "prophet (in Islamic theology)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "prophet"
+  },
+  {
+    "id": 6263,
+    "value": "rabbi",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "rabbi"
+  },
+  {
+    "id": 7350,
+    "value": "cosmic adversary",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "cosmic adversary"
+  },
+  {
+    "id": 7350,
+    "value": "primordial monster",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "primordial monster"
+  },
+  {
+    "id": 6767,
+    "value": "first wife (former)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "wife"
+  },
+  {
+    "id": 6208,
+    "value": "exalted patriarch (transformed Enoch)",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "exalted patriarch"
+      },
+      {
+        "target": "identification",
+        "new_value": "Enoch"
+      }
+    ]
+  },
+  {
+    "id": 6133,
+    "value": "archangel",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "archangel"
+  },
+  {
+    "id": 6133,
+    "value": "prince of the heavenly armies",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "prince"
+      },
+      {
+        "target": "domain",
+        "new_value": "heavenly armies"
+      }
+    ]
+  },
+  {
+    "id": 6245,
+    "value": "prophet",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "prophet"
+  },
+  {
+    "id": 6152,
+    "value": "archangel",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "archangel"
+  },
+  {
+    "id": 6152,
+    "value": "divine messenger",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "divine messenger"
+  },
+  {
+    "id": 6152,
+    "value": "one of the seven who stand before God",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the seven who stand before God"
+  },
+  {
+    "id": 7346,
+    "value": "accuser",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "accuser"
+  },
+  {
+    "id": 7346,
+    "value": "angel of death",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "angel"
+      },
+      {
+        "target": "domain",
+        "new_value": "death"
+      }
+    ]
+  },
+  {
+    "id": 7346,
+    "value": "head of the demonic order",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "head"
+      },
+      {
+        "target": "domain",
+        "new_value": "demonic order"
+      }
+    ]
+  },
+  {
+    "id": 7349,
+    "value": "archangel",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "archangel"
+  },
+  {
+    "id": 7349,
+    "value": "possibly the ascended prophet Elijah",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Elijah"
+  },
+  {
+    "id": 7349,
+    "value": "twin/companion of Metatron",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "twin"
+  },
+  {
+    "id": 6254,
+    "value": "accuser",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "accuser"
+  },
+  {
+    "id": 6254,
+    "value": "fallen angel (in Christian theology)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "fallen angel"
+  },
+  {
+    "id": 6254,
+    "value": "prince of demons (in NT terminology)",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "prince"
+      },
+      {
+        "target": "domain",
+        "new_value": "demons"
+      }
+    ]
+  },
+  {
+    "id": 7348,
+    "value": "bride of Tiferet (Kabbalah)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "wife"
+  },
+  {
+    "id": 7348,
+    "value": "feminine aspect of divinity",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "feminine aspect of divinity"
+  },
+  {
+    "id": 6160,
+    "value": "archangel",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "archangel"
+  },
+  {
+    "id": 7338,
+    "value": "father (creator-father of all, covenant-father of Israel)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "father"
+  },
+  {
+    "id": 7338,
+    "value": "king",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "king"
+  },
+  {
+    "id": 7480,
+    "value": "maize-god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "maize"
+  },
+  {
+    "id": 7470,
+    "value": "fourth sun in the Five Suns",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "fourth sun in the Five Suns"
+  },
+  {
+    "id": 7470,
+    "value": "goddess of fresh water",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "goddess"
+      },
+      {
+        "target": "domain",
+        "new_value": "fresh water"
+      }
+    ]
+  },
+  {
+    "id": 7470,
+    "value": "sister-wife of Tlaloc",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "wife"
+  },
+  {
+    "id": 7471,
+    "value": "moon-goddess",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "moon"
+  },
+  {
+    "id": 7479,
+    "value": "patroness of women who died in childbirth",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "patroness"
+      },
+      {
+        "target": "domain",
+        "new_value": "women who died in childbirth"
+      }
+    ]
+  },
+  {
+    "id": 7479,
+    "value": "ruler of the Tzitzimimeh",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "ruler"
+      },
+      {
+        "target": "domain",
+        "new_value": "Tzitzimimeh"
+      }
+    ]
+  },
+  {
+    "id": 7478,
+    "value": "rescued by Quetzalcoatl from her grandmother Tzitzimitl",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "rescue"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "rescued by Quetzalcoatl from her grandmother Tzitzimitl"
+      }
+    ]
+  },
+  {
+    "id": 7475,
+    "value": "identified with Tecuciztecatl",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Tecuciztecatl"
+  },
+  {
+    "id": 7475,
+    "value": "the moon",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "moon"
+  },
+  {
+    "id": 7473,
+    "value": "queen of Mictlan",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "queen"
+      },
+      {
+        "target": "domain",
+        "new_value": "Mictlan"
+      }
+    ]
+  },
+  {
+    "id": 7472,
+    "value": "co-ruler with Mictlancihuatl (his consort)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "co-ruler"
+  },
+  {
+    "id": 7472,
+    "value": "lord of Mictlan",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "lord"
+      },
+      {
+        "target": "domain",
+        "new_value": "Mictlan"
+      }
+    ]
+  },
+  {
+    "id": 7476,
+    "value": "transformed into Tonatiuh",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "transformation"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "transformed into Tonatiuh"
+      }
+    ]
+  },
+  {
+    "id": 7467,
+    "value": "feminine half of Ometeotl",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "feminine half of Ometeotl"
+  },
+  {
+    "id": 7466,
+    "value": "masculine half of Ometeotl",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "masculine half of Ometeotl"
+  },
+  {
+    "id": 7465,
+    "value": "dwells in Omeyocan",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "Omeyocan"
+  },
+  {
+    "id": 7465,
+    "value": "parent of the four directional Tezcatlipocas",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "ancestor"
+  },
+  {
+    "id": 7465,
+    "value": "supreme creator-deity in unified-duality aspect",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "supreme creator-deity in unified-duality aspect"
+  },
+  {
+    "id": 7477,
+    "value": "transformed into Metztli",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "transformation"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "transformed into Metztli"
+      }
+    ]
+  },
+  {
+    "id": 7469,
+    "value": "co-supreme with Huitzilopochtli at Tenochtitlan",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "co-ruler"
+  },
+  {
+    "id": 7469,
+    "value": "master of the Tlaloque (rain-helpers)",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "master"
+      },
+      {
+        "target": "domain",
+        "new_value": "Tlaloque"
+      }
+    ]
+  },
+  {
+    "id": 7468,
+    "value": "feminine half of supreme creator-duality",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "feminine half of supreme creator-duality"
+  },
+  {
+    "id": 7468,
+    "value": "sometimes identified with Omecihuatl",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Omecihuatl"
+  },
+  {
+    "id": 7481,
+    "value": "pre-Conquest goddess of Tepeyac",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "goddess"
+      },
+      {
+        "target": "domain",
+        "new_value": "Tepeyac"
+      }
+    ]
+  },
+  {
+    "id": 7481,
+    "value": "\"source of Guadalupe syncretism\"",
+    "action": "DELETE"
+  },
+  {
+    "id": 7481,
+    "value": "\"title-aspect of the mother-goddess complex\"",
+    "action": "DELETE"
+  },
+  {
+    "id": 7474,
+    "value": "\"identified with Nanahuatzin (the diseased god who became him)\"",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Nanahuatzin"
+  },
+  {
+    "id": 7474,
+    "value": "\"presides over the warrior-paradise Tonatiuh Ichan\"",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "domain",
+        "new_value": "Tonatiuh Ichan"
+      }
+    ]
+  },
+  {
+    "id": 7474,
+    "value": "\"the fifth sun\"",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "fifth sun"
+  },
+  {
+    "id": 7212,
+    "value": "\"the source from whom all other gods emanate\"",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "source from whom all other gods emanate"
+  },
+  {
+    "id": 7212,
+    "value": "\"the supreme formless god of Balinese Hinduism\"",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "supreme formless god of Balinese Hinduism"
+  },
+  {
+    "id": 7213,
+    "value": "\"the \"king of the spirits\"\"",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "king"
+      },
+      {
+        "target": "domain",
+        "new_value": "spirits"
+      }
+    ]
+  },
+  {
+    "id": 7213,
+    "value": "\"the eternal adversary of Rangda\"",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "eternal adversary of Rangda"
+  },
+  {
+    "id": 7213,
+    "value": "\"the protective beast-spirit of Bali\"",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "protective beast-spirit"
+      },
+      {
+        "target": "domain",
+        "new_value": "Bali"
+      }
+    ]
+  },
+  {
+    "id": 7215,
+    "value": "the Balinese-Javanese goddess of rice and fertility",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "goddess"
+      },
+      {
+        "target": "domain",
+        "new_value": "rice"
+      },
+      {
+        "target": "domain",
+        "new_value": "fertility"
+      }
+    ]
+  },
+  {
+    "id": 6484,
+    "value": "leader of the leyak",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "leader"
+      },
+      {
+        "target": "domain",
+        "new_value": "leyak"
+      }
+    ]
+  },
+  {
+    "id": 6484,
+    "value": "the demon-queen of Balinese myth",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "demon-queen"
+  },
+  {
+    "id": 6484,
+    "value": "the eternal adversary of Barong",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "eternal adversary of Barong"
+  },
+  {
+    "id": 7224,
+    "value": "spiritual father of Avalokiteśvara",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "father"
+  },
+  {
+    "id": 7219,
+    "value": "East Asian form: Guanyin/Kannon",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Guanyin; Kannon"
+  },
+  {
+    "id": 7219,
+    "value": "bodhisattva of compassion",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "bodhisattva"
+      },
+      {
+        "target": "domain",
+        "new_value": "compassion"
+      }
+    ]
+  },
+  {
+    "id": 7219,
+    "value": "spiritual son of the Buddha Amitābha",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "son"
+  },
+  {
+    "id": 7507,
+    "value": "presiding Buddha of the eastern pure land",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "Buddha"
+      },
+      {
+        "target": "domain",
+        "new_value": "eastern pure land"
+      }
+    ]
+  },
+  {
+    "id": 7507,
+    "value": "the Medicine Buddha",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Medicine Buddha"
+  },
+  {
+    "id": 7511,
+    "value": "East Asian form: Kishimojin",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Kishimojin"
+  },
+  {
+    "id": 7511,
+    "value": "a converted child-devouring yakṣiṇī",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "converted child-devouring yakṣiṇī"
+  },
+  {
+    "id": 7511,
+    "value": "protector-goddess of children and childbirth",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "protector-goddess"
+      },
+      {
+        "target": "domain",
+        "new_value": "children and childbirth"
+      }
+    ]
+  },
+  {
+    "id": 7505,
+    "value": "East Asian forms: Dizang (Chinese), Jizō (Japanese)",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Dizang, Jizō"
+  },
+  {
+    "id": 7505,
+    "value": "bodhisattva of the hell-beings and of vows",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "bodhisattva"
+      },
+      {
+        "target": "domain",
+        "new_value": "hell-beings and vows"
+      }
+    ]
+  },
+  {
+    "id": 7509,
+    "value": "Buddhist transformation of the Hindu Shiva-Mahākāla",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Shiva-Mahākāla"
+  },
+  {
+    "id": 7509,
+    "value": "East Asian form: Daikokuten",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Daikokuten"
+  },
+  {
+    "id": 7509,
+    "value": "great wrathful protector (dharmapāla)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "great wrathful protector"
+  },
+  {
+    "id": 7509,
+    "value": "wrathful emanation (often of Avalokiteśvara)",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "wrathful emanation"
+      },
+      {
+        "target": "identification",
+        "new_value": "Avalokiteśvara"
+      }
+    ]
+  },
+  {
+    "id": 7504,
+    "value": "the bodhisattva awaiting his final birth in the Tuṣita heaven",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "bodhisattva"
+      },
+      {
+        "target": "event_type",
+        "new_value": "birth"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "awaiting his final birth in the Tuṣita heaven"
+      }
+    ]
+  }
+]

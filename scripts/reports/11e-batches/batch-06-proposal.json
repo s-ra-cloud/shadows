@@ -1,0 +1,773 @@
+[
+  {
+    "id": 7127,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7124,
+    "value": "folkloric type",
+    "action": "DELETE"
+  },
+  {
+    "id": 7124,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 6213,
+    "value": "folkloric type",
+    "action": "DELETE"
+  },
+  {
+    "id": 6213,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7117,
+    "value": "folkloric type",
+    "action": "DELETE"
+  },
+  {
+    "id": 7117,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7095,
+    "value": "father (as Ríg) of the three social classes",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "father"
+  },
+  {
+    "id": 7095,
+    "value": "watchman of the gods",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "watchman"
+      },
+      {
+        "target": "domain",
+        "new_value": "gods"
+      }
+    ]
+  },
+  {
+    "id": 6758,
+    "value": "queen of the underworld",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "queen"
+      },
+      {
+        "target": "domain",
+        "new_value": "underworld"
+      }
+    ]
+  },
+  {
+    "id": 7103,
+    "value": "Vanir-hostage",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "hostage"
+  },
+  {
+    "id": 7103,
+    "value": "companion of Odin",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "companion of Odin"
+  },
+  {
+    "id": 7103,
+    "value": "creator",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "creator"
+  },
+  {
+    "id": 7355,
+    "value": "keeper of the apples",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "keeper"
+      },
+      {
+        "target": "domain",
+        "new_value": "apples"
+      }
+    ]
+  },
+  {
+    "id": 6236,
+    "value": "victim",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "victim"
+  },
+  {
+    "id": 6236,
+    "value": "wisdom-being",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "wisdom-being"
+  },
+  {
+    "id": 7123,
+    "value": "folkloric type",
+    "action": "DELETE"
+  },
+  {
+    "id": 7123,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7121,
+    "value": "folkloric type",
+    "action": "DELETE"
+  },
+  {
+    "id": 7121,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7246,
+    "value": "adversary of the Æsir",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "adversary"
+      },
+      {
+        "target": "domain",
+        "new_value": "Æsir"
+      }
+    ]
+  },
+  {
+    "id": 7246,
+    "value": "blood-brother of Odin",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "brother"
+  },
+  {
+    "id": 7125,
+    "value": "folkloric type",
+    "action": "DELETE"
+  },
+  {
+    "id": 7125,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7112,
+    "value": "creator",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "creator"
+  },
+  {
+    "id": 7247,
+    "value": "folkloric type",
+    "action": "DELETE"
+  },
+  {
+    "id": 7247,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7101,
+    "value": "counselor",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "counselor"
+  },
+  {
+    "id": 7101,
+    "value": "wise being",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "wise"
+  },
+  {
+    "id": 7104,
+    "value": "brothers",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "brother"
+  },
+  {
+    "id": 7104,
+    "value": "inheritors",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "inheritors"
+  },
+  {
+    "id": 7104,
+    "value": "sons of Thor",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "son"
+  },
+  {
+    "id": 7111,
+    "value": "corpse-feeder",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "corpse-feeder"
+  },
+  {
+    "id": 7111,
+    "value": "cosmic-tree gnawer",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "cosmic-tree gnawer"
+  },
+  {
+    "id": 7122,
+    "value": "folkloric type",
+    "action": "DELETE"
+  },
+  {
+    "id": 7122,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7096,
+    "value": "Vanir hostage",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Vanir hostage"
+  },
+  {
+    "id": 7096,
+    "value": "god of the sea, wind, and wealth",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "god"
+      },
+      {
+        "target": "domain",
+        "new_value": "sea"
+      },
+      {
+        "target": "domain",
+        "new_value": "wind"
+      },
+      {
+        "target": "domain",
+        "new_value": "wealth"
+      }
+    ]
+  },
+  {
+    "id": 6749,
+    "value": "collective",
+    "action": "DELETE"
+  },
+  {
+    "id": 6749,
+    "value": "fate-spinners",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "fate-spinners"
+  },
+  {
+    "id": 7366,
+    "value": "sea-giantess",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "giantess"
+      },
+      {
+        "target": "domain",
+        "new_value": "sea"
+      }
+    ]
+  },
+  {
+    "id": 7369,
+    "value": "Aesir-goddess",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "Aesir"
+  },
+  {
+    "id": 7369,
+    "value": "companion of Odin",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "companion of Odin"
+  },
+  {
+    "id": 7126,
+    "value": "folkloric type",
+    "action": "DELETE"
+  },
+  {
+    "id": 7126,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7356,
+    "value": "Jǫtunn-goddess",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Jǫtunn-goddess"
+  },
+  {
+    "id": 7363,
+    "value": "eschatological adversary",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "eschatological adversary"
+  },
+  {
+    "id": 7363,
+    "value": "fire-giant",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "giant"
+      },
+      {
+        "target": "domain",
+        "new_value": "fire"
+      }
+    ]
+  },
+  {
+    "id": 7364,
+    "value": "sun-goddess",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "sun"
+  },
+  {
+    "id": 7092,
+    "value": "protector of Asgard",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "protector"
+      },
+      {
+        "target": "domain",
+        "new_value": "Asgard"
+      }
+    ]
+  },
+  {
+    "id": 7120,
+    "value": "folkloric type",
+    "action": "DELETE"
+  },
+  {
+    "id": 7120,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 6579,
+    "value": "god of justice and oaths",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "god"
+      },
+      {
+        "target": "domain",
+        "new_value": "justice"
+      },
+      {
+        "target": "domain",
+        "new_value": "oaths"
+      }
+    ]
+  },
+  {
+    "id": 6579,
+    "value": "warrior-god",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "warrior"
+  },
+  {
+    "id": 7097,
+    "value": "archer-god",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "archer"
+  },
+  {
+    "id": 7097,
+    "value": "stepson of Thor",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "stepson"
+  },
+  {
+    "id": 6101,
+    "value": "divine servants of Odin",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "divine servants of Odin"
+  },
+  {
+    "id": 6101,
+    "value": "warrior-maidens",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "warrior-maidens"
+  },
+  {
+    "id": 7106,
+    "value": "brothers of Odin",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "brother"
+  },
+  {
+    "id": 7106,
+    "value": "co-creators",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "co-creator"
+  },
+  {
+    "id": 7106,
+    "value": "sons of Borr and Bestla",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "son"
+  },
+  {
+    "id": 7107,
+    "value": "avenger",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "avenger"
+  },
+  {
+    "id": 7107,
+    "value": "survivor",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "survivor"
+  },
+  {
+    "id": 7098,
+    "value": "avenger",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "avenger"
+  },
+  {
+    "id": 7098,
+    "value": "survivor",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "survivor"
+  },
+  {
+    "id": 7118,
+    "value": "folkloric type",
+    "action": "DELETE"
+  },
+  {
+    "id": 7118,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7360,
+    "value": "primordial ancestor of giants",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "ancestor"
+  },
+  {
+    "id": 7360,
+    "value": "sacrificial cosmos-body",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "dismemberment"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "sacrificial cosmos-body"
+      }
+    ]
+  },
+  {
+    "id": 7109,
+    "value": "sea-giant",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "giant"
+      },
+      {
+        "target": "domain",
+        "new_value": "sea"
+      }
+    ]
+  },
+  {
+    "id": 7229,
+    "value": "primordial androgynous daemon",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "primordial androgynous daemon"
+  },
+  {
+    "id": 7229,
+    "value": "sometimes identified with a wild aspect of Cybele",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "wild aspect of Cybele"
+  },
+  {
+    "id": 7229,
+    "value": "the being from whose castration Attis ultimately springs",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "dismemberment"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "the being from whose castration Attis ultimately springs"
+      }
+    ]
+  },
+  {
+    "id": 6781,
+    "value": "born of (or bound to) Agdistis",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "child"
+  },
+  {
+    "id": 6781,
+    "value": "the dying-and-mourned vegetation-figure of the Mother-cult",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "the dying-and-mourned vegetation-figure of the Mother-cult"
+  },
+  {
+    "id": 6781,
+    "value": "the youthful consort of Cybele",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "consort"
+  },
+  {
+    "id": 6689,
+    "value": "bound in myth to Attis",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "consort"
+  },
+  {
+    "id": 6689,
+    "value": "identified by the Greeks with Rhea, and at Rome as Magna Mater",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "identification",
+        "new_value": "Rhea"
+      },
+      {
+        "target": "identification",
+        "new_value": "Magna Mater"
+      }
+    ]
+  },
+  {
+    "id": 6689,
+    "value": "the Phrygian Great Mother",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Phrygian Great Mother"
+  },
+  {
+    "id": 7231,
+    "value": "Anatolian/Phrygian moon-god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "moon"
+  },
+  {
+    "id": 7231,
+    "value": "\"governor of the months\"",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "governor"
+      },
+      {
+        "target": "domain",
+        "new_value": "months"
+      }
+    ]
+  },
+  {
+    "id": 7230,
+    "value": "\"Phrygian-Thracian sky- and father-god\"",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "domain",
+        "new_value": "sky"
+      },
+      {
+        "target": "character_trait",
+        "new_value": "patriarch"
+      }
+    ]
+  },
+  {
+    "id": 7230,
+    "value": "\"a mystery-cult deity\"",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "mystery-cult deity"
+  },
+  {
+    "id": 7230,
+    "value": "\"identified by the Greeks with Zeus and with Dionysus\"",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Zeus; Dionysus"
+  },
+  {
+    "id": 7460,
+    "value": "\"identified with Asclepius\"",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Asclepius"
+  },
+  {
+    "id": 7451,
+    "value": "\"identified with Dionysus and Liber\"",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Dionysus; Liber"
+  },
+  {
+    "id": 7451,
+    "value": "\"twice-born\"",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "twice-born"
+  },
+  {
+    "id": 6773,
+    "value": "\"identified with Demeter\"",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Demeter"
+  },
+  {
+    "id": 6773,
+    "value": "\"plebeian patron-goddess of the Aventine Triad (with Liber and Libera)\"",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "patron"
+      },
+      {
+        "target": "domain",
+        "new_value": "Aventine Triad"
+      }
+    ]
+  },
+  {
+    "id": 7458,
+    "value": "\"identified with Eros\"",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Eros"
+  },
+  {
+    "id": 6546,
+    "value": "identified with Artemis",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Artemis"
+  },
+  {
+    "id": 7455,
+    "value": "identified with Pan",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Pan"
+  },
+  {
+    "id": 7455,
+    "value": "indigenous Italic god",
+    "action": "DELETE"
+  },
+  {
+    "id": 7455,
+    "value": "sometimes called son of Picus (the woodpecker-deity)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "son"
+  },
+  {
+    "id": 6252,
+    "value": "identified with Greek Tyche",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Tyche"
+  },
+  {
+    "id": 6252,
+    "value": "in Praeneste tradition, mother of Jupiter and Juno (uniquely Italic)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "mother"
+  },
+  {
+    "id": 6252,
+    "value": "indigenous Italic origin",
+    "action": "DELETE"
+  },
+  {
+    "id": 6252,
+    "value": "many cult-aspects (Primigenia, Virilis, Muliebris, Redux, Augusta)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7459,
+    "value": "identified with Heracles",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Heracles"
+  },
+  {
+    "id": 7459,
+    "value": "indigenous Italic Ara Maxima cult predates the interpretatio",
+    "action": "DELETE"
+  }
+]

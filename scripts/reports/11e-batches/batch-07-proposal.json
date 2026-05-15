@@ -1,0 +1,707 @@
+[
+  {
+    "id": 7288,
+    "value": "first invoked in every prayer-sequence",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "first invoked in every prayer-sequence"
+  },
+  {
+    "id": 7288,
+    "value": "indigenous Italic god (predates the Greek interpretatio)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7288,
+    "value": "no Greek equivalent — uniquely Roman",
+    "action": "DELETE"
+  },
+  {
+    "id": 6555,
+    "value": "one of the Capitoline Triad (Jupiter-Juno-Minerva)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "member of the Capitoline Triad"
+  },
+  {
+    "id": 6555,
+    "value": "sister-wife of Jupiter",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "wife"
+  },
+  {
+    "id": 7444,
+    "value": "head of the Capitoline Triad",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "head"
+      },
+      {
+        "target": "domain",
+        "new_value": "Capitoline Triad"
+      }
+    ]
+  },
+  {
+    "id": 7444,
+    "value": "identified with Zeus",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Zeus"
+  },
+  {
+    "id": 7444,
+    "value": "sister-brother to Juno (and husband)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "husband"
+  },
+  {
+    "id": 7463,
+    "value": "linked to Mania (the Lares-mother in some traditions)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "child"
+  },
+  {
+    "id": 7463,
+    "value": "sometimes treated as deified ancestors",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "ancestor"
+  },
+  {
+    "id": 7463,
+    "value": "tutelary household spirits",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "tutelary spirits"
+      },
+      {
+        "target": "domain",
+        "new_value": "household"
+      }
+    ]
+  },
+  {
+    "id": 7452,
+    "value": "identified with Bacchus",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Bacchus"
+  },
+  {
+    "id": 7452,
+    "value": "indigenous Italic deity",
+    "action": "DELETE"
+  },
+  {
+    "id": 7452,
+    "value": "one of the Aventine Triad with Ceres and Libera",
+    "action": "DELETE"
+  },
+  {
+    "id": 7445,
+    "value": "identified with Ares",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Ares"
+  },
+  {
+    "id": 7446,
+    "value": "identified with Hermes",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Hermes"
+  },
+  {
+    "id": 7446,
+    "value": "messenger of the gods",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "messenger"
+      },
+      {
+        "target": "domain",
+        "new_value": "gods"
+      }
+    ]
+  },
+  {
+    "id": 7446,
+    "value": "patron of merchants and thieves",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "patron"
+      },
+      {
+        "target": "domain",
+        "new_value": "merchants"
+      },
+      {
+        "target": "domain",
+        "new_value": "thieves"
+      }
+    ]
+  },
+  {
+    "id": 6578,
+    "value": "one of the Capitoline Triad",
+    "action": "DELETE"
+  },
+  {
+    "id": 6578,
+    "value": "virgin goddess",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "virgin"
+  },
+  {
+    "id": 7448,
+    "value": "identified with Poseidon",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Poseidon"
+  },
+  {
+    "id": 6653,
+    "value": "identified with Rhea",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Rhea"
+  },
+  {
+    "id": 6653,
+    "value": "indigenous Italic before the Rhea-interpretatio",
+    "action": "DELETE"
+  },
+  {
+    "id": 6653,
+    "value": "wife-sister of Saturn",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "wife"
+  },
+  {
+    "id": 7464,
+    "value": "brought from Troy by Aeneas",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "hero_journey"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "brought from Troy by Aeneas"
+      }
+    ]
+  },
+  {
+    "id": 7464,
+    "value": "state-cult Penates publici",
+    "action": "DELETE"
+  },
+  {
+    "id": 7464,
+    "value": "tutelary household spirits",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "tutelary household spirits"
+  },
+  {
+    "id": 7449,
+    "value": "identified with Hades",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Hades"
+  },
+  {
+    "id": 7449,
+    "value": "syncretized with Dis Pater (the Italic underworld-wealth deity)",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Dis Pater"
+  },
+  {
+    "id": 7257,
+    "value": "identified with Persephone",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Persephone"
+  },
+  {
+    "id": 7453,
+    "value": "Sabine war-deity",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "war"
+  },
+  {
+    "id": 7453,
+    "value": "identified with deified Romulus",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Romulus"
+  },
+  {
+    "id": 7453,
+    "value": "one of the Archaic Triad (Jupiter-Mars-Quirinus)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7462,
+    "value": "killed by Romulus or his men",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "death"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "killed by Romulus or his men"
+      }
+    ]
+  },
+  {
+    "id": 7461,
+    "value": "deified as Quirinus",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Quirinus"
+  },
+  {
+    "id": 7461,
+    "value": "first king of Rome",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "king"
+      },
+      {
+        "target": "domain",
+        "new_value": "Rome"
+      }
+    ]
+  },
+  {
+    "id": 7461,
+    "value": "grand-nephew of Amulius",
+    "action": "DELETE"
+  },
+  {
+    "id": 7461,
+    "value": "grandson of Numitor",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "descendant"
+  },
+  {
+    "id": 7450,
+    "value": "Italic ruler of Latium during the Golden Age (uniquely Roman tradition)",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "ruler"
+      },
+      {
+        "target": "domain",
+        "new_value": "Latium"
+      }
+    ]
+  },
+  {
+    "id": 7450,
+    "value": "husband-brother of Ops",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "husband"
+  },
+  {
+    "id": 7450,
+    "value": "identified with Cronus",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Cronus"
+  },
+  {
+    "id": 7456,
+    "value": "indigenous Italic god",
+    "action": "DELETE"
+  },
+  {
+    "id": 7456,
+    "value": "not in the state-cult",
+    "action": "DELETE"
+  },
+  {
+    "id": 7456,
+    "value": "popular among common people",
+    "action": "DELETE"
+  },
+  {
+    "id": 7454,
+    "value": "Sol Invictus from 274 CE",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Sol Invictus"
+  },
+  {
+    "id": 7454,
+    "value": "identified with Helios",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Helios"
+  },
+  {
+    "id": 7454,
+    "value": "indigenous Italic Sol Indiges (pre-Greek)",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Sol Indiges"
+  },
+  {
+    "id": 6157,
+    "value": "divine ancestress of the Julian gens (Caesar, Augustus)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "ancestor"
+  },
+  {
+    "id": 6157,
+    "value": "identified with Aphrodite",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Aphrodite"
+  },
+  {
+    "id": 7457,
+    "value": "Etruscan Voltumna imported",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Voltumna"
+  },
+  {
+    "id": 7269,
+    "value": "first-born of Saturn and Ops; first-swallowed",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "daughter"
+  },
+  {
+    "id": 7269,
+    "value": "identified with Hestia",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Hestia"
+  },
+  {
+    "id": 7269,
+    "value": "indigenous Roman as Latin Vesta predating the Hestia-interpretatio",
+    "action": "DELETE"
+  },
+  {
+    "id": 7269,
+    "value": "virgin goddess (her vow guarded by the Vestal Virgins on earth)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "virgin goddess"
+  },
+  {
+    "id": 7447,
+    "value": "identified with Hephaestus",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Hephaestus"
+  },
+  {
+    "id": 7416,
+    "value": "Japanese form of Vaiśravaṇa/Kubera",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Vaiśravaṇa/Kubera"
+  },
+  {
+    "id": 7416,
+    "value": "one of the Four Heavenly Kings of Buddhism",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "one of the Four Heavenly Kings"
+      },
+      {
+        "target": "domain",
+        "new_value": "Buddhism"
+      }
+    ]
+  },
+  {
+    "id": 7416,
+    "value": "one of the Seven Lucky Gods",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the Seven Lucky Gods"
+  },
+  {
+    "id": 7414,
+    "value": "often paired with Ebisu",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "often paired with Ebisu"
+  },
+  {
+    "id": 7414,
+    "value": "one of the Seven Lucky Gods",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the Seven Lucky Gods"
+  },
+  {
+    "id": 7414,
+    "value": "syncretic combination of Mahākāla, Daikoku, Ōkuninushi",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Mahākāla; Daikoku; Ōkuninushi"
+  },
+  {
+    "id": 7415,
+    "value": "identified with Hiruko or Kotoshironushi",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Hiruko; Kotoshironushi"
+  },
+  {
+    "id": 7415,
+    "value": "often paired with Daikokuten",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "paired with Daikokuten"
+  },
+  {
+    "id": 7415,
+    "value": "one of the Seven Lucky Gods",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "member of the Seven Lucky Gods"
+  },
+  {
+    "id": 7419,
+    "value": "Daoist Three Stars of Fortune combined",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Daoist Three Stars of Fortune"
+  },
+  {
+    "id": 7419,
+    "value": "often paired/merged with Jurojin",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "identification",
+        "new_value": "Jurojin"
+      },
+      {
+        "target": "character_trait",
+        "new_value": "paired with Jurojin"
+      }
+    ]
+  },
+  {
+    "id": 7419,
+    "value": "one of the Seven Lucky Gods",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "member of the Seven Lucky Gods"
+  },
+  {
+    "id": 7046,
+    "value": "identified with Emperor Ōjin",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Emperor Ōjin"
+  },
+  {
+    "id": 7046,
+    "value": "protector of the Minamoto clan",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "protector"
+      },
+      {
+        "target": "domain",
+        "new_value": "Minamoto clan"
+      }
+    ]
+  },
+  {
+    "id": 7046,
+    "value": "war-kami",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "war"
+  },
+  {
+    "id": 7417,
+    "value": "historically the Chinese Chan monk Budai",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Budai"
+  },
+  {
+    "id": 7417,
+    "value": "incarnation of Maitreya (future Buddha)",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Maitreya"
+  },
+  {
+    "id": 7417,
+    "value": "one of the Seven Lucky Gods",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the Seven Lucky Gods"
+  },
+  {
+    "id": 7270,
+    "value": "master of foxes",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "master"
+      },
+      {
+        "target": "domain",
+        "new_value": "foxes"
+      }
+    ]
+  },
+  {
+    "id": 7270,
+    "value": "patron of merchants and craftsmen",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "patron"
+      },
+      {
+        "target": "domain",
+        "new_value": "merchants and craftsmen"
+      }
+    ]
+  },
+  {
+    "id": 7270,
+    "value": "rice and harvest kami",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "rice and harvest"
+  },
+  {
+    "id": 7413,
+    "value": "founder of the Yamato imperial dynasty",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "founder"
+      },
+      {
+        "target": "domain",
+        "new_value": "Yamato imperial dynasty"
+      }
+    ]
+  },
+  {
+    "id": 7413,
+    "value": "great-grandson of Ninigi",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "descendant"
+  },
+  {
+    "id": 7413,
+    "value": "legendary first emperor",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "emperor"
+  },
+  {
+    "id": 7418,
+    "value": "Japanese form of Shou-lao",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Shou-lao"
+  },
+  {
+    "id": 7418,
+    "value": "often paired/merged with Fukurokuju",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Fukurokuju"
+  },
+  {
+    "id": 7418,
+    "value": "one of the Seven Lucky Gods",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "member of the Seven Lucky Gods"
+  },
+  {
+    "id": 7412,
+    "value": "earthly-kami",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "earthly-kami"
+  },
+  {
+    "id": 7412,
+    "value": "later identified with Ebisu",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Ebisu"
+  },
+  {
+    "id": 7411,
+    "value": "emerged from Izanagi's sword Ame-no-Ohabari",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "birth"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "emerged from Izanagi's sword Ame-no-Ohabari"
+      }
+    ]
+  },
+  {
+    "id": 7411,
+    "value": "kami of Kashima Jingū",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "kami"
+      },
+      {
+        "target": "domain",
+        "new_value": "Kashima Jingū"
+      }
+    ]
+  },
+  {
+    "id": 7411,
+    "value": "partner-warrior of Futsunushi",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "partner-warrior of Futsunushi"
+  }
+]

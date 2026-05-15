@@ -1,0 +1,905 @@
+[
+  {
+    "id": 7171,
+    "value": "lord of the cremation-ground",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "lord"
+      },
+      {
+        "target": "domain",
+        "new_value": "cremation-ground"
+      }
+    ]
+  },
+  {
+    "id": 7380,
+    "value": "avatar of Lakṣmī",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Lakṣmī"
+  },
+  {
+    "id": 7390,
+    "value": "ancestor of Soma-vaṃśa",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "ancestor"
+  },
+  {
+    "id": 7390,
+    "value": "favorite of Rohiṇī",
+    "action": "DELETE"
+  },
+  {
+    "id": 7390,
+    "value": "moon-god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "moon"
+  },
+  {
+    "id": 7387,
+    "value": "one of the Ādityas",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Āditya"
+  },
+  {
+    "id": 7387,
+    "value": "sun-god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "sun"
+  },
+  {
+    "id": 7170,
+    "value": "solar emblem of Majapahit royalty",
+    "action": "DELETE"
+  },
+  {
+    "id": 7391,
+    "value": "dawn-goddess",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "dawn"
+  },
+  {
+    "id": 7391,
+    "value": "sister/companion of Aśvin-twins",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "sister"
+  },
+  {
+    "id": 7164,
+    "value": "category — collective entry for divine mounts",
+    "action": "DELETE"
+  },
+  {
+    "id": 7172,
+    "value": "joint icon of Viṣṇu and Lakṣmī",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "joint icon of Viṣṇu and Lakṣmī"
+  },
+  {
+    "id": 7177,
+    "value": "Śakti-form",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Śakti-form"
+  },
+  {
+    "id": 7393,
+    "value": "rescuer of Bhū-devi",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "rescue"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "rescuer of Bhū-devi"
+      }
+    ]
+  },
+  {
+    "id": 7393,
+    "value": "third avatar of Viṣṇu",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "third avatar of Viṣṇu"
+  },
+  {
+    "id": 7388,
+    "value": "lokapāla of the west",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "lokapāla"
+      },
+      {
+        "target": "domain",
+        "new_value": "west"
+      }
+    ]
+  },
+  {
+    "id": 7388,
+    "value": "water-deity",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "water"
+  },
+  {
+    "id": 7388,
+    "value": "Āditya",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Āditya"
+  },
+  {
+    "id": 7389,
+    "value": "lokapāla of the northwest",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "lokapāla"
+      },
+      {
+        "target": "domain",
+        "new_value": "northwest"
+      }
+    ]
+  },
+  {
+    "id": 7389,
+    "value": "wind-god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "wind"
+  },
+  {
+    "id": 7176,
+    "value": "village-goddess collective",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "domain",
+        "new_value": "village"
+      },
+      {
+        "target": "character_trait",
+        "new_value": "collective"
+      }
+    ]
+  },
+  {
+    "id": 7370,
+    "value": "Trimūrti member",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Trimūrti member"
+  },
+  {
+    "id": 6148,
+    "value": "all-gods collective",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "collective of all gods"
+  },
+  {
+    "id": 6737,
+    "value": "attendants of Kubera",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "attendants"
+      },
+      {
+        "target": "domain",
+        "new_value": "Kubera"
+      }
+    ]
+  },
+  {
+    "id": 6737,
+    "value": "nature-spirits",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "nature spirits"
+  },
+  {
+    "id": 7399,
+    "value": "lokapāla of the south",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "lokapāla"
+      },
+      {
+        "target": "domain",
+        "new_value": "south"
+      }
+    ]
+  },
+  {
+    "id": 7525,
+    "value": "the Death Bat of Xibalba",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "death bat"
+      },
+      {
+        "target": "domain",
+        "new_value": "Xibalba"
+      }
+    ]
+  },
+  {
+    "id": 7525,
+    "value": "the danger of the House of Bats",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "danger"
+      },
+      {
+        "target": "domain",
+        "new_value": "House of Bats"
+      }
+    ]
+  },
+  {
+    "id": 7516,
+    "value": "cognate of the Aztec Tlaloc",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Tlaloc"
+  },
+  {
+    "id": 7516,
+    "value": "quadrupled into the four directional Chaacs",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "transformation"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "quadrupled into the four directional Chaacs"
+      }
+    ]
+  },
+  {
+    "id": 7516,
+    "value": "the Maya rain-god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "rain"
+  },
+  {
+    "id": 7523,
+    "value": "adversary of the Hero Twins",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "adversary of the Hero Twins"
+  },
+  {
+    "id": 7523,
+    "value": "co-ruler with Vucub-Came",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "co-ruler"
+  },
+  {
+    "id": 7523,
+    "value": "one of the two paramount lords of Xibalba",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "lord"
+      },
+      {
+        "target": "domain",
+        "new_value": "Xibalba"
+      }
+    ]
+  },
+  {
+    "id": 7519,
+    "value": "one of the Hero Twins",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Hero Twin"
+  },
+  {
+    "id": 7519,
+    "value": "raised to become the sun",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "transformation"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "raised to become the sun"
+      }
+    ]
+  },
+  {
+    "id": 7515,
+    "value": "a trinity-in-one (the three Thunderbolts)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "trinity-in-one (the three Thunderbolts)"
+  },
+  {
+    "id": 7515,
+    "value": "storm- and creator-god of the K'iche' Maya",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "domain",
+        "new_value": "storm"
+      },
+      {
+        "target": "domain",
+        "new_value": "creation"
+      }
+    ]
+  },
+  {
+    "id": 7515,
+    "value": "the Heart of Sky",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Heart of Sky"
+  },
+  {
+    "id": 7512,
+    "value": "patron of writing and learning",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "patron"
+      },
+      {
+        "target": "domain",
+        "new_value": "writing"
+      },
+      {
+        "target": "domain",
+        "new_value": "learning"
+      }
+    ]
+  },
+  {
+    "id": 7512,
+    "value": "supreme creator-god of the Yucatec Maya",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "supreme creator"
+      },
+      {
+        "target": "domain",
+        "new_value": "creation"
+      },
+      {
+        "target": "domain",
+        "new_value": "Yucatec Maya"
+      }
+    ]
+  },
+  {
+    "id": 7518,
+    "value": "Maya goddess of the moon, childbirth, weaving, and medicine",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "domain",
+        "new_value": "moon"
+      },
+      {
+        "target": "domain",
+        "new_value": "childbirth"
+      },
+      {
+        "target": "domain",
+        "new_value": "weaving"
+      },
+      {
+        "target": "domain",
+        "new_value": "medicine"
+      }
+    ]
+  },
+  {
+    "id": 7527,
+    "value": "Yucatec Maya goddess associated with the rope and with those who died by hanging",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "hanging"
+  },
+  {
+    "id": 7517,
+    "value": "cognate of the Aztec Tonatiuh",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Tonatiuh"
+  },
+  {
+    "id": 7517,
+    "value": "patron of kingship",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "patron"
+      },
+      {
+        "target": "domain",
+        "new_value": "kingship"
+      }
+    ]
+  },
+  {
+    "id": 7517,
+    "value": "sometimes the solar aspect of Itzamna",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Itzamna"
+  },
+  {
+    "id": 7517,
+    "value": "the Maya sun-god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "sun"
+  },
+  {
+    "id": 7513,
+    "value": "cognate of the Aztec Quetzalcoatl and the K'iche' Q'uq'umatz",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "identification",
+        "new_value": "Quetzalcoatl"
+      },
+      {
+        "target": "identification",
+        "new_value": "Q'uq'umatz"
+      }
+    ]
+  },
+  {
+    "id": 7513,
+    "value": "the Feathered Serpent of the Yucatec Maya",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "Feathered Serpent"
+      },
+      {
+        "target": "domain",
+        "new_value": "Yucatec Maya"
+      }
+    ]
+  },
+  {
+    "id": 7514,
+    "value": "a creator-deity of the Popol Vuh",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "creation"
+  },
+  {
+    "id": 7514,
+    "value": "cognate of Kukulkan and Quetzalcoatl",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "identification",
+        "new_value": "Kukulkan"
+      },
+      {
+        "target": "identification",
+        "new_value": "Quetzalcoatl"
+      }
+    ]
+  },
+  {
+    "id": 7514,
+    "value": "the Feathered Serpent of the K'iche' Maya",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Feathered Serpent"
+  },
+  {
+    "id": 7522,
+    "value": "adversary of the Hero Twins",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "adversary of the Hero Twins"
+  },
+  {
+    "id": 7522,
+    "value": "the bird-monster Seven Macaw",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "bird-monster"
+      },
+      {
+        "target": "identification",
+        "new_value": "Seven Macaw"
+      }
+    ]
+  },
+  {
+    "id": 7522,
+    "value": "the false sun of the age before the true sun",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "false sun of the age before the true sun"
+  },
+  {
+    "id": 7524,
+    "value": "adversary of the Hero Twins",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "adversary of the Hero Twins"
+  },
+  {
+    "id": 7524,
+    "value": "co-ruler with Hun-Came",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "co-ruler"
+  },
+  {
+    "id": 7524,
+    "value": "one of the two paramount lords of Xibalba",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "lord"
+      },
+      {
+        "target": "domain",
+        "new_value": "Xibalba"
+      }
+    ]
+  },
+  {
+    "id": 7520,
+    "value": "one of the Hero Twins",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "twin"
+  },
+  {
+    "id": 7520,
+    "value": "raised to become the moon",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "transformation"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "raised to become the moon"
+      }
+    ]
+  },
+  {
+    "id": 7526,
+    "value": "Yucatec Maya god of the forest and of maize",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "god"
+      },
+      {
+        "target": "domain",
+        "new_value": "forest"
+      },
+      {
+        "target": "domain",
+        "new_value": "maize"
+      }
+    ]
+  },
+  {
+    "id": 7526,
+    "value": "related to Hun Hunahpu the resurrected Maize God",
+    "action": "DELETE"
+  },
+  {
+    "id": 7526,
+    "value": "the youthful Maize God",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "youthful"
+      },
+      {
+        "target": "domain",
+        "new_value": "maize"
+      }
+    ]
+  },
+  {
+    "id": 7308,
+    "value": "storm-god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "storm"
+  },
+  {
+    "id": 7308,
+    "value": "warrior",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "warrior"
+  },
+  {
+    "id": 7206,
+    "value": "culture-bearer",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "culture-bearer"
+  },
+  {
+    "id": 6137,
+    "value": "creator",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "creator"
+  },
+  {
+    "id": 7318,
+    "value": "companion",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "companion"
+  },
+  {
+    "id": 7305,
+    "value": "queen",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "queen"
+  },
+  {
+    "id": 7317,
+    "value": "companion",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "companion"
+  },
+  {
+    "id": 7314,
+    "value": "divine physician",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "divine physician"
+  },
+  {
+    "id": 7208,
+    "value": "laborers",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "laborers"
+  },
+  {
+    "id": 6478,
+    "value": "creator",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "creator"
+  },
+  {
+    "id": 7294,
+    "value": "advisor",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "advisor"
+  },
+  {
+    "id": 7316,
+    "value": "counter-demonic protector",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "counter-demonic protector"
+  },
+  {
+    "id": 7211,
+    "value": "divine couple of the Kassite dynasty",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "spouse"
+  },
+  {
+    "id": 7211,
+    "value": "paired deities",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "spouse"
+  },
+  {
+    "id": 7319,
+    "value": "flood-survivor",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "flood-survivor"
+  },
+  {
+    "id": 7319,
+    "value": "wise man",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "wise man"
+  },
+  {
+    "id": 7368,
+    "value": "cursed-treasure-keeper",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "cursed-treasure-keeper"
+  },
+  {
+    "id": 7361,
+    "value": "progenitrix-by-licking of Búri",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "creation"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "progenitrix-by-licking of Búri"
+      }
+    ]
+  },
+  {
+    "id": 6721,
+    "value": "folkloric type",
+    "action": "DELETE"
+  },
+  {
+    "id": 6721,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7119,
+    "value": "folkloric type",
+    "action": "DELETE"
+  },
+  {
+    "id": 7119,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7075,
+    "value": "god of poetry",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "poetry"
+  },
+  {
+    "id": 7075,
+    "value": "husband (of Iðunn)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "husband"
+  },
+  {
+    "id": 7362,
+    "value": "first of the Aesir",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "first of the Aesir"
+  },
+  {
+    "id": 7115,
+    "value": "folkloric type",
+    "action": "DELETE"
+  },
+  {
+    "id": 7115,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7358,
+    "value": "healing goddess",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "healing"
+  },
+  {
+    "id": 7358,
+    "value": "possibly valkyrie",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "possibly valkyrie"
+  },
+  {
+    "id": 7099,
+    "value": "god of justice",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "justice"
+  },
+  {
+    "id": 7094,
+    "value": "god of fertility and prosperity",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "fertility; prosperity"
+  },
+  {
+    "id": 7353,
+    "value": "foster-mother of various Aesir",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "mother"
+  },
+  {
+    "id": 7116,
+    "value": "folkloric type",
+    "action": "DELETE"
+  },
+  {
+    "id": 7116,
+    "value": "supernatural being (category)",
+    "action": "DELETE"
+  },
+  {
+    "id": 7367,
+    "value": "plower of Zealand",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "plower"
+      },
+      {
+        "target": "domain",
+        "new_value": "Zealand"
+      }
+    ]
+  },
+  {
+    "id": 7367,
+    "value": "virgin-goddess",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "virginity"
+  },
+  {
+    "id": 7127,
+    "value": "folkloric type",
+    "action": "DELETE"
+  }
+]

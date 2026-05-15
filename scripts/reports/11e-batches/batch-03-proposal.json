@@ -1,0 +1,1015 @@
+[
+  {
+    "id": 6323,
+    "value": "one of the Three Sovereigns",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the Three Sovereigns"
+  },
+  {
+    "id": 7490,
+    "value": "abdicated to Yu",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "judgment"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "abdicated to Yu"
+      }
+    ]
+  },
+  {
+    "id": 7490,
+    "value": "one of the Five Emperors / sage-kings",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the Five Emperors / sage-kings"
+  },
+  {
+    "id": 7490,
+    "value": "son-in-law of Yao (married Yao's two daughters)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "in-law"
+  },
+  {
+    "id": 6377,
+    "value": "attained Buddhahood as the Victorious Fighting Buddha",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "transformation"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "attained Buddhahood as the Victorious Fighting Buddha"
+      }
+    ]
+  },
+  {
+    "id": 6377,
+    "value": "born from a stone egg",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "birth"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "born from a stone egg"
+      }
+    ]
+  },
+  {
+    "id": 6377,
+    "value": "foremost disciple of Xuanzang",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "foremost disciple of Xuanzang"
+  },
+  {
+    "id": 6377,
+    "value": "the Monkey King",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "the Monkey King"
+  },
+  {
+    "id": 7484,
+    "value": "Queen Mother of the West",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "Queen Mother"
+      },
+      {
+        "target": "domain",
+        "new_value": "West"
+      }
+    ]
+  },
+  {
+    "id": 7484,
+    "value": "goddess of Mount Kunlun and the western paradise",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "goddess"
+      },
+      {
+        "target": "domain",
+        "new_value": "Mount Kunlun"
+      },
+      {
+        "target": "domain",
+        "new_value": "western paradise"
+      }
+    ]
+  },
+  {
+    "id": 7484,
+    "value": "keeper of the peaches of immortality",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "keeper"
+      },
+      {
+        "target": "domain",
+        "new_value": "peaches of immortality"
+      }
+    ]
+  },
+  {
+    "id": 7484,
+    "value": "ruler of the female immortals",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "ruler"
+      },
+      {
+        "target": "domain",
+        "new_value": "female immortals"
+      }
+    ]
+  },
+  {
+    "id": 7486,
+    "value": "ancestor of Chiyou in some traditions",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "ancestor"
+  },
+  {
+    "id": 7486,
+    "value": "co-ancestor (with Huangdi) of the Chinese people",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "ancestor"
+  },
+  {
+    "id": 7486,
+    "value": "often identified with Shennong",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Shennong"
+  },
+  {
+    "id": 7486,
+    "value": "the Yan Emperor",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Yan Emperor"
+  },
+  {
+    "id": 7489,
+    "value": "abdicated to Shun (gave him his two daughters in marriage)",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "marriage"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "abdicated to Shun (gave him his two daughters in marriage)"
+      }
+    ]
+  },
+  {
+    "id": 7489,
+    "value": "one of the Five Emperors / sage-kings",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the Five Emperors / sage-kings"
+  },
+  {
+    "id": 7488,
+    "value": "founder of the Xia dynasty",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "founder"
+      },
+      {
+        "target": "domain",
+        "new_value": "Xia dynasty"
+      }
+    ]
+  },
+  {
+    "id": 7488,
+    "value": "last of the sage-kings",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "last of the sage-kings"
+  },
+  {
+    "id": 6450,
+    "value": "dwells in the Jade Pure heaven (Yuqing)",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "domain",
+        "new_value": "Jade Pure Heaven"
+      }
+    ]
+  },
+  {
+    "id": 6450,
+    "value": "first and highest of the Three Pure Ones",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "first and highest of the Three Pure Ones"
+  },
+  {
+    "id": 7492,
+    "value": "annual reporter to the Jade Emperor",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "annual reporter to the Jade Emperor"
+  },
+  {
+    "id": 7492,
+    "value": "household-resident deity",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "household"
+  },
+  {
+    "id": 7492,
+    "value": "the Kitchen God / Stove God",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "kitchen"
+  },
+  {
+    "id": 7495,
+    "value": "one of the Eight Immortals (often the eldest)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "one of the Eight Immortals"
+  },
+  {
+    "id": 7495,
+    "value": "the master who initiated Lu Dongbin",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "master who initiated Lu Dongbin"
+  },
+  {
+    "id": 6634,
+    "value": "adversary and victor over Gonggong",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "theomachy"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "adversary and victor over Gonggong"
+      }
+    ]
+  },
+  {
+    "id": 7403,
+    "value": "annihilator of the unjustified",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "annihilator"
+      },
+      {
+        "target": "domain",
+        "new_value": "unjustified"
+      }
+    ]
+  },
+  {
+    "id": 7403,
+    "value": "judgment-hall-attendant",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "attendant"
+      },
+      {
+        "target": "domain",
+        "new_value": "judgment hall"
+      }
+    ]
+  },
+  {
+    "id": 7268,
+    "value": "Hermopolitan Ogdoad pair-member (with Amunet)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "consort"
+  },
+  {
+    "id": 7268,
+    "value": "Theban triad father (with Mut and Khonsu)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "father"
+  },
+  {
+    "id": 7268,
+    "value": "supreme imperial god of New Kingdom Egypt",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "supreme imperial god"
+  },
+  {
+    "id": 7401,
+    "value": "adopted by Isis (who raised him as her own)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "son"
+  },
+  {
+    "id": 7401,
+    "value": "grave-god, psychopomp",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "domain",
+        "new_value": "graves"
+      },
+      {
+        "target": "character_trait",
+        "new_value": "psychopomp"
+      }
+    ]
+  },
+  {
+    "id": 7402,
+    "value": "cosmic adversary of Ra",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "cosmic adversary of Ra"
+  },
+  {
+    "id": 7402,
+    "value": "embodiment of isfet",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "embodiment"
+      },
+      {
+        "target": "domain",
+        "new_value": "isfet"
+      }
+    ]
+  },
+  {
+    "id": 6090,
+    "value": "Eye of Ra",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Eye of Ra"
+  },
+  {
+    "id": 7405,
+    "value": "Ogdoad pair-member with Heh",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "consort"
+  },
+  {
+    "id": 7407,
+    "value": "Ogdoad pair-member with Kuk",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "consort"
+  },
+  {
+    "id": 6241,
+    "value": "Theban triad member",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Theban triad member"
+  },
+  {
+    "id": 6241,
+    "value": "moon-god",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "moon"
+  },
+  {
+    "id": 7406,
+    "value": "Ogdoad pair-member with Kauket",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "consort"
+  },
+  {
+    "id": 6765,
+    "value": "cosmic principle",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "cosmic principle"
+  },
+  {
+    "id": 6240,
+    "value": "Theban triad member",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Theban triad member"
+  },
+  {
+    "id": 7404,
+    "value": "Ogdoad pair-member with Nun",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "consort"
+  },
+  {
+    "id": 6362,
+    "value": "Memphite triad member",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Memphite triad member"
+  },
+  {
+    "id": 6362,
+    "value": "god of the blue lotus",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "god"
+      },
+      {
+        "target": "domain",
+        "new_value": "blue lotus"
+      }
+    ]
+  },
+  {
+    "id": 7400,
+    "value": "canopic-jar protectress",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "protectress"
+      },
+      {
+        "target": "domain",
+        "new_value": "canopic jars"
+      }
+    ]
+  },
+  {
+    "id": 7400,
+    "value": "sister-wife of Set",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "wife"
+  },
+  {
+    "id": 6906,
+    "value": "member of the Memphite triad",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "member"
+      },
+      {
+        "target": "domain",
+        "new_value": "Memphite triad"
+      }
+    ]
+  },
+  {
+    "id": 6906,
+    "value": "supreme creator (Memphite theology)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "supreme creator"
+  },
+  {
+    "id": 6302,
+    "value": "Eye of Ra",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "eye"
+      },
+      {
+        "target": "domain",
+        "new_value": "Ra"
+      }
+    ]
+  },
+  {
+    "id": 6302,
+    "value": "Memphite triad member",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "member"
+      },
+      {
+        "target": "domain",
+        "new_value": "Memphite triad"
+      }
+    ]
+  },
+  {
+    "id": 6302,
+    "value": "plague-and-healing patron",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "patron"
+      },
+      {
+        "target": "domain",
+        "new_value": "plague and healing"
+      }
+    ]
+  },
+  {
+    "id": 6838,
+    "value": "Germanic North Sea coast goddess",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "Germanic North Sea coast"
+  },
+  {
+    "id": 6838,
+    "value": "protectress of seafarers and merchants",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "protectress"
+      },
+      {
+        "target": "domain",
+        "new_value": "seafarers and merchants"
+      }
+    ]
+  },
+  {
+    "id": 6786,
+    "value": "continental Germanic earth-mother goddess",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "earth mother"
+  },
+  {
+    "id": 6786,
+    "value": "the etymological counterpart of the Norse Njörðr",
+    "action": "MOVE",
+    "target": "identification",
+    "new_value": "Njörðr"
+  },
+  {
+    "id": 6752,
+    "value": "the earth-born primordial god of the Germanic peoples",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "earth-born primordial god"
+      },
+      {
+        "target": "domain",
+        "new_value": "Germanic peoples"
+      }
+    ]
+  },
+  {
+    "id": 7227,
+    "value": "a cosmic ruler-power of the Gnostic systems (especially Basilidian)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "cosmic ruler-power"
+  },
+  {
+    "id": 7227,
+    "value": "the ruler of the 365 heavens",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "ruler"
+      },
+      {
+        "target": "domain",
+        "new_value": "365 heavens"
+      }
+    ]
+  },
+  {
+    "id": 7226,
+    "value": "the first emanation of the Monad",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "first emanation"
+      },
+      {
+        "target": "domain",
+        "new_value": "Monad"
+      }
+    ]
+  },
+  {
+    "id": 7226,
+    "value": "the source of the further aeons (including, ultimately, Sophia)",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "source"
+      },
+      {
+        "target": "domain",
+        "new_value": "further aeons"
+      }
+    ]
+  },
+  {
+    "id": 7226,
+    "value": "the supreme feminine principle of Sethian Gnosticism",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "supreme feminine principle"
+      },
+      {
+        "target": "domain",
+        "new_value": "Sethian Gnosticism"
+      }
+    ]
+  },
+  {
+    "id": 7228,
+    "value": "a redeemed and revelation-bearing figure of the Sethian texts",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "redeemed and revelation-bearing figure"
+  },
+  {
+    "id": 7228,
+    "value": "sister or wife of Seth",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "sister"
+  },
+  {
+    "id": 6736,
+    "value": "an emanation within the line proceeding from Barbelo",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "descendant"
+  },
+  {
+    "id": 6736,
+    "value": "the unwitting mother of the demiurge Yaldabaoth",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "mother"
+  },
+  {
+    "id": 6736,
+    "value": "the youngest aeon of the Pleroma",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "youngest aeon"
+      },
+      {
+        "target": "domain",
+        "new_value": "Pleroma"
+      }
+    ]
+  },
+  {
+    "id": 7225,
+    "value": "the supreme transcendent Godhead of the Gnostic systems",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "supreme transcendent Godhead"
+  },
+  {
+    "id": 7225,
+    "value": "the ultimate source of the Pleroma of aeons",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "ultimate source"
+      },
+      {
+        "target": "domain",
+        "new_value": "Pleroma"
+      }
+    ]
+  },
+  {
+    "id": 7256,
+    "value": "the demiurge of the Gnostic systems",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "demiurge"
+  },
+  {
+    "id": 7256,
+    "value": "the malformed offspring of Sophia",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "child"
+  },
+  {
+    "id": 6742,
+    "value": "born from sea-foam; pre-Olympian generation in Hesiodic genealogy (an alternative tradition makes her daughter of Zeus and Dione)",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "daughter"
+  },
+  {
+    "id": 6742,
+    "value": "lover of Ares",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "consort"
+  },
+  {
+    "id": 7274,
+    "value": "god of Delphi, Delos, Didyma, Klaros oracles",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "god"
+      },
+      {
+        "target": "domain",
+        "new_value": "oracles"
+      },
+      {
+        "target": "domain",
+        "new_value": "Delphi"
+      },
+      {
+        "target": "domain",
+        "new_value": "Delos"
+      },
+      {
+        "target": "domain",
+        "new_value": "Didyma"
+      },
+      {
+        "target": "domain",
+        "new_value": "Klaros"
+      }
+    ]
+  },
+  {
+    "id": 7274,
+    "value": "leader of the Muses (Apollo Mousagetes)",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "leader"
+      },
+      {
+        "target": "domain",
+        "new_value": "Muses"
+      }
+    ]
+  },
+  {
+    "id": 7422,
+    "value": "god of war",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "war"
+  },
+  {
+    "id": 7422,
+    "value": "lover of Aphrodite",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "consort"
+  },
+  {
+    "id": 7277,
+    "value": "patroness of childbirth, hunting, wild animals, the moon",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "patroness"
+      },
+      {
+        "target": "domain",
+        "new_value": "childbirth"
+      },
+      {
+        "target": "domain",
+        "new_value": "hunting"
+      },
+      {
+        "target": "domain",
+        "new_value": "wild animals"
+      },
+      {
+        "target": "domain",
+        "new_value": "moon"
+      }
+    ]
+  },
+  {
+    "id": 7277,
+    "value": "virgin-goddess",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "virgin"
+  },
+  {
+    "id": 7285,
+    "value": "patroness of Athens",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "patroness"
+      },
+      {
+        "target": "domain",
+        "new_value": "Athens"
+      }
+    ]
+  },
+  {
+    "id": 7285,
+    "value": "virgin-goddess (one of the three Παρθένοι — Athena, Artemis, Hestia)",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "virgin"
+  },
+  {
+    "id": 7441,
+    "value": "guardian of Hades",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "guardian"
+      },
+      {
+        "target": "domain",
+        "new_value": "Hades"
+      }
+    ]
+  },
+  {
+    "id": 7425,
+    "value": "parent of Erebus and Nyx",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "ancestor"
+  },
+  {
+    "id": 7425,
+    "value": "the first of all things",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "first of all things"
+  },
+  {
+    "id": 7442,
+    "value": "slain by Bellerophon",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "event_type",
+        "new_value": "death"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "slain by Bellerophon"
+      }
+    ]
+  },
+  {
+    "id": 6099,
+    "value": "Titan king before Zeus",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "king"
+  },
+  {
+    "id": 6099,
+    "value": "youngest son of Ouranos and Gaia",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "son"
+  },
+  {
+    "id": 6140,
+    "value": "\"sometimes counted as the 12th Olympian (replacing Hestia)\"",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "Olympian"
+  },
+  {
+    "id": 6140,
+    "value": "\"twice-born (from Semele's incineration, then from Zeus's thigh)\"",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "twice-born"
+      },
+      {
+        "target": "event_type",
+        "new_value": "birth"
+      },
+      {
+        "target": "significant_event",
+        "new_value": "twice-born (from Semele's incineration, then from Zeus's thigh)"
+      }
+    ]
+  },
+  {
+    "id": 7428,
+    "value": "\"mate of Nyx\"",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "consort"
+  },
+  {
+    "id": 7435,
+    "value": "\"(Olympian) son of Aphrodite, often by Ares\"",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "son"
+  },
+  {
+    "id": 7435,
+    "value": "\"(primordial) one of the first cosmic beings emerging from Chaos\"",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "primordial being"
+  },
+  {
+    "id": 6219,
+    "value": "\"mother (with Ouranos) of the Titans, Cyclopes, Hekatonkheires\"",
+    "action": "KEEP_AS_KIN",
+    "new_kin": "mother"
+  },
+  {
+    "id": 6219,
+    "value": "\"primordial earth-goddess\"",
+    "action": "MOVE",
+    "target": "domain",
+    "new_value": "earth"
+  },
+  {
+    "id": 6754,
+    "value": "\"goddess of crossroads, magic, ghosts\"",
+    "action": "SPLIT",
+    "moves": [
+      {
+        "target": "character_trait",
+        "new_value": "goddess"
+      },
+      {
+        "target": "domain",
+        "new_value": "crossroads"
+      },
+      {
+        "target": "domain",
+        "new_value": "magic"
+      },
+      {
+        "target": "domain",
+        "new_value": "ghosts"
+      }
+    ]
+  },
+  {
+    "id": 6754,
+    "value": "\"threefold-aspect deity in late tradition\"",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "threefold-aspect deity"
+  },
+  {
+    "id": 6218,
+    "value": "\"only physically-imperfect Olympian (lame)\"",
+    "action": "MOVE",
+    "target": "character_trait",
+    "new_value": "lame"
+  }
+]
