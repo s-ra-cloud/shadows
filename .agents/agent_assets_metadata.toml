@@ -48,3 +48,9 @@ id = "4H0J4ZKxvdquXZBLzuieT"
 uri = "file://Laura.csv"
 type = "table"
 title = "Laura — 80 figures to verify"
+
+[[outputs]]
+id = "5dU7k4G7Nr2MR8VjTHpao"
+uri = "file://scripts/reports/11e-batches/batch-01.md"
+type = "text"
+title = "Batch 1/7 — family_roles à arbitrer (100 entrées)"
