@@ -108,15 +108,15 @@ export default function PartnersPage() {
       <section className="relative py-24 bg-gradient-to-b from-[#0C0042] to-[#0B0626]">
         <div className="max-w-4xl mx-auto px-6">
           <div className="mb-8">
-            <Link href="/">
+            <Link href="/" aria-label="Back to SHADOWS home page">
               <Button
                 variant="ghost"
                 size="sm"
                 className="text-shadows-text/40 hover:text-shadows-text p-1 h-auto"
                 data-testid="button-back-home"
               >
-                <ArrowLeft size={16} className="mr-1" />
-                Back
+                <ArrowLeft size={16} className="mr-1" aria-hidden="true" />
+                Back to home
               </Button>
             </Link>
           </div>
@@ -183,10 +183,12 @@ export default function PartnersPage() {
                         href={partner.url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label={`Open ${partner.name} website in a new tab`}
+                        title={`Open ${partner.name} website`}
                         className="flex-shrink-0 text-[#8F00FF]/60 hover:text-[#03FF9B] transition-colors"
                         data-testid={`link-partner-${i}`}
                       >
-                        <ExternalLink size={18} />
+                        <ExternalLink size={18} aria-hidden="true" />
                       </a>
                     </div>
 
@@ -216,11 +218,12 @@ export default function PartnersPage() {
                         href={partner.url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label={`Visit the ${partner.name} website (opens in a new tab)`}
                         className="inline-flex items-center gap-2 text-sm text-[#8F00FF]/70 hover:text-[#03FF9B] transition-colors"
                         data-testid={`link-partner-visit-${i}`}
                       >
-                        Visit website
-                        <ExternalLink size={14} />
+                        Visit {partner.name} website
+                        <ExternalLink size={14} aria-hidden="true" />
                       </a>
                     </div>
                   </div>

@@ -74,10 +74,11 @@ export default function NewsPage() {
                   {isLong && (
                     <button
                       onClick={() => toggleExpand(item.id)}
+                      aria-label={expanded ? `Show less of: ${item.title}` : `Read more of: ${item.title}`}
                       className="mt-3 flex items-center gap-1 text-xs text-[#8F00FF]/70 hover:text-[#8F00FF] transition-colors"
                       data-testid={`button-expand-news-${item.id}`}
                     >
-                      {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      {expanded ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
                       {expanded ? "Show less" : "Read more"}
                     </button>
                   )}

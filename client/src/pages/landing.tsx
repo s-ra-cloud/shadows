@@ -387,14 +387,14 @@ function PartnersPreview() {
 
         <RevealBlock delay={0.3}>
           <div className="text-center mt-12">
-            <Link href="/partners">
+            <Link href="/partners" aria-label="Learn more about all SHADOWS research partners">
               <Button
                 variant="outline"
                 size="sm"
                 className="border-[#350A8C]/40 text-shadows-text/60 hover:border-[#03FF9B] hover:text-[#03FF9B] no-default-hover-elevate no-default-active-elevate transition-all duration-300"
                 data-testid="button-view-partners"
               >
-                Learn More
+                Learn more about our partners
               </Button>
             </Link>
           </div>
