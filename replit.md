@@ -32,7 +32,7 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
   - birthCircumstances, deathCircumstances
   - objectProvenance — preserves the original `object` string with parenthetical annotations (e.g. donor-deity for Durga's weapons). NOT displayed in UI, NOT used in graph computations; reference-only column kept for future use, like `*_source` fields in the JSON.
   - originalDescriptions (jsonb) — backup snapshot of the pre-cleanup values for `domain`, `physicalCharacteristics`, `characterTrait`, `symbolism` of any figure that was editorially rewritten. NOT displayed in UI, NOT used in graph computations; reference-only safety net so the original phrasing can always be retrieved.
-- `edges` - Relationships between figures (parent of, married to, sibling of, etc.) - 401 edges
+- `edges` - Relationships between figures (parent of, married to, sibling of, group, identified with, trinity, adversary of, etc.) - 1100+ edges
 - `news` - News articles (title, content, date)
 - `publications` - Research publications (title, authors, venue, abstract, doi, pdf_url)
 - `suggestions` - Public suggestions for edits (type, status, submitterName, source, nodeId, field, currentValue, suggestedValue, sourceNodeId, targetNodeId, relationType, edgeId, createdAt)
