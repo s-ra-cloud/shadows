@@ -2,6 +2,8 @@ import { Link } from "wouter";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import machinaLogoPath from "@assets/Machin_logo_1772208429837.jpeg";
+import telemmeLogoPath from "@assets/image_1778849116577.png";
+import irisLogoPath from "@assets/image_1778849190765.png";
 function LegacyLogoSvg({ size = 112 }: { size?: number }) {
   const cx = 60, cy = 60;
   const r = 38;
@@ -72,6 +74,32 @@ const partners = [
       "Open research tooling",
     ],
   },
+  {
+    name: "TELEMMe — UMR 7303",
+    url: "https://telemme.mmsh.fr/",
+    visual: "telemme",
+    description:
+      "TELEMMe (Temps, Espaces, Langages, Europe Méridionale, Méditerranée) is a joint research unit (UMR 7303) of Aix-Marseille Université and the CNRS, hosted at the Maison Méditerranéenne des Sciences de l'Homme. The lab brings together historians, geographers, art historians, and social scientists working on Southern Europe and the Mediterranean from the late Middle Ages to the present. TELEMMe partners with SHADOWS on the historical and spatial framing of Mediterranean mythological traditions.",
+    focus: [
+      "Mediterranean & Southern Europe studies",
+      "Historical geography",
+      "Cultural and intellectual history",
+      "Interdisciplinary social sciences",
+    ],
+  },
+  {
+    name: "IRIS — EHESS",
+    url: "https://iris.ehess.fr/",
+    visual: "iris",
+    description:
+      "IRIS (Institut de Recherche Interdisciplinaire sur les enjeux Sociaux) is a joint research unit of the EHESS, CNRS, INSERM, and Université Sorbonne Paris Nord. It gathers anthropologists, sociologists, historians, and public-health researchers around the social, political, and ethical dimensions of contemporary issues. IRIS contributes to SHADOWS through interdisciplinary perspectives on the social construction and circulation of mythological imaginaries.",
+    focus: [
+      "Interdisciplinary social research",
+      "Anthropology & sociology",
+      "Cultural and political imaginaries",
+      "Critical humanities",
+    ],
+  },
 ];
 
 export default function PartnersPage() {
@@ -123,6 +151,20 @@ export default function PartnersPage() {
                           alt="Machina Research Network logo"
                           className="w-28 h-28 rounded-lg object-contain bg-white/90 p-1"
                           data-testid="img-machina-logo"
+                        />
+                      ) : partner.visual === "telemme" ? (
+                        <img
+                          src={telemmeLogoPath}
+                          alt="TELEMMe — UMR 7303 logo"
+                          className="w-44 h-28 rounded-lg object-contain bg-white/95 p-2"
+                          data-testid="img-telemme-logo"
+                        />
+                      ) : partner.visual === "iris" ? (
+                        <img
+                          src={irisLogoPath}
+                          alt="IRIS — EHESS logo"
+                          className="w-28 h-28 rounded-lg object-contain bg-white/95 p-2"
+                          data-testid="img-iris-logo"
                         />
                       ) : (
                         <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#350A8C]/20 to-[#8F00FF]/10 border border-[#350A8C]/20 flex items-center justify-center">
