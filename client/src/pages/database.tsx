@@ -12,7 +12,7 @@ import { Slider } from "@/components/ui/slider";
 import { DichotomyView } from "./graph";
 
 type Tab = "nodes" | "cross-cultural" | "relations" | "suggestions" | "sources" | "dichotomy";
-type NodeCategory = "characters" | "gender" | "domain" | "object" | "animals" | "characterTrait" | "physicalCharacteristics" | "significantEvent" | "symbolism" | "neumannArchetype" | "eventTypes" | "birthTypes" | "deathTypes" | "familyRoles";
+type NodeCategory = "characters" | "gender" | "domain" | "object" | "animals" | "characterTrait" | "physicalCharacteristics" | "significantEvent" | "neumannArchetype" | "eventTypes" | "birthTypes" | "deathTypes" | "familyRoles";
 
 const NODE_CATEGORIES: { key: NodeCategory; label: string; isArray?: boolean; commaSplit?: boolean }[] = [
   { key: "characters", label: "Characters" },
@@ -23,7 +23,6 @@ const NODE_CATEGORIES: { key: NodeCategory; label: string; isArray?: boolean; co
   { key: "characterTrait", label: "Character Trait", commaSplit: true },
   { key: "physicalCharacteristics", label: "Physical Characteristics", commaSplit: true },
   { key: "significantEvent", label: "Significant Event" },
-  { key: "symbolism", label: "Symbolism" },
   { key: "neumannArchetype", label: "Neumann Archetype" },
   { key: "eventTypes", label: "Event Types", isArray: true },
   { key: "birthTypes", label: "Birth Types", isArray: true },
@@ -40,7 +39,6 @@ const TRAIT_FIELDS = [
   { key: "characterTrait", label: "Character Trait", commaSplit: true },
   { key: "physicalCharacteristics", label: "Physical Characteristics", commaSplit: true },
   { key: "significantEvent", label: "Significant Event" },
-  { key: "symbolism", label: "Symbolism" },
   { key: "neumannArchetype", label: "Neumann Archetype" },
   { key: "birthCircumstances", label: "Birth Circumstances" },
   { key: "deathCircumstances", label: "Death Circumstances" },

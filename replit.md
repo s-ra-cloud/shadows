@@ -23,7 +23,7 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
   - sourceAttributions (jsonb) — per-field citations (e.g. `{domain: "Skáldskaparmál 25", animals: "...", ...}`). 462 figures populated. Surfaced in the `/database` Sources tab grouped by figure.
   - name, tradition, gender, domain, object, animals
   - characterTrait, physicalCharacteristics
-  - significantEvent, symbolism, neumannArchetype, mentionCount
+  - significantEvent, symbolism (stored but NOT displayed in UI — kept for future use), neumannArchetype, mentionCount
   - eventTypes (text array) - 23 types: rescue, sacrifice, descent_to_underworld, quest, etc.
   - birthTypes (text array) - 10 types: divine_parentage, born_from_body, miraculous_conception, etc.
   - deathTypes (text array) - 13 types: dismemberment, killed_by_kin, resurrection, etc.
@@ -46,8 +46,9 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 - `users` - Admin users (username, password)
 
 ## Data Source
-- 1,208+ mythological figures from curated database — ALL 100% ENRICHED across 20+ traditions:
-  - Greek (364), Chinese (204), Egyptian (152), Roman (148), Shinto (96), Norse (61), Aztec (54), Hindu (33), Celtic (43), Mesopotamian (20), Buddhist (16), Maya (16), Canaanite (14), Abrahamic (12), Cross-cultural (12), Germanic (9), Balinese (8), Gnostic (6), Phrygian (5), Christian (2)
+- 1,436 mythological figures across 19 traditions:
+  - Greek (388), Chinese (204), Roman (170), Egyptian (159), Shinto (106), Norse (75), Aztec (70), Hindu (63), Mesopotamian (47), Canaanite (32), Abrahamic (29), Celtic (21), Maya (16), Buddhist (16), Cross-cultural (12), Germanic (9), Balinese (8), Gnostic (6), Phrygian (5)
+  - Quality cleanups (May 2026): in-tradition duplicates merged (Eunostus, Paean, Maat/Ma'at, Xipe-Totec, Toyotama-hime CJK artifact, Yamatohime brackets artifact); 300+ `physical_characteristics` stripped of identity-statement leakage (e.g. "the supreme deity of..."); 79 `character_trait` reduced to bare adjectives (no narrative sub-clauses); 3 over-long `domain` fields shortened. Originals backed up to `original_descriptions`. Cross-tradition pairs (Anat, Resheph, Yam, Kothar-wa-Khasis between Egyptian/Canaanite, Agdistis between Roman/Phrygian) preserved as legitimate syncretism.
   - All figures have: domain, character_trait, physical_characteristics, symbolism, neumann_archetype
   - 258 with normalized eventTypes, 387 with birthTypes, 60 with deathTypes
   - 450+ relationship edges (parent_of, child_of, sibling_of, married_to, trinity, adversary_of)

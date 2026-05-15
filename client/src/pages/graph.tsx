@@ -940,7 +940,6 @@ function NodePanel({ node, relatedNodes, edges, onClose }: { node: Node; related
     { key: "characterTrait", label: "Character Trait" },
     { key: "physicalCharacteristics", label: "Physical Characteristics" },
     { key: "significantEvent", label: "Significant Event" },
-    { key: "symbolism", label: "Symbolism" },
     { key: "birthCircumstances", label: "Circumstances of Birth" },
     { key: "deathCircumstances", label: "Circumstances of Death" },
   ];
