@@ -5724,6 +5724,38 @@ export default function GraphPage() {
   const [characterSearch, setCharacterSearch] = useState("");
   const [enabledRelationTypes, setEnabledRelationTypes] = useState<Set<RelationType>>(new Set());
 
+  const cleanMode = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("clean") === "1";
+  }, []);
+
+  const urlParamsApplied = useRef(false);
+
+  useEffect(() => {
+    if (urlParamsApplied.current) return;
+    if (typeof window === "undefined") return;
+    if (!data?.nodes) return;
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get("view");
+    const focalName = params.get("focal");
+    const minShared = params.get("minShared");
+    const validViews = ["network", "direct", "umap", "ca", "fca", "relations"] as const;
+    if (view && (validViews as readonly string[]).includes(view)) {
+      setViewMode(view as typeof validViews[number]);
+    }
+    if (minShared) {
+      const n = parseInt(minShared, 10);
+      if (!isNaN(n) && n >= 1 && n <= 10) setMinSharedTraits(n);
+    }
+    if (focalName) {
+      const lower = focalName.toLowerCase();
+      const found = data.nodes.find(n => n.name.toLowerCase() === lower)
+        || data.nodes.find(n => n.name.toLowerCase().includes(lower));
+      if (found) setFocalCharacterId(found.id);
+    }
+    urlParamsApplied.current = true;
+  }, [data]);
+
   const handleGraphNodeSelect = useCallback((node: Node | null, trait?: TraitNode | null) => {
     if (trait) {
       setSelectedTrait(trait);
@@ -6097,6 +6129,7 @@ export default function GraphPage() {
 
   return (
     <div className="h-screen relative overflow-hidden" data-testid="page-graph">
+      {!cleanMode && (
       <div className="absolute top-4 left-16 lg:left-[19rem] z-30 flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -6135,8 +6168,9 @@ export default function GraphPage() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      )}
 
-      {viewMode === "network" && (
+      {!cleanMode && viewMode === "network" && (
         <div className={`absolute top-4 z-30 transition-[right] duration-200 ${(lastSelectedNode || selectedTrait) ? "right-[21rem] lg:right-[25rem]" : "right-4"}`}>
           <div className="relative w-64 lg:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-shadows-text/30" />
@@ -6152,7 +6186,7 @@ export default function GraphPage() {
         </div>
       )}
 
-      {viewMode === "direct" && (
+      {!cleanMode && viewMode === "direct" && (
       <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[85vh] overflow-y-auto">
         <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">
           Direct Connections
@@ -6243,7 +6277,7 @@ export default function GraphPage() {
         )}
       </div>)}
 
-      {viewMode === "fca" && (
+      {!cleanMode && viewMode === "fca" && (
         <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[85vh] overflow-y-auto w-56">
           <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">Concept lattice (FCA)</span>
           <p className="text-[9px] text-shadows-text/35 leading-tight mb-1">
@@ -6286,7 +6320,7 @@ export default function GraphPage() {
         </div>
       )}
 
-      {viewMode === "ca" && (
+      {!cleanMode && viewMode === "ca" && (
         <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-[#0B0626]/60 backdrop-blur-sm rounded-md p-3 border border-[#350A8C]/15 max-h-[85vh] overflow-y-auto w-56">
           <span className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-0.5">Correspondence (MCA)</span>
           <p className="text-[9px] text-shadows-text/35 leading-tight mb-1">
@@ -6401,6 +6435,7 @@ export default function GraphPage() {
         </div>
       )}
 
+      {!cleanMode && (
       <FilterSidebar
         filters={filters}
         activeFilters={activeFilters}
@@ -6431,6 +6466,7 @@ export default function GraphPage() {
         hierarchySelections={hierarchySelections}
         onToggleHierarchyNode={toggleHierarchyNode}
         onClearHierarchyFilter={clearHierarchyFilter}
+
         minTraitFrequency={minTraitFrequency}
         onMinTraitFrequencyChange={setMinTraitFrequency}
         enabledRelationTypes={enabledRelationTypes}
@@ -6440,8 +6476,9 @@ export default function GraphPage() {
         onToggleTradition={toggleTradition}
         onClearTraditionFilter={clearTraditionFilter}
       />
+      )}
 
-      <div className="absolute inset-0 lg:left-72">
+      <div className={cleanMode ? "absolute inset-0" : "absolute inset-0 lg:left-72"}>
         {viewMode === "network" ? (
           <NetworkView
             filteredGraphNodes={filteredGraphNodes}
