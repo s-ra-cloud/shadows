@@ -10,6 +10,16 @@ export default function Footer() {
             <p className="text-shadows-text/50 text-sm leading-relaxed">
               A Comparative Archetypal Atlas of Myth and Symbol. Exploring the universal patterns that connect world mythologies.
             </p>
+            <p className="text-shadows-text/50 text-sm leading-relaxed mt-3">
+              Contact:{" "}
+              <a
+                href="mailto:laura.duparc@univ-amu.fr"
+                className="text-shadows-text/70 hover:text-shadows-green transition-colors underline decoration-dotted underline-offset-2"
+                data-testid="link-footer-contact-email"
+              >
+                laura.duparc@univ-amu.fr
+              </a>
+            </p>
           </div>
           <div>
             <h4 className="text-shadows-text/70 text-sm font-medium mb-3 uppercase tracking-wider">Navigate</h4>
