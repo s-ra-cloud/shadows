@@ -60,3 +60,15 @@ id = "d4L2nf4g2omRpQnRgRw0e"
 uri = "file://screenshots/isis-direct-clean.jpg"
 type = "image"
 title = "Isis — Direct view (min. 5 traits partagés)"
+
+[[outputs]]
+id = "YXqgv03tJh6VV7bX5trW8"
+uri = "file://screenshots/isis-direct-4k.png"
+type = "image"
+title = "Isis — Direct view 5K (5120×2880)"
+
+[[outputs]]
+id = "U3vLYDv763nj2yOdxKgF0"
+uri = "file://screenshots/isis-direct-hd.png"
+type = "image"
+title = "Isis — Direct view HD (2560×1440)"
