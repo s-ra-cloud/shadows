@@ -72,3 +72,15 @@ id = "U3vLYDv763nj2yOdxKgF0"
 uri = "file://screenshots/isis-direct-hd.png"
 type = "image"
 title = "Isis — Direct view HD (2560×1440)"
+
+[[outputs]]
+id = "OgubvQbIhZAnGkz7pNRut"
+uri = "file://screenshots/hindu-double-trinity-hd.png"
+type = "image"
+title = "Double trinité hindoue — HD (2297×2454)"
+
+[[outputs]]
+id = "KJjYEcf1SlUMGgB67qCWC"
+uri = "file://screenshots/hindu-trinity-raw.png"
+type = "image"
+title = "Double trinité hindoue — brut 6K (6000×5600)"

@@ -5003,12 +5003,14 @@ function RelationsView({
   onSelectNode,
   onHoverNode,
   selectedNodeIds,
+  cleanMode = false,
 }: {
   nodes: Node[];
   edges: Edge[];
   onSelectNode: (node: Node | null) => void;
   onHoverNode: (node: any) => void;
   selectedNodeIds: Set<number>;
+  cleanMode?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawRef = useRef<(() => void) | null>(null);
@@ -5620,6 +5622,7 @@ function RelationsView({
   return (
     <div className="w-full h-full relative">
       <canvas ref={canvasRef} className="w-full h-full" data-testid="canvas-relations-view" />
+      {!cleanMode && (
       <div className="absolute top-4 right-4 z-20 bg-[#0B0626]/80 backdrop-blur-xl border border-[#350A8C]/30 rounded-md p-3 space-y-2 max-h-[85vh] overflow-y-auto scrollbar-thin" data-testid="relations-filter-panel">
         <div className="text-[10px] uppercase tracking-wider text-shadows-text/30 mb-1">Filter Relations</div>
         <div className="flex items-center gap-1 mb-1">
@@ -5681,6 +5684,7 @@ function RelationsView({
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -5752,6 +5756,23 @@ export default function GraphPage() {
       const found = data.nodes.find(n => n.name.toLowerCase() === lower)
         || data.nodes.find(n => n.name.toLowerCase().includes(lower));
       if (found) setFocalCharacterId(found.id);
+    }
+    const tradParam = params.get("tradition");
+    if (tradParam) {
+      const wanted = tradParam.split(",").map(s => s.trim()).filter(Boolean);
+      const traditionsInData = new Set(data.nodes.map(n => n.tradition).filter(Boolean) as string[]);
+      const matched = wanted.filter(t => {
+        for (const td of traditionsInData) {
+          if (td.toLowerCase() === t.toLowerCase()) return true;
+        }
+        return false;
+      }).map(t => {
+        for (const td of traditionsInData) {
+          if (td.toLowerCase() === t.toLowerCase()) return td;
+        }
+        return t;
+      });
+      if (matched.length > 0) setSelectedTraditions(new Set(matched));
     }
     urlParamsApplied.current = true;
   }, [data]);
@@ -5989,6 +6010,13 @@ export default function GraphPage() {
     return { max: max || 10 };
   }, [data?.nodes, selectedCharacterIds, enabledCategoriesSet, activeSupersets]);
 
+  const urlCharNames = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const raw = new URLSearchParams(window.location.search).get("chars");
+    if (!raw) return null;
+    return new Set(raw.split(",").map(s => s.trim().toLowerCase()).filter(Boolean));
+  }, []);
+
   const effectiveNodes = useMemo(() => {
     if (!data?.nodes) return [];
     let nodes = data.nodes.filter(n => n.tradition !== "Cross-cultural");
@@ -5998,8 +6026,11 @@ export default function GraphPage() {
     if (hierarchyFilteredNodeIds) {
       nodes = nodes.filter(n => hierarchyFilteredNodeIds.has(n.id));
     }
+    if (urlCharNames) {
+      nodes = nodes.filter(n => urlCharNames.has(n.name.toLowerCase()));
+    }
     return nodes;
-  }, [data?.nodes, hierarchyFilteredNodeIds, selectedTraditions]);
+  }, [data?.nodes, hierarchyFilteredNodeIds, selectedTraditions, urlCharNames]);
 
   const relationEdges = useMemo((): RelationEdge[] => {
     if (!data?.edges || enabledRelationTypes.size === 0) return [];
@@ -6564,6 +6595,7 @@ export default function GraphPage() {
             onSelectNode={(n) => handleGraphNodeSelect(n)}
             onHoverNode={setHoveredNode}
             selectedNodeIds={selectedNodeIds}
+            cleanMode={cleanMode}
           />
         )}
 
