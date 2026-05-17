@@ -43,6 +43,46 @@ export async function registerRoutes(
 
   await seedDatabase();
 
+  function getBaseUrl(req: Request): string {
+    const forwardedProto = (req.headers["x-forwarded-proto"] as string | undefined)?.split(",")[0].trim();
+    const forwardedHost = (req.headers["x-forwarded-host"] as string | undefined)?.split(",")[0].trim();
+    const proto = forwardedProto || req.protocol || "https";
+    const host = forwardedHost || req.get("host") || "localhost";
+    return `${proto}://${host}`;
+  }
+
+  app.get("/robots.txt", (req, res) => {
+    const base = getBaseUrl(req);
+    res.type("text/plain").send(
+      `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\n\nSitemap: ${base}/sitemap.xml\n`
+    );
+  });
+
+  app.get("/sitemap.xml", (req, res) => {
+    const base = getBaseUrl(req);
+    const pages: Array<{ path: string; changefreq: string; priority: string }> = [
+      { path: "/", changefreq: "monthly", priority: "1.0" },
+      { path: "/about", changefreq: "monthly", priority: "0.8" },
+      { path: "/graph", changefreq: "weekly", priority: "0.9" },
+      { path: "/database", changefreq: "weekly", priority: "0.9" },
+      { path: "/research", changefreq: "monthly", priority: "0.7" },
+      { path: "/news", changefreq: "weekly", priority: "0.6" },
+      { path: "/team", changefreq: "monthly", priority: "0.6" },
+      { path: "/partners", changefreq: "monthly", priority: "0.6" },
+    ];
+    const urlEntries = pages
+      .map(
+        (p) =>
+          `  <url><loc>${base}${p.path}</loc><changefreq>${p.changefreq}</changefreq><priority>${p.priority}</priority></url>`
+      )
+      .join("\n");
+    res
+      .type("application/xml")
+      .send(
+        `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urlEntries}\n</urlset>\n`
+      );
+  });
+
   app.get("/api/projects", async (_req, res) => {
     const projects = await storage.getProjects();
     res.json(projects);

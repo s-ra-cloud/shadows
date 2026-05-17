@@ -142,7 +142,13 @@ export default function PartnersPage() {
               >
                 <div className="flex flex-col md:flex-row gap-8 items-start">
                   <div className="flex-shrink-0">
-                    <a href={partner.url} target="_blank" rel="noopener noreferrer" className="block opacity-80 hover:opacity-100 transition-opacity">
+                    <a
+                      href={partner.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Visit the ${partner.name} website (opens in a new tab)`}
+                      className="block opacity-80 hover:opacity-100 transition-opacity"
+                    >
                       {partner.visual === "legacy" ? (
                         <LegacyLogoSvg size={112} />
                       ) : partner.visual === "machina" ? (
