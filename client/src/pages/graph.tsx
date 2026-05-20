@@ -4134,6 +4134,8 @@ function UMAPView({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawRef = useRef<(() => void) | null>(null);
+  const zoomByRef = useRef<((factor: number) => void) | null>(null);
+  const resetViewRef = useRef<(() => void) | null>(null);
   const selectedNodeIdsRef = useRef(selectedNodeIds);
   selectedNodeIdsRef.current = selectedNodeIds;
 
@@ -4428,20 +4430,22 @@ function UMAPView({
       const h = findHover(e.clientX - rect.left, e.clientY - rect.top);
       if (h) onSelectNode(h.p.figure);
     };
+    function zoomBy(factor: number) {
+      const newZoom = Math.max(0.3, Math.min(8, zoom * factor));
+      // Zoom toward the current view center — keeps position stable regardless of cursor
+      const ratio = newZoom / zoom;
+      panX = panX * ratio;
+      panY = panY * ratio;
+      zoom = newZoom;
+      draw();
+    }
+    zoomByRef.current = zoomBy;
+    resetViewRef.current = () => { zoom = 1; panX = 0; panY = 0; draw(); };
+
     canvas.onwheel = (e) => {
       e.preventDefault();
       const factor = e.deltaY < 0 ? 1.15 : 0.87;
-      const newZoom = Math.max(0.3, Math.min(8, zoom * factor));
-      const rect = canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      // Zoom toward cursor
-      const cx = width / 2 + panX;
-      const cy = height / 2 + panY;
-      panX = mx - (mx - cx) * (newZoom / zoom) - width / 2;
-      panY = my - (my - cy) * (newZoom / zoom) - height / 2;
-      zoom = newZoom;
-      draw();
+      zoomBy(factor);
     };
 
     draw();
@@ -4453,6 +4457,8 @@ function UMAPView({
       canvas.onclick = null;
       canvas.onwheel = null;
       drawRef.current = null;
+      zoomByRef.current = null;
+      resetViewRef.current = null;
     };
   }, [points, onHoverNode, onSelectNode]);
 
@@ -4505,6 +4511,32 @@ function UMAPView({
         >
           {showAllLabels ? "All labels" : "Top labels"}
         </button>
+        <div className="flex items-center gap-0.5 bg-black/60 border border-white/10 rounded overflow-hidden">
+          <button
+            onClick={() => zoomByRef.current?.(0.8)}
+            className="w-7 h-7 flex items-center justify-center text-shadows-text/80 hover:bg-[#8F00FF]/30 transition-colors text-sm leading-none"
+            data-testid="button-umap-zoom-out"
+            title="Zoom out"
+          >
+            −
+          </button>
+          <button
+            onClick={() => resetViewRef.current?.()}
+            className="px-2 h-7 flex items-center justify-center text-shadows-text/60 hover:bg-[#8F00FF]/30 transition-colors text-[9px] border-x border-white/10"
+            data-testid="button-umap-zoom-reset"
+            title="Reset zoom"
+          >
+            Reset
+          </button>
+          <button
+            onClick={() => zoomByRef.current?.(1.25)}
+            className="w-7 h-7 flex items-center justify-center text-shadows-text/80 hover:bg-[#8F00FF]/30 transition-colors text-sm leading-none"
+            data-testid="button-umap-zoom-in"
+            title="Zoom in"
+          >
+            +
+          </button>
+        </div>
       </div>
       {visibleTraditions.length > 0 && (
         <div className="absolute bottom-3 right-3 bg-black/60 border border-white/10 rounded px-2 py-2 max-w-[200px]" data-testid="legend-umap">
