@@ -4138,6 +4138,10 @@ function UMAPView({
   const resetViewRef = useRef<(() => void) | null>(null);
   const selectedNodeIdsRef = useRef(selectedNodeIds);
   selectedNodeIdsRef.current = selectedNodeIds;
+  const onHoverNodeRef = useRef(onHoverNode);
+  onHoverNodeRef.current = onHoverNode;
+  const onSelectNodeRef = useRef(onSelectNode);
+  onSelectNodeRef.current = onSelectNode;
 
   const [neighbors, setNeighbors] = useState(15);
   const [minDist, setMinDist] = useState(0.1);
@@ -4415,7 +4419,7 @@ function UMAPView({
         const h = findHover(mx, my);
         if (h?.p.figure.id !== hovered?.p.figure.id) {
           hovered = h;
-          onHoverNode(h ? h.p.figure : null);
+          onHoverNodeRef.current(h ? h.p.figure : null);
           draw();
         } else {
           hovered = h;
@@ -4423,12 +4427,12 @@ function UMAPView({
       }
     };
     canvas.onmouseup = () => { isDragging = false; };
-    canvas.onmouseleave = () => { isDragging = false; hovered = null; onHoverNode(null); draw(); };
+    canvas.onmouseleave = () => { isDragging = false; hovered = null; onHoverNodeRef.current(null); draw(); };
     canvas.onclick = (e) => {
       if (didDrag) return;
       const rect = canvas.getBoundingClientRect();
       const h = findHover(e.clientX - rect.left, e.clientY - rect.top);
-      if (h) onSelectNode(h.p.figure);
+      if (h) onSelectNodeRef.current(h.p.figure);
     };
     function zoomBy(factor: number) {
       const newZoom = Math.max(0.3, Math.min(8, zoom * factor));
@@ -4460,7 +4464,7 @@ function UMAPView({
       zoomByRef.current = null;
       resetViewRef.current = null;
     };
-  }, [points, onHoverNode, onSelectNode]);
+  }, [points]);
 
   useEffect(() => { if (drawRef.current) drawRef.current(); }, [selectedNodeIds, showAllLabels]);
 
