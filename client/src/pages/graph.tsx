@@ -4142,6 +4142,8 @@ function UMAPView({
   onHoverNodeRef.current = onHoverNode;
   const onSelectNodeRef = useRef(onSelectNode);
   onSelectNodeRef.current = onSelectNode;
+  // Persist view across effect re-runs (e.g. when UMAP recomputes new points)
+  const viewRef = useRef({ zoom: 1, panX: 0, panY: 0 });
 
   const [neighbors, setNeighbors] = useState(15);
   const [minDist, setMinDist] = useState(0.1);
@@ -4243,8 +4245,6 @@ function UMAPView({
     const offsetX = padding + ((width - padding * 2) - (maxX - minX) * scale) / 2;
     const offsetY = padding + ((height - padding * 2) - (maxY - minY) * scale) / 2;
 
-    let zoom = 1;
-    let panX = 0, panY = 0;
     let isDragging = false;
     let lastMx = 0, lastMy = 0;
     let didDrag = false;
@@ -4253,6 +4253,7 @@ function UMAPView({
     function project(p: { x: number; y: number }) {
       const baseX = offsetX + (p.x - minX) * scale;
       const baseY = offsetY + (p.y - minY) * scale;
+      const { zoom, panX, panY } = viewRef.current;
       return {
         sx: width / 2 + (baseX - width / 2) * zoom + panX,
         sy: height / 2 + (baseY - height / 2) * zoom + panY,
@@ -4274,7 +4275,7 @@ function UMAPView({
 
       const selIds = selectedNodeIdsRef.current;
       const hasSelection = selIds.size > 0;
-      const baseR = 4.5 * Math.min(2, Math.max(0.7, zoom * 0.85));
+      const baseR = 4.5 * Math.min(2, Math.max(0.7, viewRef.current.zoom * 0.85));
 
       // Compute connected ids when hovering
       const hoveredId = hovered?.p.figure.id;
@@ -4320,7 +4321,7 @@ function UMAPView({
       const labelPad = 4;
       const labelOffset = 8;
       const labelH = 14;
-      const maxLabels = showAllLabelsRef.current ? points.length : Math.min(150, Math.floor(80 + zoom * 40));
+      const maxLabels = showAllLabelsRef.current ? points.length : Math.min(150, Math.floor(80 + viewRef.current.zoom * 40));
       let placed = 0;
 
       const candidates = hoveredId
@@ -4386,7 +4387,7 @@ function UMAPView({
     drawRef.current = draw;
 
     function findHover(mx: number, my: number) {
-      const r = 6 * Math.max(1, zoom);
+      const r = 6 * Math.max(1, viewRef.current.zoom);
       let best: { p: typeof points[0]; sx: number; sy: number; d: number } | null = null;
       for (const p of points) {
         const { sx, sy } = project(p);
@@ -4411,7 +4412,8 @@ function UMAPView({
         const dx = e.clientX - lastMx;
         const dy = e.clientY - lastMy;
         if (Math.abs(dx) + Math.abs(dy) > 3) didDrag = true;
-        panX += dx; panY += dy;
+        viewRef.current.panX += dx;
+        viewRef.current.panY += dy;
         lastMx = e.clientX;
         lastMy = e.clientY;
         draw();
@@ -4435,16 +4437,16 @@ function UMAPView({
       if (h) onSelectNodeRef.current(h.p.figure);
     };
     function zoomBy(factor: number) {
-      const newZoom = Math.max(0.3, Math.min(8, zoom * factor));
-      // Zoom toward the current view center — keeps position stable regardless of cursor
-      const ratio = newZoom / zoom;
-      panX = panX * ratio;
-      panY = panY * ratio;
-      zoom = newZoom;
+      const v = viewRef.current;
+      const newZoom = Math.max(0.3, Math.min(8, v.zoom * factor));
+      const ratio = newZoom / v.zoom;
+      v.panX = v.panX * ratio;
+      v.panY = v.panY * ratio;
+      v.zoom = newZoom;
       draw();
     }
     zoomByRef.current = zoomBy;
-    resetViewRef.current = () => { zoom = 1; panX = 0; panY = 0; draw(); };
+    resetViewRef.current = () => { viewRef.current = { zoom: 1, panX: 0, panY: 0 }; draw(); };
 
     canvas.onwheel = (e) => {
       e.preventDefault();
