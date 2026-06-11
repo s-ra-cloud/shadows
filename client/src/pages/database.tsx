@@ -130,7 +130,17 @@ export default function DatabasePage() {
                   onClick={async () => {
                     try {
                       const res = await fetch("/api/export", { credentials: "include" });
-                      if (!res.ok) throw new Error("Export failed");
+                      if (res.status === 401) {
+                        setIsEditor(false);
+                        queryClient.invalidateQueries({ queryKey: ["/api/database/auth-status"] });
+                        toast({ title: "Edit session expired", description: "Please enter the editor password again, then retry the export.", variant: "destructive" });
+                        return;
+                      }
+                      if (!res.ok) {
+                        let detail = `Server error (${res.status})`;
+                        try { const j = await res.json(); if (j?.error || j?.message) detail = j.error || j.message; } catch {}
+                        throw new Error(detail);
+                      }
                       const blob = await res.blob();
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement("a");
@@ -139,8 +149,8 @@ export default function DatabasePage() {
                       a.click();
                       URL.revokeObjectURL(url);
                       toast({ title: "Database exported" });
-                    } catch {
-                      toast({ title: "Export failed", variant: "destructive" });
+                    } catch (err) {
+                      toast({ title: "Export failed", description: err instanceof Error ? err.message : undefined, variant: "destructive" });
                     }
                   }}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all bg-[#350A8C]/30 text-[#E0DCE6]/70 border border-[#350A8C]/40 hover:border-[#8F00FF]/50"
@@ -200,7 +210,17 @@ export default function DatabasePage() {
                   onClick={async () => {
                     try {
                       const res = await fetch("/api/suggestions/export", { credentials: "include" });
-                      if (!res.ok) throw new Error("Export failed");
+                      if (res.status === 401) {
+                        setIsEditor(false);
+                        queryClient.invalidateQueries({ queryKey: ["/api/database/auth-status"] });
+                        toast({ title: "Edit session expired", description: "Please enter the editor password again, then retry the export.", variant: "destructive" });
+                        return;
+                      }
+                      if (!res.ok) {
+                        let detail = `Server error (${res.status})`;
+                        try { const j = await res.json(); if (j?.error || j?.message) detail = j.error || j.message; } catch {}
+                        throw new Error(detail);
+                      }
                       const blob = await res.blob();
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement("a");
@@ -209,8 +229,8 @@ export default function DatabasePage() {
                       a.click();
                       URL.revokeObjectURL(url);
                       toast({ title: "Suggestions exported" });
-                    } catch {
-                      toast({ title: "Export failed", variant: "destructive" });
+                    } catch (err) {
+                      toast({ title: "Export failed", description: err instanceof Error ? err.message : undefined, variant: "destructive" });
                     }
                   }}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all bg-[#350A8C]/30 text-[#E0DCE6]/70 border border-[#350A8C]/40 hover:border-[#8F00FF]/50"
