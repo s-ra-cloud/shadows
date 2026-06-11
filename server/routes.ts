@@ -32,12 +32,21 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // The app is served over HTTPS behind Replit's proxy and is frequently
+  // embedded in an iframe (canvas preview). Cookies must be SameSite=None +
+  // Secure to be sent inside a cross-site iframe; trust proxy so the Secure
+  // cookie is actually issued when x-forwarded-proto is https.
+  app.set("trust proxy", 1);
   app.use(
     session({
       secret: process.env.SESSION_SECRET || "shadows-dev-secret",
       resave: false,
       saveUninitialized: false,
-      cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 },
+      cookie: {
+        secure: true,
+        sameSite: "none",
+        maxAge: 24 * 60 * 60 * 1000,
+      },
     })
   );
 
