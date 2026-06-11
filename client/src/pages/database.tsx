@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, setEditorToken, authHeaders } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Node, Edge, Suggestion, Source, TraitHierarchy, TraitCrossCut } from "@shared/schema";
 import {
@@ -129,9 +129,10 @@ export default function DatabasePage() {
                 <button
                   onClick={async () => {
                     try {
-                      const res = await fetch("/api/export", { credentials: "include" });
+                      const res = await fetch("/api/export", { headers: authHeaders(), credentials: "include" });
                       if (res.status === 401) {
                         setIsEditor(false);
+                        setEditorToken(null);
                         queryClient.invalidateQueries({ queryKey: ["/api/database/auth-status"] });
                         toast({ title: "Edit session expired", description: "Please enter the editor password again, then retry the export.", variant: "destructive" });
                         return;
@@ -209,9 +210,10 @@ export default function DatabasePage() {
                 <button
                   onClick={async () => {
                     try {
-                      const res = await fetch("/api/suggestions/export", { credentials: "include" });
+                      const res = await fetch("/api/suggestions/export", { headers: authHeaders(), credentials: "include" });
                       if (res.status === 401) {
                         setIsEditor(false);
+                        setEditorToken(null);
                         queryClient.invalidateQueries({ queryKey: ["/api/database/auth-status"] });
                         toast({ title: "Edit session expired", description: "Please enter the editor password again, then retry the export.", variant: "destructive" });
                         return;
@@ -284,6 +286,7 @@ export default function DatabasePage() {
               onClick={() => {
                 if (editorMode) {
                   setIsEditor(false);
+                  setEditorToken(null);
                   apiRequest("POST", "/api/database/logout");
                   queryClient.invalidateQueries({ queryKey: ["/api/database/auth-status"] });
                   toast({ title: "Exited edit mode" });
@@ -531,8 +534,12 @@ function LoginModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
   const { toast } = useToast();
 
   const loginMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/database/login", { password }),
-    onSuccess: () => {
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/database/login", { password });
+      return res.json();
+    },
+    onSuccess: (data: { token?: string }) => {
+      if (data?.token) setEditorToken(data.token);
       toast({ title: "Edit mode activated" });
       onSuccess();
     },

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { queryClient, apiRequest, setEditorToken, authHeaders } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -221,7 +221,8 @@ export default function AdminPage() {
       const res = await apiRequest("POST", "/api/admin/login", { password });
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: { token?: string }) => {
+      if (data?.token) setEditorToken(data.token);
       setAuthenticated(true);
       setAuthError("");
     },
@@ -280,8 +281,25 @@ export default function AdminPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                window.location.href = "/api/export";
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/export", { headers: authHeaders(), credentials: "include" });
+                  if (!res.ok) {
+                    toast({ title: "Export failed", description: `Server error (${res.status})`, variant: "destructive" });
+                    return;
+                  }
+                  const blob = await res.blob();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "shadows-database.json";
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(url);
+                } catch (e: any) {
+                  toast({ title: "Export failed", description: e?.message || "Network error", variant: "destructive" });
+                }
               }}
               className="border-[#350A8C]/30 text-shadows-text/50 no-default-hover-elevate no-default-active-elevate"
               data-testid="button-download-db"
@@ -294,6 +312,7 @@ export default function AdminPage() {
               size="sm"
               onClick={async () => {
                 try { await apiRequest("POST", "/api/admin/logout"); } catch {}
+                setEditorToken(null);
                 setAuthenticated(false);
               }}
               className="border-[#350A8C]/30 text-shadows-text/50 no-default-hover-elevate no-default-active-elevate"

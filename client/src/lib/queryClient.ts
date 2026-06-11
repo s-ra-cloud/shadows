@@ -1,5 +1,24 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+const EDITOR_TOKEN_KEY = "shadows-editor-token";
+
+export function setEditorToken(token: string | null) {
+  if (token) localStorage.setItem(EDITOR_TOKEN_KEY, token);
+  else localStorage.removeItem(EDITOR_TOKEN_KEY);
+}
+
+export function getEditorToken(): string | null {
+  try { return localStorage.getItem(EDITOR_TOKEN_KEY); } catch { return null; }
+}
+
+// The app runs inside a cross-site iframe (canvas preview) where browsers block
+// third-party cookies, so the editor session cookie can't be relied on. We send
+// a token (issued at login, stored in localStorage) in this header as a fallback.
+export function authHeaders(base: Record<string, string> = {}): Record<string, string> {
+  const token = getEditorToken();
+  return token ? { ...base, "x-editor-token": token } : base;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -14,7 +33,7 @@ export async function apiRequest(
 ): Promise<Response> {
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: authHeaders(data ? { "Content-Type": "application/json" } : {}),
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -30,6 +49,7 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const res = await fetch(queryKey.join("/") as string, {
+      headers: authHeaders(),
       credentials: "include",
     });
 

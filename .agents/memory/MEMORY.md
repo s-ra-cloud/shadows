@@ -1,1 +1,1 @@
-- [iframe session cookies](iframe-session-cookies.md) — editor login 401s inside canvas iframe unless session cookie is SameSite=None; Secure (+ trust proxy).
+- [iframe auth (cookies fail)](iframe-session-cookies.md) — editor/admin login 401s inside canvas iframe; cookies blocked, use x-editor-token header token (HMAC of SESSION_SECRET).

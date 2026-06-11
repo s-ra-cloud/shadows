@@ -1,5 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import { createHmac } from "crypto";
 import session from "express-session";
 import { storage, db } from "./storage";
 import { seedDatabase } from "./seed";
@@ -12,8 +13,31 @@ declare module "express-session" {
   }
 }
 
+// Deterministic tokens derived from SESSION_SECRET. Used as a fallback to
+// cookies because the app is embedded in a cross-site iframe (canvas preview),
+// where browsers (Safari, recent Chrome) block third-party cookies entirely —
+// so cookie-based sessions can't be relied on. Tokens are sent in the
+// `x-editor-token` header and validated here. They survive restarts and need
+// no server-side storage.
+const SECRET = process.env.SESSION_SECRET || "shadows-dev-secret";
+const EDITOR_TOKEN = createHmac("sha256", SECRET).update("editor").digest("hex");
+const ADMIN_TOKEN = createHmac("sha256", SECRET).update("admin").digest("hex");
+
+function tokenFrom(req: Request): string {
+  return (req.headers["x-editor-token"] as string | undefined) || "";
+}
+
+function hasAdmin(req: Request): boolean {
+  return !!(req.session && req.session.isAdmin) || tokenFrom(req) === ADMIN_TOKEN;
+}
+
+function hasEditor(req: Request): boolean {
+  return !!(req.session && (req.session.isEditor || req.session.isAdmin)) ||
+    tokenFrom(req) === EDITOR_TOKEN || tokenFrom(req) === ADMIN_TOKEN;
+}
+
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  if (req.session && req.session.isAdmin) {
+  if (hasAdmin(req)) {
     next();
   } else {
     res.status(401).json({ message: "Unauthorized" });
@@ -21,7 +45,7 @@ function requireAdmin(req: Request, res: Response, next: NextFunction) {
 }
 
 function requireEditor(req: Request, res: Response, next: NextFunction) {
-  if (req.session && (req.session.isEditor || req.session.isAdmin)) {
+  if (hasEditor(req)) {
     next();
   } else {
     res.status(401).json({ message: "Unauthorized" });
@@ -368,7 +392,7 @@ export async function registerRoutes(
     const adminPassword = process.env.SESSION_SECRET || "shadows-admin-2024";
     if (password === adminPassword) {
       req.session.isAdmin = true;
-      res.json({ success: true });
+      res.json({ success: true, token: ADMIN_TOKEN });
     } else {
       res.status(401).json({ message: "Invalid password" });
     }
@@ -607,7 +631,7 @@ export async function registerRoutes(
     const editorPassword = process.env.DB_EDITOR_PASSWORD || "shadows-editor-2024";
     if (password === editorPassword) {
       req.session.isEditor = true;
-      res.json({ success: true });
+      res.json({ success: true, token: EDITOR_TOKEN });
     } else {
       res.status(401).json({ message: "Invalid password" });
     }
@@ -622,8 +646,8 @@ export async function registerRoutes(
 
   app.get("/api/database/auth-status", (req, res) => {
     res.json({
-      isEditor: !!(req.session && (req.session.isEditor || req.session.isAdmin)),
-      isAdmin: !!(req.session && req.session.isAdmin),
+      isEditor: hasEditor(req),
+      isAdmin: hasAdmin(req),
     });
   });
 
