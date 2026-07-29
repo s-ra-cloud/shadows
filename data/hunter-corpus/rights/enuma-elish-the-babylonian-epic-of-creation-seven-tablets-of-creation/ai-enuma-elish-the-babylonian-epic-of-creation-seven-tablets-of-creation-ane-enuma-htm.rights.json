@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:enuma-elish-the-babylonian-epic-of-creation-seven-tablets-of-creation",
+  "edition_id": "edition:ai-enuma-elish-the-babylonian-epic-of-creation-seven-tablets-of-creation-ane-enuma-htm",
+  "source_id": "source:sacred-texts",
+  "source_reference": "https://www.sacred-texts.com/ane/enuma.htm",
+  "rights": {
+    "status": "public_domain",
+    "confidence": "high",
+    "basis": "source_statement",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "territory_covered": true,
+    "statement": "AI-suggested lead (confidence: high). Claimed rights: Public domain",
+    "license": "Public Domain Mark",
+    "rights_url": null,
+    "license_url": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "publication_allowed": true,
+    "translation_allowed": true,
+    "locked": false,
+    "do_not_publish": false,
+    "review_required": false,
+    "obligations": [],
+    "reasons": [
+      "standardized Creative Commons marker"
+    ],
+    "assessed_at": "2026-07-29T16:13:05.757000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_statement",
+    "statement": "AI-suggested lead (confidence: high). Claimed rights: Public domain",
+    "license_url": "https://creativecommons.org/publicdomain/mark/1.0/"
+  },
+  "file_sha256": "sha256:5eeddd176419e894972ee2978d6600fc6efc45b6b0706bcd01779aac985004e4"
+}

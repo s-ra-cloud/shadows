@@ -9,7 +9,8 @@ import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import { eq, desc } from "drizzle-orm";
 import { db, storage } from "./storage";
-import { hunterCandidates, hunterRuns, hunterCorpusFiles } from "@shared/schema";
+import { hunterCandidates, hunterRuns, hunterCorpusFiles, hunterBlockers } from "@shared/schema";
+import { runHuntingCycle, type CycleStore, type CycleScope } from "./hunterCycle";
 import {
   loadDefaultPolicy,
   DATA_DIR,
@@ -345,6 +346,131 @@ export function registerHunterRoutes(
     } catch (e) {
       await finishRun(runId, false, null, errMessage(e));
     }
+  });
+
+  // ---- Hunting cycles ----------------------------------------------------
+  app.post("/api/hunter/cycles", requireEditor, async (req, res) => {
+    const query = String(req.body?.query ?? "").trim();
+    if (!query) return res.status(400).json({ message: "Provide a search query for the cycle" });
+    const limitRaw = Number(req.body?.limit);
+    const scope: CycleScope = {
+      query,
+      limit: Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 25) : 10,
+      useAi: req.body?.use_ai !== false,
+    };
+    const runId = await createRun("cycle");
+    // Long operation: respond immediately; the UI polls the run until done.
+    res.json({ run: { id: runId, status: "running" } });
+    try {
+      const policy = await loadActivePolicy();
+      validatePolicy(policy);
+      const registry = await loadActiveRegistry();
+      const store: CycleStore = {
+        async existingEditionIds() {
+          const rows = await db
+            .select({ editionId: hunterCandidates.editionId })
+            .from(hunterCandidates);
+          return new Set(rows.map((r) => r.editionId));
+        },
+        async insertCandidate(candidate) {
+          await db
+            .insert(hunterCandidates)
+            .values({
+              workId: String(candidate.work_id),
+              editionId: String(candidate.edition_id),
+              data: candidate,
+            })
+            .onConflictDoNothing();
+        },
+        async addBlocker(b) {
+          await db.insert(hunterBlockers).values({
+            runId,
+            sourceId: b.sourceId ?? null,
+            url: b.url ?? null,
+            reason: b.reason,
+            detail: b.detail ?? null,
+            workId: b.workId ?? null,
+            editionId: b.editionId ?? null,
+          });
+        },
+        async updateProgress(progress) {
+          await db
+            .update(hunterRuns)
+            .set({ result: { progress } })
+            .where(eq(hunterRuns.id, runId));
+        },
+        async mirrorCorpusRecords(records) {
+          for (const record of records) {
+            const file = record.file as Record<string, unknown> | undefined;
+            if (!file || !file.relative_path) continue;
+            await db
+              .insert(hunterCorpusFiles)
+              .values({
+                workId: String(record.work_id ?? ""),
+                editionId: String(record.edition_id ?? ""),
+                language: (record.language as string | undefined) ?? null,
+                partition: file.locked ? "locked" : "public",
+                path: String(file.relative_path),
+                byteCount: Number(file.bytes ?? 0),
+                sha256: (file.sha256 as string | undefined) ?? null,
+                record,
+              })
+              .onConflictDoNothing();
+          }
+        },
+      };
+      const summary = await runHuntingCycle({
+        scope,
+        policy,
+        registry,
+        corpusRoot: CORPUS_ROOT,
+        store,
+      });
+      await finishRun(runId, true, summary);
+    } catch (e) {
+      await finishRun(runId, false, null, errMessage(e));
+    }
+  });
+
+  app.get("/api/hunter/cycles", async (_req, res) => {
+    const runs = await db
+      .select()
+      .from(hunterRuns)
+      .where(eq(hunterRuns.kind, "cycle"))
+      .orderBy(desc(hunterRuns.id))
+      .limit(25);
+    // Keep the listing light: drop bulky per-record entries (fetch a single
+    // run via /api/hunter/runs/:id for full detail).
+    res.json(
+      runs.map((run) => {
+        const result = run.result as Record<string, unknown> | null;
+        if (result && "entries" in result) {
+          const { entries, ...rest } = result;
+          void entries;
+          return { ...run, result: rest };
+        }
+        return run;
+      }),
+    );
+  });
+
+  // ---- Blocker ledger ----------------------------------------------------
+  app.get("/api/hunter/blockers", async (_req, res) => {
+    res.json(await db.select().from(hunterBlockers).orderBy(desc(hunterBlockers.id)).limit(500));
+  });
+
+  app.patch("/api/hunter/blockers/:id", requireEditor, async (req, res) => {
+    const status = String(req.body?.status ?? "");
+    if (!["open", "resolved", "dismissed"].includes(status)) {
+      return res.status(400).json({ message: "status must be open, resolved or dismissed" });
+    }
+    const [row] = await db
+      .update(hunterBlockers)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(hunterBlockers.id, parseInt(String(req.params.id))))
+      .returning();
+    if (!row) return res.status(404).json({ message: "Blocker not found" });
+    res.json(row);
   });
 
   // ---- Corpus -----------------------------------------------------------

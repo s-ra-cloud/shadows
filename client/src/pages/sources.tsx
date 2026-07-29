@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 type Tab = "library" | "hunter";
-type HunterTab = "candidates" | "plan" | "corpus" | "verify" | "catalog" | "runs" | "policy" | "registry";
+type HunterTab = "cycles" | "candidates" | "plan" | "corpus" | "verify" | "catalog" | "runs" | "policy" | "registry";
 
 export default function SourcesPage() {
   const [activeTab, setActiveTab] = useState<Tab>("library");
@@ -256,6 +256,7 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
   const [activeHunterTab, setActiveHunterTab] = useState<HunterTab>("candidates");
 
   const tabs: { key: HunterTab; label: string }[] = [
+    { key: "cycles", label: "Hunting Cycles" },
     { key: "candidates", label: "Candidates" },
     { key: "plan", label: "Download Plan" },
     { key: "corpus", label: "Corpus" },
@@ -291,6 +292,7 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
         ))}
       </div>
       <div className="p-6">
+        {activeHunterTab === "cycles" && <HunterCycles isEditor={isEditor} />}
         {activeHunterTab === "candidates" && <HunterCandidates isEditor={isEditor} />}
         {activeHunterTab === "plan" && <HunterPlan isEditor={isEditor} />}
         {activeHunterTab === "corpus" && <HunterCorpus isEditor={isEditor} />}
@@ -305,6 +307,330 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
 }
 
 // --- Source Hunter Sub-components ---
+
+const BLOCKER_REASON_LABELS: Record<string, string> = {
+  robots_disallowed: "Blocked by robots.txt",
+  requires_auth: "Login / auth required",
+  rights_locked: "Rights locked (not publishable)",
+  fetch_failed: "Fetch failed",
+  unregistered_source: "Host not in trusted registry",
+  discovery_unsupported: "No discovery strategy yet",
+  download_not_authorized: "Automated download not authorized",
+  invalid_candidate: "Invalid candidate data",
+  too_large: "File exceeds size limit",
+};
+
+function HunterCycles({ isEditor }: { isEditor: boolean }) {
+  const [query, setQuery] = useState("");
+  const [limit, setLimit] = useState(10);
+  const [useAi, setUseAi] = useState(true);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const { toast } = useToast();
+
+  const { data: cycles } = useQuery<any[]>({
+    queryKey: ["/api/hunter/cycles"],
+    refetchInterval: (q) =>
+      Array.isArray(q.state.data) && q.state.data.some((r: any) => r.status === "running")
+        ? 2000
+        : false,
+  });
+  const running = Array.isArray(cycles) && cycles.some((r) => r.status === "running");
+
+  const { data: blockers } = useQuery<any[]>({
+    queryKey: ["/api/hunter/blockers"],
+    refetchInterval: running ? 3000 : false,
+  });
+
+  useEffect(() => {
+    if (!running) {
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/blockers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/candidates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/corpus"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/library"] });
+    }
+  }, [running]);
+
+  const launchMutation = useMutation({
+    mutationFn: () =>
+      apiRequest("POST", "/api/hunter/cycles", { query, limit, use_ai: useAi }),
+    onSuccess: () => {
+      toast({ title: "Hunting cycle launched" });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/cycles"] });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Could not launch cycle", description: e.message, variant: "destructive" }),
+  });
+
+  const blockerMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: string }) =>
+      apiRequest("PATCH", `/api/hunter/blockers/${id}`, { status }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/hunter/blockers"] }),
+    onError: (e: Error) =>
+      toast({ title: "Update failed", description: e.message, variant: "destructive" }),
+  });
+
+  const cycleItems = Array.isArray(cycles) ? cycles : [];
+  const blockerItems = Array.isArray(blockers) ? blockers : [];
+  const openBlockers = blockerItems.filter((b) => b.status === "open");
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h3 className="text-lg font-medium text-[#E0DCE6] mb-1">Hunting Cycles</h3>
+        <p className="text-sm text-[#E0DCE6]/60 mb-4">
+          Launch an autonomous cycle: the hunter crawls the trusted source registries, asks the AI
+          for extra leads, downloads everything it can (cleared texts to the public Library, all
+          others to the locked research partition) and records every blocker it hits.
+        </p>
+        {isEditor ? (
+          <div className="p-4 rounded-xl border border-[#350A8C]/30 bg-[#0B0626]/50 flex flex-wrap items-end gap-3">
+            <div className="flex-1 min-w-[220px]">
+              <label className="block text-xs text-[#E0DCE6]/50 mb-1">Scope (tradition, deity, keyword...)</label>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder='e.g. "Enuma Elish", "Orphic hymns", "Norse Edda"'
+                className="w-full px-3 py-2 rounded-lg bg-[#130D30] border border-[#350A8C]/40 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60"
+                data-testid="input-cycle-query"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-[#E0DCE6]/50 mb-1">Max per source</label>
+              <input
+                type="number"
+                min={1}
+                max={25}
+                value={limit}
+                onChange={(e) => setLimit(Math.max(1, Math.min(25, Number(e.target.value) || 10)))}
+                className="w-24 px-3 py-2 rounded-lg bg-[#130D30] border border-[#350A8C]/40 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60"
+                data-testid="input-cycle-limit"
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-[#E0DCE6]/70 pb-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useAi}
+                onChange={(e) => setUseAi(e.target.checked)}
+                className="accent-[#8F00FF]"
+                data-testid="checkbox-cycle-ai"
+              />
+              AI lead search
+            </label>
+            <button
+              onClick={() => launchMutation.mutate()}
+              disabled={launchMutation.isPending || running || !query.trim()}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-[#8F00FF] text-white hover:bg-[#7B00E0] disabled:opacity-50 transition-colors"
+              data-testid="button-launch-cycle"
+            >
+              {running ? <RefreshCw size={16} className="animate-spin" /> : <Play size={16} />}
+              {running ? "Cycle running..." : "Launch Cycle"}
+            </button>
+          </div>
+        ) : (
+          <div className="p-4 rounded-lg border border-[#350A8C]/20 bg-[#0B0626]/40 text-sm text-[#E0DCE6]/50">
+            Enter edit mode to launch a hunting cycle.
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h4 className="text-sm font-medium text-[#E0DCE6]/80 mb-3">Past cycles</h4>
+        {cycleItems.length === 0 ? (
+          <div className="p-6 text-center border border-[#350A8C]/20 rounded-xl bg-[#0B0626]/30 text-sm text-[#E0DCE6]/50">
+            No hunting cycles have been launched yet.
+          </div>
+        ) : (
+          <div className="border border-[#350A8C]/30 rounded-xl overflow-hidden bg-[#0B0626]/50">
+            {cycleItems.map((run: any) => {
+              const result = run.result ?? {};
+              const progress = result.progress ?? (result.scope ? result : null);
+              const isExpanded = expandedId === run.id;
+              const summary = result.scope ? result : progress?.phase === "completed" ? progress : null;
+              return (
+                <div key={run.id} className="border-b border-[#350A8C]/20 last:border-0">
+                  <div
+                    className="flex items-center gap-4 p-4 hover:bg-[#130D30]/50 transition-colors cursor-pointer"
+                    onClick={() => setExpandedId(isExpanded ? null : run.id)}
+                    data-testid={`row-cycle-${run.id}`}
+                  >
+                    {isExpanded ? (
+                      <ChevronDown size={16} className="text-[#8F00FF] shrink-0" />
+                    ) : (
+                      <ChevronRight size={16} className="text-[#E0DCE6]/40 shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-[#E0DCE6] truncate">
+                        {(summary?.scope?.query ?? progress?.query) ? `“${summary?.scope?.query ?? progress?.query}”` : `Cycle #${run.id}`}
+                      </div>
+                      <div className="text-xs text-[#E0DCE6]/50 mt-0.5">
+                        {new Date(run.startedAt).toLocaleString()}
+                        {run.status === "running" && progress?.phase && (
+                          <span className="text-[#03FF9B] ml-2">{String(progress.phase).replace(/_/g, " ")}...</span>
+                        )}
+                      </div>
+                    </div>
+                    {run.status === "running" && (
+                      <span className="inline-flex items-center gap-1.5 text-xs text-[#03FF9B]">
+                        <RefreshCw size={12} className="animate-spin" /> Running
+                      </span>
+                    )}
+                    {run.status === "failed" && (
+                      <span className="inline-flex items-center gap-1 text-xs text-red-400">
+                        <X size={12} /> Failed
+                      </span>
+                    )}
+                    {run.status === "completed" && summary && (
+                      <div className="flex items-center gap-3 text-xs shrink-0">
+                        <span className="text-[#E0DCE6]/60">{summary.discovered ?? 0} found</span>
+                        <span className="text-[#03FF9B]">{summary.downloaded_public ?? 0} public</span>
+                        <span className="text-orange-400">{summary.downloaded_locked ?? 0} locked</span>
+                        <span className="text-red-400">{summary.blockers ?? 0} blockers</span>
+                      </div>
+                    )}
+                  </div>
+                  {isExpanded && (
+                    <div className="p-4 bg-[#0B0626] border-t border-[#350A8C]/10 space-y-3">
+                      {run.error && (
+                        <div className="text-sm text-red-400 flex items-center gap-2">
+                          <AlertCircle size={14} /> {run.error}
+                        </div>
+                      )}
+                      {summary && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                          {[
+                            ["Discovered", summary.discovered],
+                            ["Candidates created", summary.created],
+                            ["Duplicates skipped", summary.duplicates],
+                            ["Invalid leads", summary.invalid],
+                            ["Downloaded (public)", summary.downloaded_public],
+                            ["Downloaded (locked)", summary.downloaded_locked],
+                            ["Metadata only", summary.metadata_only],
+                            ["Failed", summary.failed],
+                          ].map(([label, value]) => (
+                            <div key={String(label)} className="p-2 rounded-lg bg-[#130D30] border border-[#350A8C]/20">
+                              <div className="text-[#E0DCE6]/50">{label}</div>
+                              <div className="text-[#E0DCE6] text-base font-medium">{value ?? 0}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {Array.isArray(summary?.discovery) && summary.discovery.length > 0 && (
+                        <div>
+                          <div className="text-xs text-[#E0DCE6]/50 mb-2">New candidates & where they came from</div>
+                          <ul className="space-y-1 text-xs">
+                            {summary.discovery.map((d: any, i: number) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <span
+                                  className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-bold shrink-0 ${
+                                    d.origin === "ai_search"
+                                      ? "bg-[#8F00FF]/20 text-[#8F00FF]"
+                                      : "bg-[#03FF9B]/15 text-[#03FF9B]"
+                                  }`}
+                                >
+                                  {d.origin === "ai_search" ? "AI" : "Registry"}
+                                </span>
+                                <span className="text-[#E0DCE6]/80">{d.title}</span>
+                                <span className="text-[#E0DCE6]/40 truncate">{d.originDetail}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-sm font-medium text-[#E0DCE6]/80">
+            Blocker ledger{" "}
+            <span className="text-[#E0DCE6]/40 font-normal">
+              ({openBlockers.length} open / {blockerItems.length} total)
+            </span>
+          </h4>
+        </div>
+        {blockerItems.length === 0 ? (
+          <div className="p-6 text-center border border-[#350A8C]/20 rounded-xl bg-[#0B0626]/30 text-sm text-[#E0DCE6]/50">
+            No blockers recorded yet.
+          </div>
+        ) : (
+          <div className="border border-[#350A8C]/30 rounded-xl overflow-hidden bg-[#0B0626]/50">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-[#130D30] border-b border-[#350A8C]/30 text-[#E0DCE6]/60">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Reason</th>
+                  <th className="px-4 py-3 font-medium">Detail</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  {isEditor && <th className="px-4 py-3 font-medium text-right">Actions</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#350A8C]/10">
+                {blockerItems.map((b: any) => (
+                  <tr key={b.id} className={`transition-colors ${b.status !== "open" ? "opacity-50" : "hover:bg-[#130D30]/30"}`} data-testid={`row-blocker-${b.id}`}>
+                    <td className="px-4 py-3 align-top">
+                      <span className="inline-flex px-2 py-1 rounded-md bg-red-500/10 text-red-300 text-xs font-medium whitespace-nowrap">
+                        {BLOCKER_REASON_LABELS[b.reason] ?? b.reason}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 align-top text-xs text-[#E0DCE6]/70 max-w-md">
+                      <div>{b.detail}</div>
+                      {b.url && (
+                        <a
+                          href={b.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-[#8F00FF] hover:underline mt-1 break-all"
+                        >
+                          <ExternalLink size={11} className="shrink-0" /> {b.url}
+                        </a>
+                      )}
+                      {b.editionId && <div className="font-mono text-[#E0DCE6]/40 mt-1">{b.editionId}</div>}
+                    </td>
+                    <td className="px-4 py-3 align-top text-xs text-[#E0DCE6]/60 capitalize">{b.status}</td>
+                    {isEditor && (
+                      <td className="px-4 py-3 align-top text-right whitespace-nowrap">
+                        {b.status === "open" ? (
+                          <>
+                            <button
+                              onClick={() => blockerMutation.mutate({ id: b.id, status: "resolved" })}
+                              className="px-2 py-1 rounded text-xs text-[#03FF9B] hover:bg-[#03FF9B]/10 transition-colors"
+                              data-testid={`button-resolve-blocker-${b.id}`}
+                            >
+                              Resolve
+                            </button>
+                            <button
+                              onClick={() => blockerMutation.mutate({ id: b.id, status: "dismissed" })}
+                              className="px-2 py-1 rounded text-xs text-[#E0DCE6]/50 hover:bg-[#350A8C]/30 transition-colors"
+                              data-testid={`button-dismiss-blocker-${b.id}`}
+                            >
+                              Dismiss
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => blockerMutation.mutate({ id: b.id, status: "open" })}
+                            className="px-2 py-1 rounded text-xs text-[#E0DCE6]/50 hover:bg-[#350A8C]/30 transition-colors"
+                          >
+                            Reopen
+                          </button>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function HunterCandidates({ isEditor }: { isEditor: boolean }) {
   const { data: candidates, isLoading } = useQuery({ queryKey: ["/api/hunter/candidates"] });

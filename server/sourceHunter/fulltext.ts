@@ -66,16 +66,21 @@ function checksum(payload: Buffer): string {
   return "sha256:" + createHash("sha256").update(payload).digest("hex");
 }
 
-async function robotsAllowed(): Promise<boolean> {
-  // Robots handling is best-effort in this port; remote fetches are also gated
-  // by the source allow-list in validateRemoteUrl. Default allow.
-  return true;
-}
+/** Optional robots checker: return allowed=false to block a URL fetch. */
+export type RobotsCheck = (
+  url: string,
+  source: FullTextSource,
+) => Promise<{ allowed: boolean; reason: string }>;
 
 async function readCandidatePayload(
   candidate: Candidate,
   source: FullTextSource,
-  options: { userAgent: string; maximumBytes: number; throttle: Throttle },
+  options: {
+    userAgent: string;
+    maximumBytes: number;
+    throttle: Throttle;
+    robotsCheck?: RobotsCheck;
+  },
 ): Promise<{ payload: Buffer; contentType: string | null }> {
   validateCandidateAccess(candidate, source);
   if (candidate.local_path) {
@@ -93,8 +98,11 @@ async function readCandidatePayload(
   }
 
   const url = String(candidate.text_url);
-  if (!(await robotsAllowed())) {
-    throw new PermissionErrorLike(`robots policy disallows download: ${url}`);
+  if (options.robotsCheck && source.robots_mode === "target_origin") {
+    const decision = await options.robotsCheck(url, source);
+    if (!decision.allowed) {
+      throw new PermissionErrorLike(`robots policy disallows download: ${decision.reason}`);
+    }
   }
   await options.throttle.wait(source);
   const response = await fetch(url, {
@@ -236,7 +244,12 @@ export async function collectFulltexts(
   policy: Policy,
   registry: Record<string, unknown>,
   corpusRoot: string,
-  options: { assessedAt?: string | Date; selectionMode?: string; userAgent?: string } = {},
+  options: {
+    assessedAt?: string | Date;
+    selectionMode?: string;
+    userAgent?: string;
+    robotsCheck?: RobotsCheck;
+  } = {},
 ): Promise<Record<string, unknown>[]> {
   const selectionMode = options.selectionMode ?? "preferred";
   const userAgent = options.userAgent ?? DEFAULT_USER_AGENT;
@@ -272,6 +285,7 @@ export async function collectFulltexts(
         userAgent,
         maximumBytes: Number(policy.maximum_file_bytes),
         throttle,
+        robotsCheck: options.robotsCheck,
       });
       const embeddedNotice = extractEmbeddedNotice(payload, String(candidate.format));
       const finalRights = assessRights(candidate, policy, { embeddedNotice, assessedAt });

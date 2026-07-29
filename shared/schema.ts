@@ -152,6 +152,24 @@ export const hunterCorpusFiles = pgTable("hunter_corpus_files", {
   downloadedAt: timestamp("downloaded_at").defaultNow().notNull(),
 });
 
+// Blockers recorded by hunting cycles: anything that stopped the hunter from
+// discovering or downloading a text (robots.txt, auth walls, rights locks,
+// fetch failures, unregistered sources...). Persist across cycles until an
+// editor resolves or dismisses them.
+export const hunterBlockers = pgTable("hunter_blockers", {
+  id: serial("id").primaryKey(),
+  runId: integer("run_id").references(() => hunterRuns.id),
+  sourceId: text("source_id"),
+  url: text("url"),
+  reason: text("reason").notNull(), // robots_disallowed | requires_auth | rights_locked | fetch_failed | unregistered_source | discovery_unsupported | download_not_authorized | invalid_candidate | too_large
+  detail: text("detail"),
+  workId: text("work_id"),
+  editionId: text("edition_id"),
+  status: text("status").notNull().default("open"), // open | resolved | dismissed
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -170,6 +188,7 @@ export const insertSourceSchema = createInsertSchema(sources).omit({ id: true, c
 export const insertHunterCandidateSchema = createInsertSchema(hunterCandidates).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertHunterRunSchema = createInsertSchema(hunterRuns).omit({ id: true, startedAt: true });
 export const insertHunterCorpusFileSchema = createInsertSchema(hunterCorpusFiles).omit({ id: true, downloadedAt: true });
+export const insertHunterBlockerSchema = createInsertSchema(hunterBlockers).omit({ id: true, createdAt: true, updatedAt: true });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -199,3 +218,5 @@ export type HunterRun = typeof hunterRuns.$inferSelect;
 export type InsertHunterRun = z.infer<typeof insertHunterRunSchema>;
 export type HunterCorpusFile = typeof hunterCorpusFiles.$inferSelect;
 export type InsertHunterCorpusFile = z.infer<typeof insertHunterCorpusFileSchema>;
+export type HunterBlocker = typeof hunterBlockers.$inferSelect;
+export type InsertHunterBlocker = z.infer<typeof insertHunterBlockerSchema>;
