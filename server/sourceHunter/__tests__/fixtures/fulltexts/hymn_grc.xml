@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Ὕμνος τῇ θεῷ</title></titleStmt>
+      <publicationStmt><p>Synthetic public-domain fixture.</p></publicationStmt>
+      <sourceDesc><p>Synthetic fixture.</p></sourceDesc>
+    </fileDesc>
+  </teiHeader>
+  <text><body><p>Ἡ θεὰ παρὰ τῷ τείχει ἔστη.</p></body></text>
+</TEI>
+

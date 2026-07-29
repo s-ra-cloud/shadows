@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://religious-mythology-resource-hunter.org/schemas/v1/fulltext-candidate.schema.json",
+  "title": "Full-text edition candidate",
+  "description": "One complete source-text edition offered to the rights-aware hunter.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "work_id",
+    "edition_id",
+    "title",
+    "author",
+    "source_id",
+    "language",
+    "language_role",
+    "format",
+    "rights",
+    "access"
+  ],
+  "properties": {
+    "work_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*:.+$"},
+    "edition_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*:.+$"},
+    "title": {"type": "string", "minLength": 1},
+    "author": {"type": ["string", "null"]},
+    "translator": {"type": ["string", "null"]},
+    "language": {"type": "string", "minLength": 2},
+    "language_name": {"type": "string", "minLength": 1},
+    "language_role": {
+      "enum": ["original", "translation", "parallel", "unknown"]
+    },
+    "original_language": {"type": ["string", "null"]},
+    "source_id": {"type": "string", "pattern": "^source:.+$"},
+    "text_url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://[^\\s]+$"
+    },
+    "local_path": {"type": "string", "minLength": 1},
+    "metadata_url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://[^\\s]+$"
+    },
+    "format": {
+      "enum": ["txt", "tei_xml", "xml", "html", "epub", "pdf", "json"]
+    },
+    "publication_year": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "maximum": 9999
+    },
+    "copyright_author_death_year": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "maximum": 9999
+    },
+    "rights": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status_claim": {
+          "enum": [
+            "public_domain",
+            "open_license",
+            "copyrighted",
+            "unknown"
+          ]
+        },
+        "statement": {"type": "string"},
+        "license": {"type": ["string", "null"]},
+        "license_url": {
+          "type": ["string", "null"],
+          "format": "uri"
+        },
+        "rights_url": {
+          "type": ["string", "null"],
+          "format": "uri"
+        },
+        "territories": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 2}
+        },
+        "basis": {
+          "enum": [
+            "source_metadata",
+            "embedded_notice",
+            "provider_policy",
+            "catalog",
+            "manual",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "access": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["download_allowed"],
+      "properties": {
+        "download_allowed": {"type": "boolean"},
+        "requires_auth": {"type": "boolean"},
+        "notes": {"type": "string"}
+      }
+    }
+  },
+  "oneOf": [
+    {"required": ["text_url"]},
+    {"required": ["local_path"]}
+  ]
+}
+

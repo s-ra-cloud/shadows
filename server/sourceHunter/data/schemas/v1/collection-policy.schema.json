@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://religious-mythology-resource-hunter.org/schemas/v1/collection-policy.schema.json",
+  "title": "Full-text collection policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "target_jurisdiction",
+    "current_year",
+    "unlock_likely_public_domain",
+    "ai_translatable_languages",
+    "preferred_formats",
+    "maximum_file_bytes"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "target_jurisdiction": {"type": "string", "minLength": 2},
+    "current_year": {"type": "integer", "minimum": 1900},
+    "unlock_likely_public_domain": {"type": "boolean"},
+    "ai_translatable_languages": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string"}
+    },
+    "preferred_formats": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string"}
+    },
+    "maximum_file_bytes": {"type": "integer", "minimum": 1}
+  }
+}
+

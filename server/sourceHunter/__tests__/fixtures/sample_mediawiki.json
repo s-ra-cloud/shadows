@@ -1,0 +1,34 @@
+{
+  "batchcomplete": true,
+  "query": {
+    "pages": {
+      "10": {
+        "pageid": 10,
+        "ns": 6,
+        "title": "File:Bast with a sistrum.jpg",
+        "fullurl": "https://commons.wikimedia.org/wiki/File:Bast_with_a_sistrum.jpg",
+        "imageinfo": [
+          {
+            "extmetadata": {
+              "ImageDescription": {
+                "value": "<p>A bronze figure of Bast carrying a sistrum.</p>"
+              },
+              "Artist": {"value": "Unknown Egyptian artist"},
+              "DateTimeOriginal": {"value": "Late Period"},
+              "Medium": {"value": "Bronze"},
+              "ObjectType": {"value": "Statuette"}
+            }
+          }
+        ]
+      },
+      "20": {
+        "pageid": 20,
+        "ns": 0,
+        "title": "A Sample Hymn",
+        "fullurl": "https://en.wikisource.org/wiki/A_Sample_Hymn",
+        "extract": "<p>Jupiter assembled the gods and Athena answered him.</p>"
+      }
+    }
+  }
+}
+

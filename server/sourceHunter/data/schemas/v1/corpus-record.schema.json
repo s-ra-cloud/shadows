@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://religious-mythology-resource-hunter.org/schemas/v1/corpus-record.schema.json",
+  "title": "Downloaded full-text corpus record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "download_id",
+    "work_id",
+    "edition_id",
+    "title",
+    "author",
+    "translator",
+    "language",
+    "language_role",
+    "source_id",
+    "source_reference",
+    "format",
+    "selection",
+    "rights",
+    "download_status",
+    "file"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "download_id": {"type": "string", "pattern": "^download:[0-9a-f]{16}$"},
+    "work_id": {"type": "string"},
+    "edition_id": {"type": "string"},
+    "title": {"type": "string"},
+    "author": {"type": ["string", "null"]},
+    "translator": {"type": ["string", "null"]},
+    "language": {"type": "string"},
+    "language_role": {"type": "string"},
+    "original_language": {"type": ["string", "null"]},
+    "source_id": {"type": "string"},
+    "source_reference": {"type": "string"},
+    "format": {"type": "string"},
+    "selection": {
+      "type": "object",
+      "required": ["selected", "reason", "rank"],
+      "properties": {
+        "selected": {"type": "boolean"},
+        "reason": {"type": "string"},
+        "rank": {"type": "integer"}
+      }
+    },
+    "rights": {"type": "object"},
+    "download_status": {
+      "enum": [
+        "downloaded",
+        "already_present",
+        "metadata_only",
+        "not_selected",
+        "failed"
+      ]
+    },
+    "file": {
+      "type": ["object", "null"],
+      "required": [
+        "relative_path",
+        "bytes",
+        "sha256",
+        "content_type",
+        "locked",
+        "lock_path",
+        "rights_path"
+      ],
+      "properties": {
+        "relative_path": {"type": "string"},
+        "bytes": {"type": "integer"},
+        "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "content_type": {"type": ["string", "null"]},
+        "locked": {"type": "boolean"},
+        "lock_path": {"type": ["string", "null"]},
+        "rights_path": {"type": "string"}
+      }
+    },
+    "error": {"type": ["string", "null"]},
+    "retrieved_at": {"type": ["string", "null"], "format": "date-time"}
+  }
+}

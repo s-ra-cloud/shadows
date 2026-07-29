@@ -15,6 +15,7 @@ import GraphPage from "@/pages/graph";
 import AdminPage from "@/pages/admin";
 import DatabasePage from "@/pages/database";
 import AboutPage from "@/pages/about";
+import SourcesPage from "@/pages/sources";
 
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -49,6 +50,9 @@ function Router() {
       </Route>
       <Route path="/graph">
         <GraphPage />
+      </Route>
+      <Route path="/sources">
+        <PublicLayout><SourcesPage /></PublicLayout>
       </Route>
       <Route path="/database">
         <PublicLayout><DatabasePage /></PublicLayout>

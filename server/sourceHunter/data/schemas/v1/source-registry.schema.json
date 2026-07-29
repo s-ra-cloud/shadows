@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://religious-mythology-resource-hunter.org/schemas/v1/source-registry.schema.json",
+  "title": "Religious and Mythology Source Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "sources"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "sources": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/source"}
+    }
+  },
+  "$defs": {
+    "httpsUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://[^\\s]+$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "name",
+        "source_family",
+        "endpoint_url",
+        "resource_types",
+        "access",
+        "rate_limit"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "pattern": "^source:[a-z0-9][a-z0-9_-]*$"
+        },
+        "name": {"type": "string", "minLength": 1},
+        "source_family": {
+          "enum": [
+            "iiif",
+            "legacy_jsonl",
+            "mediawiki",
+            "oai_dc",
+            "plain_text",
+            "tei"
+          ]
+        },
+        "endpoint_url": {"$ref": "#/$defs/httpsUrl"},
+        "allowed_hosts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "resource_types": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["text_excerpt", "art_description", "museum_object"]
+          }
+        },
+        "defaults": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "access": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "review_status",
+            "terms_url",
+            "robots_url",
+            "license",
+            "reuse_notes"
+          ],
+          "properties": {
+            "review_status": {
+              "enum": ["reviewed", "conditional", "blocked"]
+            },
+            "terms_url": {"$ref": "#/$defs/httpsUrl"},
+            "robots_url": {"$ref": "#/$defs/httpsUrl"},
+            "license": {"type": "string", "minLength": 1},
+            "reuse_notes": {"type": "string", "minLength": 1}
+          }
+        },
+        "rate_limit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["requests_per_second"],
+          "properties": {
+            "requests_per_second": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

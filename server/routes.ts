@@ -4,6 +4,7 @@ import { createHmac } from "crypto";
 import session from "express-session";
 import { storage, db } from "./storage";
 import { seedDatabase } from "./seed";
+import { registerHunterRoutes } from "./hunterRoutes";
 import { nodes, edges, sources, suggestions, news, publications, projects, traitHierarchy, traitHabitat, traitCrossCut } from "@shared/schema";
 
 declare module "express-session" {
@@ -643,6 +644,8 @@ export async function registerRoutes(
     }
     res.json({ success: true });
   });
+
+  registerHunterRoutes(app, requireEditor);
 
   app.get("/api/database/auth-status", (req, res) => {
     res.json({

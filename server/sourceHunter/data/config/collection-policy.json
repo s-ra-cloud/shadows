@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "target_jurisdiction": "FR",
+  "current_year": 2026,
+  "unlock_likely_public_domain": false,
+  "ai_translatable_languages": [
+    "en",
+    "fr",
+    "de",
+    "es",
+    "it",
+    "pt",
+    "nl",
+    "la",
+    "grc",
+    "el",
+    "ar",
+    "he",
+    "sa",
+    "hi",
+    "bn",
+    "zh",
+    "ja",
+    "ko",
+    "fa",
+    "tr",
+    "ru",
+    "uk",
+    "pl",
+    "cs",
+    "ro",
+    "sv",
+    "da",
+    "no",
+    "non"
+  ],
+  "preferred_formats": [
+    "txt",
+    "tei_xml",
+    "xml",
+    "html",
+    "epub",
+    "pdf",
+    "json"
+  ],
+  "maximum_file_bytes": 50000000
+}
+

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://religious-mythology-resource-hunter.org/schemas/v1/fulltext-source-registry.schema.json",
+  "title": "Full-text source registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "sources"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_id",
+          "name",
+          "local_only",
+          "allowed_hosts",
+          "automated_download_allowed",
+          "terms_url",
+          "robots_mode",
+          "requests_per_second",
+          "rights_notes"
+        ],
+        "properties": {
+          "source_id": {"type": "string", "pattern": "^source:.+$"},
+          "name": {"type": "string"},
+          "local_only": {"type": "boolean"},
+          "allowed_hosts": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "allowed_path_prefixes": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "automated_download_allowed": {"type": "boolean"},
+          "terms_url": {"type": ["string", "null"], "format": "uri"},
+          "robots_mode": {"enum": ["not_applicable", "target_origin"]},
+          "requests_per_second": {"type": "number", "exclusiveMinimum": 0},
+          "rights_notes": {"type": "string"}
+        }
+      }
+    }
+  }
+}
+

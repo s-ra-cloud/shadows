@@ -1,0 +1,45 @@
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "https://museum.example.org/iiif/manifest/athena-1",
+  "type": "Manifest",
+  "label": {
+    "en": ["Athena with an owl"]
+  },
+  "summary": {
+    "en": ["A marble figure of Athena accompanied by her sacred bird."]
+  },
+  "metadata": [
+    {
+      "label": {"en": ["Creator"]},
+      "value": {"en": ["Unknown Attic sculptor"]}
+    },
+    {
+      "label": {"en": ["Date"]},
+      "value": {"en": ["5th century BCE"]}
+    },
+    {
+      "label": {"en": ["Medium"]},
+      "value": {"en": ["Marble"]}
+    },
+    {
+      "label": {"en": ["Object type"]},
+      "value": {"en": ["Sculpture"]}
+    }
+  ],
+  "provider": [
+    {
+      "id": "https://museum.example.org",
+      "type": "Agent",
+      "label": {"en": ["Example Museum"]}
+    }
+  ],
+  "homepage": [
+    {
+      "id": "https://museum.example.org/objects/athena-1",
+      "type": "Text",
+      "label": {"en": ["Object page"]}
+    }
+  ],
+  "items": []
+}
+

@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "scope_note": "Candidates are full-text discovery leads, not authorization to crawl. A source moves to enabled only after automated-access, format, per-edition rights, robots, attribution, complete-file, and cultural review.",
+  "candidates": [
+    {
+      "candidate_id": "source:project-gutenberg-catalog-and-mirror",
+      "priority": 1,
+      "coverage_goal": "Rights-screened English translations and original-language editions from the machine-readable catalog",
+      "adapter": "opds_rdf_fulltext",
+      "status": "mirror_configuration_required"
+    },
+    {
+      "candidate_id": "source:multilingual-wikisource",
+      "priority": 2,
+      "coverage_goal": "Complete multilingual works and translations with page-level copyright templates",
+      "adapter": "mediawiki_export_fulltext",
+      "status": "in_progress"
+    },
+    {
+      "candidate_id": "source:perseus-open-greek-latin",
+      "priority": 3,
+      "coverage_goal": "Complete TEI originals and translations with CTS identifiers",
+      "adapter": "git_tei_fulltext",
+      "status": "in_progress"
+    },
+    {
+      "candidate_id": "source:sefaria-versions",
+      "priority": 4,
+      "coverage_goal": "Original and English versions with version-specific licence metadata",
+      "adapter": "sefaria_fulltext",
+      "status": "research_required"
+    },
+    {
+      "candidate_id": "source:internet-archive-rights-filtered",
+      "priority": 5,
+      "coverage_goal": "Full OCR/text files only when item-level access and rights evidence permit download",
+      "adapter": "internet_archive_fulltext",
+      "status": "research_required"
+    }
+  ]
+}

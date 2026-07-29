@@ -117,6 +117,41 @@ export const sources = pgTable("sources", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// --- Source Hunter (rights-aware full-text collector) ---
+// `data` columns hold snake_case JSON matching the original hunter tool's
+// schemas (fulltext-candidate, plan entries, corpus records, etc.).
+export const hunterCandidates = pgTable("hunter_candidates", {
+  id: serial("id").primaryKey(),
+  workId: text("work_id").notNull(),
+  editionId: text("edition_id").notNull().unique(),
+  data: jsonb("data").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const hunterRuns = pgTable("hunter_runs", {
+  id: serial("id").primaryKey(),
+  kind: text("kind").notNull(), // plan | download | verify | catalog
+  status: text("status").notNull().default("running"), // running | completed | failed
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  finishedAt: timestamp("finished_at"),
+  result: jsonb("result"),
+  error: text("error"),
+});
+
+export const hunterCorpusFiles = pgTable("hunter_corpus_files", {
+  id: serial("id").primaryKey(),
+  workId: text("work_id").notNull(),
+  editionId: text("edition_id").notNull(),
+  language: text("language"),
+  partition: text("partition").notNull(), // public | locked
+  path: text("path").notNull().unique(),
+  byteCount: integer("byte_count"),
+  sha256: text("sha256"),
+  record: jsonb("record"),
+  downloadedAt: timestamp("downloaded_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -132,6 +167,9 @@ export const insertTraitHierarchySchema = createInsertSchema(traitHierarchy).omi
 export const insertTraitHabitatSchema = createInsertSchema(traitHabitat).omit({ id: true });
 export const insertTraitCrossCutSchema = createInsertSchema(traitCrossCut).omit({ id: true });
 export const insertSourceSchema = createInsertSchema(sources).omit({ id: true, createdAt: true });
+export const insertHunterCandidateSchema = createInsertSchema(hunterCandidates).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertHunterRunSchema = createInsertSchema(hunterRuns).omit({ id: true, startedAt: true });
+export const insertHunterCorpusFileSchema = createInsertSchema(hunterCorpusFiles).omit({ id: true, downloadedAt: true });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -155,3 +193,9 @@ export type TraitCrossCut = typeof traitCrossCut.$inferSelect;
 export type InsertTraitCrossCut = z.infer<typeof insertTraitCrossCutSchema>;
 export type Source = typeof sources.$inferSelect;
 export type InsertSource = z.infer<typeof insertSourceSchema>;
+export type HunterCandidate = typeof hunterCandidates.$inferSelect;
+export type InsertHunterCandidate = z.infer<typeof insertHunterCandidateSchema>;
+export type HunterRun = typeof hunterRuns.$inferSelect;
+export type InsertHunterRun = z.infer<typeof insertHunterRunSchema>;
+export type HunterCorpusFile = typeof hunterCorpusFiles.$inferSelect;
+export type InsertHunterCorpusFile = z.infer<typeof insertHunterCorpusFileSchema>;

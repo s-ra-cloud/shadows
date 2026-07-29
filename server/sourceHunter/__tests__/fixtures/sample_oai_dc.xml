@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
+  xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <ListRecords>
+    <record>
+      <header>
+        <identifier>oai:example.org:shiva-1</identifier>
+        <datestamp>2026-07-01</datestamp>
+      </header>
+      <metadata>
+        <oai_dc:dc>
+          <dc:title>Shiva Nataraja</dc:title>
+          <dc:creator>Unknown Chola artist</dc:creator>
+          <dc:date>12th century</dc:date>
+          <dc:type>Sculpture</dc:type>
+          <dc:format>Bronze</dc:format>
+          <dc:description>Shiva dances within a ring of flame.</dc:description>
+          <dc:identifier>https://museum.example.org/object/shiva-1</dc:identifier>
+        </oai_dc:dc>
+      </metadata>
+    </record>
+  </ListRecords>
+</OAI-PMH>
+

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title>Sample Hymns</title>
+        <author>Anonymous</author>
+        <respStmt>
+          <resp>Translated by</resp>
+          <name>Example Translator</name>
+        </respStmt>
+      </titleStmt>
+      <publicationStmt>
+        <p>Public-domain test fixture.</p>
+      </publicationStmt>
+      <sourceDesc>
+        <p>Synthetic fixture.</p>
+      </sourceDesc>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <p xml:id="hymn-1">Zeus lifted the storm while Athena guarded the city.</p>
+      <p xml:id="hymn-2">Ra crossed the sky in the solar barque.</p>
+      <p xml:id="ordinary">The word ra appears here only in lowercase and is not the short divine name.</p>
+    </body>
+  </text>
+</TEI>
+

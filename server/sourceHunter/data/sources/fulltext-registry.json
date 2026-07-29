@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0.0",
+  "sources": [
+    {
+      "source_id": "source:local-import",
+      "name": "Reviewed local full-text import",
+      "local_only": true,
+      "allowed_hosts": [],
+      "allowed_path_prefixes": [],
+      "automated_download_allowed": true,
+      "terms_url": null,
+      "robots_mode": "not_applicable",
+      "requests_per_second": 10,
+      "rights_notes": "Local import does not establish rights. Every candidate still needs edition-level evidence."
+    },
+    {
+      "source_id": "source:multilingual-wikisource",
+      "name": "Multilingual Wikisource",
+      "local_only": false,
+      "allowed_hosts": [
+        "wikisource.org"
+      ],
+      "allowed_path_prefixes": [
+        "/w/api.php",
+        "/wiki/Special:Export"
+      ],
+      "automated_download_allowed": true,
+      "terms_url": "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use",
+      "robots_mode": "target_origin",
+      "requests_per_second": 0.5,
+      "rights_notes": "Check the work and translation copyright template. Wikisource accepts public-domain or compatible free-licensed texts, but the exact page-level statement remains authoritative."
+    },
+    {
+      "source_id": "source:project-gutenberg",
+      "name": "Project Gutenberg",
+      "local_only": false,
+      "allowed_hosts": [
+        "gutenberg.org"
+      ],
+      "allowed_path_prefixes": [
+        "/robot/harvest"
+      ],
+      "automated_download_allowed": false,
+      "terms_url": "https://www.gutenberg.org/policy/terms_of_use.html",
+      "robots_mode": "target_origin",
+      "requests_per_second": 0.5,
+      "rights_notes": "Configure and review an official mirror before enabling direct downloads; never crawl human pages. Project Gutenberg copyright determinations are U.S.-specific and the embedded ebook notice must be checked."
+    },
+    {
+      "source_id": "source:perseus-github",
+      "name": "Perseus Digital Library GitHub corpora",
+      "local_only": false,
+      "allowed_hosts": [
+        "raw.githubusercontent.com"
+      ],
+      "allowed_path_prefixes": [
+        "/PerseusDL/"
+      ],
+      "automated_download_allowed": true,
+      "terms_url": "https://github.com/PerseusDL",
+      "robots_mode": "target_origin",
+      "requests_per_second": 0.5,
+      "rights_notes": "Rights vary by repository, edition, and translation. Do not inherit a corpus-level licence without checking the selected file and repository metadata."
+    }
+  ]
+}

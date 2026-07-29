@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:city-goddess-hymn",
+  "edition_id": "edition:city-goddess-en-open",
+  "source_id": "source:local-import",
+  "source_reference": "server/sourceHunter/__tests__/fixtures/fulltexts/hymn_en.txt",
+  "rights": {
+    "status": "open_license",
+    "confidence": "high",
+    "basis": "manual",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "territory_covered": true,
+    "statement": "Creative Commons Attribution-ShareAlike 4.0 International",
+    "license": "CC BY-SA 4.0",
+    "rights_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "publication_allowed": true,
+    "translation_allowed": true,
+    "locked": false,
+    "do_not_publish": false,
+    "review_required": false,
+    "obligations": [
+      "attribution",
+      "share_alike"
+    ],
+    "reasons": [
+      "standardized Creative Commons marker"
+    ],
+    "assessed_at": "2026-07-29T15:45:52.997000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "basis": "manual",
+    "license": "CC BY-SA 4.0",
+    "statement": "Creative Commons Attribution-ShareAlike 4.0 International",
+    "rights_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "status_claim": "open_license"
+  },
+  "file_sha256": "sha256:470b8bb0cab49ae1533aaa1566c44f254d078e19610dc42a10d4d01f00b73662"
+}

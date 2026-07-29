@@ -1,0 +1,52 @@
+{
+  "exportedAt": "2026-07-29T00:00:00.000Z",
+  "projects": [
+    {
+      "id": 6,
+      "title": "Comparative Mythological Atlas",
+      "slug": "atlas"
+    }
+  ],
+  "nodes": [
+    {
+      "id": 1,
+      "projectId": 6,
+      "name": "Zeus",
+      "tradition": "Greek",
+      "gender": "Male",
+      "aliases": ["Jupiter"]
+    },
+    {
+      "id": 2,
+      "projectId": 6,
+      "name": "Athena",
+      "tradition": "Greek",
+      "gender": "Female",
+      "aliases": ["Pallas Athena"]
+    },
+    {
+      "id": 3,
+      "projectId": 6,
+      "name": "Ra",
+      "tradition": "Egyptian",
+      "gender": "Male"
+    },
+    {
+      "id": 4,
+      "projectId": 6,
+      "name": "Bast",
+      "tradition": "Egyptian",
+      "gender": "Female",
+      "aliases": ["Bastet"]
+    },
+    {
+      "id": 5,
+      "projectId": 6,
+      "name": "Shiva",
+      "tradition": "Hindu",
+      "gender": "Male"
+    }
+  ],
+  "edges": []
+}
+

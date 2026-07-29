@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://religious-mythology-resource-hunter.org/schemas/v1/resource-record.schema.json",
+  "title": "Religious and Mythology Resource Record",
+  "description": "Version 1 JSONL record, compatible with deity_excerpts.jsonl.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "deity",
+    "tradition",
+    "gender",
+    "matched_alias",
+    "record_type",
+    "source_work",
+    "source_author",
+    "translator",
+    "corpus",
+    "origin",
+    "locator",
+    "excerpt",
+    "n_words",
+    "id"
+  ],
+  "properties": {
+    "deity": {"type": "string"},
+    "tradition": {"type": "string"},
+    "gender": {"type": "string"},
+    "matched_alias": {"type": "string"},
+    "record_type": {
+      "enum": ["text_excerpt", "art_description", "museum_object"]
+    },
+    "source_work": {"type": "string"},
+    "source_author": {"type": "string"},
+    "translator": {"type": ["string", "null"]},
+    "corpus": {"type": "string"},
+    "origin": {"type": "string"},
+    "locator": {"type": "string"},
+    "excerpt": {"type": "string"},
+    "n_words": {"type": "integer", "minimum": 0},
+    "id": {
+      "type": "string",
+      "pattern": "^rec[0-9a-f]{6,32}$"
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://[^\\s]+$"
+    },
+    "artwork_title": {"type": "string"},
+    "artwork_date": {"type": "string"},
+    "artwork_medium": {"type": "string"},
+    "artwork_classification": {"type": "string"},
+    "match_confidence": {"type": "string"},
+    "excerpt_original": {"type": "string"},
+    "original_language": {"type": "string"},
+    "translation_method": {"type": "string"},
+    "translator_note": {"type": "string"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "record_type": {"const": "museum_object"}
+        },
+        "required": ["record_type"]
+      },
+      "then": {
+        "required": [
+          "url",
+          "artwork_title",
+          "artwork_date",
+          "artwork_medium",
+          "artwork_classification",
+          "match_confidence"
+        ]
+      }
+    }
+  ]
+}
+

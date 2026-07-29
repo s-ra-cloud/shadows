@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0.0",
+  "sources": [
+    {
+      "source_id": "source:perseus-canonical-greek",
+      "name": "Perseus Digital Library canonical Greek literature",
+      "source_family": "tei",
+      "endpoint_url": "https://github.com/PerseusDL/canonical-greekLit",
+      "allowed_hosts": [
+        "github.com",
+        "raw.githubusercontent.com"
+      ],
+      "resource_types": [
+        "text_excerpt",
+        "art_description"
+      ],
+      "defaults": {
+        "record_type": "text_excerpt",
+        "corpus": "greek",
+        "origin": "primary_source"
+      },
+      "access": {
+        "review_status": "conditional",
+        "terms_url": "https://github.com/PerseusDL/canonical-greekLit",
+        "robots_url": "https://github.com/robots.txt",
+        "license": "Per-work licensing; inspect repository metadata before reuse",
+        "reuse_notes": "The adapter is ready, but each edition or translation must pass a rights and attribution review before bulk collection."
+      },
+      "rate_limit": {
+        "requests_per_second": 0.5
+      }
+    },
+    {
+      "source_id": "source:wikisource-en",
+      "name": "English Wikisource",
+      "source_family": "mediawiki",
+      "endpoint_url": "https://en.wikisource.org/w/api.php",
+      "allowed_hosts": [
+        "en.wikisource.org"
+      ],
+      "resource_types": [
+        "text_excerpt",
+        "art_description"
+      ],
+      "defaults": {
+        "record_type": "text_excerpt",
+        "source_author": "Wikisource contributors",
+        "corpus": "wikisource",
+        "origin": "primary_source"
+      },
+      "access": {
+        "review_status": "conditional",
+        "terms_url": "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use",
+        "robots_url": "https://en.wikisource.org/robots.txt",
+        "license": "Page-specific public-domain or free-license status; Wikisource contributions are CC BY-SA 4.0",
+        "reuse_notes": "Verify the edition, translator, page-level licence, and attribution before accepting a text."
+      },
+      "rate_limit": {
+        "requests_per_second": 0.5
+      }
+    },
+    {
+      "source_id": "source:wikimedia-commons",
+      "name": "Wikimedia Commons",
+      "source_family": "mediawiki",
+      "endpoint_url": "https://commons.wikimedia.org/w/api.php",
+      "allowed_hosts": [
+        "commons.wikimedia.org"
+      ],
+      "resource_types": [
+        "museum_object"
+      ],
+      "defaults": {
+        "record_type": "museum_object",
+        "source_work": "Wikimedia Commons file description",
+        "source_author": "Wikimedia Commons",
+        "corpus": "museum",
+        "origin": "museum_catalog_modern"
+      },
+      "access": {
+        "review_status": "conditional",
+        "terms_url": "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use",
+        "robots_url": "https://commons.wikimedia.org/robots.txt",
+        "license": "Per-file licence; structured file data may be CC0 and unstructured descriptions CC BY-SA",
+        "reuse_notes": "Retain the creator, source, licence URL, and attribution from every accepted file."
+      },
+      "rate_limit": {
+        "requests_per_second": 0.5
+      }
+    }
+  ]
+}
+
