@@ -317,6 +317,71 @@ export function registerHunterRoutes(
     res.json(await db.select().from(hunterCorpusFiles).orderBy(hunterCorpusFiles.id));
   });
 
+  // ---- Library (public corpus reading) ----------------------------------
+  // Lists only public-partition files; locked material is never exposed.
+  app.get("/api/hunter/library", async (_req, res) => {
+    const rows = await db
+      .select()
+      .from(hunterCorpusFiles)
+      .where(eq(hunterCorpusFiles.partition, "public"))
+      .orderBy(hunterCorpusFiles.id);
+    res.json(
+      rows.map((row) => {
+        const record = (row.record ?? {}) as Record<string, unknown>;
+        return {
+          id: row.id,
+          workId: row.workId,
+          editionId: row.editionId,
+          language: row.language,
+          byteCount: row.byteCount,
+          title: (record.title as string | undefined) ?? row.editionId,
+          author: (record.author as string | undefined) ?? null,
+          translator: (record.translator as string | undefined) ?? null,
+          format: (record.format as string | undefined) ?? null,
+        };
+      }),
+    );
+  });
+
+  app.get("/api/hunter/library/:id/text", async (req, res) => {
+    try {
+      const id = parseInt(String(req.params.id));
+      if (!Number.isInteger(id)) return res.status(400).json({ message: "Invalid id" });
+      const [row] = await db
+        .select()
+        .from(hunterCorpusFiles)
+        .where(eq(hunterCorpusFiles.id, id))
+        .limit(1);
+      if (!row || row.partition !== "public") {
+        return res.status(404).json({ message: "Text not found" });
+      }
+      const record = (row.record ?? {}) as Record<string, unknown>;
+      const file = (record.file ?? {}) as Record<string, unknown>;
+      if (file.locked === true) {
+        return res.status(404).json({ message: "Text not found" });
+      }
+      // Path-traversal guard: resolved path must stay inside the public partition.
+      const publicRoot = path.join(CORPUS_ROOT, "public");
+      const resolved = path.resolve(CORPUS_ROOT, row.path);
+      const rel = path.relative(publicRoot, resolved);
+      if (rel === "" || rel.startsWith("..") || path.isAbsolute(rel)) {
+        return res.status(404).json({ message: "Text not found" });
+      }
+      const text = await fs.readFile(resolved, "utf-8").catch(() => null);
+      if (text === null) return res.status(404).json({ message: "Text not found" });
+      res.json({
+        id: row.id,
+        title: (record.title as string | undefined) ?? row.editionId,
+        author: (record.author as string | undefined) ?? null,
+        translator: (record.translator as string | undefined) ?? null,
+        language: row.language,
+        text,
+      });
+    } catch (e) {
+      res.status(500).json({ message: errMessage(e) });
+    }
+  });
+
   // ---- Verification -----------------------------------------------------
   app.post("/api/hunter/verify", requireEditor, async (_req, res) => {
     const runId = await createRun("verify");
