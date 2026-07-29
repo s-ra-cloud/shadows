@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:why-omnipotence-does-not-hide-behind-syncretic-texts",
+  "edition_id": "edition:internet-archive-why-omnipotence-does-not-hide-behind-syncretic-texts",
+  "source_id": "source:local-import",
+  "source_reference": "/home/runner/workspace/server/sourceHunter/data/hunter-uploads/edition-internet-archive-why-omnipotence-does-not-hide-behind-syncretic-texts.txt",
+  "rights": {
+    "status": "public_domain_jurisdictional",
+    "confidence": "medium",
+    "basis": "source_statement",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "UNSPECIFIED"
+    ],
+    "territory_covered": false,
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "license": null,
+    "rights_url": "https://archive.org/details/why-omnipotence-does-not-hide-behind-syncretic-texts",
+    "license_url": null,
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "verify_target_jurisdiction"
+    ],
+    "reasons": [
+      "explicit public-domain claim"
+    ],
+    "assessed_at": "2026-07-29T20:16:53.802000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "basis": "source_statement",
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "rights_url": "https://archive.org/details/why-omnipotence-does-not-hide-behind-syncretic-texts",
+    "license_url": null,
+    "status_claim": "unknown",
+    "manual_upload": true,
+    "manual_upload_from": "https://archive.org/download/why-omnipotence-does-not-hide-behind-syncretic-texts/why-omnipotence-does-not-hide-behind-syncretic-texts_djvu.txt"
+  },
+  "file_sha256": "sha256:64e8659e5d4d2f60a46630fd88e35c71f392a3de134482a5bd75fdfd31ec97bf"
+}

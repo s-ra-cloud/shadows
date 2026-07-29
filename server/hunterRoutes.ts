@@ -4,6 +4,7 @@
  * All JSON payloads produced by the library keep the original snake_case
  * field names; DB rows use camelCase columns with a `data`/`record` jsonb.
  */
+import express from "express";
 import type { Express, Request, Response, NextFunction } from "express";
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
@@ -483,6 +484,106 @@ export function registerHunterRoutes(
     if (!row) return res.status(404).json({ message: "Blocker not found" });
     res.json(row);
   });
+
+  /**
+   * Manual rescue for a blocked download: a human downloads the text from the
+   * source page themselves and uploads it here. The file goes through the
+   * exact same rights pipeline as any other candidate (assessment, public vs
+   * locked partitioning), so an upload can never bypass rights review.
+   * Body: raw text (text/plain, html or xml). Requires the blocker to carry
+   * an edition_id so we know which candidate the text belongs to.
+   */
+  app.post(
+    "/api/hunter/blockers/:id/upload",
+    requireEditor,
+    express.text({ type: () => true, limit: "25mb" }),
+    async (req, res) => {
+      try {
+        const [blocker] = await db
+          .select()
+          .from(hunterBlockers)
+          .where(eq(hunterBlockers.id, parseInt(String(req.params.id))));
+        if (!blocker) return res.status(404).json({ message: "Blocker not found" });
+        if (!blocker.editionId) {
+          return res.status(400).json({
+            message: "This blocker has no candidate attached; add the text via Candidates instead.",
+          });
+        }
+        const text = typeof req.body === "string" ? req.body : "";
+        if (!text.trim()) {
+          return res.status(400).json({ message: "Upload the text file's content as the request body" });
+        }
+        const [candidateRow] = await db
+          .select()
+          .from(hunterCandidates)
+          .where(eq(hunterCandidates.editionId, blocker.editionId));
+        if (!candidateRow) {
+          return res.status(404).json({ message: `No candidate found for ${blocker.editionId}` });
+        }
+        const original = candidateFromRow(candidateRow) as Record<string, unknown>;
+
+        // Stage the uploaded text as a local file for the rights pipeline.
+        const uploadsDir = path.join(DATA_DIR, "hunter-uploads");
+        await fs.mkdir(uploadsDir, { recursive: true });
+        const format = String(original.format ?? "txt");
+        const ext = format === "html" ? "html" : format === "xml" || format === "tei" ? "xml" : "txt";
+        const safeName = String(blocker.editionId).replace(/[^a-zA-Z0-9_-]+/g, "-");
+        const localPath = path.join(uploadsDir, `${safeName}.${ext}`);
+        await fs.writeFile(localPath, text, "utf-8");
+
+        const candidate = {
+          ...original,
+          source_id: "source:local-import",
+          local_path: localPath,
+          text_url: undefined,
+          access: { download_allowed: true, requires_auth: false },
+          rights: {
+            ...(original.rights as Record<string, unknown> | undefined),
+            manual_upload: true,
+            manual_upload_from: blocker.url ?? null,
+          },
+        } as Candidate;
+
+        const policy = await loadActivePolicy();
+        validatePolicy(policy);
+        const registry = await loadActiveRegistry();
+        const records = await collectFulltexts([candidate], policy, registry, CORPUS_ROOT, {
+          selectionMode: "all",
+        });
+        const record = records[0] as Record<string, unknown> | undefined;
+        const file = record?.file as Record<string, unknown> | undefined;
+        if (!record || !file?.relative_path) {
+          const error = (record?.error as string | undefined) ?? "text was not ingested";
+          return res.status(422).json({ message: `Upload rejected by the rights pipeline: ${error}` });
+        }
+        await db
+          .insert(hunterCorpusFiles)
+          .values({
+            workId: String(record.work_id ?? ""),
+            editionId: String(record.edition_id ?? ""),
+            language: (record.language as string | undefined) ?? null,
+            partition: file.locked ? "locked" : "public",
+            path: String(file.relative_path),
+            byteCount: Number(file.bytes ?? 0),
+            sha256: (file.sha256 as string | undefined) ?? null,
+            record,
+          })
+          .onConflictDoNothing();
+        const [updated] = await db
+          .update(hunterBlockers)
+          .set({
+            status: "resolved",
+            detail: `${blocker.detail ?? ""} — resolved by manual upload (${file.locked ? "locked" : "public"} partition)`.trim(),
+            updatedAt: new Date(),
+          })
+          .where(eq(hunterBlockers.id, blocker.id))
+          .returning();
+        res.json({ blocker: updated, partition: file.locked ? "locked" : "public", record });
+      } catch (e) {
+        res.status(500).json({ message: errMessage(e) });
+      }
+    },
+  );
 
   // ---- Corpus -----------------------------------------------------------
   app.get("/api/hunter/corpus", async (_req, res) => {

@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Lock, Unlock, ChevronDown, ChevronRight, Plus, Pencil, Trash2,
   BookOpen, X, Check, AlertCircle, ExternalLink,
-  Download, Play, RefreshCw, FileText, ShieldCheck, ShieldAlert,
+  Download, Upload, Play, RefreshCw, FileText, ShieldCheck, ShieldAlert,
   Clock, Database, Code
 } from "lucide-react";
 
@@ -636,6 +636,60 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
       toast({ title: "Update failed", description: e.message, variant: "destructive" }),
   });
 
+  const [uploadingId, setUploadingId] = useState<number | null>(null);
+  const uploadMutation = useMutation({
+    mutationFn: async ({ id, file }: { id: number; file: File }) => {
+      const text = await file.text();
+      const res = await fetch(`/api/hunter/blockers/${id}/upload`, {
+        method: "POST",
+        headers: { ...authHeaders(), "Content-Type": "text/plain" },
+        body: text,
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || `Upload failed (${res.status})`);
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Text uploaded",
+        description:
+          data.partition === "public"
+            ? "Rights cleared — the text is now readable in the Library."
+            : "Rights still unclear — the text was saved to the locked research partition.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/blockers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/corpus"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/library"] });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Upload failed", description: e.message, variant: "destructive" }),
+    onSettled: () => setUploadingId(null),
+  });
+
+  const pickFileFor = (id: number) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".txt,.text,.html,.htm,.xml,.md";
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (file) {
+        setUploadingId(id);
+        uploadMutation.mutate({ id, file });
+      }
+    };
+    input.click();
+  };
+
+  const MANUAL_UPLOAD_REASONS = new Set([
+    "robots_disallowed",
+    "download_not_authorized",
+    "requires_auth",
+    "fetch_failed",
+    "too_large",
+  ]);
+
   const cycleItems = Array.isArray(cycles) ? cycles : [];
   const blockerItems = Array.isArray(blockers) ? blockers : [];
   const openBlockers = blockerItems.filter((b) => b.status === "open");
@@ -852,8 +906,13 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
                           target="_blank"
                           rel="noreferrer"
                           className="inline-flex items-center gap-1 text-[#8F00FF] hover:underline mt-1 break-all"
+                          data-testid={`link-blocker-manual-${b.id}`}
                         >
-                          <ExternalLink size={11} className="shrink-0" /> {b.url}
+                          <ExternalLink size={11} className="shrink-0" />
+                          {b.status === "open" && MANUAL_UPLOAD_REASONS.has(b.reason)
+                            ? "Download manually: "
+                            : ""}
+                          {b.url}
                         </a>
                       )}
                       {b.editionId && <div className="font-mono text-[#E0DCE6]/40 mt-1">{b.editionId}</div>}
@@ -863,6 +922,21 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
                       <td className="px-4 py-3 align-top text-right whitespace-nowrap">
                         {b.status === "open" ? (
                           <>
+                            {MANUAL_UPLOAD_REASONS.has(b.reason) && b.editionId && (
+                              <button
+                                onClick={() => pickFileFor(b.id)}
+                                disabled={uploadingId === b.id}
+                                className="px-2 py-1 rounded text-xs text-[#8F00FF] hover:bg-[#8F00FF]/10 transition-colors disabled:opacity-50 inline-flex items-center gap-1"
+                                data-testid={`button-upload-blocker-${b.id}`}
+                              >
+                                {uploadingId === b.id ? (
+                                  <RefreshCw size={11} className="animate-spin" />
+                                ) : (
+                                  <Upload size={11} />
+                                )}
+                                Upload text
+                              </button>
+                            )}
                             <button
                               onClick={() => blockerMutation.mutate({ id: b.id, status: "resolved" })}
                               className="px-2 py-1 rounded text-xs text-[#03FF9B] hover:bg-[#03FF9B]/10 transition-colors"
