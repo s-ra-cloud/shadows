@@ -1,4 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { geoNaturalEarth1, geoPath } from "d3";
+import { feature } from "topojson-client";
+import { HUNTER_REGIONS, type HunterRegion } from "@shared/hunterRegions";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient, setEditorToken, authHeaders } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -10,7 +13,7 @@ import {
 } from "lucide-react";
 
 type Tab = "library" | "hunter";
-type HunterTab = "cycles" | "candidates" | "plan" | "corpus" | "verify" | "catalog" | "runs" | "policy" | "registry";
+type HunterTab = "map" | "cycles" | "candidates" | "plan" | "corpus" | "verify" | "catalog" | "runs" | "policy" | "registry";
 
 export default function SourcesPage() {
   const [activeTab, setActiveTab] = useState<Tab>("library");
@@ -256,6 +259,7 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
   const [activeHunterTab, setActiveHunterTab] = useState<HunterTab>("candidates");
 
   const tabs: { key: HunterTab; label: string }[] = [
+    { key: "map", label: "World Map" },
     { key: "cycles", label: "Hunting Cycles" },
     { key: "candidates", label: "Candidates" },
     { key: "plan", label: "Download Plan" },
@@ -292,6 +296,7 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
         ))}
       </div>
       <div className="p-6">
+        {activeHunterTab === "map" && <HunterWorldMap isEditor={isEditor} />}
         {activeHunterTab === "cycles" && <HunterCycles isEditor={isEditor} />}
         {activeHunterTab === "candidates" && <HunterCandidates isEditor={isEditor} />}
         {activeHunterTab === "plan" && <HunterPlan isEditor={isEditor} />}
@@ -319,6 +324,268 @@ const BLOCKER_REASON_LABELS: Record<string, string> = {
   invalid_candidate: "Invalid candidate data",
   too_large: "File exceeds size limit",
 };
+
+interface RegionStats {
+  cycles: number;
+  successes: number; // texts downloaded (public or locked)
+  failures: number; // metadata_only + failed download attempts
+  failedRuns: number;
+}
+
+function successColor(rate: number | null): string {
+  if (rate === null) return "#8F00FF";
+  if (rate >= 0.66) return "#03FF9B";
+  if (rate >= 0.33) return "#FFB020";
+  return "#FF4D6D";
+}
+
+function HunterWorldMap({ isEditor }: { isEditor: boolean }) {
+  const [world, setWorld] = useState<any>(null);
+  const [selected, setSelected] = useState<HunterRegion | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [limit, setLimit] = useState(10);
+  const [useAi, setUseAi] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetch("/countries-110m.json")
+      .then((r) => r.json())
+      .then(setWorld)
+      .catch(() => setWorld(null));
+  }, []);
+
+  const { data: cycles } = useQuery<any[]>({
+    queryKey: ["/api/hunter/cycles"],
+    refetchInterval: (q) =>
+      Array.isArray(q.state.data) && q.state.data.some((r: any) => r.status === "running")
+        ? 2000
+        : false,
+  });
+  const running = Array.isArray(cycles) && cycles.some((r) => r.status === "running");
+
+  const statsByRegion = useMemo(() => {
+    const map = new Map<string, RegionStats>();
+    for (const run of Array.isArray(cycles) ? cycles : []) {
+      const result = run.result ?? {};
+      const summary = result.scope ? result : null;
+      const regionId = summary?.scope?.region?.id ?? result.progress?.region?.id;
+      if (!regionId) continue;
+      const stats = map.get(regionId) ?? { cycles: 0, successes: 0, failures: 0, failedRuns: 0 };
+      stats.cycles += 1;
+      if (run.status === "failed") stats.failedRuns += 1;
+      if (summary) {
+        stats.successes += (summary.downloaded_public ?? 0) + (summary.downloaded_locked ?? 0);
+        stats.failures += (summary.metadata_only ?? 0) + (summary.failed ?? 0) + (summary.invalid ?? 0);
+      }
+      map.set(regionId, stats);
+    }
+    return map;
+  }, [cycles]);
+
+  const width = 960;
+  const height = 480;
+  const { countriesPath, project } = useMemo(() => {
+    const projection = geoNaturalEarth1().fitSize([width, height], { type: "Sphere" } as any);
+    const pathGen = geoPath(projection);
+    let countries: string | null = null;
+    if (world?.objects?.countries) {
+      const geo = feature(world, world.objects.countries) as any;
+      countries = pathGen(geo);
+    }
+    return {
+      countriesPath: countries,
+      project: (coords: [number, number]) => projection(coords) as [number, number] | null,
+    };
+  }, [world]);
+
+  const launchMutation = useMutation({
+    mutationFn: (region: HunterRegion) =>
+      apiRequest("POST", "/api/hunter/cycles", {
+        query: query.trim(),
+        limit,
+        use_ai: useAi,
+        region_id: region.id,
+      }),
+    onSuccess: (_d, region) => {
+      toast({ title: `Hunting cycle launched for ${region.label}` });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/cycles"] });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Could not launch cycle", description: e.message, variant: "destructive" }),
+  });
+
+  const selectedStats = selected ? statsByRegion.get(selected.id) : undefined;
+  const selectedRate =
+    selectedStats && selectedStats.successes + selectedStats.failures > 0
+      ? selectedStats.successes / (selectedStats.successes + selectedStats.failures)
+      : null;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-[#E0DCE6] mb-1">Hunting World Map</h3>
+        <p className="text-sm text-[#E0DCE6]/60">
+          Each marker is a mythological region. Size shows how many cycles have hunted there;
+          color shows the download success rate. {isEditor ? "Click a region to launch a cycle scoped to it." : "Enter edit mode to launch region cycles."}
+        </p>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex-1 rounded-xl border border-[#350A8C]/30 bg-[#0B0626]/50 overflow-hidden">
+          <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto block" data-testid="svg-hunter-map">
+            <rect width={width} height={height} fill="#0B0626" />
+            {countriesPath ? (
+              <path d={countriesPath} fill="#130D30" stroke="#350A8C" strokeOpacity={0.45} strokeWidth={0.5} />
+            ) : (
+              <text x={width / 2} y={height / 2} textAnchor="middle" fill="#E0DCE6" opacity={0.4} fontSize={14}>
+                Loading map...
+              </text>
+            )}
+            {HUNTER_REGIONS.map((region) => {
+              const pos = project(region.coordinates);
+              if (!pos) return null;
+              const stats = statsByRegion.get(region.id);
+              const attempts = (stats?.successes ?? 0) + (stats?.failures ?? 0);
+              const rate = stats && attempts > 0 ? stats.successes / attempts : null;
+              const r = 5 + Math.min(10, (stats?.cycles ?? 0) * 2.5);
+              const isActive = selected?.id === region.id || hovered === region.id;
+              return (
+                <g
+                  key={region.id}
+                  transform={`translate(${pos[0]},${pos[1]})`}
+                  onClick={() => setSelected(region)}
+                  onMouseEnter={() => setHovered(region.id)}
+                  onMouseLeave={() => setHovered(null)}
+                  style={{ cursor: "pointer" }}
+                  data-testid={`marker-region-${region.id}`}
+                >
+                  <circle r={r + 6} fill={successColor(rate)} opacity={isActive ? 0.25 : 0.1} />
+                  <circle
+                    r={r}
+                    fill={stats ? successColor(rate) : "#350A8C"}
+                    opacity={stats ? 0.9 : 0.7}
+                    stroke={isActive ? "#E0DCE6" : "#0B0626"}
+                    strokeWidth={1.2}
+                  />
+                  {stats && (
+                    <text y={4} textAnchor="middle" fontSize={10} fontWeight={700} fill="#0B0626">
+                      {stats.cycles}
+                    </text>
+                  )}
+                  {isActive && (
+                    <text y={-r - 10} textAnchor="middle" fontSize={12} fill="#E0DCE6">
+                      {region.label}
+                      {rate !== null ? ` · ${Math.round(rate * 100)}% success` : ""}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+          <div className="flex items-center gap-4 px-4 py-2 border-t border-[#350A8C]/20 text-[11px] text-[#E0DCE6]/50">
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#03FF9B]" /> ≥66% success</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#FFB020]" /> 33–66%</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#FF4D6D]" /> &lt;33%</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#350A8C]" /> not hunted yet</span>
+            <span className="ml-auto">success = texts downloaded / attempts (locked + public both count)</span>
+          </div>
+        </div>
+
+        <div className="w-full lg:w-80 shrink-0">
+          {selected ? (
+            <div className="rounded-xl border border-[#350A8C]/30 bg-[#0B0626]/50 p-4 space-y-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-[#E0DCE6] font-medium">{selected.label}</div>
+                  <div className="text-xs text-[#E0DCE6]/50 mt-0.5">{selected.terms}</div>
+                </div>
+                <button onClick={() => setSelected(null)} className="text-[#E0DCE6]/40 hover:text-[#E0DCE6]">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="p-2 rounded-lg bg-[#130D30] border border-[#350A8C]/20">
+                  <div className="text-[#E0DCE6] text-base font-medium">{selectedStats?.cycles ?? 0}</div>
+                  <div className="text-[#E0DCE6]/50">cycles</div>
+                </div>
+                <div className="p-2 rounded-lg bg-[#130D30] border border-[#350A8C]/20">
+                  <div className="text-[#03FF9B] text-base font-medium">{selectedStats?.successes ?? 0}</div>
+                  <div className="text-[#E0DCE6]/50">downloads</div>
+                </div>
+                <div className="p-2 rounded-lg bg-[#130D30] border border-[#350A8C]/20">
+                  <div className="text-[#FF4D6D] text-base font-medium">{selectedStats?.failures ?? 0}</div>
+                  <div className="text-[#E0DCE6]/50">blocked/failed</div>
+                </div>
+              </div>
+              {selectedRate !== null && (
+                <div className="text-xs text-[#E0DCE6]/60">
+                  Success rate:{" "}
+                  <span style={{ color: successColor(selectedRate) }} className="font-medium">
+                    {Math.round(selectedRate * 100)}%
+                  </span>
+                </div>
+              )}
+
+              {isEditor && (
+                <div className="space-y-3 pt-2 border-t border-[#350A8C]/20">
+                  <div>
+                    <label className="block text-xs text-[#E0DCE6]/50 mb-1">
+                      Extra keywords (optional — region terms used if empty)
+                    </label>
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="e.g. flood myth, creation epic"
+                      className="w-full px-3 py-2 rounded-lg bg-[#130D30] border border-[#350A8C]/40 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60"
+                      data-testid="input-region-query"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <label className="block text-xs text-[#E0DCE6]/50 mb-1">Max per source</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={25}
+                        value={limit}
+                        onChange={(e) => setLimit(Math.max(1, Math.min(25, Number(e.target.value) || 10)))}
+                        className="w-20 px-3 py-2 rounded-lg bg-[#130D30] border border-[#350A8C]/40 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60"
+                      />
+                    </div>
+                    <label className="flex items-center gap-2 text-sm text-[#E0DCE6]/70 mt-4 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={useAi}
+                        onChange={(e) => setUseAi(e.target.checked)}
+                        className="accent-[#8F00FF]"
+                      />
+                      AI leads
+                    </label>
+                  </div>
+                  <button
+                    onClick={() => launchMutation.mutate(selected)}
+                    disabled={launchMutation.isPending || running}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm bg-[#8F00FF] text-white hover:bg-[#7B00E0] disabled:opacity-50 transition-colors"
+                    data-testid="button-launch-region-cycle"
+                  >
+                    {running ? <RefreshCw size={16} className="animate-spin" /> : <Play size={16} />}
+                    {running ? "A cycle is running..." : `Hunt ${selected.label}`}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-[#350A8C]/20 bg-[#0B0626]/30 p-6 text-center text-sm text-[#E0DCE6]/50">
+              Select a region on the map to see its hunting record{isEditor ? " and launch a cycle" : ""}.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function HunterCycles({ isEditor }: { isEditor: boolean }) {
   const [query, setQuery] = useState("");

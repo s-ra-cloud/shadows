@@ -49,6 +49,8 @@ export interface CycleScope {
   query: string;
   limit?: number;
   useAi?: boolean;
+  /** Optional world region the editor scoped this cycle to (map launches). */
+  region?: { id: string; label: string };
 }
 
 export interface DiscoveredLead {
@@ -347,7 +349,9 @@ async function defaultAiDiscover(
       },
       {
         role: "user",
-        content: `Find up to ${limit} complete-text editions relevant to: ${scope.query}`,
+        content: `Find up to ${limit} complete-text editions relevant to: ${scope.query}${
+          scope.region ? ` (mythological region: ${scope.region.label})` : ""
+        }`,
       },
     ],
   });
@@ -487,7 +491,7 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
   };
 
   // Phase 1: crawl trusted registries.
-  await store.updateProgress({ phase: "discovering_registry", query: scope.query });
+  await store.updateProgress({ phase: "discovering_registry", query: scope.query, region: scope.region });
   const registryDiscover = options.registryDiscover
     ? options.registryDiscover(scope, registrySources, report)
     : defaultRegistryDiscover(scope, registrySources, report, fetchImpl);
@@ -495,7 +499,7 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
 
   // Phase 2: AI lead discovery.
   if (scope.useAi !== false) {
-    await store.updateProgress({ phase: "discovering_ai", query: scope.query });
+    await store.updateProgress({ phase: "discovering_ai", query: scope.query, region: scope.region });
     try {
       const aiLeads = await (options.aiDiscover ?? defaultAiDiscover)(scope, registrySources);
       for (const lead of aiLeads) {

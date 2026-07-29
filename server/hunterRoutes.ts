@@ -11,6 +11,7 @@ import { eq, desc } from "drizzle-orm";
 import { db, storage } from "./storage";
 import { hunterCandidates, hunterRuns, hunterCorpusFiles, hunterBlockers } from "@shared/schema";
 import { runHuntingCycle, type CycleStore, type CycleScope } from "./hunterCycle";
+import { getHunterRegion } from "@shared/hunterRegions";
 import {
   loadDefaultPolicy,
   DATA_DIR,
@@ -352,13 +353,21 @@ export function registerHunterRoutes(
 
   // ---- Hunting cycles ----------------------------------------------------
   app.post("/api/hunter/cycles", requireEditor, async (req, res) => {
-    const query = String(req.body?.query ?? "").trim();
+    let query = String(req.body?.query ?? "").trim();
+    const regionId = req.body?.region_id ? String(req.body.region_id) : null;
+    const region = regionId ? getHunterRegion(regionId) : undefined;
+    if (regionId && !region) {
+      return res.status(400).json({ message: "Unknown region" });
+    }
+    // A region-scoped launch may omit the query; the region's seed terms fill in.
+    if (!query && region) query = region.terms;
     if (!query) return res.status(400).json({ message: "Provide a search query for the cycle" });
     const limitRaw = Number(req.body?.limit);
     const scope: CycleScope = {
       query,
       limit: Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 25) : 10,
       useAi: req.body?.use_ai !== false,
+      ...(region ? { region: { id: region.id, label: region.label } } : {}),
     };
     const runId = await createRun("cycle");
     // Long operation: respond immediately; the UI polls the run until done.
