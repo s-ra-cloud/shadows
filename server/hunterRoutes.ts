@@ -50,9 +50,11 @@ async function assertSafeExternalUrl(rawUrl: string): Promise<URL> {
   }
   const { lookup } = await import("node:dns/promises");
   const { isIP } = await import("node:net");
-  const addresses = isIP(url.hostname)
-    ? [{ address: url.hostname }]
-    : await lookup(url.hostname, { all: true });
+  // URL.hostname keeps brackets around IPv6 literals; strip them for isIP.
+  const hostname = url.hostname.replace(/^\[|\]$/g, "");
+  const addresses = isIP(hostname)
+    ? [{ address: hostname }]
+    : await lookup(hostname, { all: true });
   for (const { address } of addresses) {
     if (isPrivateAddress(address)) {
       throw new Error("URL resolves to a private or internal address");

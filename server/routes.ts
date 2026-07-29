@@ -1,55 +1,16 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { createHmac } from "crypto";
 import session from "express-session";
 import { storage, db } from "./storage";
 import { seedDatabase } from "./seed";
 import { registerHunterRoutes } from "./hunterRoutes";
+import { requireAdmin, requireEditor, hasAdmin, hasEditor, ADMIN_TOKEN, EDITOR_TOKEN } from "./editorAuth";
 import { nodes, edges, sources, suggestions, news, publications, projects, traitHierarchy, traitHabitat, traitCrossCut } from "@shared/schema";
 
 declare module "express-session" {
   interface SessionData {
     isAdmin: boolean;
     isEditor: boolean;
-  }
-}
-
-// Deterministic tokens derived from SESSION_SECRET. Used as a fallback to
-// cookies because the app is embedded in a cross-site iframe (canvas preview),
-// where browsers (Safari, recent Chrome) block third-party cookies entirely —
-// so cookie-based sessions can't be relied on. Tokens are sent in the
-// `x-editor-token` header and validated here. They survive restarts and need
-// no server-side storage.
-const SECRET = process.env.SESSION_SECRET || "shadows-dev-secret";
-const EDITOR_TOKEN = createHmac("sha256", SECRET).update("editor").digest("hex");
-const ADMIN_TOKEN = createHmac("sha256", SECRET).update("admin").digest("hex");
-
-function tokenFrom(req: Request): string {
-  return (req.headers["x-editor-token"] as string | undefined) || "";
-}
-
-function hasAdmin(req: Request): boolean {
-  return !!(req.session && req.session.isAdmin) || tokenFrom(req) === ADMIN_TOKEN;
-}
-
-function hasEditor(req: Request): boolean {
-  return !!(req.session && (req.session.isEditor || req.session.isAdmin)) ||
-    tokenFrom(req) === EDITOR_TOKEN || tokenFrom(req) === ADMIN_TOKEN;
-}
-
-function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  if (hasAdmin(req)) {
-    next();
-  } else {
-    res.status(401).json({ message: "Unauthorized" });
-  }
-}
-
-function requireEditor(req: Request, res: Response, next: NextFunction) {
-  if (hasEditor(req)) {
-    next();
-  } else {
-    res.status(401).json({ message: "Unauthorized" });
   }
 }
 
