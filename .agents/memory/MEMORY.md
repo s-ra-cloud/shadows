@@ -1,1 +1,2 @@
 - [iframe auth (cookies fail)](iframe-session-cookies.md) — editor/admin login 401s inside canvas iframe; cookies blocked, use x-editor-token header token (HMAC of SESSION_SECRET).
+- [Source registry & robots](source-registry-robots.md) — robots.txt, not the allow-list, is the practical download gate; Wikimedia blocks Special:Export, Perseus raw GitHub works.

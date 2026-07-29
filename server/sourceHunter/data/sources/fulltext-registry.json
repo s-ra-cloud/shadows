@@ -61,6 +61,50 @@
       "robots_mode": "target_origin",
       "requests_per_second": 0.5,
       "rights_notes": "Rights vary by repository, edition, and translation. Do not inherit a corpus-level licence without checking the selected file and repository metadata."
+    },
+    {
+      "source_id": "source:sacred-texts",
+      "name": "Internet Sacred Text Archive",
+      "local_only": false,
+      "allowed_hosts": [
+        "sacred-texts.com"
+      ],
+      "allowed_path_prefixes": [],
+      "automated_download_allowed": true,
+      "terms_url": "https://sacred-texts.com/cnote.htm",
+      "robots_mode": "target_origin",
+      "requests_per_second": 0.25,
+      "rights_notes": "Most texts are pre-1923 public-domain scans, but the archive also hosts copyrighted and 'not renewed' material. Verify the copyright note on each text's index page before collecting."
+    },
+    {
+      "source_id": "source:internet-archive",
+      "name": "Internet Archive (texts collection downloads)",
+      "local_only": false,
+      "allowed_hosts": [
+        "archive.org"
+      ],
+      "allowed_path_prefixes": [
+        "/download/"
+      ],
+      "automated_download_allowed": true,
+      "terms_url": "https://archive.org/about/terms.php",
+      "robots_mode": "target_origin",
+      "requests_per_second": 0.25,
+      "rights_notes": "Only /download/ item files are permitted. The Archive hosts material under many rights states; check the item's metadata (possible-copyright-status, licenseurl) and the scanned edition's own notice before collecting."
+    },
+    {
+      "source_id": "source:topostext",
+      "name": "ToposText",
+      "local_only": false,
+      "allowed_hosts": [
+        "topostext.org"
+      ],
+      "allowed_path_prefixes": [],
+      "automated_download_allowed": true,
+      "terms_url": "https://topostext.org/the-fine-print",
+      "robots_mode": "target_origin",
+      "requests_per_second": 0.25,
+      "rights_notes": "ToposText texts are generally CC BY-SA-licensed translations or public-domain editions, but each work page states its own source and licence; record the per-work statement as evidence."
     }
   ]
 }

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 type Tab = "library" | "hunter";
-type HunterTab = "candidates" | "plan" | "corpus" | "verify" | "catalog" | "runs" | "policy";
+type HunterTab = "candidates" | "plan" | "corpus" | "verify" | "catalog" | "runs" | "policy" | "registry";
 
 export default function SourcesPage() {
   const [activeTab, setActiveTab] = useState<Tab>("library");
@@ -263,6 +263,7 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
     ...(isEditor ? [{ key: "catalog" as HunterTab, label: "Catalog Builder" }] : []),
     { key: "runs", label: "Runs History" },
     { key: "policy", label: "Policy" },
+    { key: "registry", label: "Source Registry" },
   ];
 
   useEffect(() => {
@@ -297,6 +298,7 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
         {activeHunterTab === "catalog" && isEditor && <HunterCatalog />}
         {activeHunterTab === "runs" && <HunterRuns />}
         {activeHunterTab === "policy" && <HunterPolicy isEditor={isEditor} />}
+        {activeHunterTab === "registry" && <HunterRegistry isEditor={isEditor} />}
       </div>
     </div>
   );
@@ -1005,6 +1007,161 @@ function HunterPolicy({ isEditor }: { isEditor: boolean }) {
           </pre>
         )}
       </div>
+    </div>
+  );
+}
+
+function HunterRegistry({ isEditor }: { isEditor: boolean }) {
+  const { data: registry, isLoading } = useQuery({ queryKey: ["/api/hunter/registry"] });
+  const [editing, setEditing] = useState(false);
+  const [registryStr, setRegistryStr] = useState("");
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (registry && !editing) {
+      setRegistryStr(JSON.stringify(registry, null, 2));
+    }
+  }, [registry, editing]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      let parsed;
+      try {
+        parsed = JSON.parse(registryStr);
+      } catch (e) {
+        throw new Error("Invalid JSON");
+      }
+      const res = await apiRequest("PUT", "/api/hunter/registry", parsed);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/registry"] });
+      setEditing(false);
+      toast({ title: "Source registry updated" });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Failed to update registry", description: e.message, variant: "destructive" }),
+  });
+
+  if (isLoading) return <div className="text-[#E0DCE6]/50 text-sm">Loading source registry...</div>;
+
+  const sources: any[] = Array.isArray((registry as any)?.sources) ? (registry as any).sources : [];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="text-lg font-medium text-[#E0DCE6] mb-1">Trusted Source Registry</h3>
+          <p className="text-sm text-[#E0DCE6]/60">
+            Reviewed sites downloads are allowed from. A candidate's URL must match one of these
+            hosts (and path prefixes) before the hunter will fetch it.
+          </p>
+        </div>
+        {isEditor && !editing && (
+          <button
+            onClick={() => setEditing(true)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm bg-[#350A8C]/30 border border-[#350A8C]/40 text-[#E0DCE6] hover:bg-[#350A8C]/50 transition-colors"
+            data-testid="button-edit-registry"
+          >
+            <Pencil size={14} /> Edit Registry
+          </button>
+        )}
+      </div>
+
+      {editing ? (
+        <div className="bg-[#0B0626] border border-[#350A8C]/30 rounded-xl overflow-hidden flex flex-col">
+          <textarea
+            value={registryStr}
+            onChange={(e) => setRegistryStr(e.target.value)}
+            className="w-full p-4 bg-transparent text-[#E0DCE6] text-sm font-mono focus:outline-none min-h-[400px]"
+            spellCheck={false}
+            data-testid="textarea-registry"
+          />
+          <div className="p-3 bg-[#130D30] border-t border-[#350A8C]/30 flex justify-end gap-2">
+            <button
+              onClick={() => setEditing(false)}
+              className="px-4 py-2 rounded-lg text-sm text-[#E0DCE6]/70 hover:bg-[#350A8C]/20 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => saveMutation.mutate()}
+              disabled={saveMutation.isPending}
+              className="px-4 py-2 rounded-lg bg-[#8F00FF] text-white text-sm font-medium hover:bg-[#7B00E0] disabled:opacity-50 transition-colors"
+              data-testid="button-save-registry"
+            >
+              {saveMutation.isPending ? "Saving..." : "Save Registry"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {sources.map((source) => (
+            <div
+              key={source.source_id}
+              className="bg-[#0B0626] border border-[#350A8C]/30 rounded-xl p-4"
+              data-testid={`registry-source-${source.source_id}`}
+            >
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <span className="text-[#E0DCE6] font-medium">{source.name}</span>
+                <span className="text-xs font-mono text-[#E0DCE6]/40">{source.source_id}</span>
+                {source.local_only && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#350A8C]/40 text-[#E0DCE6]/70">
+                    local only
+                  </span>
+                )}
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full ${
+                    source.automated_download_allowed
+                      ? "bg-[#03FF9B]/10 text-[#03FF9B]"
+                      : "bg-red-500/10 text-red-400"
+                  }`}
+                >
+                  {source.automated_download_allowed ? "download allowed" : "download blocked"}
+                </span>
+              </div>
+              <div className="text-sm text-[#E0DCE6]/60 space-y-1">
+                {!source.local_only && (
+                  <div>
+                    <span className="text-[#E0DCE6]/40">Hosts:</span>{" "}
+                    <span className="font-mono">{(source.allowed_hosts ?? []).join(", ") || "—"}</span>
+                    {(source.allowed_path_prefixes ?? []).length > 0 && (
+                      <>
+                        {" "}
+                        <span className="text-[#E0DCE6]/40">Paths:</span>{" "}
+                        <span className="font-mono">{source.allowed_path_prefixes.join(", ")}</span>
+                      </>
+                    )}
+                  </div>
+                )}
+                <div>
+                  <span className="text-[#E0DCE6]/40">Rate limit:</span>{" "}
+                  {source.requests_per_second} req/s
+                  {source.terms_url && (
+                    <>
+                      {" · "}
+                      <a
+                        href={source.terms_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#03FF9B]/80 hover:underline"
+                      >
+                        Terms of use
+                      </a>
+                    </>
+                  )}
+                </div>
+                {source.rights_notes && (
+                  <p className="text-xs text-[#E0DCE6]/50 pt-1">{source.rights_notes}</p>
+                )}
+              </div>
+            </div>
+          ))}
+          {sources.length === 0 && (
+            <div className="text-sm text-[#E0DCE6]/50">No sources registered.</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

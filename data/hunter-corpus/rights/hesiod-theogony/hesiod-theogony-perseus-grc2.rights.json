@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:hesiod-theogony",
+  "edition_id": "edition:hesiod-theogony-perseus-grc2",
+  "source_id": "source:perseus-github",
+  "source_reference": "https://raw.githubusercontent.com/PerseusDL/canonical-greekLit/master/data/tlg0020/tlg001/tlg0020.tlg001.perseus-grc2.xml",
+  "rights": {
+    "status": "public_domain",
+    "confidence": "high",
+    "basis": "unknown",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "territory_covered": true,
+    "statement": "",
+    "license": null,
+    "rights_url": "https://github.com/PerseusDL/canonical-greekLit",
+    "license_url": null,
+    "publication_allowed": true,
+    "translation_allowed": true,
+    "locked": false,
+    "do_not_publish": false,
+    "review_required": false,
+    "obligations": [],
+    "reasons": [
+      "explicit public-domain claim"
+    ],
+    "assessed_at": "2026-07-29T15:58:01.669000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "evidence": "Ancient Greek text; Perseus canonical greekLit repository (CC BY-SA metadata, PD source text).",
+    "rights_url": "https://github.com/PerseusDL/canonical-greekLit",
+    "territories": [
+      "worldwide"
+    ],
+    "status_claim": "public_domain"
+  },
+  "file_sha256": "sha256:e43bcec865a813c5c25e90142cab80dade53ad1aafeb02e2d245466e1962e644"
+}

@@ -17,6 +17,7 @@ import {
   collectFulltexts,
   verifyCorpus,
   loadFulltextRegistry,
+  validateFulltextRegistry,
   validateCandidate,
   validatePolicy,
   fetchPayload,
@@ -85,6 +86,18 @@ function isPrivateAddress(address: string): boolean {
   );
 }
 const POLICY_OVERRIDE_PATH = path.resolve(process.cwd(), "data", "hunter-policy.json");
+const REGISTRY_OVERRIDE_PATH = path.resolve(process.cwd(), "data", "hunter-registry.json");
+const REGISTRY_DEFAULT_PATH = path.join(DATA_DIR, "sources", "fulltext-registry.json");
+
+/** Editor-saved registry override if present, otherwise the bundled default. */
+async function loadActiveRegistry(): Promise<Record<string, unknown>> {
+  try {
+    await fs.access(REGISTRY_OVERRIDE_PATH);
+    return await loadFulltextRegistry(REGISTRY_OVERRIDE_PATH);
+  } catch {
+    return await loadFulltextRegistry(REGISTRY_DEFAULT_PATH);
+  }
+}
 
 async function loadActivePolicy(): Promise<Policy> {
   try {
@@ -227,6 +240,30 @@ export function registerHunterRoutes(
     }
   });
 
+  // ---- Full-text source registry ----------------------------------------
+  app.get("/api/hunter/registry", async (_req, res) => {
+    try {
+      res.json(await loadActiveRegistry());
+    } catch (e) {
+      res.status(500).json({ message: errMessage(e) });
+    }
+  });
+
+  app.put("/api/hunter/registry", requireEditor, async (req, res) => {
+    try {
+      const registry = req.body as Record<string, unknown>;
+      validateFulltextRegistry(registry);
+      await fs.mkdir(path.dirname(REGISTRY_OVERRIDE_PATH), { recursive: true });
+      await fs.writeFile(REGISTRY_OVERRIDE_PATH, JSON.stringify(registry, null, 2) + "\n");
+      res.json(registry);
+    } catch (e) {
+      // Validation throws plain Errors; treat any failure to validate as a 400.
+      const message = errMessage(e);
+      const status = e instanceof Error && !("code" in e) ? 400 : 500;
+      res.status(status).json({ message });
+    }
+  });
+
   // ---- Plan (rights assessment) ----------------------------------------
   app.post("/api/hunter/plan", requireEditor, async (_req, res) => {
     const runId = await createRun("plan");
@@ -265,9 +302,7 @@ export function registerHunterRoutes(
       const rows = await loadCandidateRows();
       const policy = await loadActivePolicy();
       validatePolicy(policy);
-      const registry = await loadFulltextRegistry(
-        path.join(DATA_DIR, "sources", "fulltext-registry.json"),
-      );
+      const registry = await loadActiveRegistry();
       const selectionMode = req.body?.selection_mode === "all" ? "all" : "preferred";
       const records = await collectFulltexts(
         rows.map(candidateFromRow),
