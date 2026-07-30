@@ -5,31 +5,42 @@
   "source_id": "source:sacred-texts",
   "source_reference": "https://www.sacred-texts.com/bib/kjv/index.htm",
   "rights": {
-    "status": "public_domain_jurisdictional",
-    "confidence": "medium",
-    "basis": "source_statement",
-    "target_jurisdiction": "FR",
-    "territories": [
-      "UNSPECIFIED"
-    ],
-    "territory_covered": false,
-    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "basis": "manual",
+    "locked": false,
+    "status": "public_domain",
     "license": null,
+    "reasons": [
+      "editor manual determination: old text"
+    ],
+    "statement": "old text",
+    "confidence": "high",
     "rights_url": null,
+    "assessed_at": "2026-07-30T08:51:51.097000+00:00",
     "license_url": null,
-    "publication_allowed": false,
-    "translation_allowed": false,
-    "locked": true,
-    "do_not_publish": true,
-    "review_required": true,
     "obligations": [
       "verify_target_jurisdiction"
     ],
-    "reasons": [
-      "explicit public-domain claim"
+    "territories": [
+      "UNSPECIFIED"
     ],
-    "assessed_at": "2026-07-30T06:07:17.780000+00:00",
-    "not_legal_advice": true
+    "do_not_publish": false,
+    "review_required": false,
+    "not_legal_advice": true,
+    "territory_covered": true,
+    "publication_allowed": true,
+    "target_jurisdiction": "FR",
+    "translation_allowed": false,
+    "manual_determination": {
+      "status": "public_domain",
+      "basis": "old text",
+      "notes": null,
+      "reviewer": null,
+      "determined_at": "2026-07-30T08:51:51.097000+00:00",
+      "previous_status": "public_domain_jurisdictional",
+      "previous_reasons": [
+        "explicit public-domain claim"
+      ]
+    }
   },
   "candidate_rights_evidence": {
     "status_claim": "unknown",
