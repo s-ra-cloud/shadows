@@ -170,6 +170,22 @@ export const hunterBlockers = pgTable("hunter_blockers", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Auditable manual rights determinations recorded by editors reviewing
+// locked corpus files. Approving a review moves the file to the public
+// partition; the review row is the permanent audit record.
+export const hunterRightsReviews = pgTable("hunter_rights_reviews", {
+  id: serial("id").primaryKey(),
+  corpusFileId: integer("corpus_file_id").references(() => hunterCorpusFiles.id),
+  workId: text("work_id").notNull(),
+  editionId: text("edition_id").notNull(),
+  decision: text("decision").notNull(), // approve_public | keep_locked
+  determinedStatus: text("determined_status"), // public_domain | open_license (approve only)
+  basis: text("basis").notNull(), // editor's stated basis for the determination
+  notes: text("notes"),
+  previousStatus: text("previous_status"), // rights status before review
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -189,6 +205,7 @@ export const insertHunterCandidateSchema = createInsertSchema(hunterCandidates).
 export const insertHunterRunSchema = createInsertSchema(hunterRuns).omit({ id: true, startedAt: true });
 export const insertHunterCorpusFileSchema = createInsertSchema(hunterCorpusFiles).omit({ id: true, downloadedAt: true });
 export const insertHunterBlockerSchema = createInsertSchema(hunterBlockers).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertHunterRightsReviewSchema = createInsertSchema(hunterRightsReviews).omit({ id: true, createdAt: true });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -220,3 +237,5 @@ export type HunterCorpusFile = typeof hunterCorpusFiles.$inferSelect;
 export type InsertHunterCorpusFile = z.infer<typeof insertHunterCorpusFileSchema>;
 export type HunterBlocker = typeof hunterBlockers.$inferSelect;
 export type InsertHunterBlocker = z.infer<typeof insertHunterBlockerSchema>;
+export type HunterRightsReview = typeof hunterRightsReviews.$inferSelect;
+export type InsertHunterRightsReview = z.infer<typeof insertHunterRightsReviewSchema>;

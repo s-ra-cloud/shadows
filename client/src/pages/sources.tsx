@@ -1301,6 +1301,7 @@ function HunterPlan({ isEditor }: { isEditor: boolean }) {
 function HunterCorpus({ isEditor }: { isEditor: boolean }) {
   const { data: corpus, isLoading } = useQuery({ queryKey: ["/api/hunter/corpus"] });
   const { toast } = useToast();
+  const [reviewingId, setReviewingId] = useState<number | null>(null);
   
   const [isPolling, setIsPolling] = useState(false);
   const { data: runs } = useQuery({
@@ -1362,6 +1363,7 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
                 <th className="px-4 py-3 font-medium">Language</th>
                 <th className="px-4 py-3 font-medium">Partition</th>
                 <th className="px-4 py-3 font-medium text-right">Size</th>
+                {isEditor && <th className="px-4 py-3 font-medium text-right">Rights</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-[#350A8C]/10">
@@ -1386,6 +1388,19 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
                   <td className="px-4 py-3 text-right text-[#E0DCE6]/50 font-mono text-xs">
                     {(file.byteCount / 1024).toFixed(1)} KB
                   </td>
+                  {isEditor && (
+                    <td className="px-4 py-3 text-right">
+                      {file.partition === "locked" && (
+                        <button
+                          onClick={() => setReviewingId(file.id)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#350A8C]/40 text-[#E0DCE6]/80 border border-[#350A8C]/50 hover:border-[#8F00FF]/60 hover:text-[#E0DCE6] transition-colors"
+                          data-testid={`button-review-rights-${file.id}`}
+                        >
+                          <ShieldCheck size={13} /> Review rights
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -1397,10 +1412,203 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
           <p className="text-[#E0DCE6]/60 text-sm">No files in corpus yet.</p>
         </div>
       )}
+      {reviewingId !== null && (
+        <RightsReviewModal fileId={reviewingId} onClose={() => setReviewingId(null)} />
+      )}
     </div>
   );
 }
 
+function RightsReviewModal({ fileId, onClose }: { fileId: number; onClose: () => void }) {
+  const { toast } = useToast();
+  const [status, setStatus] = useState<"public_domain" | "open_license">("public_domain");
+  const [basis, setBasis] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const { data, isLoading, error } = useQuery<any>({
+    queryKey: [`/api/hunter/corpus/${fileId}/rights`],
+  });
+
+  const reviewMutation = useMutation({
+    mutationFn: (decision: "approve_public" | "keep_locked") =>
+      apiRequest("POST", `/api/hunter/corpus/${fileId}/review`, {
+        decision,
+        status,
+        basis,
+        notes: notes || undefined,
+      }),
+    onSuccess: (_res, decision) => {
+      toast({
+        title:
+          decision === "approve_public"
+            ? "Text cleared for publication"
+            : "Determination recorded; text stays locked",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/corpus"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/library"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/hunter/corpus/${fileId}/rights`] });
+      onClose();
+    },
+    onError: (e: Error) =>
+      toast({ title: "Review failed", description: e.message, variant: "destructive" }),
+  });
+
+  const rights = data?.rights ?? {};
+  const reasons: string[] = Array.isArray(rights.reasons) ? rights.reasons : [];
+  const reviews: any[] = Array.isArray(data?.reviews) ? data.reviews : [];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-[#130D30] border border-[#350A8C]/40 rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="flex items-start justify-between p-6 pb-4 border-b border-[#350A8C]/30 shrink-0">
+          <div className="min-w-0">
+            <h3 className="text-lg font-semibold text-[#E0DCE6]" data-testid="text-review-title">
+              Rights Review
+            </h3>
+            <p className="text-sm text-[#E0DCE6]/60 mt-1 truncate">
+              {data?.title ?? "Loading..."}
+              {data?.author ? ` — ${data.author}` : ""}
+            </p>
+          </div>
+          <button onClick={onClose} className="shrink-0 ml-4" data-testid="button-close-review">
+            <X size={20} className="text-[#E0DCE6]/50 hover:text-[#E0DCE6]" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          {isLoading && <div className="text-[#E0DCE6]/50 text-sm">Loading rights assessment...</div>}
+          {error && (
+            <div className="text-red-400 text-sm flex items-center gap-2">
+              <AlertCircle size={16} /> Could not load the rights assessment.
+            </div>
+          )}
+          {data && (
+            <>
+              <div className="p-4 rounded-lg bg-orange-500/5 border border-orange-500/20">
+                <div className="flex items-center gap-2 text-sm font-medium text-orange-300 mb-2">
+                  <Lock size={14} /> Why this text is locked
+                </div>
+                <div className="text-xs text-[#E0DCE6]/70 space-y-1">
+                  <div>
+                    Status: <span className="font-mono">{String(rights.status ?? "unknown")}</span>
+                    {rights.confidence && (
+                      <span className="text-[#E0DCE6]/40"> ({String(rights.confidence)} confidence)</span>
+                    )}
+                  </div>
+                  {reasons.length > 0 && (
+                    <ul className="list-disc list-inside" data-testid="list-rights-reasons">
+                      {reasons.map((r, i) => (
+                        <li key={i}>{r}</li>
+                      ))}
+                    </ul>
+                  )}
+                  {rights.statement && (
+                    <div className="text-[#E0DCE6]/50 italic mt-1">“{String(rights.statement)}”</div>
+                  )}
+                  {data.sourceReference && (
+                    <div className="mt-1 break-all">
+                      Source: <span className="font-mono">{data.sourceReference}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {data.aiClaims && (
+                <div className="p-4 rounded-lg bg-[#8F00FF]/5 border border-[#8F00FF]/20">
+                  <div className="flex items-center gap-2 text-sm font-medium text-[#8F00FF] mb-2">
+                    <AlertCircle size={14} /> Unverified AI claims (hints only — never trust without checking)
+                  </div>
+                  <div className="text-xs text-[#E0DCE6]/70 space-y-1" data-testid="text-ai-claims">
+                    {data.aiClaims.statement && <div>Claimed rights: {String(data.aiClaims.statement)}</div>}
+                    {data.aiClaims.license_url && (
+                      <div className="break-all">Claimed license URL: {String(data.aiClaims.license_url)}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {reviews.length > 0 && (
+                <div>
+                  <div className="text-sm font-medium text-[#E0DCE6]/80 mb-2">Previous determinations</div>
+                  <div className="space-y-2">
+                    {reviews.map((r) => (
+                      <div key={r.id} className="p-3 rounded-lg bg-[#0B0626]/60 border border-[#350A8C]/20 text-xs text-[#E0DCE6]/70">
+                        <div className="flex items-center justify-between">
+                          <span className={r.decision === "approve_public" ? "text-[#03FF9B]" : "text-orange-300"}>
+                            {r.decision === "approve_public" ? "Approved for publication" : "Kept locked"}
+                          </span>
+                          <span className="text-[#E0DCE6]/40">{new Date(r.createdAt).toLocaleString()}</span>
+                        </div>
+                        <div className="mt-1">Basis: {r.basis}</div>
+                        {r.notes && <div className="text-[#E0DCE6]/50">Notes: {r.notes}</div>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-3 pt-2 border-t border-[#350A8C]/20">
+                <div className="text-sm font-medium text-[#E0DCE6]/80">Manual determination</div>
+                <div>
+                  <label className="block text-xs text-[#E0DCE6]/50 mb-1">Determined status (if approving)</label>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as "public_domain" | "open_license")}
+                    className="w-full px-3 py-2 rounded-lg bg-[#0B0626] border border-[#350A8C]/40 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60"
+                    data-testid="select-review-status"
+                  >
+                    <option value="public_domain">Public domain</option>
+                    <option value="open_license">Open license</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-[#E0DCE6]/50 mb-1">
+                    Basis for the determination (required)
+                  </label>
+                  <input
+                    value={basis}
+                    onChange={(e) => setBasis(e.target.value)}
+                    placeholder="e.g. Author died 1820; verified against source edition page"
+                    className="w-full px-3 py-2 rounded-lg bg-[#0B0626] border border-[#350A8C]/40 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60"
+                    data-testid="input-review-basis"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-[#E0DCE6]/50 mb-1">Notes (optional)</label>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-lg bg-[#0B0626] border border-[#350A8C]/40 text-sm text-[#E0DCE6] focus:outline-none focus:border-[#8F00FF]/60"
+                    data-testid="input-review-notes"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+        <div className="flex items-center justify-end gap-3 p-6 pt-4 border-t border-[#350A8C]/30 shrink-0">
+          <button
+            onClick={() => reviewMutation.mutate("keep_locked")}
+            disabled={reviewMutation.isPending || !basis.trim()}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-[#350A8C]/40 text-[#E0DCE6]/80 border border-[#350A8C]/50 hover:border-orange-400/50 disabled:opacity-50 transition-colors"
+            data-testid="button-keep-locked"
+          >
+            <Lock size={14} /> Keep Locked
+          </button>
+          <button
+            onClick={() => reviewMutation.mutate("approve_public")}
+            disabled={reviewMutation.isPending || !basis.trim()}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-[#03FF9B]/20 text-[#03FF9B] border border-[#03FF9B]/30 hover:bg-[#03FF9B]/30 disabled:opacity-50 transition-colors"
+            data-testid="button-approve-public"
+          >
+            {reviewMutation.isPending ? <RefreshCw size={14} className="animate-spin" /> : <Unlock size={14} />}
+            Approve & Publish
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 function HunterVerify({ isEditor }: { isEditor: boolean }) {
   const { data, isLoading } = useQuery<any>({ queryKey: ["/api/hunter/verify/latest"] });
   const { toast } = useToast();

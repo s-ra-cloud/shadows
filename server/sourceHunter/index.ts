@@ -182,12 +182,13 @@ export {
 // collectFulltexts(candidates, policy, registry, corpusRoot, {assessedAt?, selectionMode?, userAgent?})
 // verifyCorpus(corpusRoot): Promise<CorpusCounts>
 // writeCorpusManifest / iterCorpusManifest
-export type { CorpusCounts } from "./fulltext.js";
+export type { CorpusCounts, ManualDetermination } from "./fulltext.js";
 export {
   collectFulltexts,
   verifyCorpus,
   writeCorpusManifest,
   iterCorpusManifest,
+  promoteLockedFile,
 } from "./fulltext.js";
 
 // --- date utilities ---

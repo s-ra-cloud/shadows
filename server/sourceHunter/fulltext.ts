@@ -373,6 +373,19 @@ export async function collectFulltexts(
   return records;
 }
 
+/**
+ * Editor-approved manual rights determination used to promote a locked file.
+ * This is the ONLY path from the locked partition to public: it requires an
+ * explicit human decision (never AI claims) and leaves an auditable trail in
+ * the rights sidecar.
+ */
+export interface ManualDetermination {
+  status: "public_domain" | "open_license";
+  basis: string;
+  notes?: string | null;
+  reviewer?: string | null;
+  determinedAt?: string | Date;
+}
 /** Write the corpus.jsonl manifest (compact JSON lines, mode 0644). */
 export async function writeCorpusManifest(
   filePath: string,
@@ -535,3 +548,152 @@ function isInside(root: string, target: string): boolean {
 
 // Keep os import referenced for potential temp-dir consumers.
 void os;
+
+/**
+ * Promote a locked corpus file to the public partition after an editor's
+ * manual rights determination. Moves the text out of locked/, relaxes
+ * permissions, removes the .LOCK.json marker, rewrites the rights sidecar
+ * with the manual determination appended, and updates the corpus.jsonl
+ * manifest. Returns the updated corpus record.
+ */
+export async function promoteLockedFile(
+  corpusRoot: string,
+  record: Record<string, unknown>,
+  determination: ManualDetermination,
+): Promise<Record<string, unknown>> {
+  const root = path.resolve(corpusRoot);
+  const file = record.file as Record<string, unknown> | undefined;
+  if (!file || !file.relative_path) {
+    throw new Error("corpus record has no downloaded file");
+  }
+  if (!file.locked) {
+    throw new Error("file is not locked");
+  }
+  const lockedPath = path.resolve(root, String(file.relative_path));
+  const lockedRoot = path.join(root, "locked");
+  const relFromLocked = path.relative(lockedRoot, lockedPath);
+  if (relFromLocked === "" || relFromLocked.startsWith("..") || path.isAbsolute(relFromLocked)) {
+    throw new Error("locked file path escapes the locked partition");
+  }
+  const stat = await fs.stat(lockedPath).catch(() => null);
+  if (!stat || !stat.isFile()) {
+    throw new Error(`locked file is missing: ${lockedPath}`);
+  }
+  const payload = await fs.readFile(lockedPath);
+  if (file.sha256 && checksum(payload) !== file.sha256) {
+    throw new Error("locked file checksum mismatch; refusing to promote");
+  }
+
+  const publicPath = path.join(root, "public", relFromLocked);
+  if (fsSync.existsSync(publicPath)) {
+    throw new Error(`public file already exists: ${publicPath}`);
+  }
+
+  const determinedAt = isoFormat(coerceAssessedAt(determination.determinedAt));
+  const priorRights = (record.rights ?? {}) as Record<string, unknown>;
+  const manualDetermination = {
+    status: determination.status,
+    basis: determination.basis,
+    notes: determination.notes ?? null,
+    reviewer: determination.reviewer ?? null,
+    determined_at: determinedAt,
+    previous_status: priorRights.status ?? null,
+    previous_reasons: priorRights.reasons ?? [],
+  };
+  const newRights: Record<string, unknown> = {
+    ...priorRights,
+    status: determination.status,
+    confidence: "high",
+    basis: "manual",
+    statement: determination.basis,
+    publication_allowed: true,
+    locked: false,
+    do_not_publish: false,
+    review_required: false,
+    territory_covered: true,
+    reasons: [`editor manual determination: ${determination.basis}`],
+    assessed_at: determinedAt,
+    manual_determination: manualDetermination,
+    not_legal_advice: true,
+  };
+
+  // Move the text into the public partition.
+  await fs.mkdir(path.dirname(publicPath), { recursive: true });
+  await fs.rename(lockedPath, publicPath);
+  await fs.chmod(publicPath, 0o644);
+
+  // Remove the lock marker.
+  const lockRelative = file.lock_path ? String(file.lock_path) : null;
+  if (lockRelative) {
+    const lockPath = path.resolve(root, lockRelative);
+    if (path.relative(root, lockPath).startsWith("..")) {
+      throw new Error("lock marker escapes corpus root");
+    }
+    await fs.rm(lockPath, { force: true });
+  }
+
+  // Rewrite the rights sidecar with the manual determination and open perms.
+  const rightsRelative = file.rights_path ? String(file.rights_path) : null;
+  if (rightsRelative) {
+    const rightsPath = path.resolve(root, rightsRelative);
+    if (path.relative(root, rightsPath).startsWith("..")) {
+      throw new Error("rights record escapes corpus root");
+    }
+    let rightsDocument: Record<string, unknown> = {};
+    try {
+      rightsDocument = JSON.parse(await fs.readFile(rightsPath, "utf-8"));
+    } catch {
+      // Sidecar missing or unreadable: recreate it below.
+      rightsDocument = {
+        schema_version: "1.0.0",
+        work_id: record.work_id,
+        edition_id: record.edition_id,
+        source_id: record.source_id,
+        source_reference: record.source_reference,
+        candidate_rights_evidence: null,
+        file_sha256: checksum(payload),
+      };
+    }
+    rightsDocument.rights = newRights;
+    await fs.rm(rightsPath, { force: true });
+    await writeJson(rightsPath, rightsDocument, 0o644);
+  }
+
+  const newRelativePath = path.join("public", relFromLocked);
+  const updatedRecord: Record<string, unknown> = {
+    ...record,
+    rights: newRights,
+    file: {
+      ...file,
+      relative_path: newRelativePath,
+      locked: false,
+      lock_path: null,
+    },
+  };
+
+  // Update the corpus.jsonl manifest so verifyCorpus stays consistent.
+  const manifestPath = path.join(root, "corpus.jsonl");
+  try {
+    const manifest = await iterCorpusManifest(manifestPath);
+    let replaced = false;
+    const updatedManifest = manifest.map((entry) => {
+      const entryFile = entry.file as Record<string, unknown> | undefined;
+      if (
+        entry.edition_id === record.edition_id &&
+        entryFile &&
+        String(entryFile.relative_path) === String(file.relative_path)
+      ) {
+        replaced = true;
+        return updatedRecord;
+      }
+      return entry;
+    });
+    if (!replaced) updatedManifest.push(updatedRecord);
+    await writeCorpusManifest(manifestPath, updatedManifest);
+  } catch {
+    // No manifest yet (cycle-only corpus); write one with just this record.
+    await writeCorpusManifest(manifestPath, [updatedRecord]);
+  }
+
+  return updatedRecord;
+}

@@ -10,7 +10,7 @@ import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import { eq, desc } from "drizzle-orm";
 import { db, storage } from "./storage";
-import { hunterCandidates, hunterRuns, hunterCorpusFiles, hunterBlockers } from "@shared/schema";
+import { hunterCandidates, hunterRuns, hunterCorpusFiles, hunterBlockers, hunterRightsReviews } from "@shared/schema";
 import {
   runHuntingCycle,
   blockerFromRecord,
@@ -32,6 +32,7 @@ import {
   validatePolicy,
   fetchPayload,
   runSample,
+  promoteLockedFile,
   PlainTextAdapter,
   LegacyJsonlAdapter,
   TeiAdapter,
@@ -714,6 +715,143 @@ export function registerHunterRoutes(
   // ---- Corpus -----------------------------------------------------------
   app.get("/api/hunter/corpus", async (_req, res) => {
     res.json(await db.select().from(hunterCorpusFiles).orderBy(hunterCorpusFiles.id));
+  });
+
+  // ---- Rights review (locked → public) -----------------------------------
+  // Editors inspect a corpus file's rights assessment before deciding.
+  // Unverified AI claims (ai_claimed_*) are surfaced separately as hints only.
+  app.get("/api/hunter/corpus/:id/rights", requireEditor, async (req, res) => {
+    try {
+      const id = parseInt(String(req.params.id));
+      if (!Number.isInteger(id)) return res.status(400).json({ message: "Invalid id" });
+      const [row] = await db
+        .select()
+        .from(hunterCorpusFiles)
+        .where(eq(hunterCorpusFiles.id, id))
+        .limit(1);
+      if (!row) return res.status(404).json({ message: "Corpus file not found" });
+      const record = (row.record ?? {}) as Record<string, unknown>;
+      const rights = (record.rights ?? {}) as Record<string, unknown>;
+      const reviews = await db
+        .select()
+        .from(hunterRightsReviews)
+        .where(eq(hunterRightsReviews.corpusFileId, id))
+        .orderBy(desc(hunterRightsReviews.id));
+      // Pull unverified AI claims out of the candidate rights evidence so the
+      // UI can show them as hints, clearly separated from real evidence.
+      let aiClaims: Record<string, unknown> | null = null;
+      const candidateRows = await db
+        .select()
+        .from(hunterCandidates)
+        .where(eq(hunterCandidates.editionId, row.editionId))
+        .limit(1);
+      const candidateRights =
+        ((candidateRows[0]?.data as Record<string, unknown> | undefined)?.rights ?? null) as
+          | Record<string, unknown>
+          | null;
+      if (candidateRights && (candidateRights.ai_claimed_statement || candidateRights.ai_claimed_license_url)) {
+        aiClaims = {
+          statement: candidateRights.ai_claimed_statement ?? null,
+          license_url: candidateRights.ai_claimed_license_url ?? null,
+        };
+      }
+      res.json({
+        id: row.id,
+        workId: row.workId,
+        editionId: row.editionId,
+        partition: row.partition,
+        title: (record.title as string | undefined) ?? row.editionId,
+        author: (record.author as string | undefined) ?? null,
+        sourceReference: (record.source_reference as string | undefined) ?? null,
+        rights,
+        aiClaims,
+        reviews,
+      });
+    } catch (e) {
+      res.status(500).json({ message: errMessage(e) });
+    }
+  });
+
+  // Record a manual rights determination. `approve_public` promotes the file
+  // out of the locked partition; `keep_locked` only records the audit entry.
+  app.post("/api/hunter/corpus/:id/review", requireEditor, async (req, res) => {
+    try {
+      const id = parseInt(String(req.params.id));
+      if (!Number.isInteger(id)) return res.status(400).json({ message: "Invalid id" });
+      const decision = String(req.body?.decision ?? "");
+      if (!["approve_public", "keep_locked"].includes(decision)) {
+        return res.status(400).json({ message: "decision must be approve_public or keep_locked" });
+      }
+      const basis = String(req.body?.basis ?? "").trim();
+      if (!basis) {
+        return res.status(400).json({ message: "A basis for the determination is required" });
+      }
+      const notes = req.body?.notes ? String(req.body.notes) : null;
+      const determinedStatus = String(req.body?.status ?? "public_domain");
+      if (decision === "approve_public" && !["public_domain", "open_license"].includes(determinedStatus)) {
+        return res.status(400).json({ message: "status must be public_domain or open_license" });
+      }
+
+      const [row] = await db
+        .select()
+        .from(hunterCorpusFiles)
+        .where(eq(hunterCorpusFiles.id, id))
+        .limit(1);
+      if (!row) return res.status(404).json({ message: "Corpus file not found" });
+      if (row.partition !== "locked") {
+        return res.status(400).json({ message: "Only locked files can be reviewed" });
+      }
+      const record = (row.record ?? {}) as Record<string, unknown>;
+      const previousStatus =
+        (((record.rights ?? {}) as Record<string, unknown>).status as string | undefined) ?? null;
+
+      if (decision === "approve_public") {
+        // Move the file public on disk first; only persist DB changes if that
+        // succeeds so the corpus table never claims a public file that is
+        // still locked on disk.
+        const updatedRecord = await promoteLockedFile(CORPUS_ROOT, record, {
+          status: determinedStatus as "public_domain" | "open_license",
+          basis,
+          notes,
+        });
+        const newFile = updatedRecord.file as Record<string, unknown>;
+        await db.transaction(async (tx) => {
+          await tx
+            .update(hunterCorpusFiles)
+            .set({
+              partition: "public",
+              path: String(newFile.relative_path),
+              record: updatedRecord,
+            })
+            .where(eq(hunterCorpusFiles.id, id));
+          await tx.insert(hunterRightsReviews).values({
+            corpusFileId: id,
+            workId: row.workId,
+            editionId: row.editionId,
+            decision,
+            determinedStatus,
+            basis,
+            notes,
+            previousStatus,
+          });
+        });
+        return res.json({ success: true, partition: "public" });
+      }
+
+      await db.insert(hunterRightsReviews).values({
+        corpusFileId: id,
+        workId: row.workId,
+        editionId: row.editionId,
+        decision,
+        determinedStatus: null,
+        basis,
+        notes,
+        previousStatus,
+      });
+      res.json({ success: true, partition: "locked" });
+    } catch (e) {
+      res.status(500).json({ message: errMessage(e) });
+    }
   });
 
   // ---- Library (public corpus reading) ----------------------------------
