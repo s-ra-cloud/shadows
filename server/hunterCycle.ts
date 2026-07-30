@@ -590,7 +590,7 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
       policy,
       registry,
       corpusRoot,
-      { selectionMode: "all", userAgent: CYCLE_USER_AGENT, robotsCheck },
+      { selectionMode: "all", userAgent: CYCLE_USER_AGENT, robotsCheck, fetchImpl },
     );
     await store.mirrorCorpusRecords(records);
   }

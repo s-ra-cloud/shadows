@@ -4,6 +4,7 @@ description: Non-obvious constraints when adding trusted full-text sources to th
 ---
 - Downloader enforces `robots_mode: target_origin`, so registry entries only work if the site's robots.txt permits the exact path. Wikimedia robots.txt disallows `/wiki/Special:` and `/w/` — Wikisource Special:Export/api.php downloads will be robots-blocked despite being registry-allowed.
 - raw.githubusercontent.com has no robots.txt (404 ⇒ allowed); Perseus GitHub raw files download cleanly end-to-end.
+- Internet Archive `/download/...` URLs 302-redirect to mirror hosts (`iaNNN.us.archive.org`, path `/NN/items/...`); registry sources can declare `trusted_redirects` (hosts + path regex) and the downloader re-validates every hop (allow-list OR trusted rule) plus robots per hop. IA also returns 503 to datacenter IPs sometimes — a live failure may be rate-limiting, not a policy bug.
 - Editors can override the bundled registry via `PUT /api/hunter/registry`, which writes `data/hunter-registry.json`; delete that file to fall back to the bundled default.
 
 **Why:** first remote e2e test failed-path analysis (July 2026) showed robots, not the allow-list, is the practical gate.

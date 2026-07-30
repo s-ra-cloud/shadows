@@ -234,6 +234,109 @@ describe("corpus download and verify", () => {
     expect(counts.not_selected).toBe(1);
   });
 
+  function iaCandidate(): Candidate {
+    return {
+      work_id: "work:redirect-test",
+      edition_id: "edition:internet-archive-redirect-test",
+      title: "Redirect Test",
+      author: null,
+      translator: null,
+      source_id: "source:internet-archive",
+      language: "eng",
+      language_role: "unknown",
+      format: "txt",
+      text_url: "https://archive.org/download/redirecttest/redirecttest_djvu.txt",
+      rights: {
+        status_claim: "unknown",
+        basis: "source_statement",
+        statement: "Internet Archive item; licence not verified.",
+      },
+      access: { download_allowed: true, requires_auth: false },
+    } as unknown as Candidate;
+  }
+
+  function fakeFetch(
+    routes: Record<string, { status: number; headers?: Record<string, string>; body?: string }>,
+  ) {
+    return (async (input: unknown) => {
+      const url = String(input);
+      const route = routes[url] ?? { status: 404, body: "" };
+      return {
+        ok: route.status >= 200 && route.status < 300,
+        status: route.status,
+        url,
+        headers: { get: (k: string) => route.headers?.[k.toLowerCase()] ?? null },
+        arrayBuffer: async () => Buffer.from(route.body ?? "", "utf-8"),
+        text: async () => route.body ?? "",
+      };
+    }) as unknown as typeof fetch;
+  }
+
+  it("follows trusted Internet Archive mirror redirects", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "rmrh-redirect-"));
+    const corpus = path.join(dir, "corpus");
+    const body = "THE FULL TEXT OF THE REDIRECT TEST ITEM";
+    const fetchImpl = fakeFetch({
+      "https://archive.org/download/redirecttest/redirecttest_djvu.txt": {
+        status: 302,
+        headers: { location: "https://ia803109.us.archive.org/12/items/redirecttest/redirecttest_djvu.txt" },
+      },
+      "https://ia803109.us.archive.org/12/items/redirecttest/redirecttest_djvu.txt": {
+        status: 200,
+        body,
+        headers: { "content-type": "text/plain; charset=utf-8" },
+      },
+    });
+    const records = await collectFulltexts([iaCandidate()], policy, registry, corpus, {
+      assessedAt: NOW,
+      selectionMode: "all",
+      fetchImpl,
+    });
+    const record = records.find((r) => r.edition_id === "edition:internet-archive-redirect-test")!;
+    expect(record.download_status).toBe("downloaded");
+    const file = record.file as Record<string, unknown>;
+    const saved = await fs.readFile(path.join(corpus, String(file.relative_path)), "utf-8");
+    expect(saved).toBe(body);
+  });
+
+  it("refuses redirects to untrusted hosts", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "rmrh-redirect-"));
+    const corpus = path.join(dir, "corpus");
+    const fetchImpl = fakeFetch({
+      "https://archive.org/download/redirecttest/redirecttest_djvu.txt": {
+        status: 302,
+        headers: { location: "https://evil.example.com/steal.txt" },
+      },
+    });
+    const records = await collectFulltexts([iaCandidate()], policy, registry, corpus, {
+      assessedAt: NOW,
+      selectionMode: "all",
+      fetchImpl,
+    });
+    const record = records.find((r) => r.edition_id === "edition:internet-archive-redirect-test")!;
+    expect(record.download_status).toBe("metadata_only");
+    expect(String(record.error)).toMatch(/not a trusted redirect/);
+  });
+
+  it("refuses trusted-host redirects with untrusted paths", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "rmrh-redirect-"));
+    const corpus = path.join(dir, "corpus");
+    const fetchImpl = fakeFetch({
+      "https://archive.org/download/redirecttest/redirecttest_djvu.txt": {
+        status: 302,
+        headers: { location: "https://ia803109.us.archive.org/internal/admin.txt" },
+      },
+    });
+    const records = await collectFulltexts([iaCandidate()], policy, registry, corpus, {
+      assessedAt: NOW,
+      selectionMode: "all",
+      fetchImpl,
+    });
+    const record = records.find((r) => r.edition_id === "edition:internet-archive-redirect-test")!;
+    expect(record.download_status).toBe("metadata_only");
+    expect(String(record.error)).toMatch(/not a trusted redirect/);
+  });
+
   it("resume never overwrites full text", async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), "rmrh-corpus-"));
     const corpus = path.join(dir, "corpus");

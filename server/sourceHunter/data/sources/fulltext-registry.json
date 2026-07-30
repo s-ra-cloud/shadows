@@ -86,6 +86,16 @@
       "allowed_path_prefixes": [
         "/download/"
       ],
+      "trusted_redirects": [
+        {
+          "hosts": [
+            "us.archive.org"
+          ],
+          "path_patterns": [
+            "^/\\d+/items/"
+          ]
+        }
+      ],
       "automated_download_allowed": true,
       "terms_url": "https://archive.org/about/terms.php",
       "robots_mode": "target_origin",

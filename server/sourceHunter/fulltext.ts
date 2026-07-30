@@ -13,7 +13,7 @@ import {
   PermissionErrorLike,
   selectFulltextSource,
   validateCandidateAccess,
-  validateRemoteUrl,
+  validateDownloadHop,
 } from "./fulltextSources.js";
 import { guessContentType } from "./fetch.js";
 import { slug } from "./normalization.js";
@@ -80,6 +80,7 @@ async function readCandidatePayload(
     maximumBytes: number;
     throttle: Throttle;
     robotsCheck?: RobotsCheck;
+    fetchImpl?: typeof fetch;
   },
 ): Promise<{ payload: Buffer; contentType: string | null }> {
   validateCandidateAccess(candidate, source);
@@ -97,22 +98,47 @@ async function readCandidatePayload(
     return { payload, contentType: guessed || null };
   }
 
-  const url = String(candidate.text_url);
-  if (options.robotsCheck && source.robots_mode === "target_origin") {
-    const decision = await options.robotsCheck(url, source);
-    if (!decision.allowed) {
-      throw new PermissionErrorLike(`robots policy disallows download: ${decision.reason}`);
+  // Follow redirects manually so every hop is re-validated: each URL must
+  // satisfy the source's primary allow-list or (for redirect hops only) one of
+  // its declared trusted_redirects rules, and robots.txt is re-checked per hop.
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const maximumRedirects = 5;
+  let current = String(candidate.text_url);
+  let response: Response | null = null;
+  for (let hop = 0; hop <= maximumRedirects; hop += 1) {
+    validateDownloadHop(current, source, { isRedirect: hop > 0 });
+    if (options.robotsCheck && source.robots_mode === "target_origin") {
+      const decision = await options.robotsCheck(current, source);
+      if (!decision.allowed) {
+        throw new PermissionErrorLike(`robots policy disallows download: ${decision.reason}`);
+      }
     }
+    await options.throttle.wait(source);
+    const hopResponse = await fetchImpl(current, {
+      headers: {
+        Accept:
+          "text/plain, application/xml, text/xml, text/html, application/epub+zip, application/pdf, application/json",
+        "User-Agent": options.userAgent,
+      },
+      redirect: "manual",
+    });
+    if (hopResponse.status >= 300 && hopResponse.status < 400) {
+      const location = hopResponse.headers.get("location");
+      if (!location) {
+        throw new Error(`redirect without location (${hopResponse.status})`);
+      }
+      current = new URL(location, current).toString();
+      continue;
+    }
+    if (!hopResponse.ok) {
+      throw new Error(`download failed (${hopResponse.status})`);
+    }
+    response = hopResponse;
+    break;
   }
-  await options.throttle.wait(source);
-  const response = await fetch(url, {
-    headers: {
-      Accept:
-        "text/plain, application/xml, text/xml, text/html, application/epub+zip, application/pdf, application/json",
-      "User-Agent": options.userAgent,
-    },
-  });
-  validateRemoteUrl(response.url, source);
+  if (!response) {
+    throw new Error("too many redirects during download");
+  }
   const payload = Buffer.from(await response.arrayBuffer());
   if (payload.length > options.maximumBytes) {
     throw new Error("remote full text exceeds maximum_file_bytes");
@@ -249,6 +275,7 @@ export async function collectFulltexts(
     selectionMode?: string;
     userAgent?: string;
     robotsCheck?: RobotsCheck;
+    fetchImpl?: typeof fetch;
   } = {},
 ): Promise<Record<string, unknown>[]> {
   const selectionMode = options.selectionMode ?? "preferred";
@@ -286,6 +313,7 @@ export async function collectFulltexts(
         maximumBytes: Number(policy.maximum_file_bytes),
         throttle,
         robotsCheck: options.robotsCheck,
+        fetchImpl: options.fetchImpl,
       });
       const embeddedNotice = extractEmbeddedNotice(payload, String(candidate.format));
       const finalRights = assessRights(candidate, policy, { embeddedNotice, assessedAt });

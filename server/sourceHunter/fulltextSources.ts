@@ -76,6 +76,34 @@ export function validateFulltextRegistry(registry: Record<string, unknown>): voi
     if (typeof rate !== "number" || rate <= 0) {
       throw new Error(`invalid requests_per_second for ${sourceId}`);
     }
+    const trustedRedirects = src.trusted_redirects ?? [];
+    if (!Array.isArray(trustedRedirects)) {
+      throw new Error(`invalid trusted_redirects for ${sourceId}`);
+    }
+    for (const rule of trustedRedirects) {
+      if (!rule || typeof rule !== "object" || Array.isArray(rule)) {
+        throw new Error(`invalid trusted_redirects rule for ${sourceId}`);
+      }
+      const r = rule as Record<string, unknown>;
+      if (
+        !Array.isArray(r.hosts) ||
+        r.hosts.length === 0 ||
+        r.hosts.some((host) => typeof host !== "string" || !host)
+      ) {
+        throw new Error(`invalid trusted_redirects hosts for ${sourceId}`);
+      }
+      const patterns = r.path_patterns ?? [];
+      if (!Array.isArray(patterns) || patterns.some((p) => typeof p !== "string" || !p)) {
+        throw new Error(`invalid trusted_redirects path_patterns for ${sourceId}`);
+      }
+      for (const pattern of patterns as string[]) {
+        try {
+          new RegExp(pattern);
+        } catch {
+          throw new Error(`invalid trusted_redirects path pattern for ${sourceId}: ${pattern}`);
+        }
+      }
+    }
   }
 }
 
@@ -159,5 +187,60 @@ export function validateRemoteUrl(url: string, source: FullTextSource): void {
   const prefixes = (source.allowed_path_prefixes as string[]) ?? [];
   if (prefixes.length > 0 && !prefixes.some((prefix) => parsed.pathname.startsWith(prefix))) {
     throw new PermissionErrorLike(`target path is not allowed for ${source.source_id}`);
+  }
+}
+
+/**
+ * True when a redirect-target URL matches one of the source's declared
+ * `trusted_redirects` rules (HTTPS only; host suffix match plus optional
+ * path regex patterns). Sources without rules trust no redirect targets.
+ */
+export function redirectTargetTrusted(url: string, source: FullTextSource): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== "https:" || !parsed.hostname) {
+    return false;
+  }
+  const host = parsed.hostname.toLowerCase();
+  const rules = (source.trusted_redirects as Record<string, unknown>[]) ?? [];
+  for (const rule of rules) {
+    const hosts = ((rule.hosts as string[]) ?? []).map((h) => h.toLowerCase());
+    if (!hosts.some((h) => host === h || host.endsWith("." + h))) {
+      continue;
+    }
+    const patterns = (rule.path_patterns as string[]) ?? [];
+    if (patterns.length === 0 || patterns.some((p) => new RegExp(p).test(parsed.pathname))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Validate one hop of a download redirect chain: the URL must satisfy the
+ * source's primary host/path allow-list, or — for redirect hops only — one of
+ * its declared trusted_redirects rules. Throws PermissionErrorLike otherwise.
+ */
+export function validateDownloadHop(
+  url: string,
+  source: FullTextSource,
+  options: { isRedirect: boolean },
+): void {
+  try {
+    validateRemoteUrl(url, source);
+    return;
+  } catch (error) {
+    if (!options.isRedirect || !(error instanceof PermissionErrorLike)) {
+      throw error;
+    }
+    if (!redirectTargetTrusted(url, source)) {
+      throw new PermissionErrorLike(
+        `redirect target is not a trusted redirect for ${source.source_id}: ${url}`,
+      );
+    }
   }
 }
