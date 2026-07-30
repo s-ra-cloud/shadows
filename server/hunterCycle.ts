@@ -86,6 +86,8 @@ export interface CycleOptions {
   robotsCheck?: RobotsCheck;
   /** Override AI lead discovery (tests). Return raw leads. */
   aiDiscover?: (scope: CycleScope, registrySources: Record<string, unknown>[]) => Promise<AiLead[]>;
+  /** Override AI primary/secondary screening (tests). */
+  aiScreen?: AiScreen;
   /** Override registry crawling (tests). */
   registryDiscover?: (
     scope: CycleScope,
@@ -365,6 +367,71 @@ async function defaultAiDiscover(
   return Array.isArray(parsed.leads) ? parsed.leads : [];
 }
 
+// ---------------------------------------------------------------------------
+// AI primary/secondary screening
+// ---------------------------------------------------------------------------
+
+export interface AiScreenVerdict {
+  classification: "primary" | "secondary";
+  justification: string;
+}
+
+/**
+ * Classify discovered leads as primary sources vs secondary literature.
+ * Must return a verdict per input lead, aligned by index; leads without a
+ * usable verdict fall back to the keyword heuristic.
+ */
+export type AiScreen = (
+  leads: { title: string; author: string | null }[],
+  scope: CycleScope,
+) => Promise<(AiScreenVerdict | null)[]>;
+
+const defaultAiScreen: AiScreen = async (leads, scope) => {
+  const client = new OpenAI({
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  });
+  const completion = await client.chat.completions.create({
+    model: process.env.HUNTER_AI_MODEL || "gpt-5",
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content:
+          "You classify book/edition titles for a collector of PRIMARY religious and mythological sources. " +
+          "PRIMARY means the original text itself or a direct translation of it (e.g. \"The Poetic Edda\", \"Enuma Elish\"). " +
+          "SECONDARY means modern scholarship ABOUT the texts: encyclopedias, dictionaries, commentaries, histories, " +
+          "handbooks, companions, introductions, studies, retellings, textbooks, compilations of scholarship. " +
+          'Return strict JSON: {"verdicts":[{"index":<number matching the input>,"classification":"primary"|"secondary","justification":"<one short sentence>"}]}. ' +
+          "Provide exactly one verdict per input item.",
+      },
+      {
+        role: "user",
+        content:
+          `Search topic: ${scope.query}\nClassify each item:\n` +
+          leads
+            .map((l, i) => `${i}. ${l.title}${l.author ? ` — ${l.author}` : ""}`)
+            .join("\n"),
+      },
+    ],
+  });
+  const text = completion.choices[0]?.message?.content ?? "{}";
+  const parsed = JSON.parse(text) as {
+    verdicts?: { index?: number; classification?: string; justification?: string }[];
+  };
+  const verdicts: (AiScreenVerdict | null)[] = leads.map(() => null);
+  for (const v of parsed.verdicts ?? []) {
+    const i = Number(v?.index);
+    if (!Number.isInteger(i) || i < 0 || i >= leads.length) continue;
+    if (v.classification !== "primary" && v.classification !== "secondary") continue;
+    verdicts[i] = {
+      classification: v.classification,
+      justification: String(v.justification || "").trim() || "No justification given.",
+    };
+  }
+  return verdicts;
+};
+
 function matchRegistrySource(
   url: string,
   registrySources: Record<string, unknown>[],
@@ -555,28 +622,73 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
   // Phase 3: create candidates (skip duplicates, validate everything).
   await store.updateProgress({ phase: "creating_candidates", discovered: leads.length });
   const existing = await store.existingEditionIds();
+
+  // AI second opinion on primary vs secondary (heuristic remains the
+  // fallback for non-AI cycles and for leads the model fails to classify).
+  let aiVerdicts: (AiScreenVerdict | null)[] = leads.map(() => null);
+  if (scope.useAi !== false && leads.length > 0) {
+    await store.updateProgress({ phase: "screening_leads", discovered: leads.length });
+    try {
+      const verdicts = await (options.aiScreen ?? defaultAiScreen)(
+        leads.map((lead) => ({
+          title: String(lead.candidate.title ?? ""),
+          author: lead.candidate.author ? String(lead.candidate.author) : null,
+        })),
+        scope,
+      );
+      if (Array.isArray(verdicts)) {
+        aiVerdicts = leads.map((_, i) => verdicts[i] ?? null);
+      }
+    } catch (e) {
+      await report({
+        reason: "fetch_failed",
+        detail: `AI primary/secondary screening failed: ${
+          e instanceof Error ? e.message : String(e)
+        }. Falling back to the keyword heuristic for this cycle.`,
+      });
+    }
+  }
+
   const created: DiscoveredLead[] = [];
   let duplicates = 0;
   let invalid = 0;
   let secondary = 0;
-  for (const lead of leads) {
+  for (let index = 0; index < leads.length; index += 1) {
+    const lead = leads[index];
     const editionId = String(lead.candidate.edition_id);
     if (existing.has(editionId)) {
       duplicates += 1;
       continue;
     }
-    const secondaryMarker = looksLikeSecondarySource(
-      String(lead.candidate.title ?? ""),
-    );
-    if (secondaryMarker) {
-      secondary += 1;
-      await report({
-        reason: "secondary_source",
-        url: String(lead.candidate.text_url ?? "") || null,
-        editionId,
-        detail: `Skipped as a secondary source (matched "${secondaryMarker}"): the hunter only collects original texts and their direct translations. Add it manually via Candidates if it really is a primary source.`,
-      });
-      continue;
+    const verdict = aiVerdicts[index];
+    if (verdict) {
+      // The model's verdict supersedes the keyword heuristic in both
+      // directions: secondary verdicts block, primary verdicts pass through
+      // even when the title contains an unlucky marker word.
+      if (verdict.classification === "secondary") {
+        secondary += 1;
+        await report({
+          reason: "secondary_source",
+          url: String(lead.candidate.text_url ?? "") || null,
+          editionId,
+          detail: `Skipped as a secondary source (AI screening): ${verdict.justification} The hunter only collects original texts and their direct translations. Add it manually via Candidates if it really is a primary source.`,
+        });
+        continue;
+      }
+    } else {
+      const secondaryMarker = looksLikeSecondarySource(
+        String(lead.candidate.title ?? ""),
+      );
+      if (secondaryMarker) {
+        secondary += 1;
+        await report({
+          reason: "secondary_source",
+          url: String(lead.candidate.text_url ?? "") || null,
+          editionId,
+          detail: `Skipped as a secondary source (matched "${secondaryMarker}"): the hunter only collects original texts and their direct translations. Add it manually via Candidates if it really is a primary source.`,
+        });
+        continue;
+      }
     }
     try {
       validateCandidate(lead.candidate);

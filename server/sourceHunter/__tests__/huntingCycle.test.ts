@@ -149,6 +149,8 @@ describe("runHuntingCycle", () => {
         return leads;
       },
       aiDiscover: async () => [],
+      // No AI opinions -> keyword heuristic fallback for every lead.
+      aiScreen: async (leads) => leads.map(() => null),
     });
 
     expect(summary.discovered).toBe(3);
@@ -278,6 +280,118 @@ describe("primary-source screening", () => {
     expect(summary.created).toBe(0);
     expect(candidates.length).toBe(0);
     expect(blockers.some((b) => b.reason === "secondary_source")).toBe(true);
+  });
+});
+
+describe("AI primary/secondary screening", () => {
+  let tmp: string;
+  async function fixtureLead(id: string, title: string) {
+    const file = path.join(tmp, `${id}.txt`);
+    await fs.writeFile(file, "text\n");
+    return {
+      candidate: { ...localCandidate(id, file, "unknown"), title },
+      origin: "registry_crawl" as const,
+      originDetail: "fixture",
+    };
+  }
+
+  beforeEach(async () => {
+    tmp = await fs.mkdtemp(path.join(os.tmpdir(), "hunter-ai-screen-"));
+  });
+
+  it("blocks secondary leads the keyword heuristic misses, with the model's justification", async () => {
+    const policy = await loadDefaultPolicy();
+    const { store, blockers, candidates } = makeStore();
+    const title = "Babylonian Religion and Its Legacy";
+    expect(looksLikeSecondarySource(title)).toBeNull(); // heuristic misses it
+    const summary = await runHuntingCycle({
+      scope: { query: "babylon", useAi: true },
+      policy,
+      registry: REGISTRY,
+      corpusRoot: path.join(tmp, "corpus"),
+      store,
+      registryDiscover: async () => [await fixtureLead("legacy", title)],
+      aiDiscover: async () => [],
+      aiScreen: async () => [
+        { classification: "secondary", justification: "A modern survey about Babylonian religion, not a primary text." },
+      ],
+    });
+    expect(summary.secondary).toBe(1);
+    expect(summary.created).toBe(0);
+    expect(candidates.length).toBe(0);
+    const blocker = blockers.find((b) => b.reason === "secondary_source");
+    expect(blocker?.detail).toContain("AI screening");
+    expect(blocker?.detail).toContain("modern survey about Babylonian religion");
+  });
+
+  it("lets a primary verdict pass a lead the heuristic would have flagged", async () => {
+    const policy = await loadDefaultPolicy();
+    const { store, candidates } = makeStore();
+    const title = "History of the Kings of Britain"; // heuristic marker "history of"
+    expect(looksLikeSecondarySource(title)).toBeTruthy();
+    const summary = await runHuntingCycle({
+      scope: { query: "britain", useAi: true },
+      policy,
+      registry: REGISTRY,
+      corpusRoot: path.join(tmp, "corpus"),
+      store,
+      registryDiscover: async () => [await fixtureLead("hkb", title)],
+      aiDiscover: async () => [],
+      aiScreen: async () => [
+        { classification: "primary", justification: "Geoffrey of Monmouth's medieval chronicle is itself a primary text." },
+      ],
+    });
+    expect(summary.secondary).toBe(0);
+    expect(summary.created).toBe(1);
+    expect(candidates.map((c) => c.title)).toEqual([title]);
+  });
+
+  it("falls back to the heuristic and records a blocker when screening fails", async () => {
+    const policy = await loadDefaultPolicy();
+    const { store, blockers } = makeStore();
+    const summary = await runHuntingCycle({
+      scope: { query: "x", useAi: true },
+      policy,
+      registry: REGISTRY,
+      corpusRoot: path.join(tmp, "corpus"),
+      store,
+      registryDiscover: async () => [
+        await fixtureLead("edda", "The Poetic Edda"),
+        await fixtureLead("enc2", "Encyclopedia of Ancient Deities"),
+      ],
+      aiDiscover: async () => [],
+      aiScreen: async () => {
+        throw new Error("screening model unavailable");
+      },
+    });
+    // Heuristic still catches the encyclopedia; the primary text still lands.
+    expect(summary.secondary).toBe(1);
+    expect(summary.created).toBe(1);
+    expect(
+      blockers.some((b) => b.reason === "fetch_failed" && /screening model unavailable/.test(String(b.detail))),
+    ).toBe(true);
+    expect(blockers.some((b) => b.reason === "secondary_source" && /matched/.test(String(b.detail)))).toBe(true);
+  });
+
+  it("does not run AI screening on non-AI cycles", async () => {
+    const policy = await loadDefaultPolicy();
+    const { store, candidates } = makeStore();
+    let screened = false;
+    const summary = await runHuntingCycle({
+      scope: { query: "x", useAi: false },
+      policy,
+      registry: REGISTRY,
+      corpusRoot: path.join(tmp, "corpus"),
+      store,
+      registryDiscover: async () => [await fixtureLead("edda2", "The Poetic Edda")],
+      aiScreen: async (leads) => {
+        screened = true;
+        return leads.map(() => null);
+      },
+    });
+    expect(screened).toBe(false);
+    expect(summary.created).toBe(1);
+    expect(candidates.length).toBe(1);
   });
 });
 
