@@ -10,6 +10,7 @@ import {
   runHuntingCycle,
   blockerFromRecord,
   fetchJson,
+  looksLikeSecondarySource,
   type BlockerInput,
   type CycleStore,
   type DiscoveredLead,
@@ -231,6 +232,52 @@ describe("runHuntingCycle", () => {
     });
     const reasons = blockers.map((b) => b.reason).sort();
     expect(reasons).toEqual(["download_not_authorized", "invalid_candidate", "unregistered_source"]);
+  });
+});
+
+describe("primary-source screening", () => {
+  it("flags secondary literature by title", () => {
+    expect(looksLikeSecondarySource("Encyclopedia of World Mythology")).toBeTruthy();
+    expect(looksLikeSecondarySource("A Handbook of Norse Mythology")).toBeTruthy();
+    expect(looksLikeSecondarySource("THE GRAND BIBLE - An Encyclopaedic Compilation")).toBeTruthy();
+    expect(looksLikeSecondarySource("The ancient world (2700 B.C.E.--c.500 C.E.)")).toBeTruthy();
+    expect(looksLikeSecondarySource("History of the Babylonian Religion")).toBeTruthy();
+  });
+
+  it("keeps original texts and direct translations", () => {
+    expect(looksLikeSecondarySource("Enuma Elish: The Seven Tablets of Creation")).toBeNull();
+    expect(looksLikeSecondarySource("The Poetic Edda")).toBeNull();
+    expect(looksLikeSecondarySource("Rig Veda, translated by Ralph Griffith")).toBeNull();
+    expect(looksLikeSecondarySource("Popol Vuh")).toBeNull();
+    expect(looksLikeSecondarySource("Theogony of Hesiod")).toBeNull();
+  });
+
+  it("records skipped secondary leads as blockers in a cycle", async () => {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "hunter-secondary-"));
+    const file = path.join(tmp, "enc.txt");
+    await fs.writeFile(file, "text\n");
+    const policy = await loadDefaultPolicy();
+    const { store, blockers, candidates } = makeStore();
+    const lead = {
+      candidate: {
+        ...localCandidate("enc", file, "unknown"),
+        title: "Encyclopedia of Ancient Deities",
+      },
+      origin: "registry_crawl" as const,
+      originDetail: "fixture",
+    };
+    const summary = await runHuntingCycle({
+      scope: { query: "x", useAi: false },
+      policy,
+      registry: REGISTRY,
+      corpusRoot: path.join(tmp, "corpus"),
+      store,
+      registryDiscover: async () => [lead],
+    });
+    expect(summary.secondary).toBe(1);
+    expect(summary.created).toBe(0);
+    expect(candidates.length).toBe(0);
+    expect(blockers.some((b) => b.reason === "secondary_source")).toBe(true);
   });
 });
 

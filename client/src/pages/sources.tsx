@@ -322,6 +322,7 @@ const BLOCKER_REASON_LABELS: Record<string, string> = {
   discovery_unsupported: "No discovery strategy yet",
   download_not_authorized: "Automated download not authorized",
   invalid_candidate: "Invalid candidate data",
+  secondary_source: "Secondary source (not an original text)",
   too_large: "File exceeds size limit",
 };
 
@@ -823,6 +824,7 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
                             ["Candidates created", summary.created],
                             ["Duplicates skipped", summary.duplicates],
                             ["Invalid leads", summary.invalid],
+                            ["Secondary sources skipped", summary.secondary],
                             ["Downloaded (public)", summary.downloaded_public],
                             ["Downloaded (locked)", summary.downloaded_locked],
                             ["Metadata only", summary.metadata_only],

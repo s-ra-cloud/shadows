@@ -65,6 +65,8 @@ export interface CycleSummary {
   created: number;
   duplicates: number;
   invalid: number;
+  /** Leads skipped because they look like secondary literature, not original texts. */
+  secondary: number;
   downloaded_public: number;
   downloaded_locked: number;
   metadata_only: number;
@@ -341,7 +343,10 @@ async function defaultAiDiscover(
       {
         role: "system",
         content:
-          "You are a research librarian locating COMPLETE digitized primary texts (religious/mythological sources). " +
+          "You are a research librarian locating COMPLETE digitized PRIMARY sources only: the original texts themselves " +
+          "(ancient/traditional religious or mythological works) or direct translations of them. " +
+          "NEVER return secondary literature: no modern commentaries, studies, histories, encyclopedias, dictionaries, " +
+          "handbooks, companions, introductions, textbooks, retellings, or compilations about the texts. " +
           "Return strict JSON: {\"leads\":[{\"title\",\"author\",\"url\",\"language\" (ISO 639), \"rights_statement\",\"license_url\",\"confidence\" (high|medium|low)}]}. " +
           "Every url must be a direct https link to the full text (plain text, XML or HTML), not a search page. " +
           `Prefer these trusted hosts when possible: ${hosts.join(", ")}. ` +
@@ -553,10 +558,24 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
   const created: DiscoveredLead[] = [];
   let duplicates = 0;
   let invalid = 0;
+  let secondary = 0;
   for (const lead of leads) {
     const editionId = String(lead.candidate.edition_id);
     if (existing.has(editionId)) {
       duplicates += 1;
+      continue;
+    }
+    const secondaryMarker = looksLikeSecondarySource(
+      String(lead.candidate.title ?? ""),
+    );
+    if (secondaryMarker) {
+      secondary += 1;
+      await report({
+        reason: "secondary_source",
+        url: String(lead.candidate.text_url ?? "") || null,
+        editionId,
+        detail: `Skipped as a secondary source (matched "${secondaryMarker}"): the hunter only collects original texts and their direct translations. Add it manually via Candidates if it really is a primary source.`,
+      });
       continue;
     }
     try {
@@ -612,6 +631,7 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
     created: created.length,
     duplicates,
     invalid,
+    secondary,
     downloaded_public: files.filter((f) => !f.locked).length,
     downloaded_locked: files.filter((f) => f.locked).length,
     metadata_only: records.filter((r) => r.download_status === "metadata_only").length,
@@ -627,6 +647,31 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
   };
   await store.updateProgress({ phase: "completed", ...summaryLite(summary) });
   return summary;
+}
+
+/**
+ * Heuristic screen for secondary literature. The hunter only collects
+ * ORIGINAL sources (the texts themselves and direct translations); modern
+ * scholarship ABOUT the texts is skipped and surfaced as a blocker so an
+ * editor can override by adding the candidate manually.
+ * Returns the matched marker, or null when the title looks primary.
+ */
+export function looksLikeSecondarySource(title: string): string | null {
+  const t = ` ${title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()} `;
+  const markers = [
+    "encyclopedia", "encyclopaedia", "dictionary", "handbook", "companion to",
+    "introduction to", "guide to", "a study", "studies in", "study of",
+    "commentary on", "commentaries", "history of", "essays", "lectures",
+    "textbook", "reader s", "anthology of criticism", "the ancient world",
+    "civilization", "archaeology", "retold", "retelling", "stories from",
+    "myths and legends of", "compilation", "grand bible", "survey of",
+    "analysis", "interpretation of", "critical edition of scholarship",
+    "who s who", "atlas of", "chronology",
+  ];
+  for (const marker of markers) {
+    if (t.includes(` ${marker} `) || t.includes(marker)) return marker;
+  }
+  return null;
 }
 
 function summaryLite(summary: CycleSummary): Record<string, unknown> {
