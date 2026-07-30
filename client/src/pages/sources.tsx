@@ -9,12 +9,12 @@ import {
   Lock, Unlock, ChevronDown, ChevronRight, Plus, Pencil, Trash2,
   BookOpen, X, Check, AlertCircle, ExternalLink,
   Download, Upload, Play, RefreshCw, FileText, ShieldCheck, ShieldAlert,
-  Clock, Database, Code
+  Clock, Database, Code, Globe, ScanLine, Wand2, FileType
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 type Tab = "library" | "hunter";
-type HunterTab = "map" | "cycles" | "candidates" | "plan" | "corpus" | "verify" | "catalog" | "runs" | "policy" | "registry";
+type HunterTab = "map" | "cycles" | "candidates" | "plan" | "corpus" | "extractors" | "verify" | "catalog" | "runs" | "policy" | "registry";
 
 export default function SourcesPage() {
   const [activeTab, setActiveTab] = useState<Tab>("library");
@@ -299,6 +299,12 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
         "All downloaded raw files — public (rights-cleared) or locked (under review) — with provenance, size, and extraction status. Editors can trigger downloads, extract a clean readable version, stop a running extraction, and review rights for locked files.",
     },
     {
+      key: "extractors",
+      label: "Extractors",
+      description:
+        "The six extraction recipes that turn raw downloads into clean, readable Markdown. Each recipe targets a different file type or source shape. Editors choose a recipe per corpus file; the auto-detect picks the most likely one.",
+    },
+    {
       key: "verify",
       label: "Verification",
       description:
@@ -372,6 +378,7 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
         {activeHunterTab === "candidates" && <HunterCandidates isEditor={isEditor} />}
         {activeHunterTab === "plan" && <HunterPlan isEditor={isEditor} />}
         {activeHunterTab === "corpus" && <HunterCorpus isEditor={isEditor} />}
+        {activeHunterTab === "extractors" && <HunterExtractors />}
         {activeHunterTab === "verify" && <HunterVerify isEditor={isEditor} />}
         {activeHunterTab === "catalog" && isEditor && <HunterCatalog />}
         {activeHunterTab === "runs" && <HunterRuns />}
@@ -2107,6 +2114,103 @@ function RightsReviewModal({ fileId, onClose }: { fileId: number; onClose: () =>
     </div>
   );
 }
+const RECIPE_META: Record<string, { icon: React.ReactNode; when: string; tip: string }> = {
+  "html-index-crawl": {
+    icon: <Globe size={22} className="text-[#8F00FF]" />,
+    when: "Use when the downloaded file is a table-of-contents page with links to individual chapters or sections.",
+    tip: "Follows every in-scope link, strips nav/boilerplate, and stitches the pages together in order. Robots-checked and throttled.",
+  },
+  "html-single-page": {
+    icon: <FileText size={22} className="text-[#8F00FF]" />,
+    when: "Use when the whole text sits on one HTML page with no chapter links to follow.",
+    tip: "Strips scripts, navigation, headers, footers and ads, then converts the remaining content to clean Markdown.",
+  },
+  "pdf-text": {
+    icon: <FileType size={22} className="text-[#8F00FF]" />,
+    when: "Use for most PDFs — especially born-digital ones where the text is already embedded.",
+    tip: "Extracts the embedded text layer first. If the layer is too sparse (a scanned image PDF), it automatically falls back to tesseract OCR page by page.",
+  },
+  "pdf-ocr": {
+    icon: <ScanLine size={22} className="text-[#8F00FF]" />,
+    when: "Use for scanned-image PDFs where the text layer is missing or full of garbled characters.",
+    tip: "Renders every page as an image and runs tesseract on each one — slower but more accurate for pure-image scans. Supports non-English languages.",
+  },
+  "docx": {
+    icon: <Code size={22} className="text-[#8F00FF]" />,
+    when: "Use when the downloaded file is a .docx Word document.",
+    tip: "Converts the document structure (headings, paragraphs, lists) to Markdown using mammoth. Embedded images are dropped.",
+  },
+  "ocr-cleanup": {
+    icon: <Wand2 size={22} className="text-[#8F00FF]" />,
+    when: "Use for plain-text transcriptions from archive.org that are hard-wrapped, full of page numbers, or have garbled hyphenation.",
+    tip: "Removes running headers and page-number lines that repeat ≥5 times, repairs mid-word line breaks, and re-flows lines into proper paragraphs.",
+  },
+};
+
+function HunterExtractors() {
+  const { data: recipes, isLoading } = useQuery<
+    { id: string; version: string; label: string; description: string }[]
+  >({ queryKey: ["/api/hunter/extraction/recipes"] });
+
+  if (isLoading)
+    return <div className="text-[#E0DCE6]/50 text-sm py-4">Loading extractors…</div>;
+
+  return (
+    <div>
+      <div className="mb-5">
+        <h2 className="text-base font-semibold text-[#E0DCE6] mb-1">Extraction Recipes</h2>
+        <p className="text-xs text-[#E0DCE6]/50 leading-relaxed max-w-2xl">
+          When you click <span className="text-[#E0DCE6]/70 font-medium">Extract readable text</span> on
+          a corpus file, a recipe converts the raw download into clean Markdown. The auto-detect
+          picks the most likely recipe based on file extension and content; you can always override it.
+        </p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {(recipes ?? []).map((recipe) => {
+          const meta = RECIPE_META[recipe.id];
+          return (
+            <div
+              key={recipe.id}
+              className="rounded-xl border border-[#350A8C]/30 bg-[#0B0626]/40 p-5 flex flex-col gap-3 hover:border-[#8F00FF]/40 transition-colors"
+            >
+              <div className="flex items-start gap-3">
+                <div className="shrink-0 mt-0.5 w-9 h-9 rounded-lg bg-[#350A8C]/30 flex items-center justify-center">
+                  {meta?.icon ?? <FileText size={22} className="text-[#8F00FF]" />}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-[#E0DCE6] text-sm leading-tight">
+                      {recipe.label}
+                    </span>
+                    <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#350A8C]/40 text-[#E0DCE6]/40">
+                      {recipe.id}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-xs text-[#E0DCE6]/60 leading-relaxed">
+                    {recipe.description}
+                  </p>
+                </div>
+              </div>
+              {meta && (
+                <div className="space-y-2 border-t border-[#350A8C]/20 pt-3">
+                  <div className="flex gap-2 text-xs">
+                    <span className="shrink-0 text-[#03FF9B]/70 font-medium w-16">When</span>
+                    <span className="text-[#E0DCE6]/55 leading-relaxed">{meta.when}</span>
+                  </div>
+                  <div className="flex gap-2 text-xs">
+                    <span className="shrink-0 text-[#8F00FF]/80 font-medium w-16">How</span>
+                    <span className="text-[#E0DCE6]/55 leading-relaxed">{meta.tip}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function HunterVerify({ isEditor }: { isEditor: boolean }) {
   const { data, isLoading } = useQuery<any>({ queryKey: ["/api/hunter/verify/latest"] });
   const { toast } = useToast();
