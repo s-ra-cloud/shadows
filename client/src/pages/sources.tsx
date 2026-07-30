@@ -1363,6 +1363,7 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
   const [reviewingId, setReviewingId] = useState<number | null>(null);
   const [extractingFile, setExtractingFile] = useState<any | null>(null);
   const [detailRunId, setDetailRunId] = useState<number | null>(null);
+  const [viewingReadable, setViewingReadable] = useState<{ id: number; title: string } | null>(null);
   
   const [isPolling, setIsPolling] = useState(false);
   const { data: runs } = useQuery({
@@ -1469,13 +1470,14 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         {file.readable ? (
-                          <span
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#03FF9B]/10 text-[#03FF9B] text-[11px] font-medium"
-                            title={`Extracted with ${file.readable.recipe_id} on ${new Date(file.readable.extracted_at).toLocaleString()}`}
+                          <button
+                            onClick={() => setViewingReadable({ id: file.id, title: file.title ?? file.editionId ?? "Text" })}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#03FF9B]/10 text-[#03FF9B] text-[11px] font-medium hover:bg-[#03FF9B]/20 transition-colors cursor-pointer"
+                            title={`Extracted with ${file.readable.recipe_id} on ${new Date(file.readable.extracted_at).toLocaleString()} — click to read`}
                             data-testid={`badge-readable-${file.id}`}
                           >
                             <FileText size={11} /> Readable
-                          </span>
+                          </button>
                         ) : null}
                         <button
                           onClick={() => setExtractingFile(file)}
@@ -1513,9 +1515,62 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
       {extractingFile !== null && (
         <ExtractReadableModal file={extractingFile} onClose={() => setExtractingFile(null)} />
       )}
+      {viewingReadable !== null && (
+        <CorpusReadableReader
+          fileId={viewingReadable.id}
+          title={viewingReadable.title}
+          onClose={() => setViewingReadable(null)}
+        />
+      )}
       {detailRunId !== null && (
         <RunDetailModal runId={detailRunId} onClose={() => setDetailRunId(null)} />
       )}
+    </div>
+  );
+}
+
+/** Read extracted Markdown for any corpus file (public or locked) via the editor-authenticated endpoint. */
+function CorpusReadableReader({
+  fileId,
+  title,
+  onClose,
+}: {
+  fileId: number;
+  title: string;
+  onClose: () => void;
+}) {
+  const { data, isLoading, error } = useQuery<{ id: number; markdown: string }>({
+    queryKey: [`/api/hunter/corpus/${fileId}/readable`],
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-[#130D30] border border-[#350A8C]/40 rounded-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+        <div className="flex items-start justify-between p-6 pb-4 border-b border-[#350A8C]/30 shrink-0">
+          <h3
+            className="text-lg font-semibold text-[#E0DCE6] truncate min-w-0"
+            style={{ fontFamily: "'Cinzel Decorative', serif" }}
+          >
+            {title}
+          </h3>
+          <button onClick={onClose} className="shrink-0 ml-4">
+            <X size={20} className="text-[#E0DCE6]/50 hover:text-[#E0DCE6]" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          {isLoading && <div className="text-[#E0DCE6]/50 text-sm">Loading text…</div>}
+          {error && (
+            <div className="text-red-400 text-sm flex items-center gap-2">
+              <AlertCircle size={16} /> Could not load this text.
+            </div>
+          )}
+          {data?.markdown && (
+            <div className="reader-markdown text-[#E0DCE6]/90 text-[15px] leading-relaxed font-serif [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-3 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-5 [&_h2]:mb-2 [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_p]:my-3 [&_hr]:my-6 [&_hr]:border-[#350A8C]/40 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-[#8F00FF]/50 [&_blockquote]:pl-4 [&_a]:text-[#8F00FF]">
+              <ReactMarkdown>{data.markdown}</ReactMarkdown>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
