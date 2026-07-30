@@ -637,6 +637,31 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
       toast({ title: "Update failed", description: e.message, variant: "destructive" }),
   });
 
+  const retryMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("POST", `/api/hunter/blockers/${id}/retry`);
+      return res.json();
+    },
+    onSuccess: (d: any) => {
+      if (d.outcome === "downloaded") {
+        toast({ title: "Retry succeeded", description: "The text was downloaded and added to the corpus." });
+      } else if (d.outcome === "locked") {
+        toast({ title: "Downloaded to locked partition", description: "The text was fetched but stays locked pending rights review." });
+      } else {
+        toast({
+          title: "Retry still blocked",
+          description: `A fresh blocker was recorded (${BLOCKER_REASON_LABELS[d.new_blocker_reason] ?? d.new_blocker_reason ?? "unknown"}).`,
+          variant: "destructive",
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/blockers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/corpus"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/library"] });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Retry failed", description: e.message, variant: "destructive" }),
+  });
+
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const uploadMutation = useMutation({
     mutationFn: async ({ id, file }: { id: number; file: File }) => {
@@ -955,12 +980,29 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
                             </button>
                           </>
                         ) : (
-                          <button
-                            onClick={() => blockerMutation.mutate({ id: b.id, status: "open" })}
-                            className="px-2 py-1 rounded text-xs text-[#E0DCE6]/50 hover:bg-[#350A8C]/30 transition-colors"
-                          >
-                            Reopen
-                          </button>
+                          <>
+                            {b.status === "resolved" && (
+                              <button
+                                onClick={() => retryMutation.mutate(b.id)}
+                                disabled={retryMutation.isPending}
+                                className="px-2 py-1 rounded text-xs text-[#03FF9B] hover:bg-[#03FF9B]/10 disabled:opacity-50 transition-colors inline-flex items-center gap-1"
+                                data-testid={`button-retry-blocker-${b.id}`}
+                              >
+                                {retryMutation.isPending && retryMutation.variables === b.id ? (
+                                  <RefreshCw size={11} className="animate-spin" />
+                                ) : (
+                                  <RefreshCw size={11} />
+                                )}
+                                Retry
+                              </button>
+                            )}
+                            <button
+                              onClick={() => blockerMutation.mutate({ id: b.id, status: "open" })}
+                              className="px-2 py-1 rounded text-xs text-[#E0DCE6]/50 hover:bg-[#350A8C]/30 transition-colors"
+                            >
+                              Reopen
+                            </button>
+                          </>
                         )}
                       </td>
                     )}

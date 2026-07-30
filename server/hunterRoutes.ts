@@ -11,7 +11,14 @@ import * as path from "node:path";
 import { eq, desc } from "drizzle-orm";
 import { db, storage } from "./storage";
 import { hunterCandidates, hunterRuns, hunterCorpusFiles, hunterBlockers } from "@shared/schema";
-import { runHuntingCycle, type CycleStore, type CycleScope } from "./hunterCycle";
+import {
+  runHuntingCycle,
+  blockerFromRecord,
+  CYCLE_USER_AGENT,
+  type CycleStore,
+  type CycleScope,
+} from "./hunterCycle";
+import { robotsAllowsUrl } from "./sourceHunter/robots";
 import { getHunterRegion } from "@shared/hunterRegions";
 import {
   loadDefaultPolicy,
@@ -584,6 +591,125 @@ export function registerHunterRoutes(
       }
     },
   );
+
+  // Retry a resolved blocker: re-attempt the download for the specific
+  // candidate this blocker points at. Success keeps the blocker resolved and
+  // mirrors the file into the corpus; failure records a fresh blocker with
+  // the new error so the ledger reflects the latest attempt.
+  app.post("/api/hunter/blockers/:id/retry", requireEditor, async (req, res) => {
+    const id = parseInt(String(req.params.id));
+    if (!Number.isInteger(id)) return res.status(400).json({ message: "Invalid blocker id" });
+    const [blocker] = await db
+      .select()
+      .from(hunterBlockers)
+      .where(eq(hunterBlockers.id, id))
+      .limit(1);
+    if (!blocker) return res.status(404).json({ message: "Blocker not found" });
+
+    // Find the candidate to retry: by edition first, then by URL.
+    const rows = await loadCandidateRows();
+    let candidateRow = blocker.editionId
+      ? rows.find((r) => r.editionId === blocker.editionId)
+      : undefined;
+    if (!candidateRow && blocker.url) {
+      candidateRow = rows.find(
+        (r) => String((r.data as Record<string, unknown> | null)?.text_url ?? "") === blocker.url,
+      );
+    }
+    if (!candidateRow) {
+      return res.status(422).json({
+        message:
+          "No candidate matches this blocker; re-run a hunting cycle for this source instead.",
+      });
+    }
+
+    const runId = await createRun("retry");
+    try {
+      const policy = await loadActivePolicy();
+      validatePolicy(policy);
+      const registry = await loadActiveRegistry();
+      const records = await collectFulltexts(
+        [candidateFromRow(candidateRow)],
+        policy,
+        registry,
+        CORPUS_ROOT,
+        {
+          selectionMode: "all",
+          userAgent: CYCLE_USER_AGENT,
+          robotsCheck: async (url) => robotsAllowsUrl(url, CYCLE_USER_AGENT),
+        },
+      );
+      const record = records[0] ?? null;
+      if (!record) throw new Error("Retry produced no download record");
+
+      // Mirror any downloaded file into the corpus table (same as cycles).
+      const file = record.file as Record<string, unknown> | undefined;
+      if (file?.relative_path) {
+        await db
+          .insert(hunterCorpusFiles)
+          .values({
+            workId: String(record.work_id ?? ""),
+            editionId: String(record.edition_id ?? ""),
+            language: (record.language as string | undefined) ?? null,
+            partition: file.locked ? "locked" : "public",
+            path: String(file.relative_path),
+            byteCount: Number(file.bytes ?? 0),
+            sha256: (file.sha256 as string | undefined) ?? null,
+            record,
+          })
+          .onConflictDoNothing();
+      }
+
+      const status = String(record.download_status ?? "unknown");
+      const newBlocker = blockerFromRecord(record);
+      let outcome: "downloaded" | "locked" | "blocked";
+      if (newBlocker) {
+        // Failure (or rights lock): record a fresh blocker with the new error.
+        await db.insert(hunterBlockers).values({
+          runId,
+          sourceId: newBlocker.sourceId ?? null,
+          url: newBlocker.url ?? null,
+          reason: newBlocker.reason,
+          detail: `Retry of blocker #${blocker.id}: ${newBlocker.detail ?? ""}`.trim(),
+          workId: newBlocker.workId ?? null,
+          editionId: newBlocker.editionId ?? null,
+        });
+        outcome = newBlocker.reason === "rights_locked" ? "locked" : "blocked";
+      } else {
+        outcome = "downloaded";
+      }
+      // The retried blocker is cleared (kept resolved) either way — the fresh
+      // blocker, if any, now carries the current state.
+      await db
+        .update(hunterBlockers)
+        .set({ status: "resolved", updatedAt: new Date() })
+        .where(eq(hunterBlockers.id, blocker.id));
+
+      const summary = {
+        retried_blocker_id: blocker.id,
+        edition_id: candidateRow.editionId,
+        download_status: status,
+        outcome,
+        new_blocker_reason: newBlocker?.reason ?? null,
+        entries: records,
+      };
+      await finishRun(runId, true, summary);
+      res.json({ run: { id: runId, status: "completed" }, ...summary });
+    } catch (e) {
+      const message = errMessage(e);
+      await db.insert(hunterBlockers).values({
+        runId,
+        sourceId: blocker.sourceId,
+        url: blocker.url,
+        reason: "fetch_failed",
+        detail: `Retry of blocker #${blocker.id} failed: ${message}`,
+        workId: blocker.workId,
+        editionId: blocker.editionId,
+      });
+      await finishRun(runId, false, null, message);
+      res.status(500).json({ message });
+    }
+  });
 
   // ---- Corpus -----------------------------------------------------------
   app.get("/api/hunter/corpus", async (_req, res) => {
