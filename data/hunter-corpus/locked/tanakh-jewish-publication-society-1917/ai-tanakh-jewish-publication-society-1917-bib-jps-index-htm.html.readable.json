@@ -1,0 +1,11 @@
+{
+  "recipe_id": "html-index-crawl",
+  "recipe_version": "1.0.0",
+  "extracted_at": "2026-07-30T11:22:00.112Z",
+  "pages_fetched": 345,
+  "warnings": [
+    "https://www.sacred-texts.com/bib/jps/jpspro.htm: linked page is itself an index nested deeper than the crawl follows; its chapters were NOT included"
+  ],
+  "source_url": "https://www.sacred-texts.com/bib/jps/index.htm",
+  "markdown_bytes": 1666292
+}

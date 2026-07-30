@@ -82,7 +82,11 @@ export function isInterstitialPage(html: string): boolean {
 
 /** True when an HTML page is mostly links (a table of contents), not prose. */
 export function looksLikeIndexPage(html: string, sourceUrl: string | null): boolean {
-  const links = extractContentLinks(html, sourceUrl ?? "https://example.invalid/");
+  // Without a known source URL (recipe suggestion time) the same-host filter
+  // would drop every absolute link (Perseus-style TOCs), so count all hosts.
+  const links = extractContentLinks(html, sourceUrl ?? "https://example.invalid/", {
+    anyHost: sourceUrl === null,
+  });
   if (links.length < 8) return false;
   return nonLinkProseLength(html) / links.length < 220;
 }
@@ -158,6 +162,11 @@ const htmlIndexRecipe: ExtractionRecipe = {
       throw new Error("No linked pages found on the index page.");
     }
     const visited = new Set<string>([ctx.sourceUrl]);
+    // Everything ever queued. A sub-index page often carries a breadcrumb
+    // link to the *next* sibling (e.g. gen.htm → exo.htm on sacred-texts);
+    // re-queueing it as a deeper child would overtake its own pending
+    // depth-1 entry and silently flatten a whole book into link text.
+    const enqueued = new Set(queue.map((i) => i.url));
 
     while (queue.length > 0) {
       if (pagesFetched >= MAX_PAGES) {
@@ -202,13 +211,28 @@ const htmlIndexRecipe: ExtractionRecipe = {
         failIfDominant();
         continue;
       }
-      const childLinks = allLinks.filter((l) => inScope(l.url) && !visited.has(l.url));
+      const childLinks = allLinks.filter(
+        (l) => inScope(l.url) && !visited.has(l.url) && !enqueued.has(l.url),
+      );
       if (item.depth === 1 && proseLength < 600 && childLinks.length >= 5) {
         // The linked page is itself an index (e.g. a book page listing its
         // chapters): descend one more level, keeping document order.
         const heading = htmlTitle(pageHtml) ?? item.linkText;
         if (heading) sections.push(`# ${heading}`);
+        for (const l of childLinks) enqueued.add(l.url);
         queue.unshift(...childLinks.map((l) => ({ url: l.url, linkText: l.text, depth: 2 })));
+        continue;
+      }
+      if (item.depth >= 2 && proseLength < 600 && childLinks.length >= 5) {
+        // An index page deeper than the crawl descends: compiling just its
+        // link texts would silently drop everything it points at. Count it
+        // as a failure so a structure we don't handle aborts loudly.
+        failures += 1;
+        pagesFetched -= 1;
+        warnings.push(
+          `${item.url}: linked page is itself an index nested deeper than the crawl follows; its chapters were NOT included`,
+        );
+        failIfDominant();
         continue;
       }
       if (!markdown.trim()) continue;

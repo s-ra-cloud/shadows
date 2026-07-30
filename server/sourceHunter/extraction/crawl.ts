@@ -40,6 +40,22 @@ export class PageFetcher {
   }
 
   async fetchPage(url: string): Promise<string> {
+    try {
+      return await this.fetchPageOnce(url);
+    } catch (e) {
+      // One retry after a pause: CDN-fronted archives intermittently 403/5xx
+      // single pages mid-crawl; losing a page silently drops a whole chapter
+      // (or a whole book, when the page is a sub-index).
+      const message = e instanceof Error ? e.message : String(e);
+      if (!/page fetch failed \((403|429|5\d\d)\)/.test(message) && !/fetch failed/i.test(message)) {
+        throw e;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      return await this.fetchPageOnce(url);
+    }
+  }
+
+  private async fetchPageOnce(url: string): Promise<string> {
     let current = url;
     for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
       if (!sameHost(current, this.options.allowedHost)) {

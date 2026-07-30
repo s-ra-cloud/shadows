@@ -8,3 +8,7 @@ description: Durable rules for HTML→Markdown extraction crawls of public-domai
 - Sites serve interstitials mid-crawl (meta-refresh stubs, anti-bot challenges). Count them as failures and abort when failures dominate — never save a fragment as a finished document.
 - Turndown: later-added rules override earlier ones; keep all `<a>` handling in one rule.
 - Public-domain archives rate-limit repeated full crawls within minutes; keep throttle ≥500 ms and avoid back-to-back re-crawls when testing.
+- Sub-index pages carry breadcrumb links to their *next sibling* (plain book name, not "Next:" text). Never re-queue a URL already pending in the crawl queue — a deeper duplicate overtakes the depth-1 entry and silently flattens the whole book into link text.
+- Filter nav-text links ("Next: …", "« Previous: …", "Index") at link-extraction time, not just at Markdown time, so they never become crawl children.
+- CDN-fronted archives intermittently 403/5xx single pages mid-crawl; retry once after a pause, else a whole sub-index (book) drops with only a warning.
+- A "complete-looking" extraction can still be a fragment because the *raw index download* itself was partial (e.g. a half-rendered page ending in valid </html>). Compare against the live index when a compiled document looks short.

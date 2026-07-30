@@ -182,6 +182,141 @@ describe("html-index-crawl recipe", () => {
     expect(output.markdown).not.toContain("banner.jpg");
   });
 
+  it("does not let 'Next:' nav links on a sub-index swallow the following book (JPS regression)", async () => {
+    // sacred-texts JPS structure: each book-index page carries both a
+    // "Next: <next book> index »" nav link and a plain breadcrumb link to the
+    // next book (just its name). Before the fix, either link re-queued
+    // exo.htm as a depth-2 child of gen.htm; it overtook its own pending
+    // depth-1 entry, was fetched as a leaf, and Exodus's chapters silently
+    // vanished from the document.
+    const bookIndex = (book: string, prefix: string, next: [string, string] | null) =>
+      `<html><head><title>${book} index</title></head><body>` +
+      `<a href="index.htm">Index</a>` +
+      (next ? `<a href="${next[0]}.htm">${next[1]}</a>` : "") +
+      [1, 2, 3, 4, 5].map((c) => `<a href="${prefix}00${c}.htm">${book} Chapter ${c}</a>`).join(" ") +
+      (next ? `<a href="${next[0]}.htm" title="Go to next page">Next: ${next[1]} index &raquo;</a>` : "") +
+      `</body></html>`;
+    const routes: Record<string, string> = {
+      [`${host}/robots.txt`]: "",
+      [`${host}/jps/index.htm`]:
+        `<a href="gen.htm">Genesis</a><a href="exo.htm">Exodus</a><a href="lev.htm">Leviticus</a>`,
+      [`${host}/jps/gen.htm`]: bookIndex("Genesis", "gen", ["exo", "Exodus"]),
+      [`${host}/jps/exo.htm`]: bookIndex("Exodus", "exo", ["lev", "Leviticus"]),
+      [`${host}/jps/lev.htm`]: bookIndex("Leviticus", "lev", null),
+    };
+    for (const prefix of ["gen", "exo", "lev"]) {
+      for (let c = 1; c <= 5; c += 1) {
+        routes[`${host}/jps/${prefix}00${c}.htm`] =
+          `<html><head><title>${prefix} ${c}</title></head><body><p>${`Verses of ${prefix} chapter ${c}. `.repeat(40)}</p></body></html>`;
+      }
+    }
+    const recipe = getRecipe("html-index-crawl")!;
+    const output = await recipe.run({
+      payload: Buffer.from(routes[`${host}/jps/index.htm`]),
+      contentType: "text/html",
+      sourceUrl: `${host}/jps/index.htm`,
+      title: "Tanakh",
+      fetchImpl: mockFetch(routes),
+      reportProgress: () => {},
+    });
+    // Every book's chapters are present, in canonical order.
+    for (const prefix of ["gen", "exo", "lev"]) {
+      for (let c = 1; c <= 5; c += 1) {
+        expect(output.markdown).toContain(`Verses of ${prefix} chapter ${c}.`);
+      }
+    }
+    expect(output.markdown.indexOf("gen chapter 5")).toBeLessThan(output.markdown.indexOf("exo chapter 1"));
+    expect(output.markdown.indexOf("exo chapter 5")).toBeLessThan(output.markdown.indexOf("lev chapter 1"));
+    expect(output.pagesFetched).toBe(18); // 3 book indexes + 15 chapters
+    expect(output.warnings).toEqual([]);
+  }, 20000);
+
+  it("warns loudly when an index is nested deeper than the crawl follows", async () => {
+    const routes: Record<string, string> = {
+      [`${host}/robots.txt`]: "",
+      [`${host}/w/index.htm`]: `<a href="a.htm">Part A</a>`,
+      // Depth-1 sub-index → descend; its children are depth-2 indexes.
+      [`${host}/w/a.htm`]:
+        [1, 2, 3, 4, 5].map((i) => `<a href="a${i}.htm">Section ${i} of part A</a>`).join(" "),
+    };
+    for (let i = 1; i <= 5; i += 1) {
+      routes[`${host}/w/a${i}.htm`] =
+        [1, 2, 3, 4, 5, 6].map((j) => `<a href="a${i}x${j}.htm">Deep chapter ${i}.${j}</a>`).join(" ");
+    }
+    const recipe = getRecipe("html-index-crawl")!;
+    await expect(
+      recipe.run({
+        payload: Buffer.from(routes[`${host}/w/index.htm`]),
+        contentType: "text/html",
+        sourceUrl: `${host}/w/index.htm`,
+        title: null,
+        fetchImpl: mockFetch(routes),
+        reportProgress: () => {},
+      }),
+    ).rejects.toThrow(/aborting|almost no text/);
+  });
+
+  it("crawls a Perseus-style index whose links differ only by query string", async () => {
+    // Perseus-style structure: every page lives at the same pathname
+    // (/hopper/text) and chapters are distinguished purely by ?doc= query
+    // parameters. Directory scoping and the visited-set must key on the full
+    // URL (including query), or the crawl would collapse to a single page.
+    const p = "https://perseus.example/hopper/text";
+    const doc = (s: string) => `${p}?doc=Perseus%3Atext%3A1999.01.0133%3A${s}`;
+    const card = (book: number, card: number) =>
+      `<html><head><title>Theogony, book ${book}, card ${card}</title></head><body>` +
+      `<p>${`Muses of Helicon sing, book ${book} card ${card}. `.repeat(40)}</p></body></html>`;
+    const routes: Record<string, string> = {
+      "https://perseus.example/robots.txt": "",
+      [doc("toc")]:
+        `<html><head><title>Theogony (Table of Contents)</title></head><body>` +
+        `<nav><a href="/hopper/collection?collection=Greco-Roman">Greco-Roman Collection</a></nav>` +
+        `<a href="${doc("book%3D1")}">Book 1</a>` +
+        `<a href="${doc("book%3D2")}">Book 2</a></body></html>`,
+      [doc("book%3D1")]:
+        `<html><head><title>Theogony Book 1</title></head><body>` +
+        [1, 2, 3, 4, 5].map((c) => `<a href="${doc(`book%3D1%3Acard%3D${c}`)}">Card ${c} of the first book</a>`).join(" ") +
+        `</body></html>`,
+      [doc("book%3D2")]: card(2, 1).replace("book 2, card 1", "book 2"),
+      "https://perseus.example/hopper/collection?collection=Greco-Roman":
+        `<html><body><p>Collection browse page that must never be crawled.</p></body></html>`,
+    };
+    for (let c = 1; c <= 5; c += 1) routes[doc(`book%3D1%3Acard%3D${c}`)] = card(1, c);
+    const recipe = getRecipe("html-index-crawl")!;
+    const output = await recipe.run({
+      payload: Buffer.from(routes[doc("toc")]),
+      contentType: "text/html",
+      sourceUrl: doc("toc"),
+      title: "Theogony",
+      fetchImpl: mockFetch(routes),
+      reportProgress: () => {},
+    });
+    expect(output.markdown).toContain("# Theogony");
+    // Sub-index descent: book 1 lists its cards, all five cards are compiled in order.
+    for (let c = 1; c <= 5; c += 1) expect(output.markdown).toContain(`book 1 card ${c}`);
+    expect(output.markdown.indexOf("card 1")).toBeLessThan(output.markdown.indexOf("card 2"));
+    expect(output.markdown.indexOf("card 5")).toBeLessThan(output.markdown.indexOf("book 2"));
+    // Book 2 is a leaf prose page compiled directly.
+    expect(output.markdown).toContain("Muses of Helicon sing, book 2");
+    expect(output.pagesFetched).toBe(7); // book1 index + 5 cards + book2
+    expect(output.markdown).not.toContain("Collection browse page");
+  });
+
+  it("suggests the index crawl for a Perseus-style TOC page", () => {
+    const p = "https://perseus.example/hopper/text";
+    const toc =
+      "<html><body>" +
+      Array.from(
+        { length: 12 },
+        (_, i) => `<a href="${p}?doc=Perseus%3Atext%3A1999.01.0133%3Acard%3D${i}">Card ${i}</a>`,
+      ).join(" ") +
+      "</body></html>";
+    expect(looksLikeIndexPage(toc, p + "?doc=toc")).toBe(true);
+    expect(
+      suggestRecipe({ path: "text.html", contentType: "text/html", payload: Buffer.from(toc) })?.id,
+    ).toBe("html-index-crawl");
+  });
+
   it("refuses to fetch pages disallowed by robots or off the source host", async () => {
     const fetchImpl = mockFetch({
       [`${host}/robots.txt`]: "User-agent: *\nDisallow: /kjv/",

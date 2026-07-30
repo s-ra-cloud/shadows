@@ -30,6 +30,27 @@ export function stripBoilerplate(html: string): string {
   return out;
 }
 
+/**
+ * True for link texts that are page navigation ("Next", "Previous: ...",
+ * "« Previous: Genesis index", "Index"...), not content. Shared by the
+ * Markdown link rule and the content-link extractor: nav links must never be
+ * queued as crawl children — a "Next: <next book>" link on a sub-index page
+ * would otherwise consume the next book as a leaf page and silently drop all
+ * of its chapters.
+ */
+export function isNavigationLinkText(text: string): boolean {
+  const normalized = text
+    .replace(/&[a-z#0-9]+;/gi, " ")
+    .replace(/[«»‹›]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+  return (
+    ["next", "previous", "prev", "index", "contents", "up", "home", "back"].includes(normalized) ||
+    /^(next|previous|prev)\s*[:.]/.test(normalized)
+  );
+}
+
 let turndown: TurndownService | null = null;
 
 function service(): TurndownService {
@@ -58,11 +79,7 @@ function service(): TurndownService {
       filter: "a",
       replacement: (content, node) => {
         const text = content.replace(/\s+/g, " ").trim();
-        const lower = text.toLowerCase();
-        if (
-          ["next", "previous", "prev", "index", "contents", "up", "home", "back"].includes(lower) ||
-          /^(next|previous|prev)\s*[:.]/.test(lower)
-        ) {
+        if (isNavigationLinkText(text)) {
           return "";
         }
         const href = (node as HTMLElement).getAttribute?.("href") ?? "";
@@ -101,8 +118,15 @@ export interface ExtractedLink {
 /**
  * Extract same-host content links from an HTML page in document order.
  * Fragments, mailto/js links, images and off-host URLs are skipped.
+ * With `anyHost` the same-host filter is disabled — used when the page's own
+ * URL is unknown (recipe suggestion), where absolute links would otherwise
+ * all look off-host.
  */
-export function extractContentLinks(html: string, baseUrl: string): ExtractedLink[] {
+export function extractContentLinks(
+  html: string,
+  baseUrl: string,
+  options?: { anyHost?: boolean },
+): ExtractedLink[] {
   const base = new URL(baseUrl);
   const seen = new Set<string>();
   const links: ExtractedLink[] = [];
@@ -119,13 +143,16 @@ export function extractContentLinks(html: string, baseUrl: string): ExtractedLin
       continue;
     }
     if (resolved.protocol !== "https:" && resolved.protocol !== "http:") continue;
-    if (resolved.hostname.toLowerCase() !== base.hostname.toLowerCase()) continue;
+    if (!options?.anyHost && resolved.hostname.toLowerCase() !== base.hostname.toLowerCase()) continue;
     if (/\.(png|jpe?g|gif|svg|ico|css|js|zip|mp3|mp4|pdf|epub)$/i.test(resolved.pathname)) continue;
     resolved.hash = "";
     const key = resolved.toString();
     if (key === base.toString() || seen.has(key)) continue;
-    seen.add(key);
     const text = match[2].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+    // Nav links must not mark the URL as seen: the same chapter may appear
+    // later as a genuine content link that we do want to keep.
+    if (isNavigationLinkText(text)) continue;
+    seen.add(key);
     links.push({ url: key, text });
   }
   return links;
