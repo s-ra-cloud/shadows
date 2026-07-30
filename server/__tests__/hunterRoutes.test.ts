@@ -53,7 +53,21 @@ vi.mock("../storage", async () => {
       byte_count integer,
       sha256 text,
       record jsonb,
+      run_id integer REFERENCES hunter_runs(id),
       downloaded_at timestamp DEFAULT now() NOT NULL
+    );
+    CREATE TABLE hunter_blockers (
+      id serial PRIMARY KEY,
+      run_id integer REFERENCES hunter_runs(id),
+      source_id text,
+      url text,
+      reason text NOT NULL,
+      detail text,
+      work_id text,
+      edition_id text,
+      status text NOT NULL DEFAULT 'open',
+      created_at timestamp DEFAULT now() NOT NULL,
+      updated_at timestamp DEFAULT now() NOT NULL
     );
   `);
   const db = drizzle(client, { schema });
@@ -297,7 +311,39 @@ describe("plan -> download -> verify happy path", () => {
     expect(partitions).toEqual(["locked", "public"]);
     for (const row of corpus.body) {
       expect(row.sha256).toMatch(/^sha256:/);
+      // Provenance: newly downloaded files carry the run that produced them.
+      expect(row.runId).toBe(res.body.run.id);
     }
+
+    // Run detail lists the files this run produced.
+    const detail = await request(app).get(`/api/hunter/runs/${res.body.run.id}`);
+    expect(detail.status).toBe(200);
+    expect(detail.body.files).toHaveLength(2);
+    expect(Array.isArray(detail.body.blockers)).toBe(true);
+  });
+
+  it("keeps run provenance stable when a later download finds files already present", async () => {
+    const corpusBefore = await request(app).get("/api/hunter/corpus");
+    const runIdsBefore = new Map(corpusBefore.body.map((r: any) => [r.path, r.runId]));
+
+    const res = await request(app)
+      .post("/api/hunter/download")
+      .set(asEditor)
+      .send({ selection_mode: "all" });
+    const run = await waitForRun(res.body.run.id);
+    expect(run.status).toBe("completed");
+    expect(run.result.already_present).toBe(2);
+
+    // Already-present files keep the run that originally downloaded them.
+    const corpusAfter = await request(app).get("/api/hunter/corpus");
+    expect(corpusAfter.body).toHaveLength(2);
+    for (const row of corpusAfter.body) {
+      expect(row.runId).toBe(runIdsBefore.get(row.path));
+      expect(row.runId).not.toBe(res.body.run.id);
+    }
+    // And the re-download run reports no produced files.
+    const detail = await request(app).get(`/api/hunter/runs/${res.body.run.id}`);
+    expect(detail.body.files).toHaveLength(0);
   });
 
   it("verifies the corpus", async () => {

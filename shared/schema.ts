@@ -149,6 +149,9 @@ export const hunterCorpusFiles = pgTable("hunter_corpus_files", {
   byteCount: integer("byte_count"),
   sha256: text("sha256"),
   record: jsonb("record"),
+  // Provenance: the hunter run (cycle/download/retry) that produced this file.
+  // Null for files collected before run tracking existed ("unknown run").
+  runId: integer("run_id").references(() => hunterRuns.id),
   downloadedAt: timestamp("downloaded_at").defaultNow().notNull(),
 });
 

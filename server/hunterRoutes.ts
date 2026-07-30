@@ -8,7 +8,7 @@ import express from "express";
 import type { Express, Request, Response, NextFunction } from "express";
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
-import { eq, desc, inArray } from "drizzle-orm";
+import { eq, desc, inArray, sql } from "drizzle-orm";
 import { db, storage } from "./storage";
 import { hunterCandidates, hunterRuns, hunterCorpusFiles, hunterBlockers, hunterRightsReviews, hunterScreenVerdicts } from "@shared/schema";
 import {
@@ -192,10 +192,40 @@ function candidateFromRow(row: { data: unknown }): Candidate {
   return row.data as Candidate;
 }
 
+/**
+ * Idempotent upgrade for databases created before run provenance existed:
+ * adds hunter_corpus_files.run_id (FK to hunter_runs) if it is missing.
+ */
+export async function ensureHunterProvenanceSchema(): Promise<void> {
+  await db.execute(sql`
+    ALTER TABLE hunter_corpus_files
+    ADD COLUMN IF NOT EXISTS run_id integer REFERENCES hunter_runs(id)
+  `);
+  // Rights-review audit table (editor rights determinations) — created here
+  // too so pre-existing databases don't 500 on the review endpoints.
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS hunter_rights_reviews (
+      id serial PRIMARY KEY,
+      corpus_file_id integer REFERENCES hunter_corpus_files(id),
+      work_id text NOT NULL,
+      edition_id text NOT NULL,
+      decision text NOT NULL,
+      determined_status text,
+      basis text NOT NULL,
+      notes text,
+      previous_status text,
+      created_at timestamp DEFAULT now() NOT NULL
+    )
+  `);
+}
 export function registerHunterRoutes(
   app: Express,
   requireEditor: (req: Request, res: Response, next: NextFunction) => void,
 ) {
+  // Best-effort schema upgrade so pre-provenance databases don't 500.
+  ensureHunterProvenanceSchema().catch((e) =>
+    console.error("hunter provenance schema upgrade failed:", errMessage(e)),
+  );
   // ---- Candidates -------------------------------------------------------
   app.get("/api/hunter/candidates", async (_req, res) => {
     res.json(await loadCandidateRows());
@@ -334,25 +364,35 @@ export function registerHunterRoutes(
         { selectionMode },
       );
       // Mirror downloaded files into the corpus table for browsing.
-      // Transactional replace so a mid-write failure can't leave a partial mirror.
+      // Provenance rule: run_id points at the run that actually downloaded
+      // the bytes. Freshly downloaded files get this run's id (including
+      // re-downloads of an existing path); files that were already present
+      // keep their original run_id so history stays accurate.
       await db.transaction(async (tx) => {
-        await tx.delete(hunterCorpusFiles);
         for (const record of records) {
           const file = record.file as Record<string, unknown> | undefined;
           if (!file || !file.relative_path) continue;
-          await tx
-            .insert(hunterCorpusFiles)
-            .values({
-              workId: String(record.work_id ?? ""),
-              editionId: String(record.edition_id ?? ""),
-              language: (record.language as string | undefined) ?? null,
-              partition: file.locked ? "locked" : "public",
-              path: String(file.relative_path),
-              byteCount: Number(file.bytes ?? 0),
-              sha256: (file.sha256 as string | undefined) ?? null,
-              record,
-            })
-            .onConflictDoNothing();
+          const values = {
+            workId: String(record.work_id ?? ""),
+            editionId: String(record.edition_id ?? ""),
+            language: (record.language as string | undefined) ?? null,
+            partition: file.locked ? "locked" : "public",
+            path: String(file.relative_path),
+            byteCount: Number(file.bytes ?? 0),
+            sha256: (file.sha256 as string | undefined) ?? null,
+            record,
+            runId,
+          };
+          if (record.download_status === "downloaded") {
+            const { path: _path, ...update } = values;
+            await tx
+              .insert(hunterCorpusFiles)
+              .values(values)
+              .onConflictDoUpdate({ target: hunterCorpusFiles.path, set: update });
+          } else {
+            // already_present / metadata_only: never steal provenance.
+            await tx.insert(hunterCorpusFiles).values(values).onConflictDoNothing();
+          }
         }
       });
       const summary = {
@@ -472,6 +512,7 @@ export function registerHunterRoutes(
                 byteCount: Number(file.bytes ?? 0),
                 sha256: (file.sha256 as string | undefined) ?? null,
                 record,
+                runId,
               })
               .onConflictDoNothing();
           }
@@ -695,6 +736,7 @@ export function registerHunterRoutes(
             byteCount: Number(file.bytes ?? 0),
             sha256: (file.sha256 as string | undefined) ?? null,
             record,
+            runId,
           })
           .onConflictDoNothing();
       }
@@ -1099,7 +1141,27 @@ export function registerHunterRoutes(
       .where(eq(hunterRuns.id, parseInt(String(req.params.id))))
       .limit(1);
     if (!run) return res.status(404).json({ message: "Run not found" });
-    res.json(run);
+    // Provenance: the corpus files this run produced and the blockers it hit.
+    const files = await db
+      .select({
+        id: hunterCorpusFiles.id,
+        workId: hunterCorpusFiles.workId,
+        editionId: hunterCorpusFiles.editionId,
+        language: hunterCorpusFiles.language,
+        partition: hunterCorpusFiles.partition,
+        path: hunterCorpusFiles.path,
+        byteCount: hunterCorpusFiles.byteCount,
+        downloadedAt: hunterCorpusFiles.downloadedAt,
+      })
+      .from(hunterCorpusFiles)
+      .where(eq(hunterCorpusFiles.runId, run.id))
+      .orderBy(hunterCorpusFiles.id);
+    const blockers = await db
+      .select()
+      .from(hunterBlockers)
+      .where(eq(hunterBlockers.runId, run.id))
+      .orderBy(hunterBlockers.id);
+    res.json({ ...run, files, blockers });
   });
 
   // ---- Catalog builder ---------------------------------------------------

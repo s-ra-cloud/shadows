@@ -602,6 +602,7 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
   const [limit, setLimit] = useState(10);
   const [useAi, setUseAi] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [detailRunId, setDetailRunId] = useState<number | null>(null);
   const { toast } = useToast();
 
   const { data: cycles } = useQuery<any[]>({
@@ -871,6 +872,16 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
                           ))}
                         </div>
                       )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDetailRunId(run.id);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-[#350A8C]/30 border border-[#350A8C]/40 text-[#E0DCE6] hover:bg-[#350A8C]/50 transition-colors"
+                        data-testid={`button-cycle-detail-${run.id}`}
+                      >
+                        <FileText size={12} /> View run output (files & blockers)
+                      </button>
                       {Array.isArray(summary?.discovery) && summary.discovery.length > 0 && (
                         <div>
                           <div className="text-xs text-[#E0DCE6]/50 mb-2">New candidates & where they came from</div>
@@ -1022,6 +1033,9 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
           </div>
         )}
       </div>
+      {detailRunId !== null && (
+        <RunDetailModal runId={detailRunId} onClose={() => setDetailRunId(null)} />
+      )}
     </div>
   );
 }
@@ -1307,11 +1321,13 @@ function HunterPlan({ isEditor }: { isEditor: boolean }) {
   );
 }
 
+// hint: Logic changed on both sides. Requires understanding intent of each change.
 function HunterCorpus({ isEditor }: { isEditor: boolean }) {
   const { data: corpus, isLoading } = useQuery({ queryKey: ["/api/hunter/corpus"] });
   const { toast } = useToast();
   const [reviewingId, setReviewingId] = useState<number | null>(null);
   const [extractingFile, setExtractingFile] = useState<any | null>(null);
+  const [detailRunId, setDetailRunId] = useState<number | null>(null);
   
   const [isPolling, setIsPolling] = useState(false);
   const { data: runs } = useQuery({
@@ -1372,6 +1388,7 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
                 <th className="px-4 py-3 font-medium">Work / Edition</th>
                 <th className="px-4 py-3 font-medium">Language</th>
                 <th className="px-4 py-3 font-medium">Partition</th>
+                <th className="px-4 py-3 font-medium">Run</th>
                 <th className="px-4 py-3 font-medium text-right">Size</th>
                 {isEditor && <th className="px-4 py-3 font-medium text-right">Rights</th>}
               </tr>
@@ -1392,6 +1409,21 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
                     ) : (
                       <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#03FF9B]/10 text-[#03FF9B] text-xs font-medium">
                         <Unlock size={12} /> Public
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {file.runId ? (
+                      <button
+                        onClick={() => setDetailRunId(file.runId)}
+                        className="inline-flex items-center gap-1 text-xs text-[#8F00FF] hover:underline"
+                        data-testid={`link-corpus-run-${file.id}`}
+                      >
+                        <Clock size={11} /> Run #{file.runId}
+                      </button>
+                    ) : (
+                      <span className="text-xs text-[#E0DCE6]/40 italic" data-testid={`text-corpus-run-unknown-${file.id}`}>
+                        Unknown run
                       </span>
                     )}
                   </td>
@@ -1445,6 +1477,9 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
       )}
       {extractingFile !== null && (
         <ExtractReadableModal file={extractingFile} onClose={() => setExtractingFile(null)} />
+      )}
+      {detailRunId !== null && (
+        <RunDetailModal runId={detailRunId} onClose={() => setDetailRunId(null)} />
       )}
     </div>
   );
@@ -1945,8 +1980,152 @@ function HunterCatalog() {
   );
 }
 
+function RunDetailModal({ runId, onClose }: { runId: number; onClose: () => void }) {
+  const { data: run, isLoading, error } = useQuery<any>({
+    queryKey: [`/api/hunter/runs/${runId}`],
+  });
+  const result = run?.result ?? {};
+  const summary = result.scope ? result : null;
+  const files = Array.isArray(run?.files) ? run.files : [];
+  const blockers = Array.isArray(run?.blockers) ? run.blockers : [];
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-[#130D30] border border-[#350A8C]/40 rounded-xl w-full max-w-3xl max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+        data-testid="modal-run-detail"
+      >
+        <div className="flex items-start justify-between p-6 pb-4 border-b border-[#350A8C]/30 shrink-0">
+          <div className="min-w-0">
+            <h3 className="text-lg font-semibold text-[#E0DCE6]" data-testid="text-run-detail-title">
+              Run #{runId}
+              {run && <span className="capitalize text-[#E0DCE6]/60 font-normal"> · {run.kind}</span>}
+            </h3>
+            {run && (
+              <p className="text-sm text-[#E0DCE6]/60 mt-1">
+                {new Date(run.startedAt).toLocaleString()}
+                {" · "}
+                <span
+                  className={
+                    run.status === "completed"
+                      ? "text-[#03FF9B]"
+                      : run.status === "failed"
+                        ? "text-red-400"
+                        : "text-orange-400"
+                  }
+                >
+                  {run.status}
+                </span>
+                {summary?.scope?.query && <> · “{summary.scope.query}”</>}
+              </p>
+            )}
+          </div>
+          <button onClick={onClose} className="shrink-0 ml-4" data-testid="button-close-run-detail">
+            <X size={20} className="text-[#E0DCE6]/50 hover:text-[#E0DCE6]" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {isLoading && <div className="text-[#E0DCE6]/50 text-sm">Loading run...</div>}
+          {!!error && (
+            <div className="text-red-400 text-sm flex items-center gap-2">
+              <AlertCircle size={16} /> Could not load this run.
+            </div>
+          )}
+          {run?.error && (
+            <div className="text-sm text-red-400 flex items-start gap-2">
+              <AlertCircle size={14} className="shrink-0 mt-0.5" /> {run.error}
+            </div>
+          )}
+          {summary && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+              {[
+                ["Discovered", summary.discovered],
+                ["Candidates created", summary.created],
+                ["Duplicates skipped", summary.duplicates],
+                ["Invalid leads", summary.invalid],
+                ["Secondary skipped", summary.secondary],
+                ["Downloaded (public)", summary.downloaded_public],
+                ["Downloaded (locked)", summary.downloaded_locked],
+                ["Metadata only", summary.metadata_only],
+                ["Failed", summary.failed],
+              ].map(([label, value]) => (
+                <div key={String(label)} className="p-2 rounded-lg bg-[#0B0626] border border-[#350A8C]/20">
+                  <div className="text-[#E0DCE6]/50">{label}</div>
+                  <div className="text-[#E0DCE6] text-base font-medium">{value ?? 0}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {run && (
+            <div>
+              <h4 className="text-sm font-medium text-[#E0DCE6]/80 mb-2">
+                Corpus files produced ({files.length})
+              </h4>
+              {files.length === 0 ? (
+                <div className="text-xs text-[#E0DCE6]/50 p-3 border border-[#350A8C]/20 rounded-lg bg-[#0B0626]/40">
+                  No corpus files are recorded for this run.
+                </div>
+              ) : (
+                <div className="border border-[#350A8C]/30 rounded-lg overflow-hidden bg-[#0B0626]/50">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-[#0B0626] border-b border-[#350A8C]/30 text-[#E0DCE6]/60">
+                      <tr>
+                        <th className="px-3 py-2 font-medium">Work / Edition</th>
+                        <th className="px-3 py-2 font-medium">Partition</th>
+                        <th className="px-3 py-2 font-medium text-right">Size</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#350A8C]/10">
+                      {files.map((f: any) => (
+                        <tr key={f.id} data-testid={`row-run-file-${f.id}`}>
+                          <td className="px-3 py-2">
+                            <div className="text-[#E0DCE6]">{f.workId}</div>
+                            <div className="text-[#E0DCE6]/50 font-mono">{f.editionId}</div>
+                          </td>
+                          <td className="px-3 py-2">
+                            {f.partition === "locked" ? (
+                              <span className="inline-flex items-center gap-1 text-orange-400"><Lock size={11} /> Locked</span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[#03FF9B]"><Unlock size={11} /> Public</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-right text-[#E0DCE6]/50 font-mono">
+                            {((f.byteCount ?? 0) / 1024).toFixed(1)} KB
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+          {run && blockers.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium text-[#E0DCE6]/80 mb-2">
+                Blockers recorded ({blockers.length})
+              </h4>
+              <ul className="space-y-2">
+                {blockers.map((b: any) => (
+                  <li key={b.id} className="p-3 rounded-lg border border-[#350A8C]/20 bg-[#0B0626]/40 text-xs" data-testid={`row-run-blocker-${b.id}`}>
+                    <span className="inline-flex px-2 py-0.5 rounded-md bg-red-500/10 text-red-300 font-medium mr-2">
+                      {BLOCKER_REASON_LABELS[b.reason] ?? b.reason}
+                    </span>
+                    <span className="text-[#E0DCE6]/70">{b.detail}</span>
+                    <span className="ml-2 text-[#E0DCE6]/40 capitalize">({b.status})</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 function HunterRuns() {
   const { data: runs, isLoading } = useQuery({ queryKey: ["/api/hunter/runs"] });
+  const [detailRunId, setDetailRunId] = useState<number | null>(null);
 
   if (isLoading) return <div className="text-[#E0DCE6]/50 text-sm">Loading runs...</div>;
 
@@ -1968,7 +2147,12 @@ function HunterRuns() {
       ) : (
         <div className="space-y-2">
           {items.map((run: any) => (
-            <div key={run.id} className="flex items-center justify-between p-3 rounded-lg border border-[#350A8C]/20 bg-[#0B0626]/30">
+            <div
+              key={run.id}
+              onClick={() => setDetailRunId(run.id)}
+              className="flex items-center justify-between p-3 rounded-lg border border-[#350A8C]/20 bg-[#0B0626]/30 cursor-pointer hover:border-[#8F00FF]/50 transition-colors"
+              data-testid={`row-run-${run.id}`}
+            >
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-full ${
                   run.status === "completed" ? "bg-[#03FF9B]/10 text-[#03FF9B]" :
@@ -2003,6 +2187,9 @@ function HunterRuns() {
             </div>
           ))}
         </div>
+      )}
+      {detailRunId !== null && (
+        <RunDetailModal runId={detailRunId} onClose={() => setDetailRunId(null)} />
       )}
     </div>
   );
