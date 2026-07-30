@@ -11,6 +11,10 @@ import {
   blockerFromRecord,
   fetchJson,
   looksLikeSecondarySource,
+  confidentlySecondary,
+  screenLeads,
+  SCREEN_CHUNK_SIZE,
+  type AiScreenVerdict,
   type BlockerInput,
   type CycleStore,
   type DiscoveredLead,
@@ -373,6 +377,38 @@ describe("AI primary/secondary screening", () => {
     expect(blockers.some((b) => b.reason === "secondary_source" && /matched/.test(String(b.detail)))).toBe(true);
   });
 
+  it("skips AI screening for leads the heuristic confidently flags, blocking them by heuristic", async () => {
+    const policy = await loadDefaultPolicy();
+    const { store, blockers, candidates } = makeStore();
+    const screenedTitles: string[] = [];
+    const summary = await runHuntingCycle({
+      scope: { query: "x", useAi: true },
+      policy,
+      registry: REGISTRY,
+      corpusRoot: path.join(tmp, "corpus"),
+      store,
+      registryDiscover: async () => [
+        await fixtureLead("edda3", "The Poetic Edda"),
+        await fixtureLead("enc3", "Encyclopedia of Ancient Deities"),
+      ],
+      aiDiscover: async () => [],
+      aiScreen: async (leads) => {
+        screenedTitles.push(...leads.map((l) => l.title));
+        return leads.map(() => ({
+          classification: "primary" as const,
+          justification: "Looks primary.",
+        }));
+      },
+    });
+    // Only the non-confident lead reaches the model; the encyclopedia is
+    // blocked by the heuristic without spending a screening request.
+    expect(screenedTitles).toEqual(["The Poetic Edda"]);
+    expect(summary.secondary).toBe(1);
+    expect(summary.created).toBe(1);
+    expect(candidates.map((c) => c.title)).toEqual(["The Poetic Edda"]);
+    expect(blockers.some((b) => b.reason === "secondary_source" && /matched/.test(String(b.detail)))).toBe(true);
+  });
+
   it("does not run AI screening on non-AI cycles", async () => {
     const policy = await loadDefaultPolicy();
     const { store, candidates } = makeStore();
@@ -392,6 +428,110 @@ describe("AI primary/secondary screening", () => {
     expect(screened).toBe(false);
     expect(summary.created).toBe(1);
     expect(candidates.length).toBe(1);
+  });
+});
+
+describe("screenLeads chunking", () => {
+  const scope = { query: "x", useAi: true };
+  function lead(title: string) {
+    return { title, author: null };
+  }
+  function collectBlockers() {
+    const blockers: BlockerInput[] = [];
+    return { blockers, report: async (b: BlockerInput) => void blockers.push(b) };
+  }
+
+  it("splits large lead lists into chunks and realigns verdicts by index", async () => {
+    const total = SCREEN_CHUNK_SIZE * 2 + 5; // 3 chunks: full, full, partial
+    const leads = Array.from({ length: total }, (_, i) => lead(`Primary Text ${i}`));
+    const chunkSizes: number[] = [];
+    const { blockers, report } = collectBlockers();
+    const verdicts = await screenLeads(
+      leads,
+      scope,
+      async (chunk) => {
+        chunkSizes.push(chunk.length);
+        return chunk.map((l) => ({
+          classification: "primary" as const,
+          justification: `verdict for ${l.title}`,
+        }));
+      },
+      report,
+    );
+    expect(chunkSizes).toEqual([SCREEN_CHUNK_SIZE, SCREEN_CHUNK_SIZE, 5]);
+    expect(verdicts).toHaveLength(total);
+    // Verdicts land on the right leads across chunk boundaries.
+    expect(verdicts[0]?.justification).toBe("verdict for Primary Text 0");
+    expect(verdicts[SCREEN_CHUNK_SIZE]?.justification).toBe(`verdict for Primary Text ${SCREEN_CHUNK_SIZE}`);
+    expect(verdicts[total - 1]?.justification).toBe(`verdict for Primary Text ${total - 1}`);
+    expect(blockers).toHaveLength(0);
+  });
+
+  it("isolates a failed chunk: its leads fall back to null, other chunks keep verdicts", async () => {
+    const total = SCREEN_CHUNK_SIZE + 10;
+    const leads = Array.from({ length: total }, (_, i) => lead(`Primary Text ${i}`));
+    let call = 0;
+    const { blockers, report } = collectBlockers();
+    const verdicts = await screenLeads(
+      leads,
+      scope,
+      async (chunk) => {
+        call += 1;
+        if (call === 1) throw new Error("model unavailable");
+        return chunk.map(() => ({ classification: "primary" as const, justification: "ok" }));
+      },
+      report,
+    );
+    // First chunk failed -> nulls; second chunk succeeded -> verdicts.
+    expect(verdicts.slice(0, SCREEN_CHUNK_SIZE).every((v) => v === null)).toBe(true);
+    expect(verdicts.slice(SCREEN_CHUNK_SIZE).every((v) => v?.classification === "primary")).toBe(true);
+    expect(blockers).toHaveLength(1);
+    expect(blockers[0].reason).toBe("fetch_failed");
+    expect(String(blockers[0].detail)).toContain("model unavailable");
+    expect(String(blockers[0].detail)).toContain(`${SCREEN_CHUNK_SIZE} lead(s)`);
+  });
+
+  it("never sends confidently-secondary titles to the model and keeps index alignment", async () => {
+    const leads = [
+      lead("The Poetic Edda"),
+      lead("Encyclopedia of Ancient Deities"), // confident -> skipped
+      lead("Popol Vuh"),
+    ];
+    expect(confidentlySecondary(leads[1].title)).toBeTruthy();
+    // Weak markers (e.g. "history of") are still screened so the model can overrule.
+    expect(confidentlySecondary("History of the Kings of Britain")).toBeNull();
+    const seen: string[] = [];
+    const { report } = collectBlockers();
+    const verdicts = await screenLeads(
+      leads,
+      scope,
+      async (chunk) => {
+        seen.push(...chunk.map((l) => l.title));
+        return chunk.map((l) => ({
+          classification: "primary" as const,
+          justification: `verdict for ${l.title}`,
+        }));
+      },
+      report,
+    );
+    expect(seen).toEqual(["The Poetic Edda", "Popol Vuh"]);
+    expect(verdicts[0]?.justification).toBe("verdict for The Poetic Edda");
+    expect(verdicts[1]).toBeNull();
+    expect(verdicts[2]?.justification).toBe("verdict for Popol Vuh");
+  });
+
+  it("handles malformed per-chunk responses by leaving null verdicts", async () => {
+    const leads = [lead("A"), lead("B")];
+    const { blockers, report } = collectBlockers();
+    const verdicts = await screenLeads(
+      leads,
+      scope,
+      async () => [{ classification: "primary", justification: "only one" }] as (AiScreenVerdict | null)[],
+      report,
+    );
+    expect(verdicts[0]?.classification).toBe("primary");
+    expect(verdicts[1]).toBeNull();
+    expect(blockers).toHaveLength(0);
   });
 });
 

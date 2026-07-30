@@ -432,6 +432,65 @@ const defaultAiScreen: AiScreen = async (leads, scope) => {
   return verdicts;
 };
 
+/** Leads per AI screening request; keeps prompts small and failures isolated. */
+export const SCREEN_CHUNK_SIZE = 30;
+
+/**
+ * Markers that flag a title as secondary literature so unambiguously that AI
+ * screening is skipped for it (the heuristic verdict stands). Weaker markers
+ * (e.g. "history of") still go to the model, which may overrule them.
+ */
+const CONFIDENT_SECONDARY_MARKERS = [
+  "encyclopedia", "encyclopaedia", "dictionary", "handbook", "textbook",
+  "who s who", "atlas of", "grand bible",
+];
+
+/** Marker matched when the heuristic is confident the title is secondary, else null. */
+export function confidentlySecondary(title: string): string | null {
+  const marker = looksLikeSecondarySource(title);
+  return marker && CONFIDENT_SECONDARY_MARKERS.includes(marker) ? marker : null;
+}
+
+/**
+ * Run AI primary/secondary screening in chunks of SCREEN_CHUNK_SIZE.
+ * - Leads the heuristic confidently flags as secondary are never sent to the
+ *   model (their verdict stays null, so the heuristic blocks them downstream).
+ * - Each chunk fails independently: a failed request reports one blocker and
+ *   leaves null verdicts (heuristic fallback) for just that chunk's leads.
+ */
+export async function screenLeads(
+  leads: { title: string; author: string | null }[],
+  scope: CycleScope,
+  aiScreen: AiScreen,
+  report: (blocker: BlockerInput) => Promise<void>,
+): Promise<(AiScreenVerdict | null)[]> {
+  const verdicts: (AiScreenVerdict | null)[] = leads.map(() => null);
+  const pendingIndexes: number[] = [];
+  for (let i = 0; i < leads.length; i += 1) {
+    if (!confidentlySecondary(leads[i].title)) pendingIndexes.push(i);
+  }
+  for (let start = 0; start < pendingIndexes.length; start += SCREEN_CHUNK_SIZE) {
+    const chunkIndexes = pendingIndexes.slice(start, start + SCREEN_CHUNK_SIZE);
+    const chunkLeads = chunkIndexes.map((i) => leads[i]);
+    try {
+      const chunkVerdicts = await aiScreen(chunkLeads, scope);
+      if (Array.isArray(chunkVerdicts)) {
+        for (let j = 0; j < chunkIndexes.length; j += 1) {
+          verdicts[chunkIndexes[j]] = chunkVerdicts[j] ?? null;
+        }
+      }
+    } catch (e) {
+      await report({
+        reason: "fetch_failed",
+        detail: `AI primary/secondary screening failed: ${
+          e instanceof Error ? e.message : String(e)
+        }. Falling back to the keyword heuristic for ${chunkLeads.length} lead(s) in this batch.`,
+      });
+    }
+  }
+  return verdicts;
+}
+
 function matchRegistrySource(
   url: string,
   registrySources: Record<string, unknown>[],
@@ -628,25 +687,15 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
   let aiVerdicts: (AiScreenVerdict | null)[] = leads.map(() => null);
   if (scope.useAi !== false && leads.length > 0) {
     await store.updateProgress({ phase: "screening_leads", discovered: leads.length });
-    try {
-      const verdicts = await (options.aiScreen ?? defaultAiScreen)(
-        leads.map((lead) => ({
-          title: String(lead.candidate.title ?? ""),
-          author: lead.candidate.author ? String(lead.candidate.author) : null,
-        })),
-        scope,
-      );
-      if (Array.isArray(verdicts)) {
-        aiVerdicts = leads.map((_, i) => verdicts[i] ?? null);
-      }
-    } catch (e) {
-      await report({
-        reason: "fetch_failed",
-        detail: `AI primary/secondary screening failed: ${
-          e instanceof Error ? e.message : String(e)
-        }. Falling back to the keyword heuristic for this cycle.`,
-      });
-    }
+    aiVerdicts = await screenLeads(
+      leads.map((lead) => ({
+        title: String(lead.candidate.title ?? ""),
+        author: lead.candidate.author ? String(lead.candidate.author) : null,
+      })),
+      scope,
+      options.aiScreen ?? defaultAiScreen,
+      report,
+    );
   }
 
   const created: DiscoveredLead[] = [];
