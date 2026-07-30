@@ -1587,7 +1587,15 @@ function ExtractReadableModal({ file, onClose }: { file: any; onClose: () => voi
     queryKey: ["/api/hunter/extraction/recipes"],
   });
   const [recipeId, setRecipeId] = useState<string>(file.suggested_recipe ?? file.readable?.recipe_id ?? "");
+  const [ocrLanguage, setOcrLanguage] = useState<string>("");
   const [running, setRunning] = useState(false);
+
+  const effectiveRecipe = recipeId || file.suggested_recipe || "";
+  const isPdfRecipe = effectiveRecipe === "pdf-text" || effectiveRecipe === "pdf-ocr";
+  const { data: ocrLangs } = useQuery<string[]>({
+    queryKey: ["/api/hunter/extraction/ocr-languages"],
+    enabled: isPdfRecipe,
+  });
 
   const { data: job } = useQuery<any>({
     queryKey: [`/api/hunter/corpus/${file.id}/extract/status`],
@@ -1610,7 +1618,10 @@ function ExtractReadableModal({ file, onClose }: { file: any; onClose: () => voi
 
   const startMutation = useMutation({
     mutationFn: async () =>
-      apiRequest("POST", `/api/hunter/corpus/${file.id}/extract`, recipeId ? { recipe_id: recipeId } : {}),
+      apiRequest("POST", `/api/hunter/corpus/${file.id}/extract`, {
+        ...(recipeId ? { recipe_id: recipeId } : {}),
+        ...(isPdfRecipe && ocrLanguage ? { ocr_language: ocrLanguage } : {}),
+      }),
     onSuccess: () => setRunning(true),
     onError: (e: Error) =>
       toast({ title: "Could not start extraction", description: e.message, variant: "destructive" }),
@@ -1659,6 +1670,31 @@ function ExtractReadableModal({ file, onClose }: { file: any; onClose: () => voi
             </select>
             {selected && <p className="text-xs text-[#E0DCE6]/50 mt-1.5">{selected.description}</p>}
           </div>
+          {isPdfRecipe && (
+            <div>
+              <label className="block text-xs font-medium text-[#E0DCE6]/60 mb-1.5">OCR language (for scans)</label>
+              <select
+                value={ocrLanguage}
+                onChange={(e) => setOcrLanguage(e.target.value)}
+                disabled={running}
+                className="w-full bg-[#0B0626] border border-[#350A8C]/50 rounded-lg px-3 py-2 text-sm text-[#E0DCE6] focus:border-[#8F00FF] outline-none"
+                data-testid="select-ocr-language"
+              >
+                <option value="">
+                  Auto{file.language ? ` (from work metadata: ${file.language})` : " (default: eng)"}
+                </option>
+                {(ocrLangs ?? []).map((lang) => (
+                  <option key={lang} value={lang}>
+                    {lang}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-[#E0DCE6]/50 mt-1.5">
+                Only used when the PDF is a scan that needs OCR. Pick the language of the printed text (e.g. grc
+                for ancient Greek, lat for Latin).
+              </p>
+            </div>
+          )}
           <p className="text-xs text-[#E0DCE6]/50">
             The original download is kept untouched as rights evidence; the readable Markdown version is stored
             alongside it and shown in the Library.

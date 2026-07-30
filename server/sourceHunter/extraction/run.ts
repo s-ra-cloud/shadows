@@ -20,6 +20,7 @@ import {
   ExtractionCancelledError,
   type ExtractionProgress,
 } from "./recipes";
+import { resolveOcrLanguage } from "./pdfOcr";
 
 export interface ReadableProvenance {
   recipe_id: string;
@@ -29,6 +30,8 @@ export interface ReadableProvenance {
   warnings: string[];
   source_url: string | null;
   markdown_bytes: number;
+  /** Tesseract language used when OCR ran (null when no OCR was involved). */
+  ocr_language?: string | null;
 }
 
 export function readablePaths(rawAbsolutePath: string): { markdown: string; provenance: string } {
@@ -94,6 +97,10 @@ export interface StartExtractionInput {
   sourceUrl: string | null;
   title: string | null;
   locked: boolean;
+  /** Editor's explicit OCR language choice ("grc", "grc+lat"); validated against installed packs. */
+  ocrLanguage?: string | null;
+  /** Work's language metadata, used to auto-pick an OCR language when no explicit choice is made. */
+  workLanguage?: string | null;
   fetchImpl?: typeof fetch;
 }
 
@@ -118,6 +125,12 @@ export async function startExtraction(input: StartExtractionInput): Promise<Extr
         : "No extraction recipe applies to this file.",
     );
   }
+  // Resolve the OCR language up front so a bad explicit choice fails the
+  // request (422) instead of the background job. Only OCR-capable recipes
+  // touch tesseract — other extractions must not depend on it at all.
+  const ocrLanguage = recipe.usesOcr
+    ? await resolveOcrLanguage(input.ocrLanguage ?? null, input.workLanguage ?? null)
+    : null;
   const job: ExtractionJob = {
     corpusFileId: input.corpusFileId,
     recipeId: recipe.id,
@@ -138,6 +151,7 @@ export async function startExtraction(input: StartExtractionInput): Promise<Extr
         contentType: input.contentType,
         sourceUrl: input.sourceUrl,
         title: input.title,
+        ocrLanguage,
         fetchImpl: input.fetchImpl,
         reportProgress: (progress) => {
           job.progress = progress;
@@ -153,6 +167,7 @@ export async function startExtraction(input: StartExtractionInput): Promise<Extr
         warnings: output.warnings,
         source_url: input.sourceUrl,
         markdown_bytes: Buffer.byteLength(output.markdown, "utf-8"),
+        ocr_language: output.ocrLanguage ?? null,
       };
       const { markdown, provenance: provenancePath } = readablePaths(input.rawAbsolutePath);
       const mode = input.locked ? 0o600 : 0o644;

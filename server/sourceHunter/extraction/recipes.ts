@@ -26,6 +26,8 @@ export interface ExtractionContext {
   /** URL the raw file was downloaded from (null for local imports). */
   sourceUrl: string | null;
   title: string | null;
+  /** Tesseract language code(s) for OCR recipes ("grc", "grc+lat"). Null = tesseract default (eng). */
+  ocrLanguage?: string | null;
   fetchImpl?: typeof fetch;
   reportProgress: (progress: ExtractionProgress) => void;
   /** Fires when the editor cancels the job; long-running recipes must honor it. */
@@ -43,6 +45,8 @@ export interface ExtractionOutput {
   markdown: string;
   pagesFetched: number;
   warnings: string[];
+  /** Language actually used by OCR, when OCR ran ("eng" for the tesseract default). */
+  ocrLanguage?: string | null;
 }
 
 export interface ExtractionRecipe {
@@ -50,6 +54,8 @@ export interface ExtractionRecipe {
   version: string;
   label: string;
   description: string;
+  /** True when the recipe may run tesseract OCR (so an OCR language applies). */
+  usesOcr?: boolean;
   /** Suitability score for a raw file; 0 = not applicable, higher wins. */
   suitability(input: { path: string; contentType: string | null; payload: Buffer }): number;
   run(ctx: ExtractionContext): Promise<ExtractionOutput>;
@@ -320,6 +326,7 @@ async function pdfTextLayer(payload: Buffer): Promise<string> {
 
 /** OCR every page of a scanned PDF, reporting per-page progress. */
 async function runPdfOcr(ctx: ExtractionContext, extraWarnings: string[] = []) {
+  const language = ctx.ocrLanguage ?? null;
   let text: string;
   let warnings: string[];
   try {
@@ -327,12 +334,13 @@ async function runPdfOcr(ctx: ExtractionContext, extraWarnings: string[] = []) {
       ctx.payload,
       ({ page, totalPages }) => {
         ctx.reportProgress({
-          note: `OCR page ${page} of ${totalPages}`,
+          note: `OCR page ${page} of ${totalPages}${language ? ` (${language})` : ""}`,
           pagesFetched: page,
           totalPages,
         });
       },
       ctx.signal,
+      language,
     ));
   } catch (e) {
     if (e instanceof OcrCancelledError) throw new ExtractionCancelledError();
@@ -346,11 +354,14 @@ async function runPdfOcr(ctx: ExtractionContext, extraWarnings: string[] = []) {
     markdown: ctx.title ? `# ${ctx.title}\n\n${markdown}` : markdown,
     pagesFetched: 0,
     warnings: [...extraWarnings, ...warnings],
+    // Tesseract's default without -l is English.
+    ocrLanguage: language ?? "eng",
   };
 }
 
 const pdfRecipe: ExtractionRecipe = {
   id: "pdf-text",
+  usesOcr: true,
   version: "1.1.0",
   label: "PDF (text layer, OCR fallback)",
   description: "Extracts the embedded text layer from a PDF and reflows it into Markdown paragraphs. When the PDF is a scan with little or no text layer, it falls back to OCR (tesseract) page by page.",
@@ -380,6 +391,7 @@ const pdfRecipe: ExtractionRecipe = {
 
 const pdfOcrRecipe: ExtractionRecipe = {
   id: "pdf-ocr",
+  usesOcr: true,
   version: "1.0.0",
   label: "PDF (OCR every page)",
   description: "Ignores any embedded text layer and runs OCR (tesseract) on every page of the PDF. Use for scans whose text layer is missing or garbled.",

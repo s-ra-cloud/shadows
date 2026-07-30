@@ -30,6 +30,24 @@ export interface OcrProgress {
   totalPages: number;
 }
 
+/**
+ * ISO 639-1 (and a few common variants) → tesseract traineddata codes.
+ * Corpus metadata uses two-letter codes ("en", "de", "el"); tesseract wants
+ * its own three-letter codes ("eng", "deu", "ell").
+ */
+const ISO_TO_TESSERACT: Record<string, string> = {
+  en: "eng", de: "deu", el: "ell", fr: "fra", es: "spa", it: "ita",
+  la: "lat", he: "heb", ru: "rus", ar: "ara", pt: "por", nl: "nld",
+  pl: "pol", sv: "swe", da: "dan", no: "nor", fi: "fin", cs: "ces",
+  hu: "hun", tr: "tur", ja: "jpn", zh: "chi_sim", ko: "kor", sa: "san",
+  hi: "hin", yi: "yid", uk: "ukr", ro: "ron", bg: "bul", sr: "srp",
+  hr: "hrv", ca: "cat", eu: "eus", ga: "gle", cy: "cym", is: "isl",
+  lt: "lit", lv: "lav", et: "est", fa: "fas", ur: "urd", ta: "tam",
+  te: "tel", bn: "ben", th: "tha", vi: "vie", id: "ind", ms: "msa",
+  sw: "swa", am: "amh", ka: "kat", hy: "hye", az: "aze", sq: "sqi",
+  mk: "mkd", sl: "slv", sk: "slk", be: "bel", bo: "bod", sy: "syr",
+};
+
 /** Thrown when the caller's AbortSignal fires mid-run. */
 export class OcrCancelledError extends Error {
   constructor() {
@@ -56,6 +74,8 @@ async function ocrOnePage(
   pdfPath: string,
   page: number,
   signal: AbortSignal | undefined,
+  /** Tesseract language code(s), e.g. "grc" or "grc+lat". Null = tesseract default (eng). */
+  language: string | null = null,
 ): Promise<string> {
   // Unique per-page prefix: pages render concurrently in the same directory.
   const imgPrefix = path.join(tmpDir, `page-${page}`);
@@ -83,7 +103,7 @@ async function ocrOnePage(
     try {
       const { stdout } = await execFileAsync(
         "tesseract",
-        [imgPath, "stdout", "--dpi", String(OCR_DPI)],
+        [imgPath, "stdout", "--dpi", String(OCR_DPI), ...(language ? ["-l", language] : [])],
         { maxBuffer: 16 * 1024 * 1024, signal },
       );
       return stdout.trim();
@@ -108,6 +128,8 @@ export async function ocrPdf(
   payload: Buffer,
   reportProgress: (progress: OcrProgress) => void,
   signal?: AbortSignal,
+  /** Tesseract language code(s), e.g. "grc" or "grc+lat". Null = tesseract default (eng). */
+  language: string | null = null,
 ): Promise<{ text: string; totalPages: number; warnings: string[] }> {
   throwIfAborted(signal);
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "pdf-ocr-"));
@@ -149,7 +171,7 @@ export async function ocrPdf(
         if (page > pages) return;
         nextPage += 1;
         try {
-          pageTexts[page - 1] = await ocrOnePage(tmpDir, pdfPath, page, signal);
+          pageTexts[page - 1] = await ocrOnePage(tmpDir, pdfPath, page, signal, language);
         } catch (e) {
           if (e instanceof OcrCancelledError) throw e;
           failedPages += 1;
@@ -191,3 +213,54 @@ export async function ocrPdf(
     await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
   }
 }
+
+/** Tesseract language packs installed on this machine (cached). */
+export async function listOcrLanguages(): Promise<string[]> {
+  if (cachedLangs) return cachedLangs;
+  const { stdout, stderr } = await execFileAsync("tesseract", ["--list-langs"]);
+  const lines = `${stdout}\n${stderr}`
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => /^[a-z]{3}(_[a-z_]+)?$/.test(l) && l !== "osd");
+  if (lines.length === 0) throw new Error("tesseract reported no installed languages.");
+  cachedLangs = lines.sort();
+  return cachedLangs;
+}
+
+/**
+ * Resolve the tesseract language for an OCR run.
+ * - `explicit` (editor's choice, possibly "grc+lat"): every part must be an
+ *   installed pack — unknown languages fail loudly, never fall back silently.
+ * - Otherwise the work's language metadata is mapped when possible; when it
+ *   can't be mapped or isn't installed, returns null (tesseract default, eng).
+ */
+export async function resolveOcrLanguage(
+  explicit: string | null | undefined,
+  workLanguage: string | null | undefined,
+): Promise<string | null> {
+  const installed = new Set(await listOcrLanguages());
+  if (explicit) {
+    const cleaned = explicit.trim().toLowerCase();
+    if (!/^[a-z0-9_+]+$/.test(cleaned)) {
+      throw new Error(`Invalid OCR language: ${explicit}`);
+    }
+    const parts = cleaned.split("+").filter(Boolean);
+    if (parts.length === 0) throw new Error(`Invalid OCR language: ${explicit}`);
+    const resolved = parts.map((p) => ISO_TO_TESSERACT[p] ?? p);
+    const missing = resolved.filter((p) => !installed.has(p));
+    if (missing.length > 0) {
+      throw new Error(
+        `OCR language pack(s) not installed: ${missing.join(", ")}. Pick from the installed tesseract languages.`,
+      );
+    }
+    return resolved.join("+");
+  }
+  if (workLanguage) {
+    const code = workLanguage.trim().toLowerCase();
+    const candidate = ISO_TO_TESSERACT[code] ?? (installed.has(code) ? code : null);
+    if (candidate && installed.has(candidate)) return candidate;
+  }
+  return null;
+}
+
+let cachedLangs: string[] | null = null;

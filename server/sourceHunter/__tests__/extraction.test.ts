@@ -404,3 +404,43 @@ describe("extraction cancellation", () => {
     await fs.rm(tmp, { recursive: true, force: true });
   });
 });
+
+describe("resolveOcrLanguage", () => {
+  it("validates explicit choices against installed packs, mapping ISO codes", async () => {
+    const { resolveOcrLanguage } = await import("../extraction/pdfOcr");
+    expect(await resolveOcrLanguage("grc", null)).toBe("grc");
+    expect(await resolveOcrLanguage("el", null)).toBe("ell");
+    expect(await resolveOcrLanguage("grc+lat", null)).toBe("grc+lat");
+    await expect(resolveOcrLanguage("klingon", null)).rejects.toThrow(/not installed/);
+    await expect(resolveOcrLanguage("grc; rm -rf /", null)).rejects.toThrow(/Invalid OCR language/);
+  });
+
+  it("auto-picks from work metadata and falls back to null when unmappable", async () => {
+    const { resolveOcrLanguage } = await import("../extraction/pdfOcr");
+    expect(await resolveOcrLanguage(null, "de")).toBe("deu");
+    expect(await resolveOcrLanguage(null, "grc")).toBe("grc");
+    expect(await resolveOcrLanguage(null, "xx-unknown")).toBeNull();
+    expect(await resolveOcrLanguage(null, null)).toBeNull();
+  });
+});
+
+describe("startExtraction OCR language wiring", () => {
+  it("rejects an invalid explicit OCR language before the job starts", async () => {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "extract-lang-"));
+    const rawPath = path.join(tmp, "scan.pdf");
+    await fs.writeFile(rawPath, "%PDF-1.4 dummy");
+    await expect(
+      startExtraction({
+        corpusFileId: 999902,
+        rawAbsolutePath: rawPath,
+        recipeId: "pdf-ocr",
+        contentType: "application/pdf",
+        sourceUrl: null,
+        title: null,
+        locked: false,
+        ocrLanguage: "klingon",
+      }),
+    ).rejects.toThrow(/not installed/);
+    await fs.rm(tmp, { recursive: true, force: true });
+  });
+});

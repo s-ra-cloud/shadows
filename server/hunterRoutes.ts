@@ -56,6 +56,7 @@ import {
   loadProvenance,
   readablePaths,
 } from "./sourceHunter/extraction/run";
+import { listOcrLanguages } from "./sourceHunter/extraction/pdfOcr";
 
 const CORPUS_ROOT = path.resolve(process.cwd(), "data", "hunter-corpus");
 
@@ -194,6 +195,8 @@ export async function autoExtractDownloaded(
         sourceUrl: sourceReference && /^https:\/\//.test(sourceReference) ? sourceReference : null,
         title: (record.title as string | undefined) ?? null,
         locked: row.partition === "locked",
+        // Auto-picks the OCR language from the work's metadata for scans.
+        workLanguage: row.language ?? ((record.language as string | undefined) ?? null),
       });
       summary.queued += 1;
     } catch (e) {
@@ -901,6 +904,15 @@ export function registerHunterRoutes(
     res.json(listRecipes());
   });
 
+  // Tesseract language packs installed on this machine, for the OCR picker.
+  app.get("/api/hunter/extraction/ocr-languages", async (_req, res) => {
+    try {
+      res.json(await listOcrLanguages());
+    } catch (e) {
+      res.status(500).json({ message: errMessage(e) });
+    }
+  });
+
   app.post("/api/hunter/corpus/:id/extract", requireEditor, async (req, res) => {
     try {
       const id = parseInt(String(req.params.id));
@@ -927,6 +939,8 @@ export function registerHunterRoutes(
         sourceUrl: sourceReference && /^https:\/\//.test(sourceReference) ? sourceReference : null,
         title: (record.title as string | undefined) ?? null,
         locked: row.partition === "locked",
+        ocrLanguage: req.body?.ocr_language ? String(req.body.ocr_language) : null,
+        workLanguage: row.language ?? ((record.language as string | undefined) ?? null),
       });
       res.json(job);
     } catch (e) {
