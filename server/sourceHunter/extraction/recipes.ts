@@ -12,6 +12,7 @@
 import { htmlToMarkdown, htmlTitle, extractContentLinks, stripBoilerplate } from "./htmlToMarkdown";
 import { cleanupTranscription, looksLikeOcrTranscription } from "./textCleanup";
 import { PageFetcher } from "./crawl";
+import { ocrPdf } from "./pdfOcr";
 
 export interface ExtractionProgress {
   note: string;
@@ -263,27 +264,61 @@ const htmlSingleRecipe: ExtractionRecipe = {
 // 3. PDF (text layer) → Markdown
 // ---------------------------------------------------------------------------
 
+function isPdf(input: { path: string; contentType: string | null; payload: Buffer }): boolean {
+  return (
+    /\.pdf$/i.test(input.path) ||
+    input.contentType === "application/pdf" ||
+    input.payload.subarray(0, 5).toString("latin1") === "%PDF-"
+  );
+}
+
+/** Embedded text layer of a PDF, trimmed ("" when there is none). */
+async function pdfTextLayer(payload: Buffer): Promise<string> {
+  const { PDFParse } = await import("pdf-parse");
+  const parser = new PDFParse({ data: new Uint8Array(payload) });
+  try {
+    const result = await parser.getText();
+    return (result.text ?? "").trim();
+  } finally {
+    await parser.destroy?.().catch(() => {});
+  }
+}
+
+/** OCR every page of a scanned PDF, reporting per-page progress. */
+async function runPdfOcr(ctx: ExtractionContext, extraWarnings: string[] = []) {
+  const { text, warnings } = await ocrPdf(ctx.payload, ({ page, totalPages }) => {
+    ctx.reportProgress({
+      note: `OCR page ${page} of ${totalPages}`,
+      pagesFetched: page,
+      totalPages,
+    });
+  });
+  const markdown = cleanupTranscription(text);
+  if (markdown.replace(/\s+/g, " ").length < MINIMUM_DOCUMENT_CHARS) {
+    throw new Error("OCR produced almost no text — the scan may be too poor to read.");
+  }
+  return {
+    markdown: ctx.title ? `# ${ctx.title}\n\n${markdown}` : markdown,
+    pagesFetched: 0,
+    warnings: [...extraWarnings, ...warnings],
+  };
+}
+
 const pdfRecipe: ExtractionRecipe = {
   id: "pdf-text",
-  version: "1.0.0",
-  label: "PDF (text layer)",
-  description: "Extracts the embedded text layer from a PDF and reflows it into Markdown paragraphs. Scanned image-only PDFs are not supported.",
+  version: "1.1.0",
+  label: "PDF (text layer, OCR fallback)",
+  description: "Extracts the embedded text layer from a PDF and reflows it into Markdown paragraphs. When the PDF is a scan with little or no text layer, it falls back to OCR (tesseract) page by page.",
   suitability(input) {
     if (/\.pdf$/i.test(input.path) || input.contentType === "application/pdf") return 90;
     return input.payload.subarray(0, 5).toString("latin1") === "%PDF-" ? 80 : 0;
   },
   async run(ctx) {
-    const { PDFParse } = await import("pdf-parse");
-    const parser = new PDFParse({ data: new Uint8Array(ctx.payload) });
-    let text: string;
-    try {
-      const result = await parser.getText();
-      text = (result.text ?? "").trim();
-    } finally {
-      await parser.destroy?.().catch(() => {});
-    }
+    const text = await pdfTextLayer(ctx.payload);
     if (text.replace(/\s+/g, " ").length < MINIMUM_DOCUMENT_CHARS) {
-      throw new Error("The PDF has no usable text layer (it may be a scan; OCR is not supported yet).");
+      // Image-only scan: fall back to per-page OCR.
+      ctx.reportProgress({ note: "No usable text layer — starting OCR" });
+      return runPdfOcr(ctx, ["The PDF had no usable text layer; the text was produced by OCR and may contain recognition errors."]);
     }
     const markdown = cleanupTranscription(text);
     return {
@@ -291,6 +326,24 @@ const pdfRecipe: ExtractionRecipe = {
       pagesFetched: 0,
       warnings: [],
     };
+  },
+};
+
+// ---------------------------------------------------------------------------
+// 3b. Scanned PDF → OCR every page (explicit choice, skips the text layer)
+// ---------------------------------------------------------------------------
+
+const pdfOcrRecipe: ExtractionRecipe = {
+  id: "pdf-ocr",
+  version: "1.0.0",
+  label: "PDF (OCR every page)",
+  description: "Ignores any embedded text layer and runs OCR (tesseract) on every page of the PDF. Use for scans whose text layer is missing or garbled.",
+  suitability(input) {
+    // Never auto-suggested over pdf-text; available as an explicit choice.
+    return isPdf(input) ? 10 : 0;
+  },
+  async run(ctx) {
+    return runPdfOcr(ctx);
   },
 };
 
@@ -356,6 +409,7 @@ export const RECIPES: ExtractionRecipe[] = [
   htmlIndexRecipe,
   htmlSingleRecipe,
   pdfRecipe,
+  pdfOcrRecipe,
   docxRecipe,
   ocrCleanupRecipe,
 ];
