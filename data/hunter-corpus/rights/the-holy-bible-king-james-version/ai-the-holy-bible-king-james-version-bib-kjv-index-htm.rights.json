@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:the-holy-bible-king-james-version",
+  "edition_id": "edition:ai-the-holy-bible-king-james-version-bib-kjv-index-htm",
+  "source_id": "source:sacred-texts",
+  "source_reference": "https://www.sacred-texts.com/bib/kjv/index.htm",
+  "rights": {
+    "status": "public_domain_jurisdictional",
+    "confidence": "medium",
+    "basis": "source_statement",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "UNSPECIFIED"
+    ],
+    "territory_covered": false,
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "license": null,
+    "rights_url": null,
+    "license_url": null,
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "verify_target_jurisdiction"
+    ],
+    "reasons": [
+      "explicit public-domain claim"
+    ],
+    "assessed_at": "2026-07-30T06:07:17.780000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_statement",
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "ai_claimed_statement": "Public domain",
+    "ai_claimed_license_url": "https://creativecommons.org/publicdomain/mark/1.0/"
+  },
+  "file_sha256": "sha256:0602059414a9305f9271a91d0d73115f0f6d8148afebfeff225a4597c7863fe4"
+}

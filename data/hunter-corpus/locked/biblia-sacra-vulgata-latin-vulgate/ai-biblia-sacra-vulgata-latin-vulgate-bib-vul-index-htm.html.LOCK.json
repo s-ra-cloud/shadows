@@ -1,0 +1,11 @@
+{
+  "locked": true,
+  "do_not_publish": true,
+  "work_id": "work:biblia-sacra-vulgata-latin-vulgate",
+  "edition_id": "edition:ai-biblia-sacra-vulgata-latin-vulgate-bib-vul-index-htm",
+  "rights_status": "public_domain_jurisdictional",
+  "reasons": [
+    "explicit public-domain claim"
+  ],
+  "rights_record": "rights/biblia-sacra-vulgata-latin-vulgate/ai-biblia-sacra-vulgata-latin-vulgate-bib-vul-index-htm.rights.json"
+}

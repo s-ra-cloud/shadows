@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:the-gospel-of-thomas",
+  "edition_id": "edition:ai-the-gospel-of-thomas-chr-gnost-thomas-htm",
+  "source_id": "source:sacred-texts",
+  "source_reference": "https://www.sacred-texts.com/chr/gnost/thomas.htm",
+  "rights": {
+    "status": "public_domain_jurisdictional",
+    "confidence": "medium",
+    "basis": "source_statement",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "UNSPECIFIED"
+    ],
+    "territory_covered": false,
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "license": null,
+    "rights_url": null,
+    "license_url": null,
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "verify_target_jurisdiction"
+    ],
+    "reasons": [
+      "explicit public-domain claim"
+    ],
+    "assessed_at": "2026-07-30T06:07:17.780000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_statement",
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "ai_claimed_statement": "unknown",
+    "ai_claimed_license_url": null
+  },
+  "file_sha256": "sha256:c5b330f84f6ddb15554339bb7ae88aa7266db51b88aa251ea553f17bcad8997c"
+}

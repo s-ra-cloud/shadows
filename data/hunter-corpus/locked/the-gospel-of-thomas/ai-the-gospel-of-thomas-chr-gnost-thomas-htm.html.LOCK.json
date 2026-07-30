@@ -1,0 +1,11 @@
+{
+  "locked": true,
+  "do_not_publish": true,
+  "work_id": "work:the-gospel-of-thomas",
+  "edition_id": "edition:ai-the-gospel-of-thomas-chr-gnost-thomas-htm",
+  "rights_status": "public_domain_jurisdictional",
+  "reasons": [
+    "explicit public-domain claim"
+  ],
+  "rights_record": "rights/the-gospel-of-thomas/ai-the-gospel-of-thomas-chr-gnost-thomas-htm.rights.json"
+}
