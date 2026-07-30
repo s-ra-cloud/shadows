@@ -52,8 +52,16 @@ async function buildAll() {
     bundle: true,
     format: "cjs",
     outfile: "dist/index.cjs",
+    // `import.meta.url` is ESM-only; in a CJS bundle it becomes `undefined`
+    // which crashes any code that passes it to `fileURLToPath()`.
+    // We inject a shim into the bundle banner and rewrite every reference to
+    // `import.meta.url` to use it instead.
+    banner: {
+      js: `const __importMetaUrl = require("url").pathToFileURL(__filename).href;`,
+    },
     define: {
       "process.env.NODE_ENV": '"production"',
+      "import.meta.url": "__importMetaUrl",
     },
     minify: true,
     external: externals,
