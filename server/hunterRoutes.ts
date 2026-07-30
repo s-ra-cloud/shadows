@@ -49,6 +49,7 @@ import { FullTextValidationError } from "./sourceHunter/fulltextValidation";
 import {
   startExtraction,
   getExtractionJob,
+  cancelExtraction,
   listRecipes,
   suggestRecipeForFile,
   hasReadable,
@@ -930,6 +931,20 @@ export function registerHunterRoutes(
       res.json(job);
     } catch (e) {
       res.status(422).json({ message: errMessage(e) });
+    }
+  });
+
+  // Cancel a running extraction (e.g. a long OCR run on a big scan). The
+  // job is marked "cancelled" immediately; the OCR/crawl loop stops promptly.
+  app.post("/api/hunter/corpus/:id/extract/cancel", requireEditor, (req, res) => {
+    const id = parseInt(String(req.params.id));
+    if (!Number.isInteger(id)) return res.status(400).json({ message: "Invalid id" });
+    try {
+      const job = cancelExtraction(id);
+      if (!job) return res.status(404).json({ message: "No extraction has been started for this file" });
+      res.json(job);
+    } catch (e) {
+      res.status(409).json({ message: errMessage(e) });
     }
   });
 

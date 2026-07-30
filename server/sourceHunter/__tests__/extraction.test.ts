@@ -5,7 +5,11 @@ import {
   extractContentLinks,
 } from "../extraction/htmlToMarkdown";
 import { cleanupTranscription, looksLikeOcrTranscription } from "../extraction/textCleanup";
-import { RECIPES, getRecipe, suggestRecipe, looksLikeIndexPage, isInterstitialPage } from "../extraction/recipes";
+import { RECIPES, getRecipe, suggestRecipe, looksLikeIndexPage, isInterstitialPage, ExtractionCancelledError } from "../extraction/recipes";
+import { startExtraction, getExtractionJob, cancelExtraction } from "../extraction/run";
+import { promises as fs } from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 import { clearRobotsCache } from "../robots";
 
 function mockFetch(routes: Record<string, string | { status: number; body?: string; location?: string }>) {
@@ -117,9 +121,9 @@ describe("recipe suggestion", () => {
     ).toBe("docx");
   });
 
-  it("exposes all five recipes", () => {
+  it("exposes all six recipes", () => {
     expect(RECIPES.map((r) => r.id).sort()).toEqual(
-      ["docx", "html-index-crawl", "html-single-page", "ocr-cleanup", "pdf-text"].sort(),
+      ["docx", "html-index-crawl", "html-single-page", "ocr-cleanup", "pdf-ocr", "pdf-text"].sort(),
     );
   });
 });
@@ -333,5 +337,70 @@ describe("html-index-crawl recipe", () => {
         reportProgress: () => {},
       }),
     ).rejects.toThrow();
+  });
+});
+
+describe("extraction cancellation", () => {
+  beforeEach(() => clearRobotsCache());
+
+  it("index crawl throws ExtractionCancelledError when the signal is already aborted", async () => {
+    const recipe = getRecipe("html-index-crawl")!;
+    const controller = new AbortController();
+    controller.abort();
+    const index = `<a href="a.htm">A</a><a href="b.htm">B</a><a href="c.htm">C</a>`;
+    await expect(
+      recipe.run({
+        payload: Buffer.from(index),
+        contentType: "text/html",
+        sourceUrl: "https://texts.example/kjv/index.htm",
+        title: null,
+        fetchImpl: mockFetch({ "https://texts.example/robots.txt": "" }),
+        reportProgress: () => {},
+        signal: controller.signal,
+      }),
+    ).rejects.toThrow(ExtractionCancelledError);
+  });
+
+  it("cancelExtraction marks a running job cancelled, not error", async () => {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "extract-cancel-"));
+    const host = "https://texts.example";
+    const routes: Record<string, string> = { [`${host}/robots.txt`]: "" };
+    const index = Array.from({ length: 30 }, (_, i) => `<a href="ch${i + 1}.htm">Chapter ${i + 1}</a>`).join(" ");
+    routes[`${host}/kjv/index.htm`] = index;
+    for (let i = 1; i <= 30; i += 1) {
+      routes[`${host}/kjv/ch${i}.htm`] =
+        `<html><head><title>Ch ${i}</title></head><body><p>${"Verse text. ".repeat(60)}</p></body></html>`;
+    }
+    const base = mockFetch(routes);
+    const slowFetch = (async (input: any, init?: any) => {
+      await new Promise((r) => setTimeout(r, 30));
+      return base(input, init);
+    }) as typeof fetch;
+    const rawPath = path.join(tmp, "index.htm");
+    await fs.writeFile(rawPath, index);
+    const job = await startExtraction({
+      corpusFileId: 999901,
+      rawAbsolutePath: rawPath,
+      recipeId: "html-index-crawl",
+      contentType: "text/html",
+      sourceUrl: `${host}/kjv/index.htm`,
+      title: null,
+      locked: false,
+      fetchImpl: slowFetch,
+    });
+    expect(job.status).toBe("running");
+    await new Promise((r) => setTimeout(r, 80));
+    const cancelled = cancelExtraction(999901);
+    expect(cancelled?.status).toBe("cancelled");
+    // Let the background loop unwind; the status must stay cancelled.
+    await new Promise((r) => setTimeout(r, 200));
+    const after = getExtractionJob(999901);
+    expect(after?.status).toBe("cancelled");
+    expect(after?.error).toBeNull();
+    // No readable output was written for a cancelled run.
+    await expect(fs.access(`${rawPath}.readable.md`)).rejects.toThrow();
+    // Cancelling a non-running job is rejected loudly.
+    expect(() => cancelExtraction(999901)).toThrow(/not running/);
+    await fs.rm(tmp, { recursive: true, force: true });
   });
 });

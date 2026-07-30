@@ -1548,7 +1548,7 @@ function ExtractReadableModal({ file, onClose }: { file: any; onClose: () => voi
       toast({ title: "Extraction complete", description: "A readable version is now available." });
       queryClient.invalidateQueries({ queryKey: ["/api/hunter/corpus"] });
       queryClient.invalidateQueries({ queryKey: ["/api/hunter/library"] });
-    } else if (job.status === "error") {
+    } else if (job.status === "error" || job.status === "cancelled") {
       setRunning(false);
     }
   }, [job, running, toast]);
@@ -1559,6 +1559,12 @@ function ExtractReadableModal({ file, onClose }: { file: any; onClose: () => voi
     onSuccess: () => setRunning(true),
     onError: (e: Error) =>
       toast({ title: "Could not start extraction", description: e.message, variant: "destructive" }),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: async () => apiRequest("POST", `/api/hunter/corpus/${file.id}/extract/cancel`, {}),
+    onError: (e: Error) =>
+      toast({ title: "Could not cancel extraction", description: e.message, variant: "destructive" }),
   });
 
   const recipeList = Array.isArray(recipes) ? recipes : [];
@@ -1610,6 +1616,11 @@ function ExtractReadableModal({ file, onClose }: { file: any; onClose: () => voi
                 : "Extracting..."}
             </div>
           )}
+          {job?.status === "cancelled" && !running && (
+            <div className="text-yellow-400/80 text-sm" data-testid="text-extract-cancelled">
+              Extraction cancelled. No readable version was written; you can run it again anytime.
+            </div>
+          )}
           {job?.status === "error" && !running && (
             <div className="text-red-400 text-sm flex items-start gap-2" data-testid="text-extract-error">
               <AlertCircle size={16} className="shrink-0 mt-0.5" /> {job.error}
@@ -1637,6 +1648,16 @@ function ExtractReadableModal({ file, onClose }: { file: any; onClose: () => voi
           >
             Close
           </button>
+          {running && (
+            <button
+              onClick={() => cancelMutation.mutate()}
+              disabled={cancelMutation.isPending}
+              className="px-4 py-2 rounded-lg text-sm border border-red-400/40 text-red-400 hover:bg-red-400/10 disabled:opacity-50 transition-colors"
+              data-testid="button-cancel-extraction"
+            >
+              {cancelMutation.isPending ? "Cancelling..." : "Cancel"}
+            </button>
+          )}
           <button
             onClick={() => startMutation.mutate()}
             disabled={running || startMutation.isPending}

@@ -12,7 +12,7 @@
 import { htmlToMarkdown, htmlTitle, extractContentLinks, stripBoilerplate } from "./htmlToMarkdown";
 import { cleanupTranscription, looksLikeOcrTranscription } from "./textCleanup";
 import { PageFetcher } from "./crawl";
-import { ocrPdf } from "./pdfOcr";
+import { ocrPdf, OcrCancelledError } from "./pdfOcr";
 
 export interface ExtractionProgress {
   note: string;
@@ -28,8 +28,17 @@ export interface ExtractionContext {
   title: string | null;
   fetchImpl?: typeof fetch;
   reportProgress: (progress: ExtractionProgress) => void;
+  /** Fires when the editor cancels the job; long-running recipes must honor it. */
+  signal?: AbortSignal;
 }
 
+/** Thrown by recipes when ctx.signal aborts; the job is marked cancelled. */
+export class ExtractionCancelledError extends Error {
+  constructor() {
+    super("Extraction was cancelled.");
+    this.name = "ExtractionCancelledError";
+  }
+}
 export interface ExtractionOutput {
   markdown: string;
   pagesFetched: number;
@@ -169,6 +178,7 @@ const htmlIndexRecipe: ExtractionRecipe = {
     const enqueued = new Set(queue.map((i) => i.url));
 
     while (queue.length > 0) {
+      if (ctx.signal?.aborted) throw new ExtractionCancelledError();
       if (pagesFetched >= MAX_PAGES) {
         warnings.push(`Stopped after the ${MAX_PAGES}-page safety cap; document may be incomplete.`);
         break;
@@ -310,13 +320,24 @@ async function pdfTextLayer(payload: Buffer): Promise<string> {
 
 /** OCR every page of a scanned PDF, reporting per-page progress. */
 async function runPdfOcr(ctx: ExtractionContext, extraWarnings: string[] = []) {
-  const { text, warnings } = await ocrPdf(ctx.payload, ({ page, totalPages }) => {
-    ctx.reportProgress({
-      note: `OCR page ${page} of ${totalPages}`,
-      pagesFetched: page,
-      totalPages,
-    });
-  });
+  let text: string;
+  let warnings: string[];
+  try {
+    ({ text, warnings } = await ocrPdf(
+      ctx.payload,
+      ({ page, totalPages }) => {
+        ctx.reportProgress({
+          note: `OCR page ${page} of ${totalPages}`,
+          pagesFetched: page,
+          totalPages,
+        });
+      },
+      ctx.signal,
+    ));
+  } catch (e) {
+    if (e instanceof OcrCancelledError) throw new ExtractionCancelledError();
+    throw e;
+  }
   const markdown = cleanupTranscription(text);
   if (markdown.replace(/\s+/g, " ").length < MINIMUM_DOCUMENT_CHARS) {
     throw new Error("OCR produced almost no text — the scan may be too poor to read.");

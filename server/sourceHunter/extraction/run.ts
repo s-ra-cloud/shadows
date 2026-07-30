@@ -13,7 +13,13 @@
 import { promises as fs } from "node:fs";
 import * as fsSync from "node:fs";
 import * as path from "node:path";
-import { RECIPES, getRecipe, suggestRecipe, type ExtractionProgress } from "./recipes";
+import {
+  RECIPES,
+  getRecipe,
+  suggestRecipe,
+  ExtractionCancelledError,
+  type ExtractionProgress,
+} from "./recipes";
 
 export interface ReadableProvenance {
   recipe_id: string;
@@ -48,7 +54,7 @@ export function hasReadable(rawAbsolutePath: string): boolean {
 export interface ExtractionJob {
   corpusFileId: number;
   recipeId: string;
-  status: "running" | "done" | "error";
+  status: "running" | "done" | "error" | "cancelled";
   startedAt: string;
   progress: ExtractionProgress | null;
   error: string | null;
@@ -56,9 +62,28 @@ export interface ExtractionJob {
 }
 
 const jobs = new Map<number, ExtractionJob>();
+/** Abort controllers for running jobs, keyed like `jobs`. */
+const controllers = new Map<number, AbortController>();
 
 export function getExtractionJob(corpusFileId: number): ExtractionJob | null {
   return jobs.get(corpusFileId) ?? null;
+}
+
+/**
+ * Cancel a running extraction job. Marks the job "cancelled" immediately and
+ * aborts the underlying work (OCR child processes, crawl loop). Returns the
+ * job, or null when no job exists for this file. Throws when the job is not
+ * running (done/error/cancelled jobs cannot be cancelled).
+ */
+export function cancelExtraction(corpusFileId: number): ExtractionJob | null {
+  const job = jobs.get(corpusFileId);
+  if (!job) return null;
+  if (job.status !== "running") {
+    throw new Error(`This extraction is not running (status: ${job.status}).`);
+  }
+  job.status = "cancelled";
+  controllers.get(corpusFileId)?.abort();
+  return job;
 }
 
 export interface StartExtractionInput {
@@ -103,6 +128,8 @@ export async function startExtraction(input: StartExtractionInput): Promise<Extr
     provenance: null,
   };
   jobs.set(input.corpusFileId, job);
+  const controller = new AbortController();
+  controllers.set(input.corpusFileId, controller);
 
   void (async () => {
     try {
@@ -115,7 +142,9 @@ export async function startExtraction(input: StartExtractionInput): Promise<Extr
         reportProgress: (progress) => {
           job.progress = progress;
         },
+        signal: controller.signal,
       });
+      if (job.status === "cancelled") return;
       const provenance: ReadableProvenance = {
         recipe_id: recipe.id,
         recipe_version: recipe.version,
@@ -138,8 +167,16 @@ export async function startExtraction(input: StartExtractionInput): Promise<Extr
       job.provenance = provenance;
       job.status = "done";
     } catch (e) {
+      // A cancelled job keeps its "cancelled" status; the abort error that
+      // unwound the recipe is expected, not a failure.
+      if (job.status === "cancelled" || e instanceof ExtractionCancelledError) {
+        job.status = "cancelled";
+        return;
+      }
       job.status = "error";
       job.error = e instanceof Error ? e.message : String(e);
+    } finally {
+      controllers.delete(input.corpusFileId);
     }
   })();
 
