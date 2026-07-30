@@ -237,13 +237,17 @@ export async function suggestRecipeForFile(
  * Convert jobs stranded by a previous process (still in the durable ledger
  * but not in this process's memory) into "interrupted" jobs, so the status
  * endpoint reports something honest instead of a 404. Runs once at startup.
+ *
+ * Returns the list of jobs that were recovered as "interrupted", so callers
+ * can decide whether to re-queue them automatically.
  */
-export function recoverInterruptedJobs(): void {
+export function recoverInterruptedJobs(): ExtractionJob[] {
   const stranded = readPersistedRunning();
-  if (stranded.length === 0) return;
+  if (stranded.length === 0) return [];
+  const recovered: ExtractionJob[] = [];
   for (const entry of stranded) {
     if (jobs.has(entry.corpusFileId)) continue;
-    jobs.set(entry.corpusFileId, {
+    const job: ExtractionJob = {
       corpusFileId: entry.corpusFileId,
       recipeId: entry.recipeId,
       status: "interrupted",
@@ -251,9 +255,12 @@ export function recoverInterruptedJobs(): void {
       progress: null,
       error: "The server restarted while this extraction was running. Start it again.",
       provenance: null,
-    });
+    };
+    jobs.set(entry.corpusFileId, job);
+    recovered.push(job);
   }
   writePersistedRunning([]);
+  return recovered;
 }
 
 interface PersistedRunningJob {

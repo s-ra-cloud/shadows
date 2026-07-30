@@ -292,13 +292,88 @@ export async function ensureHunterProvenanceSchema(): Promise<void> {
     )
   `);
 }
+/**
+ * Re-queue extraction jobs that were interrupted by a server restart, when it
+ * is safe to do so: the raw file still exists and has no readable sibling yet.
+ * Called once at startup, fire-and-forget (failures are logged, not thrown).
+ */
+async function reQueueInterruptedJobs(
+  recoveredJobs: import("./sourceHunter/extraction/run").ExtractionJob[],
+): Promise<void> {
+  if (recoveredJobs.length === 0) return;
+  const ids = recoveredJobs.map((j) => j.corpusFileId);
+  let rows: (typeof hunterCorpusFiles.$inferSelect)[];
+  try {
+    rows = await db
+      .select()
+      .from(hunterCorpusFiles)
+      .where(inArray(hunterCorpusFiles.id, ids));
+  } catch (e) {
+    console.error("reQueueInterruptedJobs: DB lookup failed:", errMessage(e));
+    return;
+  }
+  const rowById = new Map(rows.map((r) => [r.id, r]));
+  for (const job of recoveredJobs) {
+    const row = rowById.get(job.corpusFileId);
+    if (!row) {
+      console.warn(
+        `reQueueInterruptedJobs: corpus file ${job.corpusFileId} not found in DB, skipping`,
+      );
+      continue;
+    }
+    const rawPath = path.resolve(CORPUS_ROOT, row.path);
+    // Safety check: only re-queue when the raw file is present and there is
+    // no readable sibling yet (i.e., the extraction never finished).
+    try {
+      await fs.access(rawPath);
+    } catch {
+      console.warn(
+        `reQueueInterruptedJobs: raw file missing for corpus ${job.corpusFileId}, skipping`,
+      );
+      continue;
+    }
+    if (hasReadable(rawPath)) {
+      // Extraction completed (perhaps by another process) — just mark done.
+      continue;
+    }
+    const record = row.record as Record<string, unknown> | null | undefined;
+    const file = record?.file as Record<string, unknown> | undefined;
+    const sourceReference = (record?.source_reference as string | undefined) ?? null;
+    try {
+      await startExtraction({
+        corpusFileId: row.id,
+        rawAbsolutePath: rawPath,
+        recipeId: job.recipeId,
+        contentType: (file?.content_type as string | undefined) ?? null,
+        sourceUrl: sourceReference && /^https:\/\//.test(sourceReference) ? sourceReference : null,
+        title: (record?.title as string | undefined) ?? null,
+        locked: row.partition === "locked",
+        workLanguage: row.language ?? null,
+      });
+      console.log(
+        `reQueueInterruptedJobs: re-queued extraction for corpus file ${job.corpusFileId}`,
+      );
+    } catch (e) {
+      console.error(
+        `reQueueInterruptedJobs: failed to re-queue corpus file ${job.corpusFileId}:`,
+        errMessage(e),
+      );
+    }
+  }
+}
+
 export function registerHunterRoutes(
   app: Express,
   requireEditor: (req: Request, res: Response, next: NextFunction) => void,
 ) {
   // Surface extraction jobs stranded by a previous process as "interrupted"
   // so the status endpoint reports something honest instead of a 404.
-  recoverInterruptedJobs();
+  // Then automatically re-queue jobs whose raw file still exists and has no
+  // readable sibling — they can be finished without editor intervention.
+  const recoveredJobs = recoverInterruptedJobs();
+  reQueueInterruptedJobs(recoveredJobs).catch((e) =>
+    console.error("reQueueInterruptedJobs failed:", errMessage(e)),
+  );
   // Best-effort schema upgrade so pre-provenance databases don't 500.
   ensureHunterProvenanceSchema().catch((e) =>
     console.error("hunter provenance schema upgrade failed:", errMessage(e)),
