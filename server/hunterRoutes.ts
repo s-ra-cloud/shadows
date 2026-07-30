@@ -134,6 +134,74 @@ function errMessage(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
+/**
+ * After a run downloads new files, queue readable extraction automatically
+ * using each file's suggested recipe. Extraction runs as the existing
+ * background jobs (pollable via /api/hunter/corpus/:id/extract/status), so
+ * long crawls never block the run. Failures to queue are reported in the run
+ * summary instead of throwing. Raw files are never modified — extraction only
+ * writes the .readable.md/.readable.json siblings.
+ */
+export interface AutoExtractionSummary {
+  queued: number;
+  skipped: number;
+  failed: { edition_id: string; error: string }[];
+}
+
+export async function autoExtractDownloaded(
+  records: Record<string, unknown>[],
+): Promise<AutoExtractionSummary> {
+  const summary: AutoExtractionSummary = { queued: 0, skipped: 0, failed: [] };
+  for (const record of records) {
+    if (record.download_status !== "downloaded") continue;
+    const file = record.file as Record<string, unknown> | undefined;
+    if (!file?.relative_path) continue;
+    const editionId = String(record.edition_id ?? file.relative_path);
+    try {
+      const rawPath = path.resolve(CORPUS_ROOT, String(file.relative_path));
+      const rel = path.relative(CORPUS_ROOT, rawPath);
+      if (rel.startsWith("..") || path.isAbsolute(rel)) {
+        summary.failed.push({ edition_id: editionId, error: "Invalid corpus path" });
+        continue;
+      }
+      // Freshly re-downloaded files may already have a readable sibling from
+      // a previous extraction — leave it alone.
+      if (hasReadable(rawPath)) {
+        summary.skipped += 1;
+        continue;
+      }
+      const [row] = await db
+        .select()
+        .from(hunterCorpusFiles)
+        .where(eq(hunterCorpusFiles.path, String(file.relative_path)))
+        .limit(1);
+      if (!row) {
+        summary.failed.push({ edition_id: editionId, error: "File not found in corpus table" });
+        continue;
+      }
+      const existingJob = getExtractionJob(row.id);
+      if (existingJob?.status === "running") {
+        summary.skipped += 1;
+        continue;
+      }
+      const sourceReference = (record.source_reference as string | undefined) ?? null;
+      await startExtraction({
+        corpusFileId: row.id,
+        rawAbsolutePath: rawPath,
+        recipeId: null, // use the suggested recipe
+        contentType: (file.content_type as string | undefined) ?? null,
+        sourceUrl: sourceReference && /^https:\/\//.test(sourceReference) ? sourceReference : null,
+        title: (record.title as string | undefined) ?? null,
+        locked: row.partition === "locked",
+      });
+      summary.queued += 1;
+    } catch (e) {
+      summary.failed.push({ edition_id: editionId, error: errMessage(e) });
+    }
+  }
+  return summary;
+}
+
 const ADAPTERS: Record<string, () => SourceAdapter> = {
   plain_text: () => new PlainTextAdapter(),
   legacy_jsonl: () => new LegacyJsonlAdapter(),
@@ -395,12 +463,16 @@ export function registerHunterRoutes(
           }
         }
       });
+      const autoExtraction = await autoExtractDownloaded(
+        records as unknown as Record<string, unknown>[],
+      );
       const summary = {
         records: records.length,
         downloaded: records.filter((r) => r.download_status === "downloaded").length,
         already_present: records.filter((r) => r.download_status === "already_present").length,
         metadata_only: records.filter((r) => r.download_status === "metadata_only").length,
         failed: records.filter((r) => r.download_status === "failed").length,
+        auto_extraction: autoExtraction,
         entries: records,
       };
       await finishRun(runId, true, summary);
@@ -434,6 +506,7 @@ export function registerHunterRoutes(
       const policy = await loadActivePolicy();
       validatePolicy(policy);
       const registry = await loadActiveRegistry();
+      const mirroredRecords: Record<string, unknown>[] = [];
       const store: CycleStore = {
         async existingEditionIds() {
           const rows = await db
@@ -498,6 +571,7 @@ export function registerHunterRoutes(
           }
         },
         async mirrorCorpusRecords(records) {
+          mirroredRecords.push(...records);
           for (const record of records) {
             const file = record.file as Record<string, unknown> | undefined;
             if (!file || !file.relative_path) continue;
@@ -525,7 +599,8 @@ export function registerHunterRoutes(
         corpusRoot: CORPUS_ROOT,
         store,
       });
-      await finishRun(runId, true, summary);
+      const autoExtraction = await autoExtractDownloaded(mirroredRecords);
+      await finishRun(runId, true, { ...summary, auto_extraction: autoExtraction });
     } catch (e) {
       await finishRun(runId, false, null, errMessage(e));
     }
@@ -766,12 +841,16 @@ export function registerHunterRoutes(
         .set({ status: "resolved", updatedAt: new Date() })
         .where(eq(hunterBlockers.id, blocker.id));
 
+      const autoExtraction = await autoExtractDownloaded(
+        records as unknown as Record<string, unknown>[],
+      );
       const summary = {
         retried_blocker_id: blocker.id,
         edition_id: candidateRow.editionId,
         download_status: status,
         outcome,
         new_blocker_reason: newBlocker?.reason ?? null,
+        auto_extraction: autoExtraction,
         entries: records,
       };
       await finishRun(runId, true, summary);

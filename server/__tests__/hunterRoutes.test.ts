@@ -320,6 +320,32 @@ describe("plan -> download -> verify happy path", () => {
     expect(detail.status).toBe(200);
     expect(detail.body.files).toHaveLength(2);
     expect(Array.isArray(detail.body.blockers)).toBe(true);
+
+    // Readable extraction is queued automatically for every fresh download,
+    // and failures are reported in the summary rather than thrown.
+    expect(run.result.auto_extraction).toMatchObject({ queued: 2, failed: [] });
+    // Raw files are untouched (extraction only writes readable siblings).
+    for (const entry of [open, locked]) {
+      const stat = await fs.stat(path.join(corpusRoot, entry.file.relative_path));
+      expect(stat.size).toBe(entry.file.bytes);
+    }
+  });
+
+  it("reports auto-extraction failures in the summary instead of throwing", async () => {
+    const { autoExtractDownloaded } = await import("../hunterRoutes");
+    const summary = await autoExtractDownloaded([
+      {
+        download_status: "downloaded",
+        edition_id: "edition:ghost",
+        file: { relative_path: "public/nowhere/ghost.txt", locked: false },
+      },
+      // Non-downloaded records are ignored entirely.
+      { download_status: "metadata_only", edition_id: "edition:meta", file: {} },
+    ]);
+    expect(summary.queued).toBe(0);
+    expect(summary.failed).toEqual([
+      { edition_id: "edition:ghost", error: "File not found in corpus table" },
+    ]);
   });
 
   it("keeps run provenance stable when a later download finds files already present", async () => {

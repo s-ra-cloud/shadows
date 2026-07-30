@@ -322,6 +322,32 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
 
 // --- Source Hunter Sub-components ---
 
+/** Per-file failures from the automatic post-download readable extraction. */
+function AutoExtractionFailures({ failures }: { failures?: { edition_id: string; error: string }[] }) {
+  if (!Array.isArray(failures) || failures.length === 0) return null;
+  return (
+    <div
+      className="text-xs border border-orange-400/30 bg-orange-400/5 rounded-lg p-3 space-y-1"
+      data-testid="text-auto-extract-failures"
+    >
+      <div className="text-orange-400 flex items-center gap-1.5 font-medium">
+        <AlertCircle size={12} /> Automatic extraction could not start for {failures.length}{" "}
+        {failures.length === 1 ? "file" : "files"}
+      </div>
+      <ul className="text-[#E0DCE6]/60 space-y-0.5 pl-4 list-disc">
+        {failures.map((f, i) => (
+          <li key={i}>
+            <span className="font-mono">{f.edition_id}</span> — {f.error}
+          </li>
+        ))}
+      </ul>
+      <div className="text-[#E0DCE6]/40">
+        You can retry from the Corpus tab with “Extract readable text”.
+      </div>
+    </div>
+  );
+}
+
 const BLOCKER_REASON_LABELS: Record<string, string> = {
   robots_disallowed: "Blocked by robots.txt",
   requires_auth: "Login / auth required",
@@ -864,6 +890,7 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
                             ["Downloaded (locked)", summary.downloaded_locked],
                             ["Metadata only", summary.metadata_only],
                             ["Failed", summary.failed],
+                            ["Extractions queued", summary.auto_extraction?.queued],
                           ].map(([label, value]) => (
                             <div key={String(label)} className="p-2 rounded-lg bg-[#130D30] border border-[#350A8C]/20">
                               <div className="text-[#E0DCE6]/50">{label}</div>
@@ -871,6 +898,14 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
                             </div>
                           ))}
                         </div>
+                      )}
+                      <AutoExtractionFailures failures={summary?.auto_extraction?.failed} />
+                      {(summary?.auto_extraction?.queued ?? 0) > 0 && (
+                        <p className="text-xs text-[#E0DCE6]/50" data-testid={`text-auto-extract-note-${run.id}`}>
+                          Readable extraction was queued automatically for {summary.auto_extraction.queued}{" "}
+                          new {summary.auto_extraction.queued === 1 ? "download" : "downloads"} — track
+                          progress in the Corpus tab.
+                        </p>
                       )}
                       <button
                         onClick={(e) => {
@@ -1985,7 +2020,46 @@ function RunDetailModal({ runId, onClose }: { runId: number; onClose: () => void
     queryKey: [`/api/hunter/runs/${runId}`],
   });
   const result = run?.result ?? {};
-  const summary = result.scope ? result : null;
+  // Summary shape depends on the run kind: cycles carry a `scope`; download
+  // and retry runs have their own flat summaries (only once completed —
+  // while running, `result` holds progress, not a summary).
+  const kind = String(run?.kind ?? "");
+  const summary =
+    kind === "cycle"
+      ? result.scope
+        ? result
+        : null
+      : run?.status === "completed" && result && Object.keys(result).length > 0
+        ? result
+        : null;
+  const statRows: [string, unknown][] =
+    kind === "download"
+      ? [
+          ["Records", summary?.records],
+          ["Downloaded", summary?.downloaded],
+          ["Already present", summary?.already_present],
+          ["Metadata only", summary?.metadata_only],
+          ["Failed", summary?.failed],
+          ["Extractions queued", summary?.auto_extraction?.queued],
+        ]
+      : kind === "retry"
+        ? [
+            ["Download status", summary?.download_status],
+            ["Outcome", summary?.outcome],
+            ["Extractions queued", summary?.auto_extraction?.queued],
+          ]
+        : [
+            ["Discovered", summary?.discovered],
+            ["Candidates created", summary?.created],
+            ["Duplicates skipped", summary?.duplicates],
+            ["Invalid leads", summary?.invalid],
+            ["Secondary skipped", summary?.secondary],
+            ["Downloaded (public)", summary?.downloaded_public],
+            ["Downloaded (locked)", summary?.downloaded_locked],
+            ["Metadata only", summary?.metadata_only],
+            ["Failed", summary?.failed],
+            ["Extractions queued", summary?.auto_extraction?.queued],
+          ];
   const files = Array.isArray(run?.files) ? run.files : [];
   const blockers = Array.isArray(run?.blockers) ? run.blockers : [];
   return (
@@ -2038,24 +2112,15 @@ function RunDetailModal({ runId, onClose }: { runId: number; onClose: () => void
           )}
           {summary && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              {[
-                ["Discovered", summary.discovered],
-                ["Candidates created", summary.created],
-                ["Duplicates skipped", summary.duplicates],
-                ["Invalid leads", summary.invalid],
-                ["Secondary skipped", summary.secondary],
-                ["Downloaded (public)", summary.downloaded_public],
-                ["Downloaded (locked)", summary.downloaded_locked],
-                ["Metadata only", summary.metadata_only],
-                ["Failed", summary.failed],
-              ].map(([label, value]) => (
+              {statRows.map(([label, value]) => (
                 <div key={String(label)} className="p-2 rounded-lg bg-[#0B0626] border border-[#350A8C]/20">
                   <div className="text-[#E0DCE6]/50">{label}</div>
-                  <div className="text-[#E0DCE6] text-base font-medium">{value ?? 0}</div>
+                  <div className="text-[#E0DCE6] text-base font-medium">{String(value ?? 0)}</div>
                 </div>
               ))}
             </div>
           )}
+          {summary && <AutoExtractionFailures failures={summary.auto_extraction?.failed} />}
           {run && (
             <div>
               <h4 className="text-sm font-medium text-[#E0DCE6]/80 mb-2">
