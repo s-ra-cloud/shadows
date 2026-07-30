@@ -8,9 +8,9 @@ import express from "express";
 import type { Express, Request, Response, NextFunction } from "express";
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, inArray } from "drizzle-orm";
 import { db, storage } from "./storage";
-import { hunterCandidates, hunterRuns, hunterCorpusFiles, hunterBlockers, hunterRightsReviews } from "@shared/schema";
+import { hunterCandidates, hunterRuns, hunterCorpusFiles, hunterBlockers, hunterRightsReviews, hunterScreenVerdicts } from "@shared/schema";
 import {
   runHuntingCycle,
   blockerFromRecord,
@@ -418,6 +418,35 @@ export function registerHunterRoutes(
             .update(hunterRuns)
             .set({ result: { progress } })
             .where(eq(hunterRuns.id, runId));
+        },
+        async getScreenVerdicts(keys) {
+          const verdicts = new Map();
+          if (keys.length === 0) return verdicts;
+          const rows = await db
+            .select()
+            .from(hunterScreenVerdicts)
+            .where(inArray(hunterScreenVerdicts.titleKey, keys));
+          for (const row of rows) {
+            if (row.classification !== "primary" && row.classification !== "secondary") continue;
+            verdicts.set(row.titleKey, {
+              classification: row.classification,
+              justification: `${row.justification} (cached from a previous cycle)`,
+            });
+          }
+          return verdicts;
+        },
+        async saveScreenVerdicts(entries) {
+          for (const entry of entries) {
+            await db
+              .insert(hunterScreenVerdicts)
+              .values({
+                titleKey: entry.key,
+                title: entry.title,
+                classification: entry.verdict.classification,
+                justification: entry.verdict.justification,
+              })
+              .onConflictDoNothing();
+          }
         },
         async mirrorCorpusRecords(records) {
           for (const record of records) {

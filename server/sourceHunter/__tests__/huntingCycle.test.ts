@@ -13,8 +13,10 @@ import {
   looksLikeSecondarySource,
   confidentlySecondary,
   screenLeads,
+  screenCacheKey,
   SCREEN_CHUNK_SIZE,
   type AiScreenVerdict,
+  type ScreenVerdictCache,
   type BlockerInput,
   type CycleStore,
   type DiscoveredLead,
@@ -532,6 +534,231 @@ describe("screenLeads chunking", () => {
     expect(verdicts[0]?.classification).toBe("primary");
     expect(verdicts[1]).toBeNull();
     expect(blockers).toHaveLength(0);
+  });
+});
+
+describe("screening verdict cache", () => {
+  const scope = { query: "x", useAi: true };
+  function lead(title: string) {
+    return { title, author: null };
+  }
+  function collectBlockers() {
+    const blockers: BlockerInput[] = [];
+    return { blockers, report: async (b: BlockerInput) => void blockers.push(b) };
+  }
+  function memoryCache(seed: Record<string, AiScreenVerdict> = {}) {
+    const entries = new Map<string, { title: string; verdict: AiScreenVerdict }>(
+      Object.entries(seed).map(([k, v]) => [k, { title: k, verdict: v }]),
+    );
+    const gets: string[][] = [];
+    const sets: { key: string; title: string; verdict: AiScreenVerdict }[] = [];
+    const cache: ScreenVerdictCache = {
+      async get(keys) {
+        gets.push(keys);
+        const found = new Map<string, AiScreenVerdict>();
+        for (const key of keys) {
+          const hit = entries.get(key);
+          if (hit) found.set(key, hit.verdict);
+        }
+        return found;
+      },
+      async set(fresh) {
+        sets.push(...fresh);
+        for (const e of fresh) entries.set(e.key, { title: e.title, verdict: e.verdict });
+      },
+    };
+    return { cache, entries, gets, sets };
+  }
+
+  it("normalizes titles into stable cache keys", () => {
+    expect(screenCacheKey("The Poetic Edda")).toBe("the poetic edda");
+    expect(screenCacheKey("  THE POETIC EDDA!! ")).toBe("the poetic edda");
+    expect(screenCacheKey("Enuma Elish: The Seven Tablets")).toBe(
+      screenCacheKey("enuma elish — the seven tablets"),
+    );
+  });
+
+  it("reuses cached verdicts and only sends never-seen titles to the model", async () => {
+    const cachedVerdict: AiScreenVerdict = {
+      classification: "secondary",
+      justification: "Cached: modern survey.",
+    };
+    const { cache, sets } = memoryCache({
+      [screenCacheKey("Babylonian Religion and Its Legacy")]: cachedVerdict,
+    });
+    const seen: string[] = [];
+    const { blockers, report } = collectBlockers();
+    const verdicts = await screenLeads(
+      [lead("Babylonian Religion and Its Legacy"), lead("The Poetic Edda")],
+      scope,
+      async (chunk) => {
+        seen.push(...chunk.map((l) => l.title));
+        return chunk.map(() => ({ classification: "primary" as const, justification: "fresh" }));
+      },
+      report,
+      cache,
+    );
+    // Cache hit never reaches the model; miss does.
+    expect(seen).toEqual(["The Poetic Edda"]);
+    expect(verdicts[0]).toEqual(cachedVerdict);
+    expect(verdicts[1]?.justification).toBe("fresh");
+    // Only the fresh verdict is written back.
+    expect(sets).toEqual([
+      {
+        key: screenCacheKey("The Poetic Edda"),
+        title: "The Poetic Edda",
+        verdict: { classification: "primary", justification: "fresh" },
+      },
+    ]);
+    expect(blockers).toHaveLength(0);
+  });
+
+  it("skips the model entirely when every title is cached", async () => {
+    const verdict: AiScreenVerdict = { classification: "primary", justification: "cached" };
+    const { cache } = memoryCache({
+      [screenCacheKey("The Poetic Edda")]: verdict,
+      [screenCacheKey("Popol Vuh")]: verdict,
+    });
+    let calls = 0;
+    const { report } = collectBlockers();
+    const verdicts = await screenLeads(
+      [lead("The Poetic Edda"), lead("Popol Vuh")],
+      scope,
+      async (chunk) => {
+        calls += 1;
+        return chunk.map(() => null);
+      },
+      report,
+      cache,
+    );
+    expect(calls).toBe(0);
+    expect(verdicts.every((v) => v?.justification === "cached")).toBe(true);
+  });
+
+  it("matches recurring titles despite capitalization/punctuation differences", async () => {
+    const { cache } = memoryCache({
+      [screenCacheKey("The Poetic Edda")]: { classification: "primary", justification: "cached" },
+    });
+    const seen: string[] = [];
+    const { report } = collectBlockers();
+    const verdicts = await screenLeads(
+      [lead("THE POETIC EDDA!")],
+      scope,
+      async (chunk) => {
+        seen.push(...chunk.map((l) => l.title));
+        return chunk.map(() => null);
+      },
+      report,
+      cache,
+    );
+    expect(seen).toEqual([]);
+    expect(verdicts[0]?.justification).toBe("cached");
+  });
+
+  it("does not consult the cache for confidently-secondary titles", async () => {
+    const { cache, gets } = memoryCache();
+    const { report } = collectBlockers();
+    await screenLeads(
+      [lead("Encyclopedia of Ancient Deities"), lead("Popol Vuh")],
+      scope,
+      async (chunk) => chunk.map(() => null),
+      report,
+      cache,
+    );
+    expect(gets).toEqual([[screenCacheKey("Popol Vuh")]]);
+  });
+
+  it("falls back to full screening when the cache lookup fails, with a blocker", async () => {
+    const seen: string[] = [];
+    const { blockers, report } = collectBlockers();
+    const cache: ScreenVerdictCache = {
+      async get() {
+        throw new Error("db down");
+      },
+      async set() {
+        throw new Error("db down");
+      },
+    };
+    const verdicts = await screenLeads(
+      [lead("The Poetic Edda")],
+      scope,
+      async (chunk) => {
+        seen.push(...chunk.map((l) => l.title));
+        return chunk.map(() => ({ classification: "primary" as const, justification: "fresh" }));
+      },
+      report,
+      cache,
+    );
+    // Model still screens everything; both cache failures are reported.
+    expect(seen).toEqual(["The Poetic Edda"]);
+    expect(verdicts[0]?.classification).toBe("primary");
+    expect(blockers.filter((b) => /verdict cache/.test(String(b.detail)))).toHaveLength(2);
+  });
+
+  it("does not cache leads the model failed to classify", async () => {
+    const { cache, sets } = memoryCache();
+    const { report } = collectBlockers();
+    await screenLeads(
+      [lead("A"), lead("B")],
+      scope,
+      async () => [{ classification: "primary", justification: "only one" }] as (AiScreenVerdict | null)[],
+      report,
+      cache,
+    );
+    expect(sets.map((s) => s.key)).toEqual([screenCacheKey("A")]);
+  });
+
+  it("runHuntingCycle uses the store's verdict cache across cycles", async () => {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "hunter-verdict-cache-"));
+    const policy = await loadDefaultPolicy();
+    const { cache } = memoryCache();
+    const screenedPerCycle: string[][] = [];
+    async function cycle(id: string) {
+      const { store, blockers } = makeStore();
+      const cachingStore: CycleStore = {
+        ...store,
+        getScreenVerdicts: (keys) => cache.get(keys),
+        saveScreenVerdicts: (entries) => cache.set(entries),
+      };
+      const file = path.join(tmp, `${id}.txt`);
+      await fs.writeFile(file, "text\n");
+      const screened: string[] = [];
+      screenedPerCycle.push(screened);
+      const summary = await runHuntingCycle({
+        scope: { query: "babylon", useAi: true },
+        policy,
+        registry: REGISTRY,
+        corpusRoot: path.join(tmp, `corpus-${id}`),
+        store: cachingStore,
+        registryDiscover: async () => [
+          {
+            candidate: {
+              ...localCandidate(id, file, "unknown"),
+              title: "Babylonian Religion and Its Legacy",
+            },
+            origin: "registry_crawl" as const,
+            originDetail: "fixture",
+          },
+        ],
+        aiDiscover: async () => [],
+        aiScreen: async (leads) => {
+          screened.push(...leads.map((l) => l.title));
+          return leads.map(() => ({
+            classification: "secondary" as const,
+            justification: "A modern survey, not a primary text.",
+          }));
+        },
+      });
+      return { summary, blockers };
+    }
+    const first = await cycle("c1");
+    const second = await cycle("c2");
+    // First cycle pays for screening; second reuses the persisted verdict.
+    expect(screenedPerCycle[0]).toEqual(["Babylonian Religion and Its Legacy"]);
+    expect(screenedPerCycle[1]).toEqual([]);
+    expect(first.summary.secondary).toBe(1);
+    expect(second.summary.secondary).toBe(1);
+    expect(second.blockers.some((b) => b.reason === "secondary_source")).toBe(true);
   });
 });
 

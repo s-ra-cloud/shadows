@@ -170,6 +170,18 @@ export const hunterBlockers = pgTable("hunter_blockers", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// AI primary/secondary screening verdicts persisted across hunting cycles,
+// keyed by normalized title. Recurring leads reuse the cached verdict instead
+// of paying for another model request.
+export const hunterScreenVerdicts = pgTable("hunter_screen_verdicts", {
+  id: serial("id").primaryKey(),
+  titleKey: text("title_key").notNull().unique(), // normalized title (screenCacheKey)
+  title: text("title").notNull(), // original title, for editor auditing
+  classification: text("classification").notNull(), // primary | secondary
+  justification: text("justification").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Auditable manual rights determinations recorded by editors reviewing
 // locked corpus files. Approving a review moves the file to the public
 // partition; the review row is the permanent audit record.

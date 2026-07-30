@@ -43,6 +43,15 @@ export interface CycleStore {
   updateProgress(progress: Record<string, unknown>): Promise<void>;
   /** Mirror downloaded corpus records into the corpus table. */
   mirrorCorpusRecords(records: Record<string, unknown>[]): Promise<void>;
+  /**
+   * Optional persistent cache of AI screening verdicts, keyed by
+   * screenCacheKey(title). Stores that implement both methods make screening
+   * verdicts survive across cycles so recurring leads cost nothing.
+   */
+  getScreenVerdicts?(keys: string[]): Promise<Map<string, AiScreenVerdict>>;
+  saveScreenVerdicts?(
+    entries: { key: string; title: string; verdict: AiScreenVerdict }[],
+  ): Promise<void>;
 }
 
 export interface CycleScope {
@@ -436,6 +445,21 @@ const defaultAiScreen: AiScreen = async (leads, scope) => {
 export const SCREEN_CHUNK_SIZE = 30;
 
 /**
+ * Normalized cache key for a screening verdict: the same title in different
+ * capitalization/punctuation (a very common recurrence across catalogs) maps
+ * to one cached verdict.
+ */
+export function screenCacheKey(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+/** Persistent verdict cache used by screenLeads (backed by the CycleStore). */
+export interface ScreenVerdictCache {
+  get(keys: string[]): Promise<Map<string, AiScreenVerdict>>;
+  set(entries: { key: string; title: string; verdict: AiScreenVerdict }[]): Promise<void>;
+}
+
+/**
  * Markers that flag a title as secondary literature so unambiguously that AI
  * screening is skipped for it (the heuristic verdict stands). Weaker markers
  * (e.g. "history of") still go to the model, which may overrule them.
@@ -455,6 +479,10 @@ export function confidentlySecondary(title: string): string | null {
  * Run AI primary/secondary screening in chunks of SCREEN_CHUNK_SIZE.
  * - Leads the heuristic confidently flags as secondary are never sent to the
  *   model (their verdict stays null, so the heuristic blocks them downstream).
+ * - When a verdict cache is provided, titles classified in past cycles reuse
+ *   the cached verdict — only never-seen titles are sent to the model — and
+ *   fresh verdicts are persisted back to the cache. Cache failures are
+ *   reported as blockers but never fail screening (the model still runs).
  * - Each chunk fails independently: a failed request reports one blocker and
  *   leaves null verdicts (heuristic fallback) for just that chunk's leads.
  */
@@ -463,20 +491,63 @@ export async function screenLeads(
   scope: CycleScope,
   aiScreen: AiScreen,
   report: (blocker: BlockerInput) => Promise<void>,
+  cache?: ScreenVerdictCache,
 ): Promise<(AiScreenVerdict | null)[]> {
   const verdicts: (AiScreenVerdict | null)[] = leads.map(() => null);
-  const pendingIndexes: number[] = [];
+  let pendingIndexes: number[] = [];
   for (let i = 0; i < leads.length; i += 1) {
     if (!confidentlySecondary(leads[i].title)) pendingIndexes.push(i);
   }
+
+  // Reuse verdicts persisted by earlier cycles; only misses go to the model.
+  if (cache && pendingIndexes.length > 0) {
+    try {
+      const cached = await cache.get(pendingIndexes.map((i) => screenCacheKey(leads[i].title)));
+      pendingIndexes = pendingIndexes.filter((i) => {
+        const hit = cached.get(screenCacheKey(leads[i].title));
+        if (!hit) return true;
+        verdicts[i] = hit;
+        return false;
+      });
+    } catch (e) {
+      await report({
+        reason: "fetch_failed",
+        detail: `Screening verdict cache lookup failed: ${
+          e instanceof Error ? e.message : String(e)
+        }. All ${pendingIndexes.length} lead(s) will be screened by the model.`,
+      });
+    }
+  }
+
   for (let start = 0; start < pendingIndexes.length; start += SCREEN_CHUNK_SIZE) {
     const chunkIndexes = pendingIndexes.slice(start, start + SCREEN_CHUNK_SIZE);
     const chunkLeads = chunkIndexes.map((i) => leads[i]);
     try {
       const chunkVerdicts = await aiScreen(chunkLeads, scope);
       if (Array.isArray(chunkVerdicts)) {
+        const fresh: { key: string; title: string; verdict: AiScreenVerdict }[] = [];
         for (let j = 0; j < chunkIndexes.length; j += 1) {
-          verdicts[chunkIndexes[j]] = chunkVerdicts[j] ?? null;
+          const verdict = chunkVerdicts[j] ?? null;
+          verdicts[chunkIndexes[j]] = verdict;
+          if (verdict) {
+            fresh.push({
+              key: screenCacheKey(chunkLeads[j].title),
+              title: chunkLeads[j].title,
+              verdict,
+            });
+          }
+        }
+        if (cache && fresh.length > 0) {
+          try {
+            await cache.set(fresh);
+          } catch (e) {
+            await report({
+              reason: "fetch_failed",
+              detail: `Screening verdict cache write failed: ${
+                e instanceof Error ? e.message : String(e)
+              }. Verdicts were still applied to this cycle.`,
+            });
+          }
         }
       }
     } catch (e) {
@@ -695,6 +766,12 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
       scope,
       options.aiScreen ?? defaultAiScreen,
       report,
+      store.getScreenVerdicts && store.saveScreenVerdicts
+        ? {
+            get: (keys) => store.getScreenVerdicts!(keys),
+            set: (entries) => store.saveScreenVerdicts!(entries),
+          }
+        : undefined,
     );
   }
 
