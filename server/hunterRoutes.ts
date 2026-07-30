@@ -50,6 +50,7 @@ import {
   startExtraction,
   getExtractionJob,
   cancelExtraction,
+  recoverInterruptedJobs,
   listRecipes,
   suggestRecipeForFile,
   hasReadable,
@@ -294,6 +295,9 @@ export function registerHunterRoutes(
   app: Express,
   requireEditor: (req: Request, res: Response, next: NextFunction) => void,
 ) {
+  // Surface extraction jobs stranded by a previous process as "interrupted"
+  // so the status endpoint reports something honest instead of a 404.
+  recoverInterruptedJobs();
   // Best-effort schema upgrade so pre-provenance databases don't 500.
   ensureHunterProvenanceSchema().catch((e) =>
     console.error("hunter provenance schema upgrade failed:", errMessage(e)),

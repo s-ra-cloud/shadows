@@ -6,7 +6,7 @@ import {
 } from "../extraction/htmlToMarkdown";
 import { cleanupTranscription, looksLikeOcrTranscription } from "../extraction/textCleanup";
 import { RECIPES, getRecipe, suggestRecipe, looksLikeIndexPage, isInterstitialPage, ExtractionCancelledError } from "../extraction/recipes";
-import { startExtraction, getExtractionJob, cancelExtraction } from "../extraction/run";
+import { startExtraction, getExtractionJob, cancelExtraction, recoverInterruptedJobs } from "../extraction/run";
 import { promises as fs } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -402,6 +402,51 @@ describe("extraction cancellation", () => {
     // Cancelling a non-running job is rejected loudly.
     expect(() => cancelExtraction(999901)).toThrow(/not running/);
     await fs.rm(tmp, { recursive: true, force: true });
+  });
+
+  it("recovers jobs stranded by a restart as 'interrupted' and lets a fresh run start", async () => {
+    const ledger = path.resolve(process.cwd(), "data", "extraction-running-jobs.json");
+    const original = await fs.readFile(ledger, "utf-8").catch(() => null);
+    try {
+      // Simulate a previous process that died mid-run: its job is in the
+      // durable ledger but not in this process's memory.
+      await fs.mkdir(path.dirname(ledger), { recursive: true });
+      await fs.writeFile(
+        ledger,
+        JSON.stringify([
+          { corpusFileId: 999777, recipeId: "html-index-crawl", startedAt: "2026-07-30T00:00:00.000Z" },
+        ]),
+      );
+      recoverInterruptedJobs();
+      const job = getExtractionJob(999777);
+      expect(job?.status).toBe("interrupted");
+      expect(job?.error).toMatch(/restart/i);
+      // The ledger is drained so the next boot doesn't re-report it.
+      expect(JSON.parse(await fs.readFile(ledger, "utf-8"))).toEqual([]);
+      // Interrupted jobs cannot be "cancelled" (nothing is running)...
+      expect(() => cancelExtraction(999777)).toThrow(/not running/);
+      // ...but a fresh extraction can start for the same file.
+      const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "extract-restart-"));
+      const rawPath = path.join(tmp, "plain.txt");
+      await fs.writeFile(rawPath, Array.from({ length: 40 }, (_, i) => `Verse ${i + 1}. In the beginning were the words of the restart test, and the words were plentiful.`).join("\n\n"));
+      const fresh = await startExtraction({
+        corpusFileId: 999777,
+        rawAbsolutePath: rawPath,
+        recipeId: null,
+        contentType: "text/plain",
+        sourceUrl: null,
+        title: "Restart test",
+        locked: false,
+      });
+      // A tiny plain-text extraction can finish almost instantly.
+      expect(["running", "done"]).toContain(fresh.status);
+      await new Promise((r) => setTimeout(r, 300));
+      expect(getExtractionJob(999777)?.status).toBe("done");
+      await fs.rm(tmp, { recursive: true, force: true });
+    } finally {
+      if (original === null) await fs.rm(ledger, { force: true });
+      else await fs.writeFile(ledger, original);
+    }
   });
 });
 

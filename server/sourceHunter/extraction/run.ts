@@ -57,7 +57,7 @@ export function hasReadable(rawAbsolutePath: string): boolean {
 export interface ExtractionJob {
   corpusFileId: number;
   recipeId: string;
-  status: "running" | "done" | "error" | "cancelled";
+  status: "running" | "done" | "error" | "cancelled" | "interrupted";
   startedAt: string;
   progress: ExtractionProgress | null;
   error: string | null;
@@ -68,6 +68,13 @@ const jobs = new Map<number, ExtractionJob>();
 /** Abort controllers for running jobs, keyed like `jobs`. */
 const controllers = new Map<number, AbortController>();
 
+/**
+ * Durable ledger of in-flight extractions. Jobs run in-process, so a server
+ * restart would otherwise lose them silently and leave clients polling a 404
+ * forever. We record each running job here (and remove it when it settles);
+ * on the next boot, leftover entries become honest "interrupted" jobs.
+ */
+const RUNNING_JOBS_FILE = path.resolve(process.cwd(), "data", "extraction-running-jobs.json");
 export function getExtractionJob(corpusFileId: number): ExtractionJob | null {
   return jobs.get(corpusFileId) ?? null;
 }
@@ -141,6 +148,7 @@ export async function startExtraction(input: StartExtractionInput): Promise<Extr
     provenance: null,
   };
   jobs.set(input.corpusFileId, job);
+  persistRunningJob(job);
   const controller = new AbortController();
   controllers.set(input.corpusFileId, controller);
 
@@ -192,6 +200,7 @@ export async function startExtraction(input: StartExtractionInput): Promise<Extr
       job.error = e instanceof Error ? e.message : String(e);
     } finally {
       controllers.delete(input.corpusFileId);
+      clearPersistedRunningJob(input.corpusFileId);
     }
   })();
 
@@ -217,5 +226,64 @@ export async function suggestRecipeForFile(
     return suggestRecipe({ path: rawAbsolutePath, contentType, payload })?.id ?? null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Convert jobs stranded by a previous process (still in the durable ledger
+ * but not in this process's memory) into "interrupted" jobs, so the status
+ * endpoint reports something honest instead of a 404. Runs once at startup.
+ */
+export function recoverInterruptedJobs(): void {
+  const stranded = readPersistedRunning();
+  if (stranded.length === 0) return;
+  for (const entry of stranded) {
+    if (jobs.has(entry.corpusFileId)) continue;
+    jobs.set(entry.corpusFileId, {
+      corpusFileId: entry.corpusFileId,
+      recipeId: entry.recipeId,
+      status: "interrupted",
+      startedAt: entry.startedAt,
+      progress: null,
+      error: "The server restarted while this extraction was running. Start it again.",
+      provenance: null,
+    });
+  }
+  writePersistedRunning([]);
+}
+
+interface PersistedRunningJob {
+  corpusFileId: number;
+  recipeId: string;
+  startedAt: string;
+}
+
+function readPersistedRunning(): PersistedRunningJob[] {
+  try {
+    const parsed = JSON.parse(fsSync.readFileSync(RUNNING_JOBS_FILE, "utf-8"));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function clearPersistedRunningJob(corpusFileId: number): void {
+  const entries = readPersistedRunning();
+  const rest = entries.filter((e) => e.corpusFileId !== corpusFileId);
+  if (rest.length !== entries.length) writePersistedRunning(rest);
+}
+
+function persistRunningJob(job: ExtractionJob): void {
+  const rest = readPersistedRunning().filter((e) => e.corpusFileId !== job.corpusFileId);
+  rest.push({ corpusFileId: job.corpusFileId, recipeId: job.recipeId, startedAt: job.startedAt });
+  writePersistedRunning(rest);
+}
+
+function writePersistedRunning(entries: PersistedRunningJob[]): void {
+  try {
+    fsSync.mkdirSync(path.dirname(RUNNING_JOBS_FILE), { recursive: true });
+    fsSync.writeFileSync(RUNNING_JOBS_FILE, JSON.stringify(entries, null, 2), "utf-8");
+  } catch {
+    // Persistence is best-effort; a failed write must not break the extraction.
   }
 }

@@ -1597,24 +1597,47 @@ function ExtractReadableModal({ file, onClose }: { file: any; onClose: () => voi
     enabled: isPdfRecipe,
   });
 
-  const { data: job } = useQuery<any>({
-    queryKey: [`/api/hunter/corpus/${file.id}/extract/status`],
-    enabled: running,
+  // Timestamp of the last "start extraction" success; only status errors that
+  // arrive *after* this moment are treated as a lost job. This keeps the
+  // harmless 404 from the initial fetch (no job started yet) from poisoning a
+  // freshly started run.
+  const [startedAtMs, setStartedAtMs] = useState<number | null>(null);
+
+  const statusQueryKey = [`/api/hunter/corpus/${file.id}/extract/status`];
+  const { data: job, error: jobError, errorUpdatedAt } = useQuery<any>({
+    queryKey: statusQueryKey,
+    // Always fetch once so an "interrupted" job (server restarted mid-run)
+    // is surfaced when the dialog opens; poll only while a run is active.
+    // A 404 just means no extraction has been started for this file.
     refetchInterval: running ? 1500 : false,
     retry: false,
   });
 
   useEffect(() => {
-    if (!job || !running) return;
+    if (!running) return;
+    // The status endpoint lost track of the job (e.g. the server restarted
+    // mid-run) — stop polling and tell the editor instead of spinning forever.
+    // Errors from before this run started (the harmless "no job yet" 404) are
+    // ignored; only a failure observed after the run began is fatal.
+    if (jobError && startedAtMs !== null && errorUpdatedAt > startedAtMs) {
+      setRunning(false);
+      toast({
+        title: "Extraction status lost",
+        description: "The server may have restarted while it was running. You can start it again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!job) return;
     if (job.status === "done") {
       setRunning(false);
       toast({ title: "Extraction complete", description: "A readable version is now available." });
       queryClient.invalidateQueries({ queryKey: ["/api/hunter/corpus"] });
       queryClient.invalidateQueries({ queryKey: ["/api/hunter/library"] });
-    } else if (job.status === "error" || job.status === "cancelled") {
+    } else if (job.status === "error" || job.status === "cancelled" || job.status === "interrupted") {
       setRunning(false);
     }
-  }, [job, running, toast]);
+  }, [job, jobError, errorUpdatedAt, startedAtMs, running, toast]);
 
   const startMutation = useMutation({
     mutationFn: async () =>
@@ -1622,7 +1645,13 @@ function ExtractReadableModal({ file, onClose }: { file: any; onClose: () => voi
         ...(recipeId ? { recipe_id: recipeId } : {}),
         ...(isPdfRecipe && ocrLanguage ? { ocr_language: ocrLanguage } : {}),
       }),
-    onSuccess: () => setRunning(true),
+    onSuccess: () => {
+      // Drop any stale status (e.g. the initial 404 or an old interrupted
+      // job) so polling starts from a clean slate for the new run.
+      queryClient.removeQueries({ queryKey: statusQueryKey });
+      setStartedAtMs(Date.now());
+      setRunning(true);
+    },
     onError: (e: Error) =>
       toast({ title: "Could not start extraction", description: e.message, variant: "destructive" }),
   });
@@ -1710,6 +1739,13 @@ function ExtractReadableModal({ file, onClose }: { file: any; onClose: () => voi
           {job?.status === "cancelled" && !running && (
             <div className="text-yellow-400/80 text-sm" data-testid="text-extract-cancelled">
               Extraction cancelled. No readable version was written; you can run it again anytime.
+            </div>
+          )}
+          {job?.status === "interrupted" && !running && (
+            <div className="text-yellow-400/80 text-sm flex items-start gap-2" data-testid="text-extract-interrupted">
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+              The server restarted while this extraction was running, so it did not finish. Run it again to
+              extract the readable version.
             </div>
           )}
           {job?.status === "error" && !running && (
