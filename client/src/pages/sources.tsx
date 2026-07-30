@@ -11,6 +11,7 @@ import {
   Download, Upload, Play, RefreshCw, FileText, ShieldCheck, ShieldAlert,
   Clock, Database, Code
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 type Tab = "library" | "hunter";
 type HunterTab = "map" | "cycles" | "candidates" | "plan" | "corpus" | "verify" | "catalog" | "runs" | "policy" | "registry";
@@ -206,6 +207,7 @@ function LibraryReader({ entryId, onClose }: { entryId: number; onClose: () => v
     translator: string | null;
     language: string | null;
     text: string;
+    markdown: string | null;
   }>({
     queryKey: [`/api/hunter/library/${entryId}/text`],
   });
@@ -241,14 +243,21 @@ function LibraryReader({ entryId, onClose }: { entryId: number; onClose: () => v
               <AlertCircle size={16} /> Could not load this text.
             </div>
           )}
-          {data && (
+          {data && data.markdown ? (
+            <div
+              className="reader-markdown text-[#E0DCE6]/90 text-[15px] leading-relaxed font-serif [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-3 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-5 [&_h2]:mb-2 [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_p]:my-3 [&_hr]:my-6 [&_hr]:border-[#350A8C]/40 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-[#8F00FF]/50 [&_blockquote]:pl-4 [&_a]:text-[#8F00FF]"
+              data-testid="text-reader-body"
+            >
+              <ReactMarkdown>{data.markdown}</ReactMarkdown>
+            </div>
+          ) : data ? (
             <pre
               className="whitespace-pre-wrap text-[#E0DCE6]/90 text-[15px] leading-relaxed font-serif"
               data-testid="text-reader-body"
             >
               {data.text}
             </pre>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
@@ -1302,6 +1311,7 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
   const { data: corpus, isLoading } = useQuery({ queryKey: ["/api/hunter/corpus"] });
   const { toast } = useToast();
   const [reviewingId, setReviewingId] = useState<number | null>(null);
+  const [extractingFile, setExtractingFile] = useState<any | null>(null);
   
   const [isPolling, setIsPolling] = useState(false);
   const { data: runs } = useQuery({
@@ -1390,15 +1400,33 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
                   </td>
                   {isEditor && (
                     <td className="px-4 py-3 text-right">
-                      {file.partition === "locked" && (
+                      <div className="flex items-center justify-end gap-2">
+                        {file.readable ? (
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#03FF9B]/10 text-[#03FF9B] text-[11px] font-medium"
+                            title={`Extracted with ${file.readable.recipe_id} on ${new Date(file.readable.extracted_at).toLocaleString()}`}
+                            data-testid={`badge-readable-${file.id}`}
+                          >
+                            <FileText size={11} /> Readable
+                          </span>
+                        ) : null}
                         <button
-                          onClick={() => setReviewingId(file.id)}
+                          onClick={() => setExtractingFile(file)}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#350A8C]/40 text-[#E0DCE6]/80 border border-[#350A8C]/50 hover:border-[#8F00FF]/60 hover:text-[#E0DCE6] transition-colors"
-                          data-testid={`button-review-rights-${file.id}`}
+                          data-testid={`button-extract-${file.id}`}
                         >
-                          <ShieldCheck size={13} /> Review rights
+                          <FileText size={13} /> {file.readable ? "Re-extract" : "Extract readable text"}
                         </button>
-                      )}
+                        {file.partition === "locked" && (
+                          <button
+                            onClick={() => setReviewingId(file.id)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#350A8C]/40 text-[#E0DCE6]/80 border border-[#350A8C]/50 hover:border-[#8F00FF]/60 hover:text-[#E0DCE6] transition-colors"
+                            data-testid={`button-review-rights-${file.id}`}
+                          >
+                            <ShieldCheck size={13} /> Review rights
+                          </button>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>
@@ -1415,6 +1443,140 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
       {reviewingId !== null && (
         <RightsReviewModal fileId={reviewingId} onClose={() => setReviewingId(null)} />
       )}
+      {extractingFile !== null && (
+        <ExtractReadableModal file={extractingFile} onClose={() => setExtractingFile(null)} />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Editor dialog to run an extraction recipe on a corpus file: pick (or accept
+ * the suggested) recipe, run it, and watch progress while linked pages are
+ * crawled. The raw file is never modified; the result is a readable Markdown
+ * sibling that the Library reader prefers automatically.
+ */
+function ExtractReadableModal({ file, onClose }: { file: any; onClose: () => void }) {
+  const { toast } = useToast();
+  const { data: recipes } = useQuery<{ id: string; label: string; description: string }[]>({
+    queryKey: ["/api/hunter/extraction/recipes"],
+  });
+  const [recipeId, setRecipeId] = useState<string>(file.suggested_recipe ?? file.readable?.recipe_id ?? "");
+  const [running, setRunning] = useState(false);
+
+  const { data: job } = useQuery<any>({
+    queryKey: [`/api/hunter/corpus/${file.id}/extract/status`],
+    enabled: running,
+    refetchInterval: running ? 1500 : false,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!job || !running) return;
+    if (job.status === "done") {
+      setRunning(false);
+      toast({ title: "Extraction complete", description: "A readable version is now available." });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/corpus"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/library"] });
+    } else if (job.status === "error") {
+      setRunning(false);
+    }
+  }, [job, running, toast]);
+
+  const startMutation = useMutation({
+    mutationFn: async () =>
+      apiRequest("POST", `/api/hunter/corpus/${file.id}/extract`, recipeId ? { recipe_id: recipeId } : {}),
+    onSuccess: () => setRunning(true),
+    onError: (e: Error) =>
+      toast({ title: "Could not start extraction", description: e.message, variant: "destructive" }),
+  });
+
+  const recipeList = Array.isArray(recipes) ? recipes : [];
+  const selected = recipeList.find((r) => r.id === recipeId);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-[#130D30] border border-[#350A8C]/40 rounded-xl w-full max-w-lg flex flex-col">
+        <div className="flex items-start justify-between p-6 pb-4 border-b border-[#350A8C]/30">
+          <div className="min-w-0">
+            <h3 className="text-lg font-semibold text-[#E0DCE6]" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
+              Extract Readable Text
+            </h3>
+            <p className="text-sm text-[#E0DCE6]/60 mt-1 truncate">{file.record?.title ?? file.editionId}</p>
+          </div>
+          <button onClick={onClose} className="shrink-0 ml-4" data-testid="button-close-extract">
+            <X size={20} className="text-[#E0DCE6]/50 hover:text-[#E0DCE6]" />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-[#E0DCE6]/60 mb-1.5">Recipe</label>
+            <select
+              value={recipeId}
+              onChange={(e) => setRecipeId(e.target.value)}
+              disabled={running}
+              className="w-full bg-[#0B0626] border border-[#350A8C]/50 rounded-lg px-3 py-2 text-sm text-[#E0DCE6] focus:border-[#8F00FF] outline-none"
+              data-testid="select-extract-recipe"
+            >
+              <option value="">Auto-detect</option>
+              {recipeList.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.label}
+                  {r.id === file.suggested_recipe ? " (suggested)" : ""}
+                </option>
+              ))}
+            </select>
+            {selected && <p className="text-xs text-[#E0DCE6]/50 mt-1.5">{selected.description}</p>}
+          </div>
+          <p className="text-xs text-[#E0DCE6]/50">
+            The original download is kept untouched as rights evidence; the readable Markdown version is stored
+            alongside it and shown in the Library.
+          </p>
+          {running && (
+            <div className="flex items-center gap-2 text-sm text-[#E0DCE6]/70" data-testid="text-extract-progress">
+              <RefreshCw size={14} className="animate-spin text-[#8F00FF]" />
+              {job?.progress?.pagesFetched
+                ? `Fetching pages... ${job.progress.pagesFetched}${job.progress.totalPages ? ` / ~${job.progress.totalPages}` : ""} (${job.progress.note})`
+                : "Extracting..."}
+            </div>
+          )}
+          {job?.status === "error" && !running && (
+            <div className="text-red-400 text-sm flex items-start gap-2" data-testid="text-extract-error">
+              <AlertCircle size={16} className="shrink-0 mt-0.5" /> {job.error}
+            </div>
+          )}
+          {job?.status === "done" && (
+            <div className="text-[#03FF9B] text-sm space-y-1" data-testid="text-extract-done">
+              <div>
+                Done — {(job.provenance?.markdown_bytes / 1024).toFixed(1)} KB of readable text
+                {job.provenance?.pages_fetched ? ` compiled from ${job.provenance.pages_fetched} pages` : ""}.
+              </div>
+              {job.provenance?.warnings?.length > 0 && (
+                <div className="text-yellow-400/80 text-xs">
+                  {job.provenance.warnings.length} page(s) had problems — check the ledger below the text if
+                  something looks missing.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="flex justify-end gap-3 p-6 pt-0">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-sm text-[#E0DCE6]/70 hover:text-[#E0DCE6] transition-colors"
+          >
+            Close
+          </button>
+          <button
+            onClick={() => startMutation.mutate()}
+            disabled={running || startMutation.isPending}
+            className="px-4 py-2 rounded-lg text-sm bg-[#8F00FF] text-white hover:bg-[#7B00E0] disabled:opacity-50 transition-colors"
+            data-testid="button-run-extraction"
+          >
+            {running ? "Running..." : "Run extraction"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

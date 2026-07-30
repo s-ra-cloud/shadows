@@ -1,3 +1,4 @@
 - [iframe auth (cookies fail)](iframe-session-cookies.md) — editor/admin login 401s inside canvas iframe; cookies blocked, use x-editor-token header token (HMAC of SESSION_SECRET).
 - [Hunting-cycle safety](hunting-cycle-safety.md) — AI-claimed rights stay out of rights-evidence fields; every discovery fetch re-validates host+robots per redirect hop.
+- [Extraction crawl lessons](extraction-crawls.md) — measure index-page prose from HTML minus anchors; one turndown link rule; treat interstitials as failures; restart workflow before re-running jobs.
 - [Source registry & robots](source-registry-robots.md) — robots.txt, not the allow-list, is the practical download gate; Wikimedia blocks Special:Export, Perseus raw GitHub works.

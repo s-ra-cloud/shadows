@@ -46,6 +46,15 @@ import {
   type SourceAdapter,
 } from "./sourceHunter/index";
 import { FullTextValidationError } from "./sourceHunter/fulltextValidation";
+import {
+  startExtraction,
+  getExtractionJob,
+  listRecipes,
+  suggestRecipeForFile,
+  hasReadable,
+  loadProvenance,
+  readablePaths,
+} from "./sourceHunter/extraction/run";
 
 const CORPUS_ROOT = path.resolve(process.cwd(), "data", "hunter-corpus");
 
@@ -743,7 +752,94 @@ export function registerHunterRoutes(
 
   // ---- Corpus -----------------------------------------------------------
   app.get("/api/hunter/corpus", async (_req, res) => {
-    res.json(await db.select().from(hunterCorpusFiles).orderBy(hunterCorpusFiles.id));
+    const rows = await db.select().from(hunterCorpusFiles).orderBy(hunterCorpusFiles.id);
+    res.json(
+      await Promise.all(
+        rows.map(async (row) => {
+          const record = (row.record ?? {}) as Record<string, unknown>;
+          const file = (record.file ?? {}) as Record<string, unknown>;
+          const rawPath = path.resolve(CORPUS_ROOT, row.path);
+          const readable = hasReadable(rawPath) ? await loadProvenance(rawPath) : null;
+          return {
+            ...row,
+            readable,
+            suggested_recipe: readable
+              ? null
+              : await suggestRecipeForFile(rawPath, (file.content_type as string | undefined) ?? null),
+          };
+        }),
+      ),
+    );
+  });
+
+  // ---- Extraction (raw download → readable Markdown) ---------------------
+  // Recipes turn a raw corpus file into a clean Markdown sibling. The raw
+  // file is rights evidence and is never modified.
+  app.get("/api/hunter/extraction/recipes", (_req, res) => {
+    res.json(listRecipes());
+  });
+
+  app.post("/api/hunter/corpus/:id/extract", requireEditor, async (req, res) => {
+    try {
+      const id = parseInt(String(req.params.id));
+      if (!Number.isInteger(id)) return res.status(400).json({ message: "Invalid id" });
+      const [row] = await db
+        .select()
+        .from(hunterCorpusFiles)
+        .where(eq(hunterCorpusFiles.id, id))
+        .limit(1);
+      if (!row) return res.status(404).json({ message: "Corpus file not found" });
+      const record = (row.record ?? {}) as Record<string, unknown>;
+      const file = (record.file ?? {}) as Record<string, unknown>;
+      const rawPath = path.resolve(CORPUS_ROOT, row.path);
+      const rel = path.relative(CORPUS_ROOT, rawPath);
+      if (rel.startsWith("..") || path.isAbsolute(rel)) {
+        return res.status(400).json({ message: "Invalid corpus path" });
+      }
+      const sourceReference = (record.source_reference as string | undefined) ?? null;
+      const job = await startExtraction({
+        corpusFileId: id,
+        rawAbsolutePath: rawPath,
+        recipeId: req.body?.recipe_id ? String(req.body.recipe_id) : null,
+        contentType: (file.content_type as string | undefined) ?? null,
+        sourceUrl: sourceReference && /^https:\/\//.test(sourceReference) ? sourceReference : null,
+        title: (record.title as string | undefined) ?? null,
+        locked: row.partition === "locked",
+      });
+      res.json(job);
+    } catch (e) {
+      res.status(422).json({ message: errMessage(e) });
+    }
+  });
+
+  app.get("/api/hunter/corpus/:id/extract/status", requireEditor, (req, res) => {
+    const id = parseInt(String(req.params.id));
+    if (!Number.isInteger(id)) return res.status(400).json({ message: "Invalid id" });
+    const job = getExtractionJob(id);
+    if (!job) return res.status(404).json({ message: "No extraction has been started for this file" });
+    res.json(job);
+  });
+
+  // Readable Markdown for any corpus file (editors only — covers locked too).
+  app.get("/api/hunter/corpus/:id/readable", requireEditor, async (req, res) => {
+    try {
+      const id = parseInt(String(req.params.id));
+      if (!Number.isInteger(id)) return res.status(400).json({ message: "Invalid id" });
+      const [row] = await db
+        .select()
+        .from(hunterCorpusFiles)
+        .where(eq(hunterCorpusFiles.id, id))
+        .limit(1);
+      if (!row) return res.status(404).json({ message: "Corpus file not found" });
+      const rawPath = path.resolve(CORPUS_ROOT, row.path);
+      if (!hasReadable(rawPath)) {
+        return res.status(404).json({ message: "No readable version has been extracted yet" });
+      }
+      const markdown = await fs.readFile(readablePaths(rawPath).markdown, "utf-8");
+      res.json({ id: row.id, markdown, provenance: await loadProvenance(rawPath) });
+    } catch (e) {
+      res.status(500).json({ message: errMessage(e) });
+    }
   });
 
   // ---- Rights review (locked → public) -----------------------------------
@@ -935,6 +1031,11 @@ export function registerHunterRoutes(
       }
       const text = await fs.readFile(resolved, "utf-8").catch(() => null);
       if (text === null) return res.status(404).json({ message: "Text not found" });
+      // Prefer the extracted readable Markdown when one exists; the raw
+      // download stays available as a fallback.
+      const markdown = hasReadable(resolved)
+        ? await fs.readFile(readablePaths(resolved).markdown, "utf-8").catch(() => null)
+        : null;
       res.json({
         id: row.id,
         title: (record.title as string | undefined) ?? row.editionId,
@@ -942,6 +1043,7 @@ export function registerHunterRoutes(
         translator: (record.translator as string | undefined) ?? null,
         language: row.language,
         text,
+        markdown,
       });
     } catch (e) {
       res.status(500).json({ message: errMessage(e) });
