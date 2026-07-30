@@ -49,6 +49,7 @@ import { FullTextValidationError } from "./sourceHunter/fulltextValidation";
 import {
   startExtraction,
   getExtractionJob,
+  listExtractionJobs,
   cancelExtraction,
   recoverInterruptedJobs,
   listRecipes,
@@ -906,6 +907,12 @@ export function registerHunterRoutes(
   // file is rights evidence and is never modified.
   app.get("/api/hunter/extraction/recipes", (_req, res) => {
     res.json(listRecipes());
+  });
+
+  // Bulk status for all extraction jobs (auto-started ones included) so the
+  // corpus list can show running extractions without opening the modal.
+  app.get("/api/hunter/extraction/jobs", requireEditor, (_req, res) => {
+    res.json(listExtractionJobs());
   });
 
   // Tesseract language packs installed on this machine, for the OCR picker.

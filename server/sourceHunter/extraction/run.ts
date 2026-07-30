@@ -79,6 +79,10 @@ export function getExtractionJob(corpusFileId: number): ExtractionJob | null {
   return jobs.get(corpusFileId) ?? null;
 }
 
+/** All known extraction jobs (running and finished) for bulk status polling. */
+export function listExtractionJobs(): ExtractionJob[] {
+  return Array.from(jobs.values());
+}
 /**
  * Cancel a running extraction job. Marks the job "cancelled" immediately and
  * aborts the underlying work (OCR child processes, crawl loop). Returns the

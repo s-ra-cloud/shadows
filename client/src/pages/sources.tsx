@@ -1390,6 +1390,35 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
     onError: (e: Error) => toast({ title: "Failed to start", description: e.message, variant: "destructive" })
   });
 
+  // Extraction jobs (including ones auto-started after a download) so rows can
+  // show a running extraction and let the editor stop it without the modal.
+  const { data: extractionJobs } = useQuery<any[]>({
+    queryKey: ["/api/hunter/extraction/jobs"],
+    enabled: isEditor,
+    refetchInterval: (q) =>
+      Array.isArray(q.state.data) && q.state.data.some((j: any) => j.status === "running")
+        ? 2000
+        : 10000,
+  });
+  const jobsByFileId = useMemo(() => {
+    const map = new Map<number, any>();
+    for (const job of Array.isArray(extractionJobs) ? extractionJobs : []) {
+      map.set(job.corpusFileId, job);
+    }
+    return map;
+  }, [extractionJobs]);
+
+  const cancelExtractionMutation = useMutation({
+    mutationFn: (fileId: number) =>
+      apiRequest("POST", `/api/hunter/corpus/${fileId}/extract/cancel`, {}),
+    onSuccess: () => {
+      toast({ title: "Extraction cancelled" });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/extraction/jobs"] });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Could not cancel extraction", description: e.message, variant: "destructive" }),
+  });
+
   if (isLoading) return <div className="text-[#E0DCE6]/50 text-sm">Loading corpus...</div>;
 
   const items = Array.isArray(corpus) ? corpus : [];
@@ -1469,6 +1498,33 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
                   {isEditor && (
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {jobsByFileId.get(file.id)?.status === "running" && (
+                          <>
+                            <span
+                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#8F00FF]/10 text-[#8F00FF] text-[11px] font-medium"
+                              title={`Extraction running (recipe: ${jobsByFileId.get(file.id)?.recipeId})`}
+                              data-testid={`badge-extracting-${file.id}`}
+                            >
+                              <RefreshCw size={11} className="animate-spin" /> Extracting…
+                            </span>
+                            <button
+                              onClick={() => cancelExtractionMutation.mutate(file.id)}
+                              disabled={cancelExtractionMutation.isPending}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 disabled:opacity-50 transition-colors"
+                              data-testid={`button-stop-extraction-${file.id}`}
+                            >
+                              <X size={13} /> Stop
+                            </button>
+                          </>
+                        )}
+                        {jobsByFileId.get(file.id)?.status === "cancelled" && (
+                          <span
+                            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-orange-500/10 text-orange-400 text-[11px] font-medium"
+                            data-testid={`badge-extraction-cancelled-${file.id}`}
+                          >
+                            <X size={11} /> Extraction cancelled
+                          </span>
+                        )}
                         {file.readable ? (
                           <button
                             onClick={() => setViewingReadable({ id: file.id, title: file.title ?? file.editionId ?? "Text" })}
