@@ -267,17 +267,71 @@ function LibraryReader({ entryId, onClose }: { entryId: number; onClose: () => v
 function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
   const [activeHunterTab, setActiveHunterTab] = useState<HunterTab>("candidates");
 
-  const tabs: { key: HunterTab; label: string }[] = [
-    { key: "map", label: "World Map" },
-    { key: "cycles", label: "Hunting Cycles" },
-    { key: "candidates", label: "Candidates" },
-    { key: "plan", label: "Download Plan" },
-    { key: "corpus", label: "Corpus" },
-    { key: "verify", label: "Verification" },
-    ...(isEditor ? [{ key: "catalog" as HunterTab, label: "Catalog Builder" }] : []),
-    { key: "runs", label: "Runs History" },
-    { key: "policy", label: "Policy" },
-    { key: "registry", label: "Source Registry" },
+  const tabs: { key: HunterTab; label: string; description: string }[] = [
+    {
+      key: "map",
+      label: "World Map",
+      description:
+        "A world map of mythological regions sized by hunting activity. Click any region to see its download history and, as an editor, launch a targeted search for texts from that area.",
+    },
+    {
+      key: "cycles",
+      label: "Hunting Cycles",
+      description:
+        "Run automated searches that find and download eligible texts from registered sources. Past cycles expand to show what was found, what was blocked, and any issues that need resolving before a retry.",
+    },
+    {
+      key: "candidates",
+      label: "Candidates",
+      description:
+        "The shortlist of editions being tracked for potential download — title, format, author, language, and rights claim. Editors can add new candidates, edit existing ones, or remove entries that are no longer relevant.",
+    },
+    {
+      key: "plan",
+      label: "Download Plan",
+      description:
+        "An automated rights-and-suitability assessment of every candidate: which will be downloaded, which are skipped, and the reasons why. Editors can re-run the assessment after updating candidates or policy.",
+    },
+    {
+      key: "corpus",
+      label: "Corpus",
+      description:
+        "All downloaded raw files — public (rights-cleared) or locked (under review) — with provenance, size, and extraction status. Editors can trigger downloads, extract a clean readable version, stop a running extraction, and review rights for locked files.",
+    },
+    {
+      key: "verify",
+      label: "Verification",
+      description:
+        "Checks that every corpus file is exactly as it was downloaded, with no accidental modifications. Shows the last verification timestamp and flags any anomalies. Editors can run a fresh check at any time.",
+    },
+    ...(isEditor
+      ? [
+          {
+            key: "catalog" as HunterTab,
+            label: "Catalog Builder",
+            description:
+              "Import candidate metadata in bulk from an external catalog feed (XML or JSON). Paste or point to a feed URL and the builder parses it into candidate records ready to review and add.",
+          },
+        ]
+      : []),
+    {
+      key: "runs",
+      label: "Runs History",
+      description:
+        "A timestamped log of every background operation — hunting cycles, downloads, extraction jobs — with status and duration. Click any run for a full breakdown of files produced and blockers raised.",
+    },
+    {
+      key: "policy",
+      label: "Policy",
+      description:
+        "The JSON ruleset that governs what the hunter considers eligible to assess and download: rights requirements, format preferences, and exclusion rules. Editors can update the policy and save it.",
+    },
+    {
+      key: "registry",
+      label: "Source Registry",
+      description:
+        "The list of trusted websites the hunter is allowed to download from, with per-site rate limits, allowed URL path prefixes, and rights notes. Editors can add or edit entries as raw JSON.",
+    },
   ];
 
   useEffect(() => {
@@ -304,6 +358,14 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
           </button>
         ))}
       </div>
+      {(() => {
+        const active = tabs.find((t) => t.key === activeHunterTab);
+        return active ? (
+          <p className="px-6 py-2.5 text-xs text-[#E0DCE6]/45 border-b border-[#350A8C]/20 bg-[#0B0626]/20 leading-relaxed">
+            {active.description}
+          </p>
+        ) : null;
+      })()}
       <div className="p-6">
         {activeHunterTab === "map" && <HunterWorldMap isEditor={isEditor} />}
         {activeHunterTab === "cycles" && <HunterCycles isEditor={isEditor} />}
