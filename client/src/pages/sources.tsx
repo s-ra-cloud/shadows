@@ -692,6 +692,49 @@ function HunterWorldMap({ isEditor }: { isEditor: boolean }) {
   );
 }
 
+const CORPUS_ITEM_STATUS: Record<string, { label: string; className: string }> = {
+  fetched: { label: "Fetched", className: "bg-[#03FF9B]/15 text-[#03FF9B]" },
+  fetched_locked: { label: "Fetched (locked)", className: "bg-orange-400/15 text-orange-400" },
+  metadata_only: { label: "No download allowed", className: "bg-yellow-400/15 text-yellow-400" },
+  failed: { label: "Failed", className: "bg-red-400/15 text-red-400" },
+  not_found: { label: "Not found", className: "bg-[#E0DCE6]/10 text-[#E0DCE6]/60" },
+};
+
+/** End-of-cycle report for corpus-list cycles: which sources were fetched. */
+function CorpusListReport({ corpusList }: { corpusList: any }) {
+  if (!corpusList || !Array.isArray(corpusList.items) || corpusList.items.length === 0) return null;
+  const fetchedCount = (corpusList.fetched ?? 0) + (corpusList.fetched_locked ?? 0);
+  return (
+    <div data-testid="corpus-list-report">
+      <div className="text-xs text-[#E0DCE6]/50 mb-2">
+        Corpus list report — {fetchedCount}/{corpusList.total ?? corpusList.items.length} sources fetched
+      </div>
+      <div className="border border-[#350A8C]/20 rounded-lg overflow-hidden divide-y divide-[#350A8C]/15">
+        {corpusList.items.map((item: any, i: number) => {
+          const status = CORPUS_ITEM_STATUS[item.status] ?? CORPUS_ITEM_STATUS.not_found;
+          return (
+            <div key={i} className="flex items-start gap-3 p-2.5 text-xs bg-[#130D30]/50" data-testid={`corpus-list-item-${i}`}>
+              <span className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-bold shrink-0 ${status.className}`}>
+                {status.label}
+              </span>
+              <div className="min-w-0 flex-1">
+                <span className="text-[#E0DCE6]">{item.title}</span>
+                {item.author && <span className="text-[#E0DCE6]/50"> — {item.author}</span>}
+                {item.languages?.length > 0 && (
+                  <span className={`ml-2 ${item.english ? "text-[#03FF9B]" : "text-yellow-400"}`}>
+                    [{item.languages.join(", ")}]
+                  </span>
+                )}
+                {item.detail && <div className="text-[#E0DCE6]/45 mt-0.5">{item.detail}</div>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function HunterCycles({ isEditor }: { isEditor: boolean }) {
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(10);
@@ -733,6 +776,38 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
     onError: (e: Error) =>
       toast({ title: "Could not launch cycle", description: e.message, variant: "destructive" }),
   });
+
+  const corpusListMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const content = await file.text();
+      const res = await apiRequest("POST", "/api/hunter/cycles/corpus", {
+        filename: file.name,
+        content,
+        use_ai: useAi,
+      });
+      return res.json();
+    },
+    onSuccess: (d: any) => {
+      toast({
+        title: `Corpus cycle "${d.corpus_list?.name ?? ""}" launched`,
+        description: `${d.corpus_list?.items ?? 0} sources to hunt.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/cycles"] });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Could not launch corpus cycle", description: e.message, variant: "destructive" }),
+  });
+
+  const pickCorpusList = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".csv,.json,.txt";
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (file) corpusListMutation.mutate(file);
+    };
+    input.click();
+  };
 
   const blockerMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) =>
@@ -877,6 +952,29 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
               {running ? <RefreshCw size={16} className="animate-spin" /> : <Play size={16} />}
               {running ? "Cycle running..." : "Launch Cycle"}
             </button>
+            <div className="w-full border-t border-[#350A8C]/20 pt-3 mt-1 flex flex-wrap items-center gap-3">
+              <div className="flex-1 min-w-[260px]">
+                <div className="text-xs text-[#E0DCE6]/70 font-medium">Or hunt from a corpus list</div>
+                <p className="text-xs text-[#E0DCE6]/45 mt-0.5">
+                  Upload a .csv, .json or .txt list of sources — the file's name becomes the cycle's
+                  name. The hunter fetches each one complete and in English when possible, falling
+                  back to AI-translatable languages, and reports what it could and couldn't fetch.
+                </p>
+              </div>
+              <button
+                onClick={pickCorpusList}
+                disabled={corpusListMutation.isPending || running}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-[#350A8C]/40 border border-[#8F00FF]/40 text-[#E0DCE6] hover:bg-[#350A8C]/60 disabled:opacity-50 transition-colors"
+                data-testid="button-upload-corpus-list"
+              >
+                {corpusListMutation.isPending ? (
+                  <RefreshCw size={16} className="animate-spin" />
+                ) : (
+                  <Upload size={16} />
+                )}
+                Upload corpus list
+              </button>
+            </div>
           </div>
         ) : (
           <div className="p-4 rounded-lg border border-[#350A8C]/20 bg-[#0B0626]/40 text-sm text-[#E0DCE6]/50">
@@ -912,11 +1010,21 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm text-[#E0DCE6] truncate">
-                        {(summary?.scope?.query ?? progress?.query) ? `“${summary?.scope?.query ?? progress?.query}”` : `Cycle #${run.id}`}
+                        {result.corpus_list?.name || progress?.corpus_list
+                          ? `Corpus list: ${result.corpus_list?.name ?? (typeof progress?.corpus_list === "string" ? progress.corpus_list : progress?.corpus_list?.name)}`
+                          : (summary?.scope?.query ?? progress?.query)
+                            ? `“${summary?.scope?.query ?? progress?.query}”`
+                            : `Cycle #${run.id}`}
                       </div>
                       <div className="text-xs text-[#E0DCE6]/50 mt-0.5">
                         {new Date(run.startedAt).toLocaleString()}
-                        {run.status === "running" && progress?.phase && (
+                        {run.status === "running" && progress?.phase === "corpus_item" && (
+                          <span className="text-[#03FF9B] ml-2">
+                            hunting {progress.item_index}/{progress.item_total}: “{progress.current_title}”
+                            {progress.item_phase ? ` — ${String(progress.item_phase).replace(/_/g, " ")}` : ""}...
+                          </span>
+                        )}
+                        {run.status === "running" && progress?.phase && progress.phase !== "corpus_item" && (
                           <span className="text-[#03FF9B] ml-2">{String(progress.phase).replace(/_/g, " ")}...</span>
                         )}
                       </div>
@@ -968,6 +1076,7 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
                           ))}
                         </div>
                       )}
+                      <CorpusListReport corpusList={result.corpus_list ?? progress?.corpus_list} />
                       <AutoExtractionFailures failures={summary?.auto_extraction?.failed} />
                       {(summary?.auto_extraction?.queued ?? 0) > 0 && (
                         <p className="text-xs text-[#E0DCE6]/50" data-testid={`text-auto-extract-note-${run.id}`}>

@@ -60,6 +60,14 @@ export interface CycleScope {
   useAi?: boolean;
   /** Optional world region the editor scoped this cycle to (map launches). */
   region?: { id: string; label: string };
+  /**
+   * Set when the cycle hunts ONE specific work from an uploaded corpus list.
+   * Discovery is told to find editions of exactly this work: complete and in
+   * English when possible, otherwise in one of `preferredLanguages`.
+   */
+  targetWork?: { title: string; author?: string | null; language?: string | null };
+  /** Fallback languages (ISO 639), most reliably AI-translatable first. */
+  preferredLanguages?: string[];
 }
 
 export interface DiscoveredLead {
@@ -103,6 +111,14 @@ export interface CycleOptions {
     registrySources: Record<string, unknown>[],
     report: (blocker: BlockerInput) => Promise<void>,
   ) => Promise<DiscoveredLead[]>;
+  /**
+   * Download selection: "all" (default — every authorized new candidate) or
+   * "preferred" (planCandidates picks English first, then AI-translatable
+   * fallbacks — used by corpus-list cycles).
+   */
+  selectionMode?: "preferred" | "all";
+  /** Extra leads injected ahead of discovery (e.g. a URL given in a corpus list). */
+  extraLeads?: DiscoveredLead[];
 }
 
 export interface AiLead {
@@ -365,9 +381,17 @@ async function defaultAiDiscover(
       },
       {
         role: "user",
-        content: `Find up to ${limit} complete-text editions relevant to: ${scope.query}${
-          scope.region ? ` (mythological region: ${scope.region.label})` : ""
-        }`,
+        content: scope.targetWork
+          ? `Find up to ${limit} complete-text editions of EXACTLY THIS WORK: "${scope.targetWork.title}"${
+              scope.targetWork.author ? ` by ${scope.targetWork.author}` : ""
+            }${scope.targetWork.language ? ` (original language hint: ${scope.targetWork.language})` : ""}. ` +
+            `Strongly prefer a COMPLETE edition in ENGLISH. If no complete English edition is available, ` +
+            `return complete editions in these languages instead (most reliably machine-translatable first): ${
+              (scope.preferredLanguages ?? []).join(", ") || "any"
+            }. Do not return other works, excerpts or partial texts when a complete edition exists.`
+          : `Find up to ${limit} complete-text editions relevant to: ${scope.query}${
+              scope.region ? ` (mythological region: ${scope.region.label})` : ""
+            }`,
       },
     ],
   });
@@ -562,7 +586,7 @@ export async function screenLeads(
   return verdicts;
 }
 
-function matchRegistrySource(
+export function matchRegistrySource(
   url: string,
   registrySources: Record<string, unknown>[],
 ): Record<string, unknown> | null {
@@ -604,7 +628,7 @@ function guessFormat(url: string): string {
   return "html";
 }
 
-function aiLeadToLead(
+export function aiLeadToLead(
   lead: AiLead,
   source: Record<string, unknown>,
 ): DiscoveredLead {
@@ -697,7 +721,7 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
   const registryDiscover = options.registryDiscover
     ? options.registryDiscover(scope, registrySources, report)
     : defaultRegistryDiscover(scope, registrySources, report, fetchImpl);
-  const leads: DiscoveredLead[] = await registryDiscover;
+  const leads: DiscoveredLead[] = [...(options.extraLeads ?? []), ...(await registryDiscover)];
 
   // Phase 2: AI lead discovery.
   if (scope.useAi !== false) {
@@ -847,7 +871,12 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
       policy,
       registry,
       corpusRoot,
-      { selectionMode: "all", userAgent: CYCLE_USER_AGENT, robotsCheck, fetchImpl },
+      {
+        selectionMode: options.selectionMode ?? "all",
+        userAgent: CYCLE_USER_AGENT,
+        robotsCheck,
+        fetchImpl,
+      },
     );
     await store.mirrorCorpusRecords(records);
   }

@@ -18,6 +18,11 @@ import {
   type CycleStore,
   type CycleScope,
 } from "./hunterCycle";
+import { runCorpusListCycle } from "./hunterCorpusCycle";
+
+/** Upload cap for corpus LISTS (indexes of titles/URLs, never full texts). */
+const MAX_CORPUS_LIST_BYTES = 512 * 1024;
+import { parseCorpusList, CorpusListParseError } from "./hunterCorpusList";
 import { robotsAllowsUrl } from "./sourceHunter/robots";
 import { getHunterRegion } from "@shared/hunterRegions";
 import {
@@ -236,6 +241,99 @@ async function loadEntitiesFromDatabase(): Promise<Entity[]> {
     }
   }
   return entities;
+}
+
+/**
+ * The DB-backed CycleStore shared by standard and corpus-list cycles.
+ * `mirroredRecords` accumulates every corpus record mirrored during the run
+ * (used afterwards for auto-extraction).
+ */
+function makeCycleStore(runId: number, mirroredRecords: Record<string, unknown>[]): CycleStore {
+  return {
+    async existingEditionIds() {
+      const rows = await db
+        .select({ editionId: hunterCandidates.editionId })
+        .from(hunterCandidates);
+      return new Set(rows.map((r) => r.editionId));
+    },
+    async insertCandidate(candidate) {
+      await db
+        .insert(hunterCandidates)
+        .values({
+          workId: String(candidate.work_id),
+          editionId: String(candidate.edition_id),
+          data: candidate,
+        })
+        .onConflictDoNothing();
+    },
+    async addBlocker(b) {
+      await db.insert(hunterBlockers).values({
+        runId,
+        sourceId: b.sourceId ?? null,
+        url: b.url ?? null,
+        reason: b.reason,
+        detail: b.detail ?? null,
+        workId: b.workId ?? null,
+        editionId: b.editionId ?? null,
+      });
+    },
+    async updateProgress(progress) {
+      await db
+        .update(hunterRuns)
+        .set({ result: { progress } })
+        .where(eq(hunterRuns.id, runId));
+    },
+    async getScreenVerdicts(keys) {
+      const verdicts = new Map();
+      if (keys.length === 0) return verdicts;
+      const rows = await db
+        .select()
+        .from(hunterScreenVerdicts)
+        .where(inArray(hunterScreenVerdicts.titleKey, keys));
+      for (const row of rows) {
+        if (row.classification !== "primary" && row.classification !== "secondary") continue;
+        verdicts.set(row.titleKey, {
+          classification: row.classification,
+          justification: `${row.justification} (cached from a previous cycle)`,
+        });
+      }
+      return verdicts;
+    },
+    async saveScreenVerdicts(entries) {
+      for (const entry of entries) {
+        await db
+          .insert(hunterScreenVerdicts)
+          .values({
+            titleKey: entry.key,
+            title: entry.title,
+            classification: entry.verdict.classification,
+            justification: entry.verdict.justification,
+          })
+          .onConflictDoNothing();
+      }
+    },
+    async mirrorCorpusRecords(records) {
+      mirroredRecords.push(...records);
+      for (const record of records) {
+        const file = record.file as Record<string, unknown> | undefined;
+        if (!file || !file.relative_path) continue;
+        await db
+          .insert(hunterCorpusFiles)
+          .values({
+            workId: String(record.work_id ?? ""),
+            editionId: String(record.edition_id ?? ""),
+            language: (record.language as string | undefined) ?? null,
+            partition: file.locked ? "locked" : "public",
+            path: String(file.relative_path),
+            byteCount: Number(file.bytes ?? 0),
+            sha256: (file.sha256 as string | undefined) ?? null,
+            record,
+            runId,
+          })
+          .onConflictDoNothing();
+      }
+    },
+  };
 }
 
 async function createRun(kind: string): Promise<number> {
@@ -591,91 +689,7 @@ export function registerHunterRoutes(
       validatePolicy(policy);
       const registry = await loadActiveRegistry();
       const mirroredRecords: Record<string, unknown>[] = [];
-      const store: CycleStore = {
-        async existingEditionIds() {
-          const rows = await db
-            .select({ editionId: hunterCandidates.editionId })
-            .from(hunterCandidates);
-          return new Set(rows.map((r) => r.editionId));
-        },
-        async insertCandidate(candidate) {
-          await db
-            .insert(hunterCandidates)
-            .values({
-              workId: String(candidate.work_id),
-              editionId: String(candidate.edition_id),
-              data: candidate,
-            })
-            .onConflictDoNothing();
-        },
-        async addBlocker(b) {
-          await db.insert(hunterBlockers).values({
-            runId,
-            sourceId: b.sourceId ?? null,
-            url: b.url ?? null,
-            reason: b.reason,
-            detail: b.detail ?? null,
-            workId: b.workId ?? null,
-            editionId: b.editionId ?? null,
-          });
-        },
-        async updateProgress(progress) {
-          await db
-            .update(hunterRuns)
-            .set({ result: { progress } })
-            .where(eq(hunterRuns.id, runId));
-        },
-        async getScreenVerdicts(keys) {
-          const verdicts = new Map();
-          if (keys.length === 0) return verdicts;
-          const rows = await db
-            .select()
-            .from(hunterScreenVerdicts)
-            .where(inArray(hunterScreenVerdicts.titleKey, keys));
-          for (const row of rows) {
-            if (row.classification !== "primary" && row.classification !== "secondary") continue;
-            verdicts.set(row.titleKey, {
-              classification: row.classification,
-              justification: `${row.justification} (cached from a previous cycle)`,
-            });
-          }
-          return verdicts;
-        },
-        async saveScreenVerdicts(entries) {
-          for (const entry of entries) {
-            await db
-              .insert(hunterScreenVerdicts)
-              .values({
-                titleKey: entry.key,
-                title: entry.title,
-                classification: entry.verdict.classification,
-                justification: entry.verdict.justification,
-              })
-              .onConflictDoNothing();
-          }
-        },
-        async mirrorCorpusRecords(records) {
-          mirroredRecords.push(...records);
-          for (const record of records) {
-            const file = record.file as Record<string, unknown> | undefined;
-            if (!file || !file.relative_path) continue;
-            await db
-              .insert(hunterCorpusFiles)
-              .values({
-                workId: String(record.work_id ?? ""),
-                editionId: String(record.edition_id ?? ""),
-                language: (record.language as string | undefined) ?? null,
-                partition: file.locked ? "locked" : "public",
-                path: String(file.relative_path),
-                byteCount: Number(file.bytes ?? 0),
-                sha256: (file.sha256 as string | undefined) ?? null,
-                record,
-                runId,
-              })
-              .onConflictDoNothing();
-          }
-        },
-      };
+      const store = makeCycleStore(runId, mirroredRecords);
       const summary = await runHuntingCycle({
         scope,
         policy,
@@ -685,6 +699,70 @@ export function registerHunterRoutes(
       });
       const autoExtraction = await autoExtractDownloaded(mirroredRecords);
       await finishRun(runId, true, { ...summary, auto_extraction: autoExtraction });
+    } catch (e) {
+      await finishRun(runId, false, null, errMessage(e));
+    }
+  });
+
+  /**
+   * Corpus-list hunting cycle: the editor uploads a list of sources
+   * (.csv/.json/.txt). The file name becomes the cycle name; the hunter tries
+   * to fetch every listed source — complete and in English when possible,
+   * otherwise in an AI-translatable language — and the run's result carries a
+   * per-item fetched/not-fetched report.
+   * Body: { filename: string, content: string, use_ai?: boolean }
+   */
+  app.post("/api/hunter/cycles/corpus", requireEditor, async (req, res) => {
+    const filename = String(req.body?.filename ?? "").trim();
+    const content = typeof req.body?.content === "string" ? req.body.content : "";
+    if (!filename) return res.status(400).json({ message: "Provide the uploaded file's name" });
+    if (!content.trim()) return res.status(400).json({ message: "The file is empty" });
+    // A corpus LIST is a small index of titles/URLs, never the texts
+    // themselves — cap it well below the global JSON body limit so a huge
+    // upload can't tie up the parser.
+    if (Buffer.byteLength(content, "utf8") > MAX_CORPUS_LIST_BYTES) {
+      return res.status(413).json({
+        message: `Corpus lists are capped at ${Math.floor(MAX_CORPUS_LIST_BYTES / 1024)} KB — this file looks like it contains full texts, not a list of sources.`,
+      });
+    }
+    let list;
+    try {
+      list = parseCorpusList(filename, content);
+    } catch (e) {
+      if (e instanceof CorpusListParseError) {
+        return res.status(400).json({ message: e.message });
+      }
+      throw e;
+    }
+    const runId = await createRun("cycle");
+    // Long operation: respond immediately; the UI polls the run until done.
+    res.json({
+      run: { id: runId, status: "running" },
+      corpus_list: { name: list.name, items: list.items.length },
+    });
+    try {
+      const policy = await loadActivePolicy();
+      validatePolicy(policy);
+      const registry = await loadActiveRegistry();
+      const mirroredRecords: Record<string, unknown>[] = [];
+      const store = makeCycleStore(runId, mirroredRecords);
+      const result = await runCorpusListCycle({
+        list,
+        policy,
+        registry,
+        corpusRoot: CORPUS_ROOT,
+        store,
+        useAi: req.body?.use_ai !== false,
+      });
+      const autoExtraction = await autoExtractDownloaded(mirroredRecords);
+      await finishRun(runId, true, {
+        // `scope` keeps the completed-run shape compatible with the standard
+        // cycle contract the UI reads (result.scope drives the summary cards).
+        scope: { query: `Corpus list: ${list.name}`, corpusList: list.name },
+        corpus_list: result.corpus_list,
+        ...result.summary,
+        auto_extraction: autoExtraction,
+      });
     } catch (e) {
       await finishRun(runId, false, null, errMessage(e));
     }
