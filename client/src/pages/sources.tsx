@@ -698,6 +698,7 @@ const CORPUS_ITEM_STATUS: Record<string, { label: string; className: string }> =
   metadata_only: { label: "No download allowed", className: "bg-yellow-400/15 text-yellow-400" },
   failed: { label: "Failed", className: "bg-red-400/15 text-red-400" },
   not_found: { label: "Not found", className: "bg-[#E0DCE6]/10 text-[#E0DCE6]/60" },
+  skipped: { label: "Skipped", className: "bg-[#350A8C]/30 text-[#E0DCE6]/50" },
 };
 
 const blockerReasonLabel = (reason: string) =>
@@ -846,6 +847,7 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
 
   useEffect(() => {
     if (!running) {
+      setStoppingId(null);
       queryClient.invalidateQueries({ queryKey: ["/api/hunter/blockers"] });
       queryClient.invalidateQueries({ queryKey: ["/api/hunter/candidates"] });
       queryClient.invalidateQueries({ queryKey: ["/api/hunter/corpus"] });
@@ -862,6 +864,21 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
     },
     onError: (e: Error) =>
       toast({ title: "Could not launch cycle", description: e.message, variant: "destructive" }),
+  });
+
+  const [stoppingId, setStoppingId] = useState<number | null>(null);
+
+  const stopCorpusMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("POST", `/api/hunter/cycles/${id}/stop`);
+      return res.json();
+    },
+    onSuccess: (_d, id) => {
+      setStoppingId(id);
+      toast({ title: "Stop requested", description: "The cycle will finish its current item then stop." });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Could not stop cycle", description: e.message, variant: "destructive" }),
   });
 
   const corpusListMutation = useMutation({
@@ -1116,11 +1133,31 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
                         )}
                       </div>
                     </div>
-                    {run.status === "running" && (
-                      <span className="inline-flex items-center gap-1.5 text-xs text-[#03FF9B]">
-                        <RefreshCw size={12} className="animate-spin" /> Running
-                      </span>
-                    )}
+                    {run.status === "running" && (() => {
+                      const isCorpusCycle = !!(result.corpus_list?.name || progress?.corpus_list);
+                      const isStopping = stoppingId === run.id;
+                      return (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="inline-flex items-center gap-1.5 text-xs text-[#03FF9B]">
+                            <RefreshCw size={12} className="animate-spin" />
+                            {isStopping ? "Stopping…" : "Running"}
+                          </span>
+                          {isEditor && isCorpusCycle && !isStopping && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                stopCorpusMutation.mutate(run.id);
+                              }}
+                              disabled={stopCorpusMutation.isPending}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] bg-red-900/30 border border-red-500/40 text-red-400 hover:bg-red-900/50 transition-colors disabled:opacity-50"
+                              data-testid={`button-stop-corpus-${run.id}`}
+                            >
+                              <X size={11} /> Stop
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                     {run.status === "failed" && (
                       <span className="inline-flex items-center gap-1 text-xs text-red-400">
                         <X size={12} /> Failed

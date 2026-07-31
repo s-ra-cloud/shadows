@@ -31,7 +31,8 @@ export type CorpusItemStatus =
   | "fetched_locked" // downloaded, but only to the locked research partition
   | "metadata_only" // found but the source does not permit automated download
   | "failed" // download attempted and failed
-  | "not_found"; // discovery produced no usable candidate
+  | "not_found" // discovery produced no usable candidate
+  | "skipped"; // cycle was stopped before this item was processed
 
 /** A blocker recorded while hunting one corpus-list item. */
 export interface CorpusItemBlocker {
@@ -68,6 +69,7 @@ export interface CorpusCycleResult {
     metadata_only: number;
     failed: number;
     not_found: number;
+    skipped: number;
     /** Count of blockers per reason across all items (why downloads were blocked). */
     blocked_reasons: Record<string, number>;
     items: CorpusItemOutcome[];
@@ -79,6 +81,7 @@ export interface CorpusCycleResult {
     original_items: CorpusListItem[];
   };
   /** Aggregated standard-cycle counters across all items. */
+
   summary: Omit<CycleSummary, "scope" | "entries" | "discovery"> & {
     entries: Record<string, unknown>[];
     discovery: CycleSummary["discovery"];
@@ -94,6 +97,12 @@ export interface CorpusCycleOptions {
   useAi?: boolean;
   /** Per-item discovery cap (default 5 — the cycle targets one work). */
   limitPerItem?: number;
+  /**
+   * Called before each item. When it returns true the loop exits immediately
+   * and all remaining items are recorded as "skipped". The run still completes
+   * successfully so the partial report is preserved.
+   */
+  shouldStop?: () => boolean;
   /** Test seams forwarded to runHuntingCycle. */
   cycleOverrides?: Partial<
     Pick<CycleOptions, "fetchImpl" | "robotsCheck" | "aiDiscover" | "aiScreen" | "registryDiscover">
@@ -209,9 +218,31 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
   };
   const allEntries: Record<string, unknown>[] = [];
   const allDiscovery: CycleSummary["discovery"] = [];
+  let stopped = false;
 
   for (let index = 0; index < list.items.length; index += 1) {
     const item = list.items[index];
+
+    // Check stop signal before starting this item.
+    if (options.shouldStop?.()) {
+      stopped = true;
+      // Mark this and all remaining items as skipped.
+      for (let rem = index; rem < list.items.length; rem += 1) {
+        const remItem = list.items[rem];
+        outcomes.push({
+          title: remItem.title,
+          author: remItem.author ?? null,
+          status: "skipped",
+          languages: [],
+          english: false,
+          edition_ids: [],
+          detail: "Cycle was stopped by an editor before this item was processed.",
+          blockers: [],
+        });
+      }
+      break;
+    }
+
     await store.updateProgress({
       phase: "corpus_item",
       corpus_list: list.name,
@@ -335,6 +366,7 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
       metadata_only: outcomes.filter((o) => o.status === "metadata_only").length,
       failed: outcomes.filter((o) => o.status === "failed").length,
       not_found: outcomes.filter((o) => o.status === "not_found").length,
+      skipped: outcomes.filter((o) => o.status === "skipped").length,
       blocked_reasons: outcomes
         .flatMap((o) => o.blockers)
         .reduce<Record<string, number>>((acc, b) => {
@@ -347,7 +379,7 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
     summary: { ...totals, entries: allEntries, discovery: allDiscovery },
   };
   await store.updateProgress({
-    phase: "completed",
+    phase: stopped ? "stopped" : "completed",
     corpus_list: { ...result.corpus_list, items: outcomes },
     ...totals,
   });

@@ -68,6 +68,19 @@ import { listOcrLanguages } from "./sourceHunter/extraction/pdfOcr";
 const CORPUS_ROOT = path.resolve(process.cwd(), "data", "hunter-corpus");
 
 /**
+ * Run IDs of corpus-list cycles that are currently executing.
+ * Used by the stop endpoint to reject stop requests aimed at non-corpus runs.
+ */
+const activeCorpusRunIds = new Set<number>();
+
+/**
+ * Run IDs for corpus-list cycles that an editor has requested to stop.
+ * The cycle loop checks this set before each item and exits early when its
+ * run ID is present, recording remaining items as "skipped".
+ */
+const corpusStopRequests = new Set<number>();
+
+/**
  * SSRF guard for ad-hoc catalog fetches: HTTPS only, and the hostname must
  * not resolve to loopback, private, link-local, or cloud-metadata addresses.
  */
@@ -740,6 +753,7 @@ export function registerHunterRoutes(
       run: { id: runId, status: "running" },
       corpus_list: { name: list.name, items: list.items.length },
     });
+    activeCorpusRunIds.add(runId);
     try {
       const policy = await loadActivePolicy();
       validatePolicy(policy);
@@ -753,7 +767,10 @@ export function registerHunterRoutes(
         corpusRoot: CORPUS_ROOT,
         store,
         useAi: req.body?.use_ai !== false,
+        shouldStop: () => corpusStopRequests.has(runId),
       });
+      corpusStopRequests.delete(runId);
+      activeCorpusRunIds.delete(runId);
       const autoExtraction = await autoExtractDownloaded(mirroredRecords);
       await finishRun(runId, true, {
         // `scope` keeps the completed-run shape compatible with the standard
@@ -764,15 +781,49 @@ export function registerHunterRoutes(
         auto_extraction: autoExtraction,
       });
     } catch (e) {
+      corpusStopRequests.delete(runId);
+      activeCorpusRunIds.delete(runId);
       await finishRun(runId, false, null, errMessage(e));
     }
   });
 
   /**
-   * Retry only the items from a completed corpus-list cycle that were not
-   * successfully fetched (status: not_found | failed | metadata_only).
-   * A new run is created named "<original> (retry)" and the result has the
-   * same shape as a regular corpus-list run so the UI renders it identically.
+   * Request a graceful stop for a running corpus-list cycle.
+   * The cycle finishes its current item, marks remaining items as "skipped",
+   * and completes the run normally so the partial report is preserved.
+   *
+   * Only corpus-list cycles support stopping (standard hunts are short-lived
+   * and don't expose shouldStop). Requests targeting any other run type are
+   * rejected with 409 so the UI doesn't give a false confirmation.
+   */
+  app.post("/api/hunter/cycles/:id/stop", requireEditor, async (req, res) => {
+    const id = parseInt(String(req.params.id));
+    if (!Number.isInteger(id)) return res.status(400).json({ message: "Invalid run id" });
+    // Gate on the in-process active-corpus registry first (no DB round-trip
+    // needed for the common case of a live corpus-list cycle).
+    if (!activeCorpusRunIds.has(id)) {
+      // Fall back to the DB to give a more precise error (not found vs wrong type).
+      const [run] = await db
+        .select({ id: hunterRuns.id, status: hunterRuns.status })
+        .from(hunterRuns)
+        .where(eq(hunterRuns.id, id))
+        .limit(1);
+      if (!run) return res.status(404).json({ message: "Run not found" });
+      // Either the run already finished or it is not a corpus-list cycle.
+      if (run.status !== "running") {
+        return res.status(409).json({ message: "Run is not currently running" });
+      }
+      return res.status(409).json({ message: "This run is not a corpus-list cycle and cannot be stopped via this endpoint" });
+    }
+    corpusStopRequests.add(id);
+    res.json({ ok: true, message: "Stop requested; the cycle will finish its current item then stop." });
+  });
+
+  /**
+   * Retry only the missing/failed sources from a completed corpus-list run.
+   * Reads the original run's per-item report, filters for retryable statuses
+   * (not_found, failed, metadata_only), and launches a new corpus-list cycle
+   * containing only those items.
    */
   app.post("/api/hunter/cycles/corpus/:runId/retry", requireEditor, async (req, res) => {
     const runId = Number(req.params.runId);
@@ -837,6 +888,7 @@ export function registerHunterRoutes(
       corpus_list: { name: list.name, items: list.items.length },
     });
 
+    activeCorpusRunIds.add(newRunId);
     try {
       const policy = await loadActivePolicy();
       validatePolicy(policy);
@@ -850,7 +902,10 @@ export function registerHunterRoutes(
         corpusRoot: CORPUS_ROOT,
         store,
         useAi: req.body?.use_ai !== false,
+        shouldStop: () => corpusStopRequests.has(newRunId),
       });
+      corpusStopRequests.delete(newRunId);
+      activeCorpusRunIds.delete(newRunId);
       const autoExtraction = await autoExtractDownloaded(mirroredRecords);
       await finishRun(newRunId, true, {
         scope: { query: `Corpus list: ${list.name}`, corpusList: list.name },
@@ -859,6 +914,8 @@ export function registerHunterRoutes(
         auto_extraction: autoExtraction,
       });
     } catch (e) {
+      corpusStopRequests.delete(newRunId);
+      activeCorpusRunIds.delete(newRunId);
       await finishRun(newRunId, false, null, errMessage(e));
     }
   });
