@@ -8,7 +8,7 @@ import express from "express";
 import type { Express, Request, Response, NextFunction } from "express";
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
-import { eq, desc, inArray, sql } from "drizzle-orm";
+import { and, eq, desc, inArray, sql } from "drizzle-orm";
 import { db, storage } from "./storage";
 import { hunterCandidates, hunterRuns, hunterCorpusFiles, hunterBlockers, hunterRightsReviews, hunterScreenVerdicts } from "@shared/schema";
 import {
@@ -945,6 +945,70 @@ export function registerHunterRoutes(
   // ---- Blocker ledger ----------------------------------------------------
   app.get("/api/hunter/blockers", async (_req, res) => {
     res.json(await db.select().from(hunterBlockers).orderBy(desc(hunterBlockers.id)).limit(500));
+  });
+
+  /**
+   * The "assisted manual fetch" queue: texts the hunter cannot download by
+   * automation at all — the source's robots.txt forbids it, the source is
+   * marked manual-only, or the page requires a login. Excludes anything whose
+   * work already has a file in the corpus (a fallback edition succeeded), and
+   * dedupes by URL keeping the newest blocker.
+   */
+  app.get("/api/hunter/manual-fetch", requireEditor, async (_req, res) => {
+    const MANUAL_ONLY_REASONS = ["robots_disallowed", "download_not_authorized", "requires_auth"];
+    const rows = await db
+      .select()
+      .from(hunterBlockers)
+      .where(and(eq(hunterBlockers.status, "open"), inArray(hunterBlockers.reason, MANUAL_ONLY_REASONS)))
+      .orderBy(desc(hunterBlockers.id))
+      .limit(500);
+
+    // Two set-based lookups (no per-row queries): which of these works were
+    // already fetched via another edition, and candidate metadata by edition.
+    const workIds = Array.from(new Set(rows.map((b) => b.workId).filter((w): w is string => !!w)));
+    const fetchedWorkIds = new Set(
+      workIds.length === 0
+        ? []
+        : (
+            await db
+              .selectDistinct({ workId: hunterCorpusFiles.workId })
+              .from(hunterCorpusFiles)
+              .where(inArray(hunterCorpusFiles.workId, workIds))
+          ).map((r) => r.workId),
+    );
+    const editionIds = Array.from(
+      new Set(rows.map((b) => b.editionId).filter((e): e is string => !!e)),
+    );
+    const candidatesByEdition = new Map(
+      editionIds.length === 0
+        ? []
+        : (
+            await db
+              .select()
+              .from(hunterCandidates)
+              .where(inArray(hunterCandidates.editionId, editionIds))
+          ).map((row) => [row.editionId, candidateFromRow(row) as Record<string, unknown>] as const),
+    );
+
+    const seenUrls = new Set<string>();
+    const items: Record<string, unknown>[] = [];
+    for (const b of rows) {
+      if (b.workId && fetchedWorkIds.has(b.workId)) continue;
+      // URL-less blockers (source-level notices) recur every run — collapse
+      // them to one row per source+reason+detail.
+      const urlKey = b.url ?? `${b.sourceId ?? ""}|${b.reason}|${b.detail ?? ""}`;
+      if (seenUrls.has(urlKey)) continue;
+      seenUrls.add(urlKey);
+
+      const c = b.editionId ? candidatesByEdition.get(b.editionId) : undefined;
+      items.push({
+        ...b,
+        title: typeof c?.title === "string" ? c.title : null,
+        language: typeof c?.language === "string" ? c.language : null,
+        can_upload: Boolean(b.editionId),
+      });
+    }
+    res.json(items);
   });
 
   app.patch("/api/hunter/blockers/:id", requireEditor, async (req, res) => {

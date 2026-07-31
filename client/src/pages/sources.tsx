@@ -14,7 +14,7 @@ import {
 import ReactMarkdown from "react-markdown";
 
 type Tab = "library" | "hunter";
-type HunterTab = "map" | "cycles" | "candidates" | "plan" | "corpus" | "extractors" | "verify" | "catalog" | "runs" | "policy" | "registry";
+type HunterTab = "map" | "cycles" | "candidates" | "plan" | "corpus" | "extractors" | "verify" | "catalog" | "manual" | "runs" | "policy" | "registry";
 
 export default function SourcesPage() {
   const [activeTab, setActiveTab] = useState<Tab>("library");
@@ -318,6 +318,12 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
             description:
               "Import candidate metadata in bulk from an external catalog feed (XML or JSON). Paste or point to a feed URL and the builder parses it into candidate records ready to review and add.",
           },
+          {
+            key: "manual" as HunterTab,
+            label: "Manual Fetch",
+            description:
+              "Texts the hunter cannot download automatically — the source's robots.txt forbids it, the site is marked manual-only, or a login is required. Open each source page yourself, save the text, and upload it here; every upload still goes through the normal rights review.",
+          },
         ]
       : []),
     {
@@ -341,7 +347,7 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
   ];
 
   useEffect(() => {
-    if (activeHunterTab === "catalog" && !isEditor) {
+    if ((activeHunterTab === "catalog" || activeHunterTab === "manual") && !isEditor) {
       setActiveHunterTab("candidates");
     }
   }, [isEditor, activeHunterTab]);
@@ -381,6 +387,7 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
         {activeHunterTab === "extractors" && <HunterExtractors />}
         {activeHunterTab === "verify" && <HunterVerify isEditor={isEditor} />}
         {activeHunterTab === "catalog" && isEditor && <HunterCatalog />}
+        {activeHunterTab === "manual" && isEditor && <HunterManualFetch />}
         {activeHunterTab === "runs" && <HunterRuns />}
         {activeHunterTab === "policy" && <HunterPolicy isEditor={isEditor} />}
         {activeHunterTab === "registry" && <HunterRegistry isEditor={isEditor} />}
@@ -2592,6 +2599,153 @@ function HunterVerify({ isEditor }: { isEditor: boolean }) {
               </pre>
             </details>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HunterManualFetch() {
+  const { toast } = useToast();
+
+  const { data: items, isLoading } = useQuery<any[]>({
+    queryKey: ["/api/hunter/manual-fetch"],
+  });
+
+  const [uploadingId, setUploadingId] = useState<number | null>(null);
+  const uploadMutation = useMutation({
+    mutationFn: async ({ id, file }: { id: number; file: File }) => {
+      const text = await file.text();
+      const res = await fetch(`/api/hunter/blockers/${id}/upload`, {
+        method: "POST",
+        headers: { ...authHeaders(), "Content-Type": "text/plain" },
+        body: text,
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || `Upload failed (${res.status})`);
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Text uploaded",
+        description:
+          data.partition === "public"
+            ? "Rights cleared — the text is now readable in the Library."
+            : "Rights still unclear — the text was saved to the locked research partition.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/manual-fetch"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/blockers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/corpus"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/library"] });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Upload failed", description: e.message, variant: "destructive" }),
+    onSettled: () => setUploadingId(null),
+  });
+
+  const pickFileFor = (id: number) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".txt,.text,.html,.htm,.xml,.md";
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (file) {
+        setUploadingId(id);
+        uploadMutation.mutate({ id, file });
+      }
+    };
+    input.click();
+  };
+
+  const dismissMutation = useMutation({
+    mutationFn: ({ id }: { id: number }) =>
+      apiRequest("PATCH", `/api/hunter/blockers/${id}`, { status: "dismissed" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/manual-fetch"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/blockers"] });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Update failed", description: e.message, variant: "destructive" }),
+  });
+
+  const list = Array.isArray(items) ? items : [];
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-medium text-[#E0DCE6] mb-1">Assisted manual fetch</h3>
+        <p className="text-sm text-[#E0DCE6]/60">
+          These texts can only be obtained by hand: their source forbids automated downloads
+          (robots.txt, manual-only policy, or a required login) and no alternative edition could be
+          fetched. Open the link in a new tab, save the page or text file, then upload it here — it
+          goes through the same rights review as any automated download.
+        </p>
+      </div>
+
+      {isLoading ? (
+        <div className="text-sm text-[#E0DCE6]/40">Loading…</div>
+      ) : list.length === 0 ? (
+        <div className="p-6 rounded-xl border border-[#350A8C]/30 bg-[#0B0626]/50 text-sm text-[#E0DCE6]/50">
+          Nothing needs a manual fetch right now — every blocked text either has a fetched
+          alternative edition or its blocker was resolved.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {list.map((b: any) => (
+            <div
+              key={b.id}
+              className="p-4 rounded-xl border border-[#350A8C]/30 bg-[#130D30]/50 flex flex-wrap items-start gap-3"
+            >
+              <div className="flex-1 min-w-[240px] space-y-1">
+                <div className="text-sm text-[#E0DCE6] font-medium">
+                  {b.title || b.workId || "Unknown text"}
+                  {b.language && (
+                    <span className="ml-2 text-xs text-[#E0DCE6]/40 uppercase">{b.language}</span>
+                  )}
+                </div>
+                <div className="text-xs text-[#FF4D6D]">
+                  {BLOCKER_REASON_LABELS[b.reason] ?? b.reason}
+                  {b.detail ? <span className="text-[#E0DCE6]/40"> — {b.detail}</span> : null}
+                </div>
+                {b.url && (
+                  <a
+                    href={b.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-[#03FF9B] hover:underline break-all"
+                  >
+                    {b.url}
+                  </a>
+                )}
+                {b.sourceId && (
+                  <div className="text-xs text-[#E0DCE6]/40">Source: {b.sourceId}</div>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {b.can_upload ? (
+                  <button
+                    onClick={() => pickFileFor(b.id)}
+                    disabled={uploadingId === b.id}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#8F00FF]/20 text-[#C77DFF] border border-[#8F00FF]/40 hover:bg-[#8F00FF]/30 disabled:opacity-50"
+                  >
+                    {uploadingId === b.id ? "Uploading…" : "Upload saved text"}
+                  </button>
+                ) : (
+                  <span className="text-xs text-[#E0DCE6]/40">
+                    No candidate attached — add it via Candidates first
+                  </span>
+                )}
+                <button
+                  onClick={() => dismissMutation.mutate({ id: b.id })}
+                  className="px-3 py-1.5 rounded-lg text-xs text-[#E0DCE6]/50 border border-[#350A8C]/30 hover:bg-[#350A8C]/20"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
