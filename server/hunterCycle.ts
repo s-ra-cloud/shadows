@@ -22,6 +22,12 @@ import { validateCandidate, FullTextValidationError } from "./sourceHunter/fullt
 import { robotsAllowsUrl } from "./sourceHunter/robots";
 import type { Candidate, Policy } from "./sourceHunter/rights";
 
+/** Max extra download passes when the preferred edition is blocked. */
+const MAX_FALLBACK_PASSES = 3;
+
+/** download_status values that mean a file was actually fetched. */
+const FETCHED_DOWNLOAD_STATUSES = new Set(["downloaded", "already_present"]);
+
 export const CYCLE_USER_AGENT =
   "ReligiousMythologyResourceHunter/0.2 (hunting cycle; rights-aware research collector)";
 
@@ -685,7 +691,10 @@ export function blockerFromRecord(record: Record<string, unknown>): BlockerInput
     return { ...base, reason, detail: error || "metadata-only: download not permitted" };
   }
   if (status === "failed") {
-    const reason = /maximum_file_bytes|exceeds maximum/i.test(error) ? "too_large" : "fetch_failed";
+    let reason = "fetch_failed";
+    if (/maximum_file_bytes|exceeds maximum/i.test(error)) reason = "too_large";
+    else if (/robots/i.test(error)) reason = "robots_disallowed";
+    else if (/auth/i.test(error)) reason = "requires_auth";
     return { ...base, reason, detail: error || "download failed" };
   }
   if (status === "downloaded" || status === "already_present") {
@@ -878,6 +887,64 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
         fetchImpl,
       },
     );
+
+    // Automatic fallback: in "preferred" mode only the top-ranked edition per
+    // work is attempted. When that download is blocked (robots.txt, manual-
+    // only source, fetch error…) the other discovered editions were never
+    // tried — so re-plan among the untried candidates and attempt the next
+    // best, until something is fetched or the pool is exhausted.
+    if ((options.selectionMode ?? "all") === "preferred") {
+      for (let pass = 1; pass <= MAX_FALLBACK_PASSES; pass += 1) {
+        const fetchedWorks = new Set(
+          records
+            .filter((r) => FETCHED_DOWNLOAD_STATUSES.has(String(r.download_status)) && r.file)
+            .map((r) => String(r.work_id)),
+        );
+        const attemptedEditions = new Set(
+          records
+            .filter((r) => String(r.download_status) !== "not_selected")
+            .map((r) => String(r.edition_id)),
+        );
+        const blockedWorks = new Set(
+          records
+            .filter(
+              (r) =>
+                String(r.download_status) !== "not_selected" &&
+                !fetchedWorks.has(String(r.work_id)),
+            )
+            .map((r) => String(r.work_id)),
+        );
+        const remaining = created
+          .map((lead) => lead.candidate)
+          .filter(
+            (c) =>
+              blockedWorks.has(String(c.work_id)) &&
+              !attemptedEditions.has(String(c.edition_id)),
+          );
+        if (remaining.length === 0) break;
+
+        await store.updateProgress({
+          phase: "downloading_fallback",
+          fallback_pass: pass,
+          remaining_candidates: remaining.length,
+        });
+        const fallbackRecords = await collectFulltexts(remaining, policy, registry, corpusRoot, {
+          selectionMode: "preferred",
+          userAgent: CYCLE_USER_AGENT,
+          robotsCheck,
+          fetchImpl,
+        });
+        // Replace the stale "not_selected" placeholders for editions that
+        // this pass attempted (or re-planned); keep everything else.
+        const fallbackByEdition = new Map(
+          fallbackRecords.map((r) => [String(r.edition_id), r] as const),
+        );
+        records = records
+          .filter((r) => !fallbackByEdition.has(String(r.edition_id)))
+          .concat(fallbackRecords);
+      }
+    }
+
     await store.mirrorCorpusRecords(records);
   }
 

@@ -116,6 +116,7 @@ const REGISTRY = {
       name: "Test Source",
       allowed_hosts: ["example.org"],
       automated_download_allowed: true,
+      robots_mode: "target_origin",
       rate_limit_seconds: 0,
     },
     {
@@ -267,6 +268,55 @@ describe("runCorpusListCycle", () => {
     const final = progress[progress.length - 1] as Record<string, any>;
     expect(final.phase).toBe("completed");
     expect(final.corpus_list.items).toHaveLength(3);
+
+    await fs.rm(corpusRoot, { recursive: true, force: true });
+  });
+
+  it("automatically falls back to the next edition when the preferred one is blocked", async () => {
+    const corpusRoot = await fs.mkdtemp(path.join(os.tmpdir(), "corpus-cycle-fb-"));
+    const { store } = memoryStore();
+
+    // English edition exists but its download is blocked by robots.txt;
+    // the French edition is fetchable. The hunter should try English first,
+    // hit the block, then automatically fetch the French one.
+    const leads: DiscoveredLead[] = [
+      {
+        candidate: makeCandidate("Blocked Epic", "en", "https://example.org/blocked-en.txt"),
+        origin: "registry_crawl",
+        originDetail: "test",
+      },
+      {
+        candidate: makeCandidate("Blocked Epic", "fr", "https://example.org/blocked-fr.txt"),
+        origin: "registry_crawl",
+        originDetail: "test",
+      },
+    ];
+
+    const result = await runCorpusListCycle({
+      list: { name: "fallback-list", items: [{ title: "Blocked Epic" }] },
+      policy: POLICY as never,
+      registry: REGISTRY,
+      corpusRoot,
+      store,
+      useAi: false,
+      cycleOverrides: {
+        fetchImpl: fetchStub({
+          "https://example.org/blocked-fr.txt": "Texte complet en français.",
+        }),
+        robotsCheck: async (url: string) =>
+          url.includes("blocked-en")
+            ? { allowed: false, reason: "robots.txt disallows" }
+            : { allowed: true, reason: "test" },
+        registryDiscover: async () => leads,
+      },
+    });
+
+    const [item] = result.corpus_list.items;
+    expect(item.status).toBe("fetched");
+    expect(item.languages).toEqual(["fr"]);
+    expect(item.english).toBe(false);
+    // The blocked English attempt is still reported so the editor sees why.
+    expect(item.blockers.some((b) => b.reason === "robots_disallowed")).toBe(true);
 
     await fs.rm(corpusRoot, { recursive: true, force: true });
   });
