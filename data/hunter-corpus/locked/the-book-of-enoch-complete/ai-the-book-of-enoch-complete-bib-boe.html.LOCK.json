@@ -1,0 +1,11 @@
+{
+  "locked": true,
+  "do_not_publish": true,
+  "work_id": "work:the-book-of-enoch-complete",
+  "edition_id": "edition:ai-the-book-of-enoch-complete-bib-boe",
+  "rights_status": "public_domain_jurisdictional",
+  "reasons": [
+    "explicit public-domain claim"
+  ],
+  "rights_record": "rights/the-book-of-enoch-complete/ai-the-book-of-enoch-complete-bib-boe.rights.json"
+}

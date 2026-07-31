@@ -118,6 +118,13 @@ const REGISTRY = {
       automated_download_allowed: true,
       rate_limit_seconds: 0,
     },
+    {
+      source_id: "source:manual-only",
+      name: "Manual Only Source",
+      allowed_hosts: ["manual-only.example"],
+      automated_download_allowed: false,
+      rate_limit_seconds: 0,
+    },
   ],
 };
 
@@ -274,6 +281,7 @@ describe("runCorpusListCycle", () => {
         items: [
           { title: "Direct Text", url: "https://example.org/direct.txt", language: "en" },
           { title: "Off Registry", url: "https://unknown-host.example/x.txt" },
+          { title: "Manual Only", url: "https://manual-only.example/y.txt" },
         ],
       },
       policy: POLICY as never,
@@ -290,7 +298,14 @@ describe("runCorpusListCycle", () => {
       },
     });
 
-    const [direct, offRegistry] = result.corpus_list.items;
+    const [direct, offRegistry, manualOnly] = result.corpus_list.items;
+    // Each item carries its own blockers so the report can explain WHY a
+    // source was blocked, and the summary rolls the reasons up — with the
+    // registered-but-manual-only case kept distinct from unregistered hosts.
+    expect(offRegistry.blockers.some((b) => b.reason === "unregistered_source")).toBe(true);
+    expect(manualOnly.blockers.some((b) => b.reason === "download_not_authorized")).toBe(true);
+    expect(result.corpus_list.blocked_reasons.unregistered_source).toBeGreaterThanOrEqual(1);
+    expect(result.corpus_list.blocked_reasons.download_not_authorized).toBeGreaterThanOrEqual(1);
     // A bare URL from the list carries no verified rights evidence, so the
     // rights pipeline downloads it to the LOCKED partition pending review —
     // exactly like an AI-suggested lead. It still counts as fetched.

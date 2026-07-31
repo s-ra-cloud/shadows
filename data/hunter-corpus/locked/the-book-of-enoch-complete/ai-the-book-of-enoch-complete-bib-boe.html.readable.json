@@ -1,0 +1,10 @@
+{
+  "recipe_id": "html-index-crawl",
+  "recipe_version": "1.0.0",
+  "extracted_at": "2026-07-31T08:13:00.564Z",
+  "pages_fetched": 115,
+  "warnings": [],
+  "source_url": "https://www.sacred-texts.com/bib/boe/",
+  "markdown_bytes": 417217,
+  "ocr_language": null
+}

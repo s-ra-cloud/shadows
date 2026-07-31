@@ -33,6 +33,16 @@ export type CorpusItemStatus =
   | "failed" // download attempted and failed
   | "not_found"; // discovery produced no usable candidate
 
+/** A blocker recorded while hunting one corpus-list item. */
+export interface CorpusItemBlocker {
+  reason: string;
+  detail: string;
+  url: string | null;
+}
+
+/** Cap on blockers kept per item (the run's blocker log keeps everything). */
+const MAX_ITEM_BLOCKERS = 8;
+
 export interface CorpusItemOutcome {
   title: string;
   author: string | null;
@@ -45,6 +55,8 @@ export interface CorpusItemOutcome {
   edition_ids: string[];
   /** Human-readable note (why not fetched, or what fallback was used). */
   detail: string;
+  /** Why downloads were blocked/failed for this item (empty when fetched cleanly). */
+  blockers: CorpusItemBlocker[];
 }
 
 export interface CorpusCycleResult {
@@ -56,6 +68,8 @@ export interface CorpusCycleResult {
     metadata_only: number;
     failed: number;
     not_found: number;
+    /** Count of blockers per reason across all items (why downloads were blocked). */
+    blocked_reasons: Record<string, number>;
     items: CorpusItemOutcome[];
   };
   /** Aggregated standard-cycle counters across all items. */
@@ -86,16 +100,18 @@ const FETCHED_STATUSES = new Set(["downloaded", "already_present"]);
 function leadFromListUrl(
   item: CorpusListItem,
   registrySources: Record<string, unknown>[],
-): { lead?: DiscoveredLead; problem?: string } {
+): { lead?: DiscoveredLead; problem?: string; problemReason?: string } {
   if (!item.url) return {};
   const source = matchRegistrySource(item.url, registrySources);
   if (!source) {
     return {
+      problemReason: "unregistered_source",
       problem: `The URL for "${item.title}" points at a host that is not in the trusted source registry; the hunter fell back to discovery.`,
     };
   }
   if (!source.automated_download_allowed) {
     return {
+      problemReason: "download_not_authorized",
       problem: `The URL for "${item.title}" belongs to a source that does not authorize automated download; the hunter fell back to discovery.`,
     };
   }
@@ -113,7 +129,11 @@ function leadFromListUrl(
   return { lead: { ...lead, origin: "registry_crawl", originDetail: `Corpus list URL: ${item.url}` } };
 }
 
-function outcomeFromSummary(item: CorpusListItem, summary: CycleSummary): CorpusItemOutcome {
+function outcomeFromSummary(
+  item: CorpusListItem,
+  summary: CycleSummary,
+  itemBlockers: CorpusItemBlocker[],
+): CorpusItemOutcome {
   const fetched = summary.entries.filter((r) => {
     const file = r.file as Record<string, unknown> | null;
     return FETCHED_STATUSES.has(String(r.download_status ?? "")) && !!file;
@@ -138,10 +158,10 @@ function outcomeFromSummary(item: CorpusListItem, summary: CycleSummary): Corpus
     detail = `Fetched to the locked research partition (${languages.join(", ") || "unknown language"}); rights review pending.`;
   } else if (summary.metadata_only > 0) {
     status = "metadata_only";
-    detail = "Found, but the source does not permit automated download — see blockers.";
+    detail = "Found, but the source does not permit automated download.";
   } else if (summary.failed > 0) {
     status = "failed";
-    detail = "Download attempted but failed — see blockers.";
+    detail = "Download attempted but failed.";
   } else {
     status = "not_found";
     detail =
@@ -149,7 +169,7 @@ function outcomeFromSummary(item: CorpusListItem, summary: CycleSummary): Corpus
         ? "Discovery found no leads for this work."
         : summary.secondary > 0 && summary.created === 0
           ? "Only secondary literature was found; no original text located."
-          : "Leads were found but none produced a usable candidate — see blockers.";
+          : "Leads were found but none produced a usable candidate.";
   }
   return {
     title: item.title,
@@ -159,6 +179,7 @@ function outcomeFromSummary(item: CorpusListItem, summary: CycleSummary): Corpus
     english,
     edition_ids: editionIds,
     detail,
+    blockers: itemBlockers,
   };
 }
 
@@ -194,9 +215,26 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
       items: outcomes,
     });
 
-    const { lead: urlLead, problem: urlProblem } = leadFromListUrl(item, registrySources);
+    const itemBlockers: CorpusItemBlocker[] = [];
+    const recordItemBlocker = (b: Record<string, unknown>) => {
+      if (itemBlockers.length < MAX_ITEM_BLOCKERS) {
+        itemBlockers.push({
+          reason: String(b.reason ?? "unknown"),
+          detail: String(b.detail ?? ""),
+          url: b.url ? String(b.url) : null,
+        });
+      }
+    };
+
+    const { lead: urlLead, problem: urlProblem, problemReason } = leadFromListUrl(item, registrySources);
     if (urlProblem) {
-      await store.addBlocker({ url: item.url ?? null, reason: "unregistered_source", detail: urlProblem });
+      const blocker = {
+        url: item.url ?? null,
+        reason: problemReason ?? "unregistered_source",
+        detail: urlProblem,
+      };
+      await store.addBlocker(blocker);
+      recordItemBlocker(blocker);
       totals.blockers += 1;
     }
 
@@ -214,7 +252,10 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
       ...store,
       existingEditionIds: () => store.existingEditionIds(),
       insertCandidate: (c) => store.insertCandidate(c),
-      addBlocker: (b) => store.addBlocker(b),
+      addBlocker: (b) => {
+        recordItemBlocker(b as unknown as Record<string, unknown>);
+        return store.addBlocker(b);
+      },
       mirrorCorpusRecords: (r) => store.mirrorCorpusRecords(r),
       updateProgress: (progress) =>
         store.updateProgress({
@@ -244,10 +285,12 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
       });
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      await store.addBlocker({
+      const blocker = {
         reason: "fetch_failed",
         detail: `Corpus-list item "${item.title}" failed: ${message}`,
-      });
+      };
+      await store.addBlocker(blocker);
+      recordItemBlocker(blocker);
       totals.blockers += 1;
       outcomes.push({
         title: item.title,
@@ -257,6 +300,7 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
         english: false,
         edition_ids: [],
         detail: `Cycle error: ${message}`,
+        blockers: itemBlockers,
       });
       continue;
     }
@@ -273,7 +317,7 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
     totals.blockers += summary.blockers;
     allEntries.push(...summary.entries);
     allDiscovery.push(...summary.discovery);
-    outcomes.push(outcomeFromSummary(item, summary));
+    outcomes.push(outcomeFromSummary(item, summary, itemBlockers));
   }
 
   const result: CorpusCycleResult = {
@@ -285,6 +329,12 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
       metadata_only: outcomes.filter((o) => o.status === "metadata_only").length,
       failed: outcomes.filter((o) => o.status === "failed").length,
       not_found: outcomes.filter((o) => o.status === "not_found").length,
+      blocked_reasons: outcomes
+        .flatMap((o) => o.blockers)
+        .reduce<Record<string, number>>((acc, b) => {
+          acc[b.reason] = (acc[b.reason] ?? 0) + 1;
+          return acc;
+        }, {}),
       items: outcomes,
     },
     summary: { ...totals, entries: allEntries, discovery: allDiscovery },

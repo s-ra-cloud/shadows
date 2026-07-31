@@ -700,15 +700,29 @@ const CORPUS_ITEM_STATUS: Record<string, { label: string; className: string }> =
   not_found: { label: "Not found", className: "bg-[#E0DCE6]/10 text-[#E0DCE6]/60" },
 };
 
+const blockerReasonLabel = (reason: string) =>
+  BLOCKER_REASON_LABELS[reason] ?? reason.replace(/_/g, " ");
+
 /** End-of-cycle report for corpus-list cycles: which sources were fetched. */
 function CorpusListReport({ corpusList }: { corpusList: any }) {
   if (!corpusList || !Array.isArray(corpusList.items) || corpusList.items.length === 0) return null;
   const fetchedCount = (corpusList.fetched ?? 0) + (corpusList.fetched_locked ?? 0);
+  const blockedReasons: [string, number][] = Object.entries(corpusList.blocked_reasons ?? {});
   return (
     <div data-testid="corpus-list-report">
       <div className="text-xs text-[#E0DCE6]/50 mb-2">
         Corpus list report — {fetchedCount}/{corpusList.total ?? corpusList.items.length} sources fetched
       </div>
+      {blockedReasons.length > 0 && (
+        <div className="mb-2 p-2.5 rounded-lg border border-yellow-400/20 bg-yellow-400/5" data-testid="corpus-blocked-summary">
+          <div className="text-[10px] uppercase font-bold text-yellow-400/80 mb-1">Why sources were blocked</div>
+          {blockedReasons.map(([reason, count]) => (
+            <div key={reason} className="text-xs text-[#E0DCE6]/70">
+              <span className="text-yellow-400 font-medium">{count}×</span> {blockerReasonLabel(reason)}
+            </div>
+          ))}
+        </div>
+      )}
       <div className="border border-[#350A8C]/20 rounded-lg overflow-hidden divide-y divide-[#350A8C]/15">
         {corpusList.items.map((item: any, i: number) => {
           const status = CORPUS_ITEM_STATUS[item.status] ?? CORPUS_ITEM_STATUS.not_found;
@@ -726,6 +740,24 @@ function CorpusListReport({ corpusList }: { corpusList: any }) {
                   </span>
                 )}
                 {item.detail && <div className="text-[#E0DCE6]/45 mt-0.5">{item.detail}</div>}
+                {Array.isArray(item.blockers) && item.blockers.length > 0 && (
+                  <div className="mt-1 space-y-0.5">
+                    {item.blockers.map((b: any, j: number) => (
+                      <div key={j} className="text-[11px] text-yellow-400/80 flex items-start gap-1">
+                        <span className="shrink-0">⛔</span>
+                        <span>
+                          {blockerReasonLabel(b.reason)}
+                          {b.url && (
+                            <span className="text-[#E0DCE6]/40 break-all"> — {b.url}</span>
+                          )}
+                          {b.detail && b.detail !== blockerReasonLabel(b.reason) && (
+                            <span className="text-[#E0DCE6]/40"> ({b.detail})</span>
+                          )}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           );

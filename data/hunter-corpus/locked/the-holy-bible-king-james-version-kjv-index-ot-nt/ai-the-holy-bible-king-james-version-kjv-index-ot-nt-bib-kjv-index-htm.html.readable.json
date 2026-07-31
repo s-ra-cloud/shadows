@@ -1,0 +1,10 @@
+{
+  "recipe_id": "html-index-crawl",
+  "recipe_version": "1.0.0",
+  "extracted_at": "2026-07-31T08:22:04.437Z",
+  "pages_fetched": 1203,
+  "warnings": [],
+  "source_url": "https://www.sacred-texts.com/bib/kjv/index.htm",
+  "markdown_bytes": 4451011,
+  "ocr_language": null
+}

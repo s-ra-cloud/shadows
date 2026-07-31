@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:the-holy-bible-king-james-version-kjv-index-ot-nt",
+  "edition_id": "edition:ai-the-holy-bible-king-james-version-kjv-index-ot-nt-bib-kjv-index-htm",
+  "source_id": "source:sacred-texts",
+  "source_reference": "https://www.sacred-texts.com/bib/kjv/index.htm",
+  "rights": {
+    "status": "public_domain_jurisdictional",
+    "confidence": "medium",
+    "basis": "source_statement",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "UNSPECIFIED"
+    ],
+    "territory_covered": false,
+    "statement": "AI-suggested lead (confidence: medium); rights evidence pending verification.",
+    "license": null,
+    "rights_url": null,
+    "license_url": null,
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "verify_target_jurisdiction"
+    ],
+    "reasons": [
+      "explicit public-domain claim"
+    ],
+    "assessed_at": "2026-07-31T07:55:37.233000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_statement",
+    "statement": "AI-suggested lead (confidence: medium); rights evidence pending verification.",
+    "ai_claimed_statement": "Public domain",
+    "ai_claimed_license_url": "https://www.sacred-texts.com/timecopy.htm"
+  },
+  "file_sha256": "sha256:0e41a5cce4b57d65f46f1a4819b14d94db971acffc31fedb3ecf9703f9a21c2c"
+}
