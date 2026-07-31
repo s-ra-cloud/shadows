@@ -15,6 +15,14 @@ import express, { type Express } from "express";
 import request from "supertest";
 
 import { requireEditor, EDITOR_TOKEN } from "../editorAuth";
+import { db } from "../storage";
+import { hunterRuns } from "@shared/schema";
+import { runCorpusListCycle } from "../hunterCorpusCycle";
+
+// Mock the corpus-list cycle runner so retry tests don't need real HTTP crawls.
+vi.mock("../hunterCorpusCycle", () => ({
+  runCorpusListCycle: vi.fn(),
+}));
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.join(HERE, "..", "sourceHunter", "__tests__");
@@ -474,5 +482,168 @@ describe("catalog builder and SSRF guard", () => {
     expect(res.status).toBe(200);
     expect(res.body.run.status).toBe("completed");
     expect(Array.isArray(res.body.records)).toBe(true);
+  });
+});
+
+describe("corpus-list retry endpoint", () => {
+  /** Run whose items mix fetched / missing statuses — the main retry test target. */
+  let mixedRunId: number;
+
+  const MOCK_CYCLE_RESULT = {
+    corpus_list: {
+      name: "retry-result",
+      total: 0,
+      fetched: 0,
+      fetched_locked: 0,
+      metadata_only: 0,
+      failed: 0,
+      not_found: 0,
+      items: [],
+      original_items: [],
+    },
+    summary: {
+      discovered: 0,
+      created: 0,
+      duplicates: 0,
+      invalid: 0,
+      secondary: 0,
+      downloaded_public: 0,
+      downloaded_locked: 0,
+      metadata_only: 0,
+      failed: 0,
+      blockers: 0,
+      entries: [],
+      discovery: [],
+    },
+  };
+
+  beforeAll(async () => {
+    vi.mocked(runCorpusListCycle).mockResolvedValue(MOCK_CYCLE_RESULT as any);
+
+    // Insert a completed corpus-list run with four items: one fetched (should
+    // be excluded from retry) and three missing (should be retried).
+    const [row] = await (db as any)
+      .insert(hunterRuns)
+      .values({
+        kind: "cycle",
+        status: "completed",
+        result: {
+          scope: { query: "Corpus list: mylist", corpusList: "mylist" },
+          corpus_list: {
+            name: "mylist",
+            total: 4,
+            fetched: 1,
+            fetched_locked: 0,
+            metadata_only: 1,
+            failed: 1,
+            not_found: 1,
+            original_items: [
+              // Fetched — must NOT appear in the retry list
+              { title: "Iliad", author: "Homer", url: "https://example.org/iliad.txt" },
+              // metadata_only — must appear, url preserved
+              { title: "Odyssey", author: "Homer", url: "https://example.org/odyssey.txt" },
+              // failed — must appear, language preserved
+              { title: "Theogony", author: "Hesiod", language: "grc" },
+              // not_found — must appear, title+author only
+              { title: "Works and Days", author: "Hesiod" },
+            ],
+            items: [
+              { title: "Iliad", author: "Homer", status: "fetched", languages: ["en"], english: true, edition_ids: ["ed1"], detail: "OK" },
+              { title: "Odyssey", author: "Homer", status: "metadata_only", languages: [], english: false, edition_ids: [], detail: "No download allowed" },
+              { title: "Theogony", author: "Hesiod", status: "failed", languages: [], english: false, edition_ids: [], detail: "Failed" },
+              { title: "Works and Days", author: "Hesiod", status: "not_found", languages: [], english: false, edition_ids: [], detail: "Not found" },
+            ],
+          },
+        },
+      })
+      .returning({ id: hunterRuns.id });
+    mixedRunId = row.id;
+  });
+
+  it("returns 401 without an editor token", async () => {
+    const res = await request(app).post("/api/hunter/cycles/corpus/1/retry").send({});
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 404 for a non-existent run", async () => {
+    const res = await request(app)
+      .post("/api/hunter/cycles/corpus/999999/retry")
+      .set(asEditor)
+      .send({});
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 400 when all items in the run were already fetched", async () => {
+    const [row] = await (db as any)
+      .insert(hunterRuns)
+      .values({
+        kind: "cycle",
+        status: "completed",
+        result: {
+          corpus_list: {
+            name: "fully-fetched",
+            total: 1,
+            fetched: 1,
+            fetched_locked: 0,
+            metadata_only: 0,
+            failed: 0,
+            not_found: 0,
+            original_items: [{ title: "Iliad", author: "Homer" }],
+            items: [
+              { title: "Iliad", author: "Homer", status: "fetched", languages: ["en"], english: true, edition_ids: ["ed1"], detail: "OK" },
+            ],
+          },
+        },
+      })
+      .returning({ id: hunterRuns.id });
+
+    const res = await request(app)
+      .post(`/api/hunter/cycles/corpus/${row.id}/retry`)
+      .set(asEditor)
+      .send({});
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/nothing to retry/i);
+  });
+
+  it("retries only missing items and preserves url and language from original_items", async () => {
+    vi.mocked(runCorpusListCycle).mockClear();
+
+    const res = await request(app)
+      .post(`/api/hunter/cycles/corpus/${mixedRunId}/retry`)
+      .set(asEditor)
+      .send({ use_ai: false });
+    expect(res.status).toBe(200);
+    expect(res.body.run.status).toBe("running");
+    expect(res.body.corpus_list.name).toBe("mylist (retry)");
+    expect(res.body.corpus_list.items).toBe(3); // 3 missing, 1 fetched excluded
+
+    // Wait for the background run to complete.
+    const run = await waitForRun(res.body.run.id);
+    expect(run.status).toBe("completed");
+
+    // Verify the list passed to runCorpusListCycle.
+    expect(vi.mocked(runCorpusListCycle)).toHaveBeenCalledTimes(1);
+    const { list } = vi.mocked(runCorpusListCycle).mock.calls[0][0];
+    expect(list.name).toBe("mylist (retry)");
+    expect(list.items).toHaveLength(3);
+
+    // Fetched item (Iliad) excluded.
+    expect(list.items.find((i: any) => i.title === "Iliad")).toBeUndefined();
+
+    // metadata_only item: url must be preserved from original_items.
+    const odyssey = list.items.find((i: any) => i.title === "Odyssey");
+    expect(odyssey).toBeDefined();
+    expect(odyssey.url).toBe("https://example.org/odyssey.txt");
+
+    // failed item: language must be preserved from original_items.
+    const theogony = list.items.find((i: any) => i.title === "Theogony");
+    expect(theogony).toBeDefined();
+    expect(theogony.language).toBe("grc");
+
+    // not_found item: title and author only.
+    const worksAndDays = list.items.find((i: any) => i.title === "Works and Days");
+    expect(worksAndDays).toBeDefined();
+    expect(worksAndDays.author).toBe("Hesiod");
+    expect(worksAndDays.url).toBeUndefined();
   });
 });

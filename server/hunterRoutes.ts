@@ -768,6 +768,101 @@ export function registerHunterRoutes(
     }
   });
 
+  /**
+   * Retry only the items from a completed corpus-list cycle that were not
+   * successfully fetched (status: not_found | failed | metadata_only).
+   * A new run is created named "<original> (retry)" and the result has the
+   * same shape as a regular corpus-list run so the UI renders it identically.
+   */
+  app.post("/api/hunter/cycles/corpus/:runId/retry", requireEditor, async (req, res) => {
+    const runId = Number(req.params.runId);
+    if (!Number.isFinite(runId)) return res.status(400).json({ message: "Invalid run id" });
+
+    const [existingRun] = await db
+      .select()
+      .from(hunterRuns)
+      .where(eq(hunterRuns.id, runId))
+      .limit(1);
+    if (!existingRun) return res.status(404).json({ message: "Run not found" });
+    if (existingRun.status !== "completed") {
+      return res.status(400).json({ message: "Can only retry a completed corpus-list run" });
+    }
+    const existingResult = existingRun.result as Record<string, unknown> | null;
+    const corpusList = existingResult?.corpus_list as Record<string, unknown> | null | undefined;
+    if (!corpusList || !Array.isArray(corpusList.items)) {
+      return res.status(400).json({ message: "This run does not have a corpus-list report" });
+    }
+
+    const RETRYABLE = new Set(["not_found", "failed", "metadata_only"]);
+    const outcomes = corpusList.items as Record<string, unknown>[];
+    // Use the original uploaded items (which carry url and language) when
+    // available, falling back to the outcome fields for older runs.
+    const originals = Array.isArray(corpusList.original_items)
+      ? (corpusList.original_items as Record<string, unknown>[])
+      : null;
+
+    const retryItems = outcomes
+      .map((outcome, i) => {
+        const orig = originals?.[i] ?? outcome;
+        return { outcome, orig };
+      })
+      .filter(({ outcome }) => RETRYABLE.has(String(outcome.status ?? "")))
+      .map(({ outcome, orig }) => {
+        const item: { title: string; author?: string; language?: string; url?: string } = {
+          title: String(orig.title ?? outcome.title ?? ""),
+        };
+        const author = orig.author ?? outcome.author;
+        if (author) item.author = String(author);
+        const language = orig.language;
+        if (language) item.language = String(language);
+        const url = orig.url;
+        if (url) item.url = String(url);
+        return item;
+      })
+      .filter((item) => item.title);
+
+    if (retryItems.length === 0) {
+      return res.status(400).json({ message: "All sources were already fetched — nothing to retry" });
+    }
+
+    const originalName = String(corpusList.name ?? `run-${runId}`);
+    const retryName = originalName.endsWith(" (retry)")
+      ? originalName
+      : `${originalName} (retry)`;
+    const list = { name: retryName, items: retryItems };
+
+    const newRunId = await createRun("cycle");
+    res.json({
+      run: { id: newRunId, status: "running" },
+      corpus_list: { name: list.name, items: list.items.length },
+    });
+
+    try {
+      const policy = await loadActivePolicy();
+      validatePolicy(policy);
+      const registry = await loadActiveRegistry();
+      const mirroredRecords: Record<string, unknown>[] = [];
+      const store = makeCycleStore(newRunId, mirroredRecords);
+      const result = await runCorpusListCycle({
+        list,
+        policy,
+        registry,
+        corpusRoot: CORPUS_ROOT,
+        store,
+        useAi: req.body?.use_ai !== false,
+      });
+      const autoExtraction = await autoExtractDownloaded(mirroredRecords);
+      await finishRun(newRunId, true, {
+        scope: { query: `Corpus list: ${list.name}`, corpusList: list.name },
+        corpus_list: result.corpus_list,
+        ...result.summary,
+        auto_extraction: autoExtraction,
+      });
+    } catch (e) {
+      await finishRun(newRunId, false, null, errMessage(e));
+    }
+  });
+
   app.get("/api/hunter/cycles", async (_req, res) => {
     const runs = await db
       .select()

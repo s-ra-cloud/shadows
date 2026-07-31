@@ -71,6 +71,12 @@ export interface CorpusCycleResult {
     /** Count of blockers per reason across all items (why downloads were blocked). */
     blocked_reasons: Record<string, number>;
     items: CorpusItemOutcome[];
+    /**
+     * The original uploaded list items, parallel to `items[]`.
+     * Preserved so the retry endpoint can reconstruct the exact input
+     * (including url and language) for each non-fetched item.
+     */
+    original_items: CorpusListItem[];
   };
   /** Aggregated standard-cycle counters across all items. */
   summary: Omit<CycleSummary, "scope" | "entries" | "discovery"> & {
@@ -336,6 +342,7 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
           return acc;
         }, {}),
       items: outcomes,
+      original_items: list.items,
     },
     summary: { ...totals, entries: allEntries, discovery: allDiscovery },
   };

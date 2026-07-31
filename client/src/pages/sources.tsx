@@ -704,14 +704,69 @@ const blockerReasonLabel = (reason: string) =>
   BLOCKER_REASON_LABELS[reason] ?? reason.replace(/_/g, " ");
 
 /** End-of-cycle report for corpus-list cycles: which sources were fetched. */
-function CorpusListReport({ corpusList }: { corpusList: any }) {
+function CorpusListReport({
+  corpusList,
+  isEditor = false,
+  runId,
+  running = false,
+  useAi = true,
+}: {
+  corpusList: any;
+  isEditor?: boolean;
+  runId?: number;
+  running?: boolean;
+  useAi?: boolean;
+}) {
+  const { toast } = useToast();
+  const retryMissingMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/hunter/cycles/corpus/${runId}/retry`, {
+        use_ai: useAi,
+      });
+      return res.json();
+    },
+    onSuccess: (d: any) => {
+      toast({
+        title: `Retry cycle "${d.corpus_list?.name ?? ""}" launched`,
+        description: `${d.corpus_list?.items ?? 0} missing source${d.corpus_list?.items === 1 ? "" : "s"} to re-hunt.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/cycles"] });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Could not launch retry", description: e.message, variant: "destructive" }),
+  });
+
   if (!corpusList || !Array.isArray(corpusList.items) || corpusList.items.length === 0) return null;
   const fetchedCount = (corpusList.fetched ?? 0) + (corpusList.fetched_locked ?? 0);
+  const missingCount =
+    (corpusList.not_found ?? 0) + (corpusList.failed ?? 0) + (corpusList.metadata_only ?? 0);
+  const canRetry = isEditor && !running && missingCount > 0 && runId != null;
   const blockedReasons: [string, number][] = Object.entries(corpusList.blocked_reasons ?? {});
+
   return (
     <div data-testid="corpus-list-report">
-      <div className="text-xs text-[#E0DCE6]/50 mb-2">
-        Corpus list report — {fetchedCount}/{corpusList.total ?? corpusList.items.length} sources fetched
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <div className="text-xs text-[#E0DCE6]/50">
+          Corpus list report — {fetchedCount}/{corpusList.total ?? corpusList.items.length} sources fetched
+        </div>
+        {canRetry && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              retryMissingMutation.mutate();
+            }}
+            disabled={retryMissingMutation.isPending || running}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] bg-[#350A8C]/40 border border-[#8F00FF]/40 text-[#E0DCE6] hover:bg-[#350A8C]/60 disabled:opacity-50 transition-colors shrink-0"
+            data-testid={`button-retry-missing-${runId}`}
+          >
+            {retryMissingMutation.isPending ? (
+              <RefreshCw size={11} className="animate-spin" />
+            ) : (
+              <RefreshCw size={11} />
+            )}
+            Retry missing ({missingCount})
+          </button>
+        )}
       </div>
       {blockedReasons.length > 0 && (
         <div className="mb-2 p-2.5 rounded-lg border border-yellow-400/20 bg-yellow-400/5" data-testid="corpus-blocked-summary">
@@ -1108,7 +1163,13 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
                           ))}
                         </div>
                       )}
-                      <CorpusListReport corpusList={result.corpus_list ?? progress?.corpus_list} />
+                      <CorpusListReport
+                        corpusList={result.corpus_list ?? progress?.corpus_list}
+                        isEditor={isEditor}
+                        runId={run.id}
+                        running={run.status === "running"}
+                        useAi={useAi}
+                      />
                       <AutoExtractionFailures failures={summary?.auto_extraction?.failed} />
                       {(summary?.auto_extraction?.queued ?? 0) > 0 && (
                         <p className="text-xs text-[#E0DCE6]/50" data-testid={`text-auto-extract-note-${run.id}`}>
