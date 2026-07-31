@@ -704,6 +704,54 @@ const CORPUS_ITEM_STATUS: Record<string, { label: string; className: string }> =
 const blockerReasonLabel = (reason: string) =>
   BLOCKER_REASON_LABELS[reason] ?? reason.replace(/_/g, " ");
 
+/**
+ * For each blocker reason: is there a realistic way to still get the text,
+ * and what would it take? Shown in the corpus report so editors can see
+ * where a fetch is still possible.
+ */
+const BLOCKER_FIX_HINTS: Record<string, { hint: string; fixable: boolean }> = {
+  download_not_authorized: {
+    fixable: true,
+    hint: "The site is read-online only (HTML pages, no bulk download). Another edition on a download-friendly source (Gutenberg, Sacred-Texts, Wikisource…) may exist — retry after adding one to the registry.",
+  },
+  robots_disallowed: {
+    fixable: true,
+    hint: "The site's robots.txt forbids automated fetching — we respect that. Look for the same text on a source that allows it, or download it manually and upload it.",
+  },
+  requires_auth: {
+    fixable: true,
+    hint: "Needs a login. If you have access, download manually and upload; otherwise look for an open mirror.",
+  },
+  unregistered_source: {
+    fixable: true,
+    hint: "The host just isn't in the trusted registry yet. Add it as a source, then use Retry missing.",
+  },
+  rights_locked: {
+    fixable: true,
+    hint: "The text WAS fetched but rights are unclear. Review it in the locked partition — approving it makes it available.",
+  },
+  too_large: {
+    fixable: true,
+    hint: "File exceeds the policy's size cap. Raise maximum_file_bytes or find a plain-text edition.",
+  },
+  fetch_failed: {
+    fixable: true,
+    hint: "Often transient (network hiccup, temporary block). Retry missing usually resolves these.",
+  },
+  invalid_candidate: {
+    fixable: false,
+    hint: "The lead's metadata was unusable; a retry only helps if discovery finds a better lead.",
+  },
+  secondary_source: {
+    fixable: false,
+    hint: "Only books ABOUT the work were found, not the text itself. Try a more precise title or the original-language title.",
+  },
+  discovery_unsupported: {
+    fixable: false,
+    hint: "This source can't be crawled automatically yet; texts from it must be uploaded manually.",
+  },
+};
+
 /** End-of-cycle report for corpus-list cycles: which sources were fetched. */
 function CorpusListReport({
   corpusList,
@@ -771,12 +819,31 @@ function CorpusListReport({
       </div>
       {blockedReasons.length > 0 && (
         <div className="mb-2 p-2.5 rounded-lg border border-yellow-400/20 bg-yellow-400/5" data-testid="corpus-blocked-summary">
-          <div className="text-[10px] uppercase font-bold text-yellow-400/80 mb-1">Why sources were blocked</div>
-          {blockedReasons.map(([reason, count]) => (
-            <div key={reason} className="text-xs text-[#E0DCE6]/70">
-              <span className="text-yellow-400 font-medium">{count}×</span> {blockerReasonLabel(reason)}
-            </div>
-          ))}
+          <div className="text-[10px] uppercase font-bold text-yellow-400/80 mb-1">
+            Why sources were blocked — and where a fetch is still possible
+          </div>
+          <div className="space-y-1.5">
+            {blockedReasons.map(([reason, count]) => {
+              const fix = BLOCKER_FIX_HINTS[reason];
+              return (
+                <div key={reason} className="text-xs" data-testid={`blocked-reason-${reason}`}>
+                  <div className="text-[#E0DCE6]/70">
+                    <span className="text-yellow-400 font-medium">{count}×</span> {blockerReasonLabel(reason)}
+                    {fix && (
+                      <span
+                        className={`ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
+                          fix.fixable ? "bg-[#03FF9B]/15 text-[#03FF9B]" : "bg-[#E0DCE6]/10 text-[#E0DCE6]/50"
+                        }`}
+                      >
+                        {fix.fixable ? "Fetch still possible" : "Needs a different lead"}
+                      </span>
+                    )}
+                  </div>
+                  {fix && <div className="text-[11px] text-[#E0DCE6]/45 mt-0.5 pl-4">{fix.hint}</div>}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
       <div className="border border-[#350A8C]/20 rounded-lg overflow-hidden divide-y divide-[#350A8C]/15">
