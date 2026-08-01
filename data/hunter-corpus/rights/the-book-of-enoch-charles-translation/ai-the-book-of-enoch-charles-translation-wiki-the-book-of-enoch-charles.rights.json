@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:the-book-of-enoch-charles-translation",
+  "edition_id": "edition:ai-the-book-of-enoch-charles-translation-wiki-the-book-of-enoch-charles",
+  "source_id": "source:multilingual-wikisource",
+  "source_reference": "https://en.wikisource.org/wiki/The_Book_of_Enoch_(Charles)",
+  "rights": {
+    "status": "open_license",
+    "confidence": "high",
+    "basis": "source_statement",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "territory_covered": true,
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "license": "CC BY-SA",
+    "rights_url": null,
+    "license_url": null,
+    "publication_allowed": true,
+    "translation_allowed": true,
+    "locked": false,
+    "do_not_publish": false,
+    "review_required": false,
+    "obligations": [
+      "attribution",
+      "share_alike"
+    ],
+    "reasons": [
+      "standardized Creative Commons marker"
+    ],
+    "assessed_at": "2026-08-01T04:26:25.436000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "basis": "source_statement",
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "status_claim": "unknown",
+    "ai_claimed_statement": "Public domain",
+    "ai_claimed_license_url": "https://creativecommons.org/publicdomain/mark/1.0/"
+  },
+  "file_sha256": "sha256:51b0e0a12329e64e6bb1690c0e01c3cc1555c0dcafd66d1b3d2a1f3dde8151c5"
+}

@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:quran-arabic-text",
+  "edition_id": "edition:ai-quran-arabic-text-wiki-d8-a7-d9-84-d9-82-d8-b1-d8-a2-d9-86",
+  "source_id": "source:multilingual-wikisource",
+  "source_reference": "https://ar.wikisource.org/wiki/%D8%A7%D9%84%D9%82%D8%B1%D8%A2%D9%86_%D8%A7%D9%84%D9%83%D8%B1%D9%8A%D9%85",
+  "rights": {
+    "status": "open_license",
+    "confidence": "high",
+    "basis": "source_statement",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "territory_covered": true,
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "license": "CC BY-SA",
+    "rights_url": null,
+    "license_url": null,
+    "publication_allowed": true,
+    "translation_allowed": true,
+    "locked": false,
+    "do_not_publish": false,
+    "review_required": false,
+    "obligations": [
+      "attribution",
+      "share_alike"
+    ],
+    "reasons": [
+      "standardized Creative Commons marker"
+    ],
+    "assessed_at": "2026-08-01T04:26:23.936000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "basis": "source_statement",
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "status_claim": "unknown",
+    "ai_claimed_statement": "Public domain",
+    "ai_claimed_license_url": "https://ar.wikisource.org/wiki/Wikisource:%D8%AD%D9%82%D9%88%D9%82_%D8%A7%D9%84%D8%AA%D8%A3%D9%84%D9%8A%D9%81_%D9%88%D8%A7%D9%84%D9%86%D8%B4%D8%B1"
+  },
+  "file_sha256": "sha256:3d0dcb5fed5f84275242e28c2d9773dc3280a549796140b0dd0e2fd07478aa45"
+}

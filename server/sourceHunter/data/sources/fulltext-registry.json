@@ -21,13 +21,12 @@
         "wikisource.org"
       ],
       "allowed_path_prefixes": [
-        "/w/api.php",
-        "/wiki/Special:Export"
+        "/wiki/"
       ],
       "automated_download_allowed": true,
       "terms_url": "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use",
       "robots_mode": "target_origin",
-      "requests_per_second": 0.5,
+      "requests_per_second": 0.25,
       "rights_notes": "Check the work and translation copyright template. Wikisource accepts public-domain or compatible free-licensed texts, but the exact page-level statement remains authoritative."
     },
     {
@@ -38,13 +37,15 @@
         "gutenberg.org"
       ],
       "allowed_path_prefixes": [
-        "/robot/harvest"
+        "/files/",
+        "/cache/epub/",
+        "/ebooks/"
       ],
-      "automated_download_allowed": false,
+      "automated_download_allowed": true,
       "terms_url": "https://www.gutenberg.org/policy/terms_of_use.html",
       "robots_mode": "target_origin",
-      "requests_per_second": 0.5,
-      "rights_notes": "Configure and review an official mirror before enabling direct downloads; never crawl human pages. Project Gutenberg copyright determinations are U.S.-specific and the embedded ebook notice must be checked."
+      "requests_per_second": 0.2,
+      "rights_notes": "Only ebook files (/files/, /cache/epub/, /ebooks/) — never crawl search or human browsing pages (robots.txt forbids /ebooks/search and the downloader re-checks robots per request). Project Gutenberg copyright determinations are U.S.-specific and the embedded ebook notice must be checked."
     },
     {
       "source_id": "source:perseus-github",

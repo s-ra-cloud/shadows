@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:the-qur-an-palmer",
+  "edition_id": "edition:ai-the-qur-an-palmer-wiki-the-qur-27an-palmer",
+  "source_id": "source:multilingual-wikisource",
+  "source_reference": "https://en.wikisource.org/wiki/The_Qur%27an_(Palmer)",
+  "rights": {
+    "status": "conflicting",
+    "confidence": "low",
+    "basis": "source_statement",
+    "target_jurisdiction": "FR",
+    "territories": [],
+    "territory_covered": false,
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "license": null,
+    "rights_url": null,
+    "license_url": null,
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "resolve_conflicting_rights_evidence"
+    ],
+    "reasons": [
+      "open licence marker conflicts with restrictive copyright evidence"
+    ],
+    "assessed_at": "2026-08-01T04:25:59.769000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "basis": "source_statement",
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "status_claim": "unknown",
+    "ai_claimed_statement": "Public domain",
+    "ai_claimed_license_url": "https://en.wikisource.org/wiki/Wikisource:Copyright_policy"
+  },
+  "file_sha256": "sha256:538c1c7619ca359124a0303617879c6cf0ae8fd8f136d8ad229554932d88442f"
+}
