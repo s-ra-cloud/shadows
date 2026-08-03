@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:konjaku-monogatarishu",
+  "edition_id": "edition:ai-konjaku-monogatarishu-wiki-e4-bb-8a-e6-98-94-e7-89-a9-e8-aa-9e",
+  "source_id": "source:multilingual-wikisource",
+  "source_reference": "https://ja.wikisource.org/wiki/%E4%BB%8A%E6%98%94%E7%89%A9%E8%AA%9E%E9%9B%86",
+  "rights": {
+    "status": "open_license",
+    "confidence": "high",
+    "basis": "source_statement",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "territory_covered": true,
+    "statement": "AI-suggested lead (confidence: medium); rights evidence pending verification.",
+    "license": "CC BY-SA",
+    "rights_url": null,
+    "license_url": null,
+    "publication_allowed": true,
+    "translation_allowed": true,
+    "locked": false,
+    "do_not_publish": false,
+    "review_required": false,
+    "obligations": [
+      "attribution",
+      "share_alike"
+    ],
+    "reasons": [
+      "standardized Creative Commons marker"
+    ],
+    "assessed_at": "2026-08-02T07:56:28.973000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_statement",
+    "statement": "AI-suggested lead (confidence: medium); rights evidence pending verification.",
+    "ai_claimed_statement": "Public domain",
+    "ai_claimed_license_url": "https://creativecommons.org/publicdomain/mark/1.0/"
+  },
+  "file_sha256": "sha256:dacf71489f8c89aba83d72d3597ef5fcab1fe64d8bd4f5bf3f9b5522c936536e"
+}

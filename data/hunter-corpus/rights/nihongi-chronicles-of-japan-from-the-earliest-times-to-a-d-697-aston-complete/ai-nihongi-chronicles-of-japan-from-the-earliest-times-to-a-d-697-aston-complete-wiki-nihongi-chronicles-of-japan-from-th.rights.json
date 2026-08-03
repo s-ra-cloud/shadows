@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:nihongi-chronicles-of-japan-from-the-earliest-times-to-a-d-697-aston-complete",
+  "edition_id": "edition:ai-nihongi-chronicles-of-japan-from-the-earliest-times-to-a-d-697-aston-complete-wiki-nihongi-chronicles-of-japan-from-th",
+  "source_id": "source:multilingual-wikisource",
+  "source_reference": "https://en.wikisource.org/wiki/Nihongi:_Chronicles_of_Japan_from_the_Earliest_Times_to_A.D._697",
+  "rights": {
+    "status": "conflicting",
+    "confidence": "low",
+    "basis": "source_statement",
+    "target_jurisdiction": "FR",
+    "territories": [],
+    "territory_covered": false,
+    "statement": "AI-suggested lead (confidence: medium); rights evidence pending verification.",
+    "license": null,
+    "rights_url": null,
+    "license_url": null,
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "resolve_conflicting_rights_evidence"
+    ],
+    "reasons": [
+      "open licence marker conflicts with restrictive copyright evidence"
+    ],
+    "assessed_at": "2026-08-02T07:47:53.889000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_statement",
+    "statement": "AI-suggested lead (confidence: medium); rights evidence pending verification.",
+    "ai_claimed_statement": "Public domain",
+    "ai_claimed_license_url": "https://creativecommons.org/publicdomain/mark/1.0/"
+  },
+  "file_sha256": "sha256:844e9b718cf4817f12c2551cd4cd5a81ee1760711fad41c0e6271ab921c72415"
+}

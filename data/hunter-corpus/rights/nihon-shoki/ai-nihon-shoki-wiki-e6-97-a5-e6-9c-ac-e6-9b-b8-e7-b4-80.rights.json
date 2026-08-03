@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:nihon-shoki",
+  "edition_id": "edition:ai-nihon-shoki-wiki-e6-97-a5-e6-9c-ac-e6-9b-b8-e7-b4-80",
+  "source_id": "source:multilingual-wikisource",
+  "source_reference": "https://ja.wikisource.org/wiki/日本書紀",
+  "rights": {
+    "status": "open_license",
+    "confidence": "high",
+    "basis": "source_statement",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "territory_covered": true,
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "license": "CC BY-SA",
+    "rights_url": null,
+    "license_url": null,
+    "publication_allowed": true,
+    "translation_allowed": true,
+    "locked": false,
+    "do_not_publish": false,
+    "review_required": false,
+    "obligations": [
+      "attribution",
+      "share_alike"
+    ],
+    "reasons": [
+      "standardized Creative Commons marker"
+    ],
+    "assessed_at": "2026-08-02T07:47:53.889000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_statement",
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "ai_claimed_statement": "Public domain",
+    "ai_claimed_license_url": "https://creativecommons.org/publicdomain/mark/1.0/"
+  },
+  "file_sha256": "sha256:633d3a4b94a03555a5504198b07b0e140298b6986aecb053e4b8b840db1b52b8"
+}

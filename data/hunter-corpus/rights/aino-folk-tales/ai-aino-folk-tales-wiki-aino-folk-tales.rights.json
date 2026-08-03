@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:aino-folk-tales",
+  "edition_id": "edition:ai-aino-folk-tales-wiki-aino-folk-tales",
+  "source_id": "source:multilingual-wikisource",
+  "source_reference": "https://en.wikisource.org/wiki/Aino_Folk-Tales",
+  "rights": {
+    "status": "open_license",
+    "confidence": "high",
+    "basis": "source_statement",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "territory_covered": true,
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "license": "CC BY-SA",
+    "rights_url": null,
+    "license_url": null,
+    "publication_allowed": true,
+    "translation_allowed": true,
+    "locked": false,
+    "do_not_publish": false,
+    "review_required": false,
+    "obligations": [
+      "attribution",
+      "share_alike"
+    ],
+    "reasons": [
+      "standardized Creative Commons marker"
+    ],
+    "assessed_at": "2026-08-02T08:01:03.133000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_statement",
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "ai_claimed_statement": "Public domain",
+    "ai_claimed_license_url": "https://creativecommons.org/publicdomain/mark/1.0/"
+  },
+  "file_sha256": "sha256:25b16f1c1ed9ed4edffc71449d2f79d4950b4f9e5be04e47ab9e1152eda73d01"
+}

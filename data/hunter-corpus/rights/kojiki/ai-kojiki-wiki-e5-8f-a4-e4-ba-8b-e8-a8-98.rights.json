@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:kojiki",
+  "edition_id": "edition:ai-kojiki-wiki-e5-8f-a4-e4-ba-8b-e8-a8-98",
+  "source_id": "source:multilingual-wikisource",
+  "source_reference": "https://ja.wikisource.org/wiki/%E5%8F%A4%E4%BA%8B%E8%A8%98",
+  "rights": {
+    "status": "open_license",
+    "confidence": "high",
+    "basis": "source_statement",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "territory_covered": true,
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "license": "CC BY-SA",
+    "rights_url": null,
+    "license_url": null,
+    "publication_allowed": true,
+    "translation_allowed": true,
+    "locked": false,
+    "do_not_publish": false,
+    "review_required": false,
+    "obligations": [
+      "attribution",
+      "share_alike"
+    ],
+    "reasons": [
+      "standardized Creative Commons marker"
+    ],
+    "assessed_at": "2026-08-02T07:46:33.442000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_statement",
+    "statement": "AI-suggested lead (confidence: high); rights evidence pending verification.",
+    "ai_claimed_statement": "Public domain",
+    "ai_claimed_license_url": "https://creativecommons.org/publicdomain/mark/1.0/"
+  },
+  "file_sha256": "sha256:58ab490fa59f4a84ba54c3107c14cc32a2729eef908cc20a9f1ef4094109445d"
+}

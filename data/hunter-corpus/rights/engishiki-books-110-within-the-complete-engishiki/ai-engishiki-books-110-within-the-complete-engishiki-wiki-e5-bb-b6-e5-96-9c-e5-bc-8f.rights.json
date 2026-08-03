@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:engishiki-books-110-within-the-complete-engishiki",
+  "edition_id": "edition:ai-engishiki-books-110-within-the-complete-engishiki-wiki-e5-bb-b6-e5-96-9c-e5-bc-8f",
+  "source_id": "source:multilingual-wikisource",
+  "source_reference": "https://ja.wikisource.org/wiki/%E5%BB%B6%E5%96%9C%E5%BC%8F",
+  "rights": {
+    "status": "open_license",
+    "confidence": "high",
+    "basis": "source_statement",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "territory_covered": true,
+    "statement": "AI-suggested lead (confidence: medium); rights evidence pending verification.",
+    "license": "CC BY-SA",
+    "rights_url": null,
+    "license_url": null,
+    "publication_allowed": true,
+    "translation_allowed": true,
+    "locked": false,
+    "do_not_publish": false,
+    "review_required": false,
+    "obligations": [
+      "attribution",
+      "share_alike"
+    ],
+    "reasons": [
+      "standardized Creative Commons marker"
+    ],
+    "assessed_at": "2026-08-02T07:51:28.837000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_statement",
+    "statement": "AI-suggested lead (confidence: medium); rights evidence pending verification.",
+    "ai_claimed_statement": "CC BY-SA 3.0 (Wikisource transcription of a public-domain original)",
+    "ai_claimed_license_url": "https://creativecommons.org/licenses/by-sa/3.0/"
+  },
+  "file_sha256": "sha256:4edc3e74ed24bd27f1fe275d17bb175e400b5e01ed716b14129c7b3895609094"
+}

@@ -1,0 +1,12 @@
+{
+  "recipe_id": "html-index-crawl",
+  "recipe_version": "1.0.0",
+  "extracted_at": "2026-08-02T08:06:33.770Z",
+  "pages_fetched": 191,
+  "warnings": [
+    "https://www.sacred-texts.com/shi/kj/kj000.htm: page fetch failed (403)"
+  ],
+  "source_url": "https://www.sacred-texts.com/shi/kj/index.htm",
+  "markdown_bytes": 1690806,
+  "ocr_language": null
+}
