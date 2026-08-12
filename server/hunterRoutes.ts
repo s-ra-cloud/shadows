@@ -25,6 +25,7 @@ const MAX_CORPUS_LIST_BYTES = 512 * 1024;
 import { parseCorpusList, CorpusListParseError } from "./hunterCorpusList";
 import { robotsAllowsUrl } from "./sourceHunter/robots";
 import { getHunterRegion } from "@shared/hunterRegions";
+import { traditionForWork } from "@shared/traditions";
 import {
   loadDefaultPolicy,
   DATA_DIR,
@@ -1293,8 +1294,11 @@ export function registerHunterRoutes(
           const file = (record.file ?? {}) as Record<string, unknown>;
           const rawPath = path.resolve(CORPUS_ROOT, row.path);
           const readable = hasReadable(rawPath) ? await loadProvenance(rawPath) : null;
+          const tradition = traditionForWork(row.workId);
           return {
             ...row,
+            title: typeof record.title === "string" && record.title.trim() ? record.title : null,
+            tradition: { id: tradition.id, label: tradition.label, emoji: tradition.emoji, order: tradition.order },
             readable,
             suggested_recipe: readable
               ? null

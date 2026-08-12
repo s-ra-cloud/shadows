@@ -1809,6 +1809,21 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
   const items = Array.isArray(corpus) ? corpus : [];
   const totalSize = items.reduce((acc, item) => acc + (item.byteCount || 0), 0);
 
+  // Group rows by religious tradition (resolved server-side from the curated map).
+  const groups = (() => {
+    const byId = new Map<string, { tradition: any; files: any[] }>();
+    for (const file of items) {
+      const tradition = file.tradition ?? { id: "unclassified", label: "Unclassified", emoji: "❓", order: 99 };
+      let group = byId.get(tradition.id);
+      if (!group) {
+        group = { tradition, files: [] };
+        byId.set(tradition.id, group);
+      }
+      group.files.push(file);
+    }
+    return Array.from(byId.values()).sort((a, b) => (a.tradition.order ?? 99) - (b.tradition.order ?? 99));
+  })();
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
@@ -1844,11 +1859,28 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#350A8C]/10">
-              {items.map((file: any) => (
+              {groups.map((group) => [
+                <tr key={`tradition-${group.tradition.id}`} className="bg-[#130D30]/60">
+                  <td colSpan={isEditor ? 6 : 5} className="px-4 py-2">
+                    <span
+                      className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#E0DCE6]"
+                      data-testid={`header-tradition-${group.tradition.id}`}
+                    >
+                      <span aria-hidden="true">{group.tradition.emoji}</span>
+                      {group.tradition.label}
+                      <span className="px-1.5 py-0.5 rounded-md bg-[#8F00FF]/15 text-[#8F00FF] text-[11px] font-medium">
+                        {group.files.length}
+                      </span>
+                    </span>
+                  </td>
+                </tr>,
+                ...group.files.map((file: any) => (
                 <tr key={file.id} className="hover:bg-[#130D30]/30 transition-colors">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-[#E0DCE6]">{file.workId}</div>
-                    <div className="text-xs text-[#E0DCE6]/50 font-mono mt-0.5">{file.editionId}</div>
+                    <div className="font-medium text-[#E0DCE6]">{file.title ?? file.workId}</div>
+                    <div className="text-xs text-[#E0DCE6]/50 font-mono mt-0.5">
+                      {file.workId} · {file.editionId}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-[#E0DCE6]/70 uppercase">{file.language}</td>
                   <td className="px-4 py-3">
@@ -1940,7 +1972,8 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
                     </td>
                   )}
                 </tr>
-              ))}
+                )),
+              ])}
             </tbody>
           </table>
         </div>
