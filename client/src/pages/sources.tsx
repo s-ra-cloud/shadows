@@ -462,6 +462,7 @@ interface RegionStats {
   successes: number; // texts downloaded (public or locked)
   failures: number; // metadata_only + failed download attempts
   failedRuns: number;
+  texts: number; // downloaded corpus texts attributed to this region
 }
 
 function successColor(rate: number | null): string {
@@ -487,24 +488,38 @@ function HunterWorldMap({ isEditor }: { isEditor: boolean }) {
       .catch(() => setWorld(null));
   }, []);
 
-  const { data: cycles } = useQuery<any[]>({
+  const { data: mapData } = useQuery<any>({
     queryKey: ["/api/hunter/map"],
-    refetchInterval: (q) =>
-      Array.isArray(q.state.data) && q.state.data.some((r: any) => r.status === "running")
-        ? 2000
-        : false,
+    refetchInterval: (q) => {
+      const d: any = q.state.data;
+      const runs = Array.isArray(d) ? d : d?.runs;
+      return Array.isArray(runs) && runs.some((r: any) => r.status === "running") ? 2000 : false;
+    },
   });
-  const running = Array.isArray(cycles) && cycles.some((r) => r.status === "running");
+  // The endpoint returns { runs, region_texts }; tolerate the older bare
+  // array shape so a stale client/server mix never blanks the map.
+  const cycles: any[] = Array.isArray(mapData) ? mapData : (mapData?.runs ?? []);
+  const regionTexts: Record<string, number> = Array.isArray(mapData)
+    ? {}
+    : (mapData?.region_texts ?? {});
+  const running = cycles.some((r) => r.status === "running");
 
   const statsByRegion = useMemo(() => {
     const map = new Map<string, RegionStats>();
-    for (const run of Array.isArray(cycles) ? cycles : []) {
+    const emptyStats = (): RegionStats => ({
+      cycles: 0,
+      successes: 0,
+      failures: 0,
+      failedRuns: 0,
+      texts: 0,
+    });
+    for (const run of cycles) {
       const result = run.result ?? {};
       // Region is stored under result.scope (seeded at creation) for all runs.
       // Fall back to progress.region for any legacy rows written before this fix.
       const regionId = result.scope?.region?.id ?? result.progress?.region?.id;
       if (!regionId) continue;
-      const stats = map.get(regionId) ?? { cycles: 0, successes: 0, failures: 0, failedRuns: 0 };
+      const stats = map.get(regionId) ?? emptyStats();
       stats.cycles += 1;
       if (run.status === "failed") stats.failedRuns += 1;
       // Aggregate download/failure counters when available (completed runs).
@@ -512,8 +527,15 @@ function HunterWorldMap({ isEditor }: { isEditor: boolean }) {
       stats.failures += (result.metadata_only ?? 0) + (result.failed ?? 0) + (result.invalid ?? 0);
       map.set(regionId, stats);
     }
+    // Downloaded corpus texts count toward the map even when their run had no
+    // region (the server attributes them per region for us).
+    for (const [regionId, count] of Object.entries(regionTexts)) {
+      const stats = map.get(regionId) ?? emptyStats();
+      stats.texts += count;
+      map.set(regionId, stats);
+    }
     return map;
-  }, [cycles]);
+  }, [cycles, regionTexts]);
 
   const width = 960;
   const height = 480;
@@ -581,7 +603,9 @@ function HunterWorldMap({ isEditor }: { isEditor: boolean }) {
               const stats = statsByRegion.get(region.id);
               const attempts = (stats?.successes ?? 0) + (stats?.failures ?? 0);
               const rate = stats && attempts > 0 ? stats.successes / attempts : null;
-              const r = 5 + Math.min(10, (stats?.cycles ?? 0) * 2.5);
+              // Size reflects cycles and (more gently) downloaded texts, so
+              // regions with library texts but no tracked cycles still show.
+              const r = 5 + Math.min(10, (stats?.cycles ?? 0) * 2.5 + (stats?.texts ?? 0) * 0.5);
               const isActive = selected?.id === region.id || hovered === region.id;
               return (
                 <g
@@ -603,7 +627,7 @@ function HunterWorldMap({ isEditor }: { isEditor: boolean }) {
                   />
                   {stats && (
                     <text y={4} textAnchor="middle" fontSize={10} fontWeight={700} fill="#0B0626">
-                      {stats.cycles}
+                      {stats.cycles > 0 ? stats.cycles : stats.texts}
                     </text>
                   )}
                   {isActive && (
@@ -652,6 +676,11 @@ function HunterWorldMap({ isEditor }: { isEditor: boolean }) {
                   <div className="text-[#E0DCE6]/50">blocked/failed</div>
                 </div>
               </div>
+              {(selectedStats?.texts ?? 0) > 0 && (
+                <div className="text-xs text-[#E0DCE6]/60" data-testid="text-region-library-texts">
+                  {selectedStats!.texts} text{selectedStats!.texts === 1 ? "" : "s"} in the library from this region
+                </div>
+              )}
               {selectedRate !== null && (
                 <div className="text-xs text-[#E0DCE6]/60">
                   Success rate:{" "}

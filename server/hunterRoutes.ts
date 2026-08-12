@@ -25,6 +25,7 @@ const MAX_CORPUS_LIST_BYTES = 512 * 1024;
 import { parseCorpusList, CorpusListParseError } from "./hunterCorpusList";
 import { robotsAllowsUrl } from "./sourceHunter/robots";
 import { getHunterRegion } from "@shared/hunterRegions";
+import { inferRegion } from "@shared/regionInference";
 import { traditionForWork, chronologyForWork, familyForTradition } from "@shared/traditions";
 import {
   loadDefaultPolicy,
@@ -450,6 +451,68 @@ export async function ensureHunterProvenanceSchema(): Promise<void> {
     )
   `);
 }
+
+/**
+ * Startup backfill: assign a mythological region to cycle runs that were
+ * created without one (legacy runs, free-query cycles, corpus-list cycles).
+ *
+ * Idempotent: runs that already carry `scope.region` or a previous inference
+ * verdict (`scope.regionInference`) are skipped. Runs whose region genuinely
+ * cannot be inferred are marked "unresolved" — not guessed — so the next boot
+ * skips them too.
+ */
+export async function backfillCycleRegionAssignments(): Promise<{
+  scanned: number;
+  assigned: number;
+  unresolved: number;
+  skipped: number;
+}> {
+  const runs = await db.select().from(hunterRuns).where(eq(hunterRuns.kind, "cycle"));
+  let assigned = 0;
+  let unresolved = 0;
+  let skipped = 0;
+  for (const run of runs) {
+    const result = (run.result ?? {}) as Record<string, unknown>;
+    const scope = (result.scope ?? {}) as Record<string, unknown>;
+    const region = scope.region as { id?: string } | undefined;
+    if (region?.id || scope.regionInference) {
+      skipped += 1;
+      continue;
+    }
+    // Evidence: the run's own scope text plus metadata of texts it downloaded.
+    const targetWork = scope.targetWork as Record<string, unknown> | undefined;
+    const parts: (string | null | undefined)[] = [
+      scope.query as string | undefined,
+      scope.corpusList as string | undefined,
+      targetWork?.title as string | undefined,
+      targetWork?.author as string | undefined,
+    ];
+    const files = await db
+      .select({ record: hunterCorpusFiles.record })
+      .from(hunterCorpusFiles)
+      .where(eq(hunterCorpusFiles.runId, run.id));
+    for (const file of files) {
+      const record = file.record as Record<string, unknown> | null;
+      if (!record) continue;
+      parts.push(
+        record.title as string | undefined,
+        record.author as string | undefined,
+        record.source_id as string | undefined,
+      );
+    }
+    const inferred = inferRegion(parts);
+    const newScope = inferred
+      ? { ...scope, region: inferred, regionInferred: true, regionInference: "inferred" }
+      : { ...scope, regionInference: "unresolved" };
+    await db
+      .update(hunterRuns)
+      .set({ result: { ...result, scope: newScope } })
+      .where(eq(hunterRuns.id, run.id));
+    if (inferred) assigned += 1;
+    else unresolved += 1;
+  }
+  return { scanned: runs.length, assigned, unresolved, skipped };
+}
 /**
  * Re-queue extraction jobs that were interrupted by a server restart, when it
  * is safe to do so: the raw file still exists and has no readable sibling yet.
@@ -546,10 +609,20 @@ export function registerHunterRoutes(
       })
       .catch((e) => console.error("readable backfill failed:", errMessage(e)));
   }
-  // Best-effort schema upgrade so pre-provenance databases don't 500.
-  ensureHunterProvenanceSchema().catch((e) =>
-    console.error("hunter provenance schema upgrade failed:", errMessage(e)),
-  );
+  // Best-effort schema upgrade so pre-provenance databases don't 500, then
+  // backfill map regions for cycle runs created before region inference
+  // existed (runs after run_id exists so downloaded texts count as evidence).
+  ensureHunterProvenanceSchema()
+    .catch((e) => console.error("hunter provenance schema upgrade failed:", errMessage(e)))
+    .then(() => backfillCycleRegionAssignments())
+    .then(({ scanned, assigned, unresolved }) => {
+      if (assigned || unresolved) {
+        console.log(
+          `hunter region backfill: ${scanned} cycle runs scanned, ${assigned} assigned, ${unresolved} unresolved`,
+        );
+      }
+    })
+    .catch((e) => console.error("hunter region backfill failed:", errMessage(e)));
   // Runs execute in-process, so any row still marked "running" at startup was
   // orphaned by a previous process (restart/redeploy). Mark them failed so the
   // UI doesn't show a phantom "Running" cycle with a Stop button that 409s.
@@ -755,11 +828,18 @@ export function registerHunterRoutes(
     if (!query && region) query = region.terms;
     if (!query) return res.status(400).json({ message: "Provide a search query for the cycle" });
     const limitRaw = Number(req.body?.limit);
+    // Free-query launches get a best-effort inferred region so they show up
+    // on the world map without editor action (left off when ambiguous).
+    const inferredRegion = region ? null : inferRegion(query);
     const scope: CycleScope = {
       query,
       limit: Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 25) : 10,
       useAi: req.body?.use_ai !== false,
-      ...(region ? { region: { id: region.id, label: region.label } } : {}),
+      ...(region
+        ? { region: { id: region.id, label: region.label } }
+        : inferredRegion
+          ? { region: inferredRegion, regionInferred: true }
+          : {}),
     };
     const runId = await createRun("cycle");
     // Seed the result with scope immediately so region is never lost even on failure.
@@ -789,6 +869,26 @@ export function registerHunterRoutes(
       await finishRun(runId, false, { scope }, errMessage(e));
     }
   });
+
+  /**
+   * Scope for a corpus-list cycle: standard query/corpusList fields plus a
+   * region inferred from the list name and item titles/authors when the
+   * evidence is unambiguous.
+   */
+  function buildCorpusListScope(list: {
+    name: string;
+    items: { title: string; author?: string | null }[];
+  }): CycleScope {
+    const inferred = inferRegion([
+      list.name,
+      ...list.items.map((item) => `${item.title} ${item.author ?? ""}`),
+    ]);
+    return {
+      query: `Corpus list: ${list.name}`,
+      corpusList: list.name,
+      ...(inferred ? { region: inferred, regionInferred: true } : {}),
+    };
+  }
 
   /**
    * Corpus-list hunting cycle: the editor uploads a list of sources
@@ -821,6 +921,13 @@ export function registerHunterRoutes(
       throw e;
     }
     const runId = await createRun("cycle");
+    // `scope` keeps the run shape compatible with the standard cycle contract
+    // the UI reads. Region is inferred from the list name and item metadata so
+    // corpus cycles appear on the world map without editor action.
+    const scope: CycleScope = buildCorpusListScope(list);
+    // Seed the result with scope immediately so the map sees the region while
+    // the cycle is still running and even if it fails.
+    await db.update(hunterRuns).set({ result: { scope } }).where(eq(hunterRuns.id, runId));
     // Long operation: respond immediately; the UI polls the run until done.
     res.json({
       run: { id: runId, status: "running" },
@@ -832,7 +939,7 @@ export function registerHunterRoutes(
       validatePolicy(policy);
       const registry = await loadActiveRegistry();
       const mirroredRecords: Record<string, unknown>[] = [];
-      const store = makeCycleStore(runId, mirroredRecords);
+      const store = makeCycleStore(runId, mirroredRecords, scope);
       const result = await runCorpusListCycle({
         list,
         policy,
@@ -846,9 +953,7 @@ export function registerHunterRoutes(
       activeCorpusRunIds.delete(runId);
       const autoExtraction = await autoExtractDownloaded(mirroredRecords);
       await finishRun(runId, true, {
-        // `scope` keeps the completed-run shape compatible with the standard
-        // cycle contract the UI reads (result.scope drives the summary cards).
-        scope: { query: `Corpus list: ${list.name}`, corpusList: list.name },
+        scope,
         corpus_list: result.corpus_list,
         ...result.summary,
         auto_extraction: autoExtraction,
@@ -856,7 +961,8 @@ export function registerHunterRoutes(
     } catch (e) {
       corpusStopRequests.delete(runId);
       activeCorpusRunIds.delete(runId);
-      await finishRun(runId, false, null, errMessage(e));
+      // Preserve scope on failure so the region remains visible on the map.
+      await finishRun(runId, false, { scope }, errMessage(e));
     }
   });
 
@@ -959,6 +1065,18 @@ export function registerHunterRoutes(
     const list = { name: retryName, items: retryItems };
 
     const newRunId = await createRun("cycle");
+    // Same region seeding as a fresh corpus-list cycle, but prefer the
+    // original run's region (explicit or inferred) when it has one.
+    const originalScope = (existingResult?.scope ?? {}) as Record<string, unknown>;
+    const originalRegion = originalScope.region as { id: string; label: string } | undefined;
+    const retryScope: CycleScope = originalRegion?.id
+      ? {
+          ...buildCorpusListScope(list),
+          region: originalRegion,
+          ...(originalScope.regionInferred ? { regionInferred: true } : {}),
+        }
+      : buildCorpusListScope(list);
+    await db.update(hunterRuns).set({ result: { scope: retryScope } }).where(eq(hunterRuns.id, newRunId));
     res.json({
       run: { id: newRunId, status: "running" },
       corpus_list: { name: list.name, items: list.items.length },
@@ -970,7 +1088,7 @@ export function registerHunterRoutes(
       validatePolicy(policy);
       const registry = await loadActiveRegistry();
       const mirroredRecords: Record<string, unknown>[] = [];
-      const store = makeCycleStore(newRunId, mirroredRecords);
+      const store = makeCycleStore(newRunId, mirroredRecords, retryScope);
       const result = await runCorpusListCycle({
         list,
         policy,
@@ -984,7 +1102,7 @@ export function registerHunterRoutes(
       activeCorpusRunIds.delete(newRunId);
       const autoExtraction = await autoExtractDownloaded(mirroredRecords);
       await finishRun(newRunId, true, {
-        scope: { query: `Corpus list: ${list.name}`, corpusList: list.name },
+        scope: retryScope,
         corpus_list: result.corpus_list,
         ...result.summary,
         auto_extraction: autoExtraction,
@@ -992,7 +1110,8 @@ export function registerHunterRoutes(
     } catch (e) {
       corpusStopRequests.delete(newRunId);
       activeCorpusRunIds.delete(newRunId);
-      await finishRun(newRunId, false, null, errMessage(e));
+      // Preserve scope on failure so the region remains visible on the map.
+      await finishRun(newRunId, false, { scope: retryScope }, errMessage(e));
     }
   });
 
@@ -1019,16 +1138,46 @@ export function registerHunterRoutes(
   });
 
   // Map endpoint: returns ALL cycle runs (no row limit) with only the scalar
-  // summary fields the world map needs. Payload stays small even for hundreds
-  // of runs because bulky per-record entries are never included.
+  // summary fields the world map needs, plus per-region counts of downloaded
+  // corpus texts (region taken from the provenance run when it has one,
+  // otherwise inferred from the text's own record metadata). Payload stays
+  // small even for hundreds of runs because bulky per-record entries are
+  // never included.
   app.get("/api/hunter/map", async (_req, res) => {
     const runs = await db
       .select()
       .from(hunterRuns)
       .where(eq(hunterRuns.kind, "cycle"))
       .orderBy(desc(hunterRuns.id));
-    res.json(
-      runs.map((run) => {
+    // region lookup: run id -> region id (explicit or inferred).
+    const regionByRun = new Map<number, string>();
+    for (const run of runs) {
+      const result = run.result as Record<string, unknown> | null;
+      const scope = result?.scope as Record<string, unknown> | undefined;
+      const region = scope?.region as { id?: string } | undefined;
+      if (region?.id) regionByRun.set(run.id, region.id);
+    }
+    const files = await db
+      .select({
+        runId: hunterCorpusFiles.runId,
+        record: hunterCorpusFiles.record,
+      })
+      .from(hunterCorpusFiles);
+    const regionTexts: Record<string, number> = {};
+    for (const file of files) {
+      let regionId = file.runId != null ? regionByRun.get(file.runId) : undefined;
+      if (!regionId) {
+        const record = file.record as Record<string, unknown> | null;
+        regionId = inferRegion([
+          record?.title as string | undefined,
+          record?.author as string | undefined,
+          record?.source_id as string | undefined,
+        ])?.id;
+      }
+      if (regionId) regionTexts[regionId] = (regionTexts[regionId] ?? 0) + 1;
+    }
+    res.json({
+      runs: runs.map((run) => {
         const result = run.result as Record<string, unknown> | null;
         // Extract only the fields the map needs; drop entries and other bulk.
         const { scope, downloaded_public, downloaded_locked, metadata_only, failed, invalid } =
@@ -1041,7 +1190,8 @@ export function registerHunterRoutes(
             : null,
         };
       }),
-    );
+      region_texts: regionTexts,
+    });
   });
 
   // ---- Blocker ledger ----------------------------------------------------

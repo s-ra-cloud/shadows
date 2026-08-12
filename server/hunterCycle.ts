@@ -66,6 +66,10 @@ export interface CycleScope {
   useAi?: boolean;
   /** Optional world region the editor scoped this cycle to (map launches). */
   region?: { id: string; label: string };
+  /** True when `region` was inferred from text rather than editor-chosen. */
+  regionInferred?: boolean;
+  /** Name of the uploaded corpus list this cycle was launched from. */
+  corpusList?: string;
   /**
    * Set when the cycle hunts ONE specific work from an uploaded corpus list.
    * Discovery is told to find editions of exactly this work: complete and in

@@ -349,7 +349,10 @@ describe("POST /api/hunter/cycles/corpus — stored run result contract", () => 
     const run = await waitForRun(app, runId);
     expect(run.status).toBe("failed");
     expect(run.error).toMatch(/simulated cycle crash/);
-    expect(run.result).toBeNull();
+    // Scope is preserved on failure so the world map keeps the run's region.
+    const failedScope = (run.result as Record<string, any> | null)?.scope;
+    expect(failedScope?.corpusList).toBe("crash");
+    expect(failedScope?.region?.id).toBe("greece");
   });
 
   it("preserves all CorpusItemStatus variants in the stored items", async () => {
