@@ -1515,10 +1515,10 @@ export function registerHunterRoutes(
           return {
             ...row,
             title: typeof record.title === "string" && record.title.trim() ? record.title : null,
-            tradition: { id: tradition.id, label: tradition.label, emoji: tradition.emoji, order: tradition.order },
+            tradition: { id: tradition.id, label: tradition.label, order: tradition.order },
             family: (() => {
               const family = familyForTradition(tradition.id);
-              return { id: family.id, label: family.label, emoji: family.emoji, order: family.order };
+              return { id: family.id, label: family.label, order: family.order };
             })(),
             readable,
             suggested_recipe: readable

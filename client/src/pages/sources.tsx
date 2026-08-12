@@ -172,7 +172,6 @@ function LibraryTab() {
       return {
         tradition,
         label: sectionEntries[0]?.traditionLabel ?? info.label,
-        emoji: info.emoji,
         order: info.order,
         family: familyInfo,
         entries: sectionEntries.slice().sort((a, b) => {
@@ -216,7 +215,7 @@ function LibraryTab() {
               style={{ fontFamily: "'Cinzel Decorative', serif" }}
               data-testid={`text-library-family-${familySection.family.id}`}
             >
-              {familySection.family.emoji} {familySection.family.label}
+              {familySection.family.label}
             </h3>
             <span className="text-xs text-[#E0DCE6]/40">
               {familySection.sections.reduce((n, s) => n + s.entries.length, 0)}{" "}
@@ -231,7 +230,7 @@ function LibraryTab() {
               style={{ fontFamily: "'Cinzel Decorative', serif" }}
               data-testid={`text-library-section-${section.tradition}`}
             >
-              {section.emoji} {section.label}
+              {section.label}
             </h3>
             <span className="text-xs text-[#E0DCE6]/40">
               {section.entries.length} {section.entries.length === 1 ? "text" : "texts"}
@@ -1861,8 +1860,8 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
   const familyGroups = (() => {
     const byId = new Map<string, { tradition: any; family: any; files: any[] }>();
     for (const file of items) {
-      const tradition = file.tradition ?? { id: "unclassified", label: "Unclassified", emoji: "❓", order: 99 };
-      const family = file.family ?? { id: "unclassified", label: "Unclassified", emoji: "❓", order: 99 };
+      const tradition = file.tradition ?? { id: "unclassified", label: "Unclassified", order: 99 };
+      const family = file.family ?? { id: "unclassified", label: "Unclassified", order: 99 };
       let group = byId.get(tradition.id);
       if (!group) {
         group = { tradition, family, files: [] };
@@ -1932,7 +1931,6 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
                       className="inline-flex items-center gap-2 text-sm font-bold text-[#E0DCE6]"
                       data-testid={`header-family-${familyGroup.family.id}`}
                     >
-                      <span aria-hidden="true">{familyGroup.family.emoji}</span>
                       {familyGroup.family.label}
                       <span className="px-1.5 py-0.5 rounded-md bg-[#8F00FF]/15 text-[#8F00FF] text-[11px] font-medium">
                         {familyGroup.groups.reduce((n: number, g: any) => n + g.files.length, 0)}
@@ -1947,7 +1945,6 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
                       className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#E0DCE6]"
                       data-testid={`header-tradition-${group.tradition.id}`}
                     >
-                      <span aria-hidden="true">{group.tradition.emoji}</span>
                       {group.tradition.label}
                       <span className="px-1.5 py-0.5 rounded-md bg-[#8F00FF]/15 text-[#8F00FF] text-[11px] font-medium">
                         {group.files.length}

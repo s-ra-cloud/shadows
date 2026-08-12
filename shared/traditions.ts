@@ -12,8 +12,6 @@ export interface TraditionInfo {
   id: string;
   /** Human-readable section header. */
   label: string;
-  /** Emoji shown next to the section header. */
-  emoji: string;
   /** Display order on the Corpus tab (lower = earlier). */
   order: number;
 }
@@ -23,8 +21,6 @@ export interface TraditionFamilyInfo {
   id: string;
   /** Human-readable family header. */
   label: string;
-  /** Emoji shown next to the family header. */
-  emoji: string;
   /** Display order across families (lower = earlier). */
   order: number;
 }
@@ -37,14 +33,13 @@ export const FAMILIES: Record<string, TraditionFamilyInfo> = {
   "ancient-near-east-mediterranean": {
     id: "ancient-near-east-mediterranean",
     label: "Ancient Near East & Mediterranean",
-    emoji: "🏺",
     order: 1,
   },
-  abrahamic: { id: "abrahamic", label: "Abrahamic", emoji: "🕊️", order: 2 },
-  dharmic: { id: "dharmic", label: "Dharmic", emoji: "🕉️", order: 3 },
-  japanese: { id: "japanese", label: "Japanese", emoji: "🗾", order: 4 },
-  scholarly: { id: "scholarly", label: "Scholarly", emoji: "🔍", order: 5 },
-  unclassified: { id: "unclassified", label: "Unclassified", emoji: "❓", order: 99 },
+  abrahamic: { id: "abrahamic", label: "Abrahamic", order: 2 },
+  dharmic: { id: "dharmic", label: "Dharmic", order: 3 },
+  japanese: { id: "japanese", label: "Japanese", order: 4 },
+  scholarly: { id: "scholarly", label: "Scholarly", order: 5 },
+  unclassified: { id: "unclassified", label: "Unclassified", order: 99 },
 };
 
 export const UNCLASSIFIED_FAMILY = FAMILIES.unclassified;
@@ -65,17 +60,17 @@ export const TRADITION_FAMILIES: Record<string, string> = {
 };
 
 export const TRADITIONS: Record<string, TraditionInfo> = {
-  mesopotamian: { id: "mesopotamian", label: "Ancient Mesopotamian", emoji: "𒀭", order: 1 },
-  greek: { id: "greek", label: "Ancient Greek", emoji: "🏛️", order: 2 },
-  judaism: { id: "judaism", label: "Judaism", emoji: "✡️", order: 3 },
-  christianity: { id: "christianity", label: "Christianity", emoji: "✝️", order: 4 },
-  islam: { id: "islam", label: "Islam", emoji: "☪️", order: 5 },
-  buddhism: { id: "buddhism", label: "Buddhism", emoji: "☸️", order: 6 },
-  shinto: { id: "shinto", label: "Shinto / Japanese Mythology", emoji: "⛩️", order: 7 },
-  ainu: { id: "ainu", label: "Ainu", emoji: "🐻", order: 8 },
-  "japanese-historical": { id: "japanese-historical", label: "Japanese Historical Literature", emoji: "📜", order: 9 },
-  scholarly: { id: "scholarly", label: "Scholarly / Comparative", emoji: "🔍", order: 10 },
-  unclassified: { id: "unclassified", label: "Unclassified", emoji: "❓", order: 99 },
+  mesopotamian: { id: "mesopotamian", label: "Ancient Mesopotamian", order: 1 },
+  greek: { id: "greek", label: "Ancient Greek", order: 2 },
+  judaism: { id: "judaism", label: "Judaism", order: 3 },
+  christianity: { id: "christianity", label: "Christianity", order: 4 },
+  islam: { id: "islam", label: "Islam", order: 5 },
+  buddhism: { id: "buddhism", label: "Buddhism", order: 6 },
+  shinto: { id: "shinto", label: "Shinto / Japanese Mythology", order: 7 },
+  ainu: { id: "ainu", label: "Ainu", order: 8 },
+  "japanese-historical": { id: "japanese-historical", label: "Japanese Historical Literature", order: 9 },
+  scholarly: { id: "scholarly", label: "Scholarly / Comparative", order: 10 },
+  unclassified: { id: "unclassified", label: "Unclassified", order: 99 },
 };
 
 export const UNCLASSIFIED_TRADITION = TRADITIONS.unclassified;
