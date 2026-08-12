@@ -468,7 +468,7 @@ function HunterWorldMap({ isEditor }: { isEditor: boolean }) {
   }, []);
 
   const { data: cycles } = useQuery<any[]>({
-    queryKey: ["/api/hunter/cycles"],
+    queryKey: ["/api/hunter/map"],
     refetchInterval: (q) =>
       Array.isArray(q.state.data) && q.state.data.some((r: any) => r.status === "running")
         ? 2000
@@ -480,16 +480,16 @@ function HunterWorldMap({ isEditor }: { isEditor: boolean }) {
     const map = new Map<string, RegionStats>();
     for (const run of Array.isArray(cycles) ? cycles : []) {
       const result = run.result ?? {};
-      const summary = result.scope ? result : null;
-      const regionId = summary?.scope?.region?.id ?? result.progress?.region?.id;
+      // Region is stored under result.scope (seeded at creation) for all runs.
+      // Fall back to progress.region for any legacy rows written before this fix.
+      const regionId = result.scope?.region?.id ?? result.progress?.region?.id;
       if (!regionId) continue;
       const stats = map.get(regionId) ?? { cycles: 0, successes: 0, failures: 0, failedRuns: 0 };
       stats.cycles += 1;
       if (run.status === "failed") stats.failedRuns += 1;
-      if (summary) {
-        stats.successes += (summary.downloaded_public ?? 0) + (summary.downloaded_locked ?? 0);
-        stats.failures += (summary.metadata_only ?? 0) + (summary.failed ?? 0) + (summary.invalid ?? 0);
-      }
+      // Aggregate download/failure counters when available (completed runs).
+      stats.successes += (result.downloaded_public ?? 0) + (result.downloaded_locked ?? 0);
+      stats.failures += (result.metadata_only ?? 0) + (result.failed ?? 0) + (result.invalid ?? 0);
       map.set(regionId, stats);
     }
     return map;
@@ -522,6 +522,7 @@ function HunterWorldMap({ isEditor }: { isEditor: boolean }) {
     onSuccess: (_d, region) => {
       toast({ title: `Hunting cycle launched for ${region.label}` });
       queryClient.invalidateQueries({ queryKey: ["/api/hunter/cycles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/map"] });
     },
     onError: (e: Error) =>
       toast({ title: "Could not launch cycle", description: e.message, variant: "destructive" }),

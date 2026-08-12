@@ -261,7 +261,7 @@ async function loadEntitiesFromDatabase(): Promise<Entity[]> {
  * `mirroredRecords` accumulates every corpus record mirrored during the run
  * (used afterwards for auto-extraction).
  */
-function makeCycleStore(runId: number, mirroredRecords: Record<string, unknown>[]): CycleStore {
+function makeCycleStore(runId: number, mirroredRecords: Record<string, unknown>[], scope?: CycleScope): CycleStore {
   return {
     async existingEditionIds() {
       const rows = await db
@@ -291,9 +291,11 @@ function makeCycleStore(runId: number, mirroredRecords: Record<string, unknown>[
       });
     },
     async updateProgress(progress) {
+      // Merge scope into every progress write so the region is never lost
+      // even while the cycle is mid-flight.
       await db
         .update(hunterRuns)
-        .set({ result: { progress } })
+        .set({ result: { ...(scope ? { scope } : {}), progress } })
         .where(eq(hunterRuns.id, runId));
     },
     async getScreenVerdicts(keys) {
@@ -695,6 +697,8 @@ export function registerHunterRoutes(
       ...(region ? { region: { id: region.id, label: region.label } } : {}),
     };
     const runId = await createRun("cycle");
+    // Seed the result with scope immediately so region is never lost even on failure.
+    await db.update(hunterRuns).set({ result: { scope } }).where(eq(hunterRuns.id, runId));
     // Long operation: respond immediately; the UI polls the run until done.
     res.json({ run: { id: runId, status: "running" } });
     try {
@@ -702,7 +706,8 @@ export function registerHunterRoutes(
       validatePolicy(policy);
       const registry = await loadActiveRegistry();
       const mirroredRecords: Record<string, unknown>[] = [];
-      const store = makeCycleStore(runId, mirroredRecords);
+      // Pass scope so updateProgress always preserves the region in the result.
+      const store = makeCycleStore(runId, mirroredRecords, scope);
       const summary = await runHuntingCycle({
         scope,
         policy,
@@ -711,9 +716,12 @@ export function registerHunterRoutes(
         store,
       });
       const autoExtraction = await autoExtractDownloaded(mirroredRecords);
-      await finishRun(runId, true, { ...summary, auto_extraction: autoExtraction });
+      // Include scope in the final result so the map can read result.scope.region
+      // even without consulting the seeded row.
+      await finishRun(runId, true, { ...summary, scope, auto_extraction: autoExtraction });
     } catch (e) {
-      await finishRun(runId, false, null, errMessage(e));
+      // Preserve scope on failure so the region remains visible on the map.
+      await finishRun(runId, false, { scope }, errMessage(e));
     }
   });
 
@@ -938,6 +946,32 @@ export function registerHunterRoutes(
           return { ...run, result: rest };
         }
         return run;
+      }),
+    );
+  });
+
+  // Map endpoint: returns ALL cycle runs (no row limit) with only the scalar
+  // summary fields the world map needs. Payload stays small even for hundreds
+  // of runs because bulky per-record entries are never included.
+  app.get("/api/hunter/map", async (_req, res) => {
+    const runs = await db
+      .select()
+      .from(hunterRuns)
+      .where(eq(hunterRuns.kind, "cycle"))
+      .orderBy(desc(hunterRuns.id));
+    res.json(
+      runs.map((run) => {
+        const result = run.result as Record<string, unknown> | null;
+        // Extract only the fields the map needs; drop entries and other bulk.
+        const { scope, downloaded_public, downloaded_locked, metadata_only, failed, invalid } =
+          (result ?? {}) as Record<string, unknown>;
+        return {
+          id: run.id,
+          status: run.status,
+          result: result
+            ? { scope, downloaded_public, downloaded_locked, metadata_only, failed, invalid }
+            : null,
+        };
       }),
     );
   });
