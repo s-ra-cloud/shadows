@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
-import { BookOpen, AlertCircle, ArrowLeft } from "lucide-react";
+import { BookOpen, AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 interface ReaderText {
@@ -9,8 +9,10 @@ interface ReaderText {
   author: string | null;
   translator: string | null;
   language: string | null;
-  text: string;
+  text: string | null;
   markdown: string | null;
+  readable_status?: "ready" | "plain" | "preparing" | "failed";
+  readable_error?: string | null;
 }
 
 export default function ReadPage() {
@@ -22,6 +24,9 @@ export default function ReadPage() {
     queryKey: [`/api/hunter/library/${id}/text`],
     enabled: validId,
     retry: false,
+    // While the readable version is being extracted, poll until it's ready.
+    refetchInterval: (query) =>
+      query.state.data?.readable_status === "preparing" ? 2500 : false,
   });
 
   return (
@@ -78,14 +83,31 @@ export default function ReadPage() {
               >
                 <ReactMarkdown>{data.markdown}</ReactMarkdown>
               </div>
-            ) : (
+            ) : data.readable_status === "preparing" ? (
+              <div
+                className="text-[#E0DCE6]/60 text-sm flex items-center gap-2"
+                data-testid="text-reader-preparing"
+              >
+                <Loader2 size={16} className="animate-spin" /> Preparing readable text… this can
+                take a moment. The page will update automatically.
+              </div>
+            ) : data.readable_status === "failed" ? (
+              <div className="text-amber-400/90 text-sm" data-testid="text-reader-failed">
+                <div className="flex items-center gap-2">
+                  <AlertCircle size={16} /> A readable version of this text couldn't be prepared.
+                </div>
+                {data.readable_error && (
+                  <p className="mt-2 text-[#E0DCE6]/50">{data.readable_error}</p>
+                )}
+              </div>
+            ) : data.text ? (
               <pre
                 className="whitespace-pre-wrap text-[#E0DCE6]/90 text-[15px] leading-relaxed font-serif"
                 data-testid="text-reader-body"
               >
                 {data.text}
               </pre>
-            )}
+            ) : null}
           </>
         ) : null}
       </div>

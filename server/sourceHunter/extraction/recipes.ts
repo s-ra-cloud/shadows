@@ -462,7 +462,118 @@ const ocrCleanupRecipe: ExtractionRecipe = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// 6. MediaWiki revisions-API JSON (Wikisource downloads) → Markdown
+// ---------------------------------------------------------------------------
+
+/** Wikitext content of the first page revision in a MediaWiki API payload, or null. */
+export function mediaWikiRevisionWikitext(payload: Buffer): string | null {
+  try {
+    const doc = JSON.parse(payload.toString("utf-8")) as Record<string, any>;
+    const pages = doc?.query?.pages;
+    if (!pages || typeof pages !== "object") return null;
+    const pageList: any[] = Array.isArray(pages) ? pages : Object.values(pages);
+    for (const page of pageList) {
+      const revisions = page?.revisions;
+      if (!Array.isArray(revisions) || revisions.length === 0) continue;
+      const rev = revisions[0];
+      // rvslots=main puts content under slots.main; older API shapes use "*"
+      // or "content" directly on the revision.
+      const slot = rev?.slots?.main;
+      const content = slot?.["*"] ?? slot?.content ?? rev?.["*"] ?? rev?.content;
+      if (typeof content === "string" && content.trim().length > 0) return content;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** Convert MediaWiki wikitext to plain readable Markdown (best effort). */
+export function wikitextToMarkdown(wikitext: string): string {
+  let text = wikitext;
+  // Comments and references first.
+  text = text.replace(/<!--[\s\S]*?-->/g, " ");
+  text = text.replace(/<ref[^>]*\/>/gi, " ");
+  text = text.replace(/<ref\b[^>]*>[\s\S]*?<\/ref>/gi, " ");
+  // Drop invisible/meta blocks, keep the text inside simple formatting tags.
+  text = text.replace(/<(noinclude|includeonly|gallery|timeline|score|syntaxhighlight|source)\b[^>]*>[\s\S]*?<\/\1>/gi, " ");
+  // Templates ({{...}}), possibly nested: strip innermost repeatedly.
+  for (let i = 0; i < 20 && /\{\{/.test(text); i++) {
+    const next = text.replace(/\{\{[^{}]*\}\}/g, " ");
+    if (next === text) break;
+    text = next;
+  }
+  // Tables.
+  text = text.replace(/^\{\|[\s\S]*?^\|\}/gm, " ");
+  // Files, images, categories, interwiki links.
+  text = text.replace(/\[\[(?:File|Image|Category)[^\]]*(?:\[\[[^\]]*\]\][^\]]*)*\]\]/gi, " ");
+  // Wiki links: [[target|label]] → label, [[target]] → target.
+  text = text.replace(/\[\[[^\]|]*\|([^\]]+)\]\]/g, "$1");
+  text = text.replace(/\[\[([^\]]+)\]\]/g, "$1");
+  // External links: [url label] → label, bare [url] → removed.
+  text = text.replace(/\[https?:\/\/[^\s\]]+\s+([^\]]+)\]/g, "$1");
+  text = text.replace(/\[https?:\/\/[^\s\]]+\]/g, " ");
+  // Headings: == Title == → ## Title (level = number of '='').
+  text = text.replace(/^(={2,6})\s*(.*?)\s*\1\s*$/gm, (_m, eq: string, title: string) => {
+    return `${"#".repeat(Math.min(eq.length, 6))} ${title}`;
+  });
+  // Bold/italic.
+  text = text.replace(/'''''([\s\S]*?)'''''/g, "***$1***");
+  text = text.replace(/'''([\s\S]*?)'''/g, "**$1**");
+  text = text.replace(/''([\s\S]*?)''/g, "*$1*");
+  // Leftover HTML: <br> to newline, then drop remaining tags.
+  text = text.replace(/<br\s*\/?>/gi, "\n");
+  text = text.replace(/<\/?[a-z][^>]*>/gi, " ");
+  // Entities (a small common subset).
+  text = text
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#(\d+);/g, (_m, n) => String.fromCodePoint(Number(n)));
+  // Tidy whitespace: collapse trailing spaces and >2 blank lines.
+  text = text
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+$/g, "").replace(/[ \t]{2,}/g, " "))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  return text;
+}
+
+const wikisourceJsonRecipe: ExtractionRecipe = {
+  id: "mediawiki-revision-json",
+  version: "1.0.0",
+  label: "MediaWiki revisions JSON (Wikisource)",
+  description:
+    "For a MediaWiki revisions-API JSON payload (Wikisource downloads): pulls the page's wikitext out of the API envelope and converts it to readable Markdown.",
+  suitability(input) {
+    if (!/\.json$/i.test(input.path) && input.contentType !== "application/json") return 0;
+    return mediaWikiRevisionWikitext(input.payload) !== null ? 95 : 0;
+  },
+  async run(ctx) {
+    const wikitext = mediaWikiRevisionWikitext(ctx.payload);
+    if (!wikitext) {
+      throw new Error("The JSON payload does not contain a MediaWiki page revision.");
+    }
+    const markdown = wikitextToMarkdown(wikitext);
+    if (markdown.replace(/\s+/g, " ").length < MINIMUM_DOCUMENT_CHARS) {
+      throw new Error("The wikitext contains almost no readable text after conversion.");
+    }
+    return {
+      // Prepend the title unless the document already opens with an H1
+      // (deeper section headings alone shouldn't suppress it).
+      markdown: ctx.title && !/^#\s/.test(markdown) ? `# ${ctx.title}\n\n${markdown}` : markdown,
+      pagesFetched: 0,
+      warnings: [],
+    };
+  },
+};
+
 export const RECIPES: ExtractionRecipe[] = [
+  wikisourceJsonRecipe,
   htmlIndexRecipe,
   htmlSingleRecipe,
   pdfRecipe,

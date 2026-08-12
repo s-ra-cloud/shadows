@@ -281,6 +281,7 @@ function LibraryTab() {
     </div>
   );
 }
+
 export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: boolean; initialTab?: HunterTab }) {
   const [activeHunterTab, setActiveHunterTab] = useState<HunterTab>(initialTab);
 

@@ -227,6 +227,27 @@ export async function autoExtractDownloaded(
   return summary;
 }
 
+/**
+ * True when stored corpus bytes are markup (HTML/XML/JSON) rather than plain
+ * readable text. Readers must never see markup — such files need an extracted
+ * readable sibling first.
+ */
+export function looksLikeMarkup(relativePath: string, content: string): boolean {
+  if (/\.(html?|xml|json|epub|pdf|docx)$/i.test(relativePath)) return true;
+  const head = content.slice(0, 2000).trimStart();
+  if (/^(<!doctype|<html|<\?xml|<head|<body)/i.test(head)) return true;
+  if (/^[\[{]/.test(head)) {
+    try {
+      JSON.parse(content);
+      return true;
+    } catch {
+      /* not JSON after all */
+    }
+  }
+  // Tag-dense content (script soup) even without a DOCTYPE.
+  const tags = (head.match(/<[a-z!/][^>]*>/gi) ?? []).length;
+  return tags >= 10;
+}
 const ADAPTERS: Record<string, () => SourceAdapter> = {
   plain_text: () => new PlainTextAdapter(),
   legacy_jsonl: () => new LegacyJsonlAdapter(),
@@ -511,6 +532,20 @@ export function registerHunterRoutes(
   reQueueInterruptedJobs(recoveredJobs).catch((e) =>
     console.error("reQueueInterruptedJobs failed:", errMessage(e)),
   );
+  // Backfill readable siblings for files downloaded before extraction existed
+  // (throttled, one job at a time). Runs in the background at startup so the
+  // library becomes readable without editors re-extracting files one by one.
+  if (process.env.NODE_ENV !== "test") {
+    backfillMissingReadables()
+      .then((summary) => {
+        if (summary.queued > 0 || summary.failed.length > 0) {
+          console.log(
+            `readable backfill: queued ${summary.queued}, skipped ${summary.skipped}, failed ${summary.failed.length}`,
+          );
+        }
+      })
+      .catch((e) => console.error("readable backfill failed:", errMessage(e)));
+  }
   // Best-effort schema upgrade so pre-provenance databases don't 500.
   ensureHunterProvenanceSchema().catch((e) =>
     console.error("hunter provenance schema upgrade failed:", errMessage(e)),
@@ -1416,6 +1451,19 @@ export function registerHunterRoutes(
     }
   });
 
+  // Editor action: scan the corpus for files with no readable sibling and
+  // queue extraction for them (throttled, one at a time). Responds when the
+  // pass completes — with the default limit this stays a bounded batch.
+  app.post("/api/hunter/extraction/backfill", requireEditor, async (req, res) => {
+    try {
+      const rawLimit = Number(req.body?.limit);
+      const limit = Number.isInteger(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 100) : undefined;
+      res.json(await backfillMissingReadables({ limit }));
+    } catch (e) {
+      res.status(500).json({ message: errMessage(e) });
+    }
+  });
+
   app.get("/api/hunter/corpus/:id/extract/status", requireEditor, (req, res) => {
     const id = parseInt(String(req.params.id));
     if (!Number.isInteger(id)) return res.status(400).json({ message: "Invalid id" });
@@ -1645,19 +1693,29 @@ export function registerHunterRoutes(
       const text = await fs.readFile(resolved, "utf-8").catch(() => null);
       if (text === null) return res.status(404).json({ message: "Text not found" });
       // Prefer the extracted readable Markdown when one exists; the raw
-      // download stays available as a fallback.
+      // download stays available as a fallback for genuine plain text only.
       const markdown = hasReadable(resolved)
         ? await fs.readFile(readablePaths(resolved).markdown, "utf-8").catch(() => null)
         : null;
-      res.json({
+      const base = {
         id: row.id,
         title: (record.title as string | undefined) ?? row.editionId,
         author: (record.author as string | undefined) ?? null,
         translator: (record.translator as string | undefined) ?? null,
         language: row.language,
-        text,
-        markdown,
-      });
+      };
+      if (markdown !== null) {
+        return res.json({ ...base, text: null, markdown, readable_status: "ready" });
+      }
+      if (!looksLikeMarkup(row.path, text)) {
+        // Genuine plain text: safe to show the raw bytes directly.
+        return res.json({ ...base, text, markdown: null, readable_status: "plain" });
+      }
+      // Markup (HTML/JSON/XML...) with no readable sibling: never show the
+      // raw bytes to readers. Queue extraction in the background so the
+      // readable version appears shortly, and tell the client to poll.
+      const status = await queueReaderExtraction(row, resolved);
+      return res.json({ ...base, text: null, markdown: null, ...status });
     } catch (e) {
       res.status(500).json({ message: errMessage(e) });
     }
@@ -1785,4 +1843,117 @@ export function registerHunterRoutes(
       res.status(500).json({ message: errMessage(e) });
     }
   });
+}
+
+export interface ReadableBackfillSummary {
+  scanned: number;
+  queued: number;
+  skipped: number;
+  failed: { id: number; path: string; error: string }[];
+}
+
+/**
+ * Queue a background extraction for a corpus file a reader requested that has
+ * no readable sibling yet. Reuses the existing extraction job machinery.
+ * Returns the readable status to report to the reader:
+ *   - preparing: an extraction is running (just started or already in flight)
+ *   - failed:    the last extraction errored, or no recipe applies
+ */
+async function queueReaderExtraction(
+  row: typeof hunterCorpusFiles.$inferSelect,
+  rawAbsolutePath: string,
+): Promise<{ readable_status: "preparing" | "failed"; readable_error: string | null }> {
+  const existing = getExtractionJob(row.id);
+  if (existing?.status === "running") {
+    return { readable_status: "preparing", readable_error: null };
+  }
+  if (existing?.status === "error" || existing?.status === "cancelled" || existing?.status === "interrupted") {
+    // Don't retry automatically in a loop; editors can re-extract manually.
+    return {
+      readable_status: "failed",
+      readable_error: existing.error ?? "The last extraction did not finish.",
+    };
+  }
+  const record = (row.record ?? {}) as Record<string, unknown>;
+  const file = (record.file ?? {}) as Record<string, unknown>;
+  const sourceReference = (record.source_reference as string | undefined) ?? null;
+  try {
+    await startExtraction({
+      corpusFileId: row.id,
+      rawAbsolutePath,
+      recipeId: null,
+      contentType: (file.content_type as string | undefined) ?? null,
+      sourceUrl: sourceReference && /^https:\/\//.test(sourceReference) ? sourceReference : null,
+      title: (record.title as string | undefined) ?? null,
+      locked: row.partition === "locked",
+      workLanguage: row.language ?? ((record.language as string | undefined) ?? null),
+    });
+    return { readable_status: "preparing", readable_error: null };
+  } catch (e) {
+    return { readable_status: "failed", readable_error: errMessage(e) };
+  }
+}
+
+/**
+ * Backfill readable siblings for corpus files downloaded before auto
+ * extraction existed (including `already_present` re-downloads that
+ * auto-extraction skips). Plain-text files need no sibling and are skipped.
+ * Jobs run one at a time — each extraction is awaited before the next is
+ * queued — so a large library never floods the process or remote sites.
+ */
+export async function backfillMissingReadables(
+  options: { limit?: number } = {},
+): Promise<ReadableBackfillSummary> {
+  const limit = options.limit ?? 25;
+  const summary: ReadableBackfillSummary = { scanned: 0, queued: 0, skipped: 0, failed: [] };
+  const rows = await db.select().from(hunterCorpusFiles).orderBy(hunterCorpusFiles.id);
+  for (const row of rows) {
+    if (summary.queued >= limit) break;
+    summary.scanned += 1;
+    try {
+      const resolved = path.resolve(CORPUS_ROOT, row.path);
+      const rel = path.relative(CORPUS_ROOT, resolved);
+      if (rel.startsWith("..") || path.isAbsolute(rel)) {
+        summary.skipped += 1;
+        continue;
+      }
+      if (hasReadable(resolved)) {
+        summary.skipped += 1;
+        continue;
+      }
+      const content = await fs.readFile(resolved, "utf-8").catch(() => null);
+      if (content === null) {
+        // Binary or missing: binary formats (PDF/DOCX) still need extraction,
+        // missing files should fail loudly below via startExtraction.
+        const stat = await fs.stat(resolved).catch(() => null);
+        if (!stat) {
+          summary.skipped += 1;
+          continue;
+        }
+      } else if (!looksLikeMarkup(row.path, content)) {
+        summary.skipped += 1; // genuine plain text reads fine as-is
+        continue;
+      }
+      const existing = getExtractionJob(row.id);
+      if (existing?.status === "running") {
+        summary.skipped += 1;
+        continue;
+      }
+      const status = await queueReaderExtraction(row, resolved);
+      if (status.readable_status === "failed") {
+        summary.failed.push({ id: row.id, path: row.path, error: status.readable_error ?? "unknown" });
+        continue;
+      }
+      summary.queued += 1;
+      // Throttle: wait for this job to settle before queuing the next one.
+      for (;;) {
+        const job = getExtractionJob(row.id);
+        if (!job || job.status !== "running") break;
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    } catch (e) {
+      summary.failed.push({ id: row.id, path: row.path, error: errMessage(e) });
+    }
+  }
+  return summary;
 }

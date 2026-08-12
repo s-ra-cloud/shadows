@@ -16,7 +16,7 @@ import request from "supertest";
 
 import { requireEditor, EDITOR_TOKEN } from "../editorAuth";
 import { db } from "../storage";
-import { hunterRuns } from "@shared/schema";
+import { hunterRuns, hunterCorpusFiles } from "@shared/schema";
 import { runCorpusListCycle } from "../hunterCorpusCycle";
 
 // Mock the corpus-list cycle runner so retry tests don't need real HTTP crawls.
@@ -666,5 +666,126 @@ describe("corpus-list retry endpoint", () => {
     expect(worksAndDays).toBeDefined();
     expect(worksAndDays.author).toBe("Hesiod");
     expect(worksAndDays.url).toBeUndefined();
+  });
+});
+
+describe("library reader never shows raw markup", () => {
+  async function insertCorpusFile(relPath: string, content: string, record: Record<string, unknown> = {}) {
+    const abs = path.join(corpusRoot, relPath);
+    await fs.mkdir(path.dirname(abs), { recursive: true });
+    await fs.writeFile(abs, content, "utf-8");
+    const [row] = await (db as any)
+      .insert(hunterCorpusFiles)
+      .values({
+        workId: "work:test",
+        editionId: `edition:${relPath.replace(/[^a-z0-9]/gi, "-")}`,
+        language: "en",
+        partition: "public",
+        path: relPath,
+        byteCount: Buffer.byteLength(content),
+        record: { title: "Test Text", ...record },
+      })
+      .returning({ id: hunterCorpusFiles.id });
+    return { id: row.id as number, abs };
+  }
+
+  it("returns plain text directly with readable_status plain", async () => {
+    const prose = "In the beginning the gods assembled and spoke of the deep.\n".repeat(5);
+    const { id } = await insertCorpusFile("public/work-test/plain-one.txt", prose);
+    const res = await request(app).get(`/api/hunter/library/${id}/text`);
+    expect(res.status).toBe(200);
+    expect(res.body.readable_status).toBe("plain");
+    expect(res.body.text).toContain("gods assembled");
+  });
+
+  it("never returns raw HTML: queues extraction and reports preparing", async () => {
+    const prose = "When heaven and earth began, three deities came into existence. ".repeat(20);
+    const html = `<!DOCTYPE html><html><head><title>Kojiki</title><script>x()</script></head><body><p>${prose}</p></body></html>`;
+    const { id, abs } = await insertCorpusFile("public/work-test/kojiki.html", html, {
+      file: { content_type: "text/html" },
+    });
+    const res = await request(app).get(`/api/hunter/library/${id}/text`);
+    expect(res.status).toBe(200);
+    expect(res.body.text).toBeNull();
+    expect(res.body.markdown).toBeNull();
+    expect(res.body.readable_status).toBe("preparing");
+    // The queued extraction eventually writes a readable sibling…
+    const deadline = Date.now() + 15_000;
+    while (!(await fs.stat(`${abs}.readable.md`).catch(() => null))) {
+      if (Date.now() > deadline) throw new Error("extraction did not finish");
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    // …after which the reader gets Markdown, never the raw bytes.
+    const after = await request(app).get(`/api/hunter/library/${id}/text`);
+    expect(after.body.readable_status).toBe("ready");
+    expect(after.body.markdown).toContain("three deities came into existence");
+    expect(after.body.markdown).not.toContain("<script>");
+    expect(after.body.text).toBeNull();
+  });
+
+  it("extracts a Wikisource revisions JSON payload into readable prose", async () => {
+    const prose = "Now when chaos had begun to condense, the names of the deities were these. ".repeat(15);
+    const payload = JSON.stringify({
+      query: { pages: { "9": { title: "Kojiki", revisions: [{ slots: { main: { "*": `== Part I ==\n${prose}` } } }] } } },
+    });
+    const { id, abs } = await insertCorpusFile("public/work-test/kojiki.json", payload, {
+      file: { content_type: "application/json" },
+    });
+    const res = await request(app).get(`/api/hunter/library/${id}/text`);
+    expect(res.body.readable_status).toBe("preparing");
+    const deadline = Date.now() + 15_000;
+    while (!(await fs.stat(`${abs}.readable.md`).catch(() => null))) {
+      if (Date.now() > deadline) throw new Error("extraction did not finish");
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    const after = await request(app).get(`/api/hunter/library/${id}/text`);
+    expect(after.body.readable_status).toBe("ready");
+    expect(after.body.markdown).toContain("chaos had begun to condense");
+    expect(after.body.markdown).not.toContain('"query"');
+  });
+
+  it("reports failed (not raw markup) when no readable version can be made", async () => {
+    // Tiny HTML: the single-page recipe rejects it as too short, so the
+    // queued extraction fails — the reader must see a failure, not markup.
+    const { id } = await insertCorpusFile(
+      "public/work-test/stub.html",
+      "<!DOCTYPE html><html><body><p>tiny</p></body></html>",
+      { file: { content_type: "text/html" } },
+    );
+    const first = await request(app).get(`/api/hunter/library/${id}/text`);
+    expect(first.body.text).toBeNull();
+    // Either the job fails synchronously at queue time or shortly after.
+    const deadline = Date.now() + 15_000;
+    let status = first.body.readable_status;
+    while (status === "preparing") {
+      if (Date.now() > deadline) throw new Error("extraction never settled");
+      await new Promise((r) => setTimeout(r, 100));
+      const res = await request(app).get(`/api/hunter/library/${id}/text`);
+      status = res.body.readable_status;
+    }
+    expect(status).toBe("failed");
+    const final = await request(app).get(`/api/hunter/library/${id}/text`);
+    expect(final.body.text).toBeNull();
+    expect(final.body.markdown).toBeNull();
+  });
+
+  it("backfill endpoint queues extraction for files without readable siblings", async () => {
+    const prose = "The great flood covered the land and the hero built a vessel of reeds. ".repeat(20);
+    const html = `<!DOCTYPE html><html><head><title>Flood</title></head><body><p>${prose}</p></body></html>`;
+    const { abs } = await insertCorpusFile("public/work-test/flood.html", html, {
+      file: { content_type: "text/html" },
+    });
+    const unauthorized = await request(app).post("/api/hunter/extraction/backfill").send({});
+    expect(unauthorized.status).toBe(401);
+    const res = await request(app).post("/api/hunter/extraction/backfill").set(asEditor).send({});
+    expect(res.status).toBe(200);
+    expect(res.body.queued).toBeGreaterThanOrEqual(1);
+    const deadline = Date.now() + 15_000;
+    while (!(await fs.stat(`${abs}.readable.md`).catch(() => null))) {
+      if (Date.now() > deadline) throw new Error("backfill extraction did not finish");
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    const md = await fs.readFile(`${abs}.readable.md`, "utf-8");
+    expect(md).toContain("built a vessel of reeds");
   });
 });
