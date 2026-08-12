@@ -264,8 +264,8 @@ function LibraryReader({ entryId, onClose }: { entryId: number; onClose: () => v
   );
 }
 
-function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
-  const [activeHunterTab, setActiveHunterTab] = useState<HunterTab>("map");
+export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: boolean; initialTab?: HunterTab }) {
+  const [activeHunterTab, setActiveHunterTab] = useState<HunterTab>(initialTab);
 
   const tabs: { key: HunterTab; label: string; description: string }[] = [
     {
@@ -1833,15 +1833,20 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
             {items.length} files • {(totalSize / 1024 / 1024).toFixed(2)} MB total
           </p>
         </div>
-        {isEditor && (
+        {isEditor ? (
           <button
             onClick={() => downloadMutation.mutate()}
             disabled={downloadMutation.isPending || isPolling}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-[#8F00FF] text-white hover:bg-[#7B00E0] disabled:opacity-50 transition-colors"
+            data-testid="button-download-planned"
           >
             {isPolling ? <RefreshCw size={16} className="animate-spin" /> : <Download size={16} />}
             {isPolling ? "Downloading..." : "Download Planned Editions"}
           </button>
+        ) : (
+          <div className="text-xs text-[#E0DCE6]/50" data-testid="hint-corpus-edit-mode">
+            Enter edit mode to download or extract texts.
+          </div>
         )}
       </div>
 
@@ -2593,15 +2598,20 @@ function HunterVerify({ isEditor }: { isEditor: boolean }) {
             <p className="text-sm text-[#E0DCE6]/60">Corpus has not been verified yet.</p>
           )}
         </div>
-        {isEditor && (
+        {isEditor ? (
           <button
             onClick={() => verifyMutation.mutate()}
             disabled={verifyMutation.isPending}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-[#8F00FF] text-white hover:bg-[#7B00E0] disabled:opacity-50 transition-colors"
+            data-testid="button-verify-corpus"
           >
             {verifyMutation.isPending ? <RefreshCw size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
             Verify Corpus
           </button>
+        ) : (
+          <div className="text-xs text-[#E0DCE6]/50" data-testid="hint-verify-edit-mode">
+            Enter edit mode to run a verification check.
+          </div>
         )}
       </div>
 

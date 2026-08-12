@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from "vitest";
 import {
   htmlToMarkdown,
   htmlTitle,
@@ -11,6 +11,19 @@ import { promises as fs } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { clearRobotsCache } from "../robots";
+
+// Extraction jobs persist to the durable ledger under the real project data/
+// directory (resolved from cwd at import time). Save and restore it so test
+// runs never leave fake jobs behind for the app's restart-recovery to find.
+const LEDGER = path.resolve(process.cwd(), "data", "extraction-running-jobs.json");
+let ledgerBefore: string | null = null;
+beforeAll(async () => {
+  ledgerBefore = await fs.readFile(LEDGER, "utf-8").catch(() => null);
+});
+afterAll(async () => {
+  if (ledgerBefore !== null) await fs.writeFile(LEDGER, ledgerBefore);
+  else await fs.rm(LEDGER, { force: true });
+});
 
 function mockFetch(routes: Record<string, string | { status: number; body?: string; location?: string }>) {
   return (async (input: any) => {

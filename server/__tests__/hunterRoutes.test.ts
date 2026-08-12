@@ -161,6 +161,27 @@ describe("auth gating", () => {
     expect(res.body).toEqual({ message: "Unauthorized" });
   });
 
+  it("every registered mutating /api/hunter route rejects requests without a token", async () => {
+    // Systematic guarantee: enumerate the live Express router so any future
+    // compute/LLM route added without `requireEditor` fails this test.
+    const stack: any[] = (app as any).router?.stack ?? (app as any)._router?.stack ?? [];
+    const mutating: Array<[string, string]> = [];
+    for (const layer of stack) {
+      const route = layer.route;
+      if (!route?.path || typeof route.path !== "string") continue;
+      if (!route.path.startsWith("/api/hunter")) continue;
+      for (const method of Object.keys(route.methods ?? {})) {
+        if (method === "get" || method === "head") continue;
+        mutating.push([method, route.path.replace(/:[^/]+/g, "1")]);
+      }
+    }
+    expect(mutating.length).toBeGreaterThanOrEqual(15);
+    for (const [method, url] of mutating) {
+      const res = await (request(app) as any)[method](url).send({});
+      expect(res.status, `${method.toUpperCase()} ${url} must require editor auth`).toBe(401);
+    }
+  });
+
   it("rejects a wrong x-editor-token", async () => {
     const res = await request(app)
       .post("/api/hunter/plan")
