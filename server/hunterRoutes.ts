@@ -25,7 +25,7 @@ const MAX_CORPUS_LIST_BYTES = 512 * 1024;
 import { parseCorpusList, CorpusListParseError } from "./hunterCorpusList";
 import { robotsAllowsUrl } from "./sourceHunter/robots";
 import { getHunterRegion } from "@shared/hunterRegions";
-import { traditionForWork } from "@shared/traditions";
+import { traditionForWork, chronologyForWork } from "@shared/traditions";
 import {
   loadDefaultPolicy,
   DATA_DIR,
@@ -1558,7 +1558,13 @@ export function registerHunterRoutes(
     res.json(
       rows.map((row) => {
         const record = (row.record ?? {}) as Record<string, unknown>;
+        const tradition = traditionForWork(row.workId);
+        const chronology = chronologyForWork(row.workId);
         return {
+          tradition: tradition.id,
+          traditionLabel: tradition.label,
+          compositionYear: chronology?.year ?? null,
+          eraLabel: chronology?.era ?? null,
           id: row.id,
           workId: row.workId,
           editionId: row.editionId,

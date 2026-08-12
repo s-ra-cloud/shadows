@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { geoNaturalEarth1, geoPath } from "d3";
 import { feature } from "topojson-client";
 import { HUNTER_REGIONS, type HunterRegion } from "@shared/hunterRegions";
+import { TRADITIONS } from "@shared/traditions";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient, setEditorToken, authHeaders } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -121,13 +122,16 @@ interface LibraryEntry {
   author: string | null;
   translator: string | null;
   format: string | null;
+  tradition: string;
+  traditionLabel: string;
+  compositionYear: number | null;
+  eraLabel: string | null;
 }
 
 function LibraryTab() {
   const { data: entries, isLoading } = useQuery<LibraryEntry[]>({
     queryKey: ["/api/hunter/library"],
   });
-  const [readingId, setReadingId] = useState<number | null>(null);
 
   if (isLoading) {
     return <div className="py-12 text-center text-[#E0DCE6]/50 text-sm">Loading the library...</div>;
@@ -152,6 +156,31 @@ function LibraryTab() {
     );
   }
 
+  const sectionMap = new Map<string, LibraryEntry[]>();
+  for (const entry of items) {
+    const key = entry.tradition || "unclassified";
+    const list = sectionMap.get(key) ?? [];
+    list.push(entry);
+    sectionMap.set(key, list);
+  }
+  const sections = Array.from(sectionMap.entries())
+    .map(([tradition, sectionEntries]) => {
+      const info = TRADITIONS[tradition] ?? TRADITIONS.unclassified;
+      return {
+        tradition,
+        label: sectionEntries[0]?.traditionLabel ?? info.label,
+        emoji: info.emoji,
+        order: info.order,
+        entries: sectionEntries.slice().sort((a, b) => {
+          const ay = a.compositionYear ?? Number.POSITIVE_INFINITY;
+          const by = b.compositionYear ?? Number.POSITIVE_INFINITY;
+          if (ay !== by) return ay - by;
+          return a.title.localeCompare(b.title);
+        }),
+      };
+    })
+    .sort((a, b) => a.order - b.order);
+
   return (
     <div>
       <div className="mb-6">
@@ -162,108 +191,62 @@ function LibraryTab() {
           {items.length} rights-cleared {items.length === 1 ? "text" : "texts"} available to read
         </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {items.map((entry) => (
-          <button
-            key={entry.id}
-            onClick={() => setReadingId(entry.id)}
-            className="text-left p-5 rounded-xl border border-[#350A8C]/30 bg-[#130D30]/50 hover:border-[#8F00FF]/50 hover:bg-[#130D30] transition-all group"
-            data-testid={`card-library-${entry.id}`}
-          >
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <BookOpen size={18} className="text-[#8F00FF]/60 group-hover:text-[#8F00FF] transition-colors shrink-0 mt-0.5" />
-              {entry.language && (
-                <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-[#350A8C]/40 text-[#8F00FF]">
-                  {entry.language}
-                </span>
-              )}
-            </div>
-            <div className="font-medium text-[#E0DCE6] mb-1" data-testid={`text-library-title-${entry.id}`}>
-              {entry.title}
-            </div>
-            <div className="text-sm text-[#E0DCE6]/60">
-              {entry.author && <span>By {entry.author}</span>}
-              {entry.translator && <span>{entry.author ? " • " : ""}Tr: {entry.translator}</span>}
-              {!entry.author && !entry.translator && <span className="italic text-[#E0DCE6]/40">Anonymous</span>}
-            </div>
-            <div className="text-xs text-[#E0DCE6]/40 mt-3">
-              {(entry.byteCount / 1024).toFixed(1)} KB
-            </div>
-          </button>
-        ))}
-      </div>
-      {readingId !== null && (
-        <LibraryReader entryId={readingId} onClose={() => setReadingId(null)} />
-      )}
-    </div>
-  );
-}
-
-function LibraryReader({ entryId, onClose }: { entryId: number; onClose: () => void }) {
-  const { data, isLoading, error } = useQuery<{
-    id: number;
-    title: string;
-    author: string | null;
-    translator: string | null;
-    language: string | null;
-    text: string;
-    markdown: string | null;
-  }>({
-    queryKey: [`/api/hunter/library/${entryId}/text`],
-  });
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#130D30] border border-[#350A8C]/40 rounded-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-        <div className="flex items-start justify-between p-6 pb-4 border-b border-[#350A8C]/30 shrink-0">
-          <div className="min-w-0">
+      {sections.map((section) => (
+        <div key={section.tradition} className="mb-10" data-testid={`section-library-${section.tradition}`}>
+          <div className="flex items-baseline gap-2 mb-4">
             <h3
-              className="text-lg font-semibold text-[#E0DCE6] truncate"
+              className="text-lg font-semibold text-[#E0DCE6]"
               style={{ fontFamily: "'Cinzel Decorative', serif" }}
-              data-testid="text-reader-title"
+              data-testid={`text-library-section-${section.tradition}`}
             >
-              {data?.title ?? "Loading..."}
+              {section.emoji} {section.label}
             </h3>
-            {data && (
-              <p className="text-sm text-[#E0DCE6]/60 mt-1">
-                {data.author && `By ${data.author}`}
-                {data.translator && ` • Tr: ${data.translator}`}
-                {data.language && ` • ${data.language.toUpperCase()}`}
-              </p>
-            )}
+            <span className="text-xs text-[#E0DCE6]/40">
+              {section.entries.length} {section.entries.length === 1 ? "text" : "texts"}
+            </span>
           </div>
-          <button onClick={onClose} className="shrink-0 ml-4" data-testid="button-close-reader">
-            <X size={20} className="text-[#E0DCE6]/50 hover:text-[#E0DCE6]" />
-          </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {section.entries.map((entry) => (
+              <a
+                key={entry.id}
+                href={`/read/${entry.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-left p-5 rounded-xl border border-[#350A8C]/30 bg-[#130D30]/50 hover:border-[#8F00FF]/50 hover:bg-[#130D30] transition-all group"
+                data-testid={`card-library-${entry.id}`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <BookOpen size={18} className="text-[#8F00FF]/60 group-hover:text-[#8F00FF] transition-colors shrink-0 mt-0.5" />
+                  {entry.language && (
+                    <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-[#350A8C]/40 text-[#8F00FF]">
+                      {entry.language}
+                    </span>
+                  )}
+                </div>
+                <div className="font-medium text-[#E0DCE6] mb-1" data-testid={`text-library-title-${entry.id}`}>
+                  {entry.title}
+                </div>
+                <div className="text-sm text-[#E0DCE6]/60">
+                  {entry.author && <span>By {entry.author}</span>}
+                  {entry.translator && <span>{entry.author ? " • " : ""}Tr: {entry.translator}</span>}
+                  {!entry.author && !entry.translator && <span className="italic text-[#E0DCE6]/40">Anonymous</span>}
+                </div>
+                <div className="flex items-center justify-between text-xs text-[#E0DCE6]/40 mt-3">
+                  <span>{(entry.byteCount / 1024).toFixed(1)} KB</span>
+                  {entry.eraLabel && (
+                    <span className="text-[#E0DCE6]/50" data-testid={`text-library-era-${entry.id}`}>
+                      {entry.eraLabel}
+                    </span>
+                  )}
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-6">
-          {isLoading && <div className="text-[#E0DCE6]/50 text-sm">Loading text...</div>}
-          {error && (
-            <div className="text-red-400 text-sm flex items-center gap-2">
-              <AlertCircle size={16} /> Could not load this text.
-            </div>
-          )}
-          {data && data.markdown ? (
-            <div
-              className="reader-markdown text-[#E0DCE6]/90 text-[15px] leading-relaxed font-serif [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-3 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-5 [&_h2]:mb-2 [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_p]:my-3 [&_hr]:my-6 [&_hr]:border-[#350A8C]/40 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_blockquote]:border-l-2 [&_blockquote]:border-[#8F00FF]/50 [&_blockquote]:pl-4 [&_a]:text-[#8F00FF]"
-              data-testid="text-reader-body"
-            >
-              <ReactMarkdown>{data.markdown}</ReactMarkdown>
-            </div>
-          ) : data ? (
-            <pre
-              className="whitespace-pre-wrap text-[#E0DCE6]/90 text-[15px] leading-relaxed font-serif"
-              data-testid="text-reader-body"
-            >
-              {data.text}
-            </pre>
-          ) : null}
-        </div>
-      </div>
+      ))}
     </div>
   );
 }
-
 export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: boolean; initialTab?: HunterTab }) {
   const [activeHunterTab, setActiveHunterTab] = useState<HunterTab>(initialTab);
 
