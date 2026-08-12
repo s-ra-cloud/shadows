@@ -8,7 +8,7 @@ import express from "express";
 import type { Express, Request, Response, NextFunction } from "express";
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
-import { and, eq, desc, inArray, sql } from "drizzle-orm";
+import { and, eq, desc, inArray, lt, sql } from "drizzle-orm";
 import { db, storage } from "./storage";
 import { hunterCandidates, hunterRuns, hunterCorpusFiles, hunterBlockers, hunterRightsReviews, hunterScreenVerdicts } from "@shared/schema";
 import {
@@ -372,6 +372,29 @@ async function finishRun(id: number, ok: boolean, result: unknown, error?: strin
     .where(eq(hunterRuns.id, id));
 }
 
+/**
+ * Mark hunter runs orphaned by a previous process as failed.
+ * Runs execute entirely in-process, so any "running" row present when the
+ * server boots cannot still be executing.
+ */
+async function failOrphanedRuns() {
+  // Only touch runs started before this process booted, so a run created
+  // right after startup can never be caught by this cleanup.
+  const bootTime = new Date();
+  const rows = await db
+    .update(hunterRuns)
+    .set({
+      status: "failed",
+      finishedAt: new Date(),
+      error: "Interrupted by a server restart",
+    })
+    .where(and(eq(hunterRuns.status, "running"), lt(hunterRuns.startedAt, bootTime)))
+    .returning({ id: hunterRuns.id });
+  if (rows.length > 0) {
+    console.log(`Marked ${rows.length} orphaned hunter run(s) as failed after restart`);
+  }
+}
+
 async function loadCandidateRows() {
   return db.select().from(hunterCandidates).orderBy(hunterCandidates.id);
 }
@@ -491,6 +514,12 @@ export function registerHunterRoutes(
   // Best-effort schema upgrade so pre-provenance databases don't 500.
   ensureHunterProvenanceSchema().catch((e) =>
     console.error("hunter provenance schema upgrade failed:", errMessage(e)),
+  );
+  // Runs execute in-process, so any row still marked "running" at startup was
+  // orphaned by a previous process (restart/redeploy). Mark them failed so the
+  // UI doesn't show a phantom "Running" cycle with a Stop button that 409s.
+  failOrphanedRuns().catch((e) =>
+    console.error("failOrphanedRuns failed:", errMessage(e)),
   );
   // ---- Candidates -------------------------------------------------------
   app.get("/api/hunter/candidates", async (_req, res) => {
@@ -822,6 +851,9 @@ export function registerHunterRoutes(
       if (run.status !== "running") {
         return res.status(409).json({ message: "Run is not currently running" });
       }
+      // Live non-corpus runs are never in activeCorpusRunIds, and we cannot
+      // distinguish them from orphaned rows here, so keep the 409. Orphaned
+      // "running" rows are cleaned up by failOrphanedRuns() at startup.
       return res.status(409).json({ message: "This run is not a corpus-list cycle and cannot be stopped via this endpoint" });
     }
     corpusStopRequests.add(id);
