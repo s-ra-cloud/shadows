@@ -18,6 +18,52 @@ export interface TraditionInfo {
   order: number;
 }
 
+export interface TraditionFamilyInfo {
+  /** Stable key used by the API and UI grouping. */
+  id: string;
+  /** Human-readable family header. */
+  label: string;
+  /** Emoji shown next to the family header. */
+  emoji: string;
+  /** Display order across families (lower = earlier). */
+  order: number;
+}
+
+/**
+ * Higher-level grouping of traditions into families. Each tradition below
+ * belongs to exactly one family via TRADITION_FAMILIES.
+ */
+export const FAMILIES: Record<string, TraditionFamilyInfo> = {
+  "ancient-near-east-mediterranean": {
+    id: "ancient-near-east-mediterranean",
+    label: "Ancient Near East & Mediterranean",
+    emoji: "🏺",
+    order: 1,
+  },
+  abrahamic: { id: "abrahamic", label: "Abrahamic", emoji: "🕊️", order: 2 },
+  dharmic: { id: "dharmic", label: "Dharmic", emoji: "🕉️", order: 3 },
+  japanese: { id: "japanese", label: "Japanese", emoji: "🗾", order: 4 },
+  scholarly: { id: "scholarly", label: "Scholarly", emoji: "🔍", order: 5 },
+  unclassified: { id: "unclassified", label: "Unclassified", emoji: "❓", order: 99 },
+};
+
+export const UNCLASSIFIED_FAMILY = FAMILIES.unclassified;
+
+/** Map from tradition key to family key. Every tradition must appear here. */
+export const TRADITION_FAMILIES: Record<string, string> = {
+  mesopotamian: "ancient-near-east-mediterranean",
+  greek: "ancient-near-east-mediterranean",
+  judaism: "abrahamic",
+  christianity: "abrahamic",
+  islam: "abrahamic",
+  buddhism: "dharmic",
+  shinto: "japanese",
+  ainu: "japanese",
+  "japanese-historical": "japanese",
+  scholarly: "scholarly",
+  unclassified: "unclassified",
+};
+
 export const TRADITIONS: Record<string, TraditionInfo> = {
   mesopotamian: { id: "mesopotamian", label: "Ancient Mesopotamian", emoji: "𒀭", order: 1 },
   greek: { id: "greek", label: "Ancient Greek", emoji: "🏛️", order: 2 },
@@ -175,4 +221,16 @@ export function traditionForWork(workId: string | null | undefined): TraditionIn
   const bare = workId.startsWith("work:") ? workId.slice("work:".length) : workId;
   const key = WORK_TRADITIONS[bare];
   return (key && TRADITIONS[key]) || UNCLASSIFIED_TRADITION;
+}
+
+/** Resolve a tradition id to its family. */
+export function familyForTradition(traditionId: string | null | undefined): TraditionFamilyInfo {
+  if (!traditionId) return UNCLASSIFIED_FAMILY;
+  const key = TRADITION_FAMILIES[traditionId];
+  return (key && FAMILIES[key]) || UNCLASSIFIED_FAMILY;
+}
+
+/** Resolve a work id (with or without the "work:" prefix) to its tradition family. */
+export function familyForWork(workId: string | null | undefined): TraditionFamilyInfo {
+  return familyForTradition(traditionForWork(workId).id);
 }

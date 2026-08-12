@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { geoNaturalEarth1, geoPath } from "d3";
 import { feature } from "topojson-client";
 import { HUNTER_REGIONS, type HunterRegion } from "@shared/hunterRegions";
-import { TRADITIONS } from "@shared/traditions";
+import { TRADITIONS, FAMILIES, familyForTradition } from "@shared/traditions";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient, setEditorToken, authHeaders } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -124,6 +124,8 @@ interface LibraryEntry {
   format: string | null;
   tradition: string;
   traditionLabel: string;
+  family: string;
+  familyLabel: string;
   compositionYear: number | null;
   eraLabel: string | null;
 }
@@ -166,11 +168,13 @@ function LibraryTab() {
   const sections = Array.from(sectionMap.entries())
     .map(([tradition, sectionEntries]) => {
       const info = TRADITIONS[tradition] ?? TRADITIONS.unclassified;
+      const familyInfo = FAMILIES[sectionEntries[0]?.family ?? ""] ?? familyForTradition(tradition);
       return {
         tradition,
         label: sectionEntries[0]?.traditionLabel ?? info.label,
         emoji: info.emoji,
         order: info.order,
+        family: familyInfo,
         entries: sectionEntries.slice().sort((a, b) => {
           const ay = a.compositionYear ?? Number.POSITIVE_INFINITY;
           const by = b.compositionYear ?? Number.POSITIVE_INFINITY;
@@ -180,6 +184,19 @@ function LibraryTab() {
       };
     })
     .sort((a, b) => a.order - b.order);
+
+  const familyMap = new Map<string, { family: (typeof sections)[number]["family"]; sections: typeof sections }>();
+  for (const section of sections) {
+    let group = familyMap.get(section.family.id);
+    if (!group) {
+      group = { family: section.family, sections: [] };
+      familyMap.set(section.family.id, group);
+    }
+    group.sections.push(section);
+  }
+  const familySections = Array.from(familyMap.values()).sort(
+    (a, b) => (a.family.order ?? 99) - (b.family.order ?? 99),
+  );
 
   return (
     <div>
@@ -191,7 +208,22 @@ function LibraryTab() {
           {items.length} rights-cleared {items.length === 1 ? "text" : "texts"} available to read
         </p>
       </div>
-      {sections.map((section) => (
+      {familySections.map((familySection) => (
+        <div key={familySection.family.id} className="mb-12" data-testid={`section-library-family-${familySection.family.id}`}>
+          <div className="flex items-baseline gap-2 mb-5 pb-2 border-b border-[#350A8C]/30">
+            <h3
+              className="text-xl font-bold text-[#E0DCE6]"
+              style={{ fontFamily: "'Cinzel Decorative', serif" }}
+              data-testid={`text-library-family-${familySection.family.id}`}
+            >
+              {familySection.family.emoji} {familySection.family.label}
+            </h3>
+            <span className="text-xs text-[#E0DCE6]/40">
+              {familySection.sections.reduce((n, s) => n + s.entries.length, 0)}{" "}
+              {familySection.sections.reduce((n, s) => n + s.entries.length, 0) === 1 ? "text" : "texts"}
+            </span>
+          </div>
+          {familySection.sections.map((section) => (
         <div key={section.tradition} className="mb-10" data-testid={`section-library-${section.tradition}`}>
           <div className="flex items-baseline gap-2 mb-4">
             <h3
@@ -242,6 +274,8 @@ function LibraryTab() {
               </a>
             ))}
           </div>
+        </div>
+          ))}
         </div>
       ))}
     </div>
@@ -1792,19 +1826,33 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
   const items = Array.isArray(corpus) ? corpus : [];
   const totalSize = items.reduce((acc, item) => acc + (item.byteCount || 0), 0);
 
-  // Group rows by religious tradition (resolved server-side from the curated map).
-  const groups = (() => {
-    const byId = new Map<string, { tradition: any; files: any[] }>();
+  // Group rows by family, then religious tradition (both resolved
+  // server-side from the curated map).
+  const familyGroups = (() => {
+    const byId = new Map<string, { tradition: any; family: any; files: any[] }>();
     for (const file of items) {
       const tradition = file.tradition ?? { id: "unclassified", label: "Unclassified", emoji: "❓", order: 99 };
+      const family = file.family ?? { id: "unclassified", label: "Unclassified", emoji: "❓", order: 99 };
       let group = byId.get(tradition.id);
       if (!group) {
-        group = { tradition, files: [] };
+        group = { tradition, family, files: [] };
         byId.set(tradition.id, group);
       }
       group.files.push(file);
     }
-    return Array.from(byId.values()).sort((a, b) => (a.tradition.order ?? 99) - (b.tradition.order ?? 99));
+    const traditionGroups = Array.from(byId.values()).sort(
+      (a, b) => (a.tradition.order ?? 99) - (b.tradition.order ?? 99),
+    );
+    const byFamily = new Map<string, { family: any; groups: typeof traditionGroups }>();
+    for (const group of traditionGroups) {
+      let fam = byFamily.get(group.family.id);
+      if (!fam) {
+        fam = { family: group.family, groups: [] };
+        byFamily.set(group.family.id, fam);
+      }
+      fam.groups.push(group);
+    }
+    return Array.from(byFamily.values()).sort((a, b) => (a.family.order ?? 99) - (b.family.order ?? 99));
   })();
 
   return (
@@ -1847,7 +1895,22 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#350A8C]/10">
-              {groups.map((group) => [
+              {familyGroups.map((familyGroup) => [
+                <tr key={`family-${familyGroup.family.id}`} className="bg-[#1B1140]">
+                  <td colSpan={isEditor ? 6 : 5} className="px-4 py-2.5">
+                    <span
+                      className="inline-flex items-center gap-2 text-sm font-bold text-[#E0DCE6]"
+                      data-testid={`header-family-${familyGroup.family.id}`}
+                    >
+                      <span aria-hidden="true">{familyGroup.family.emoji}</span>
+                      {familyGroup.family.label}
+                      <span className="px-1.5 py-0.5 rounded-md bg-[#8F00FF]/15 text-[#8F00FF] text-[11px] font-medium">
+                        {familyGroup.groups.reduce((n: number, g: any) => n + g.files.length, 0)}
+                      </span>
+                    </span>
+                  </td>
+                </tr>,
+                ...familyGroup.groups.flatMap((group: any) => [
                 <tr key={`tradition-${group.tradition.id}`} className="bg-[#130D30]/60">
                   <td colSpan={isEditor ? 6 : 5} className="px-4 py-2">
                     <span
@@ -1961,6 +2024,7 @@ function HunterCorpus({ isEditor }: { isEditor: boolean }) {
                   )}
                 </tr>
                 )),
+                ]),
               ])}
             </tbody>
           </table>

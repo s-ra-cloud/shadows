@@ -25,7 +25,7 @@ const MAX_CORPUS_LIST_BYTES = 512 * 1024;
 import { parseCorpusList, CorpusListParseError } from "./hunterCorpusList";
 import { robotsAllowsUrl } from "./sourceHunter/robots";
 import { getHunterRegion } from "@shared/hunterRegions";
-import { traditionForWork, chronologyForWork } from "@shared/traditions";
+import { traditionForWork, chronologyForWork, familyForTradition } from "@shared/traditions";
 import {
   loadDefaultPolicy,
   DATA_DIR,
@@ -1331,6 +1331,10 @@ export function registerHunterRoutes(
             ...row,
             title: typeof record.title === "string" && record.title.trim() ? record.title : null,
             tradition: { id: tradition.id, label: tradition.label, emoji: tradition.emoji, order: tradition.order },
+            family: (() => {
+              const family = familyForTradition(tradition.id);
+              return { id: family.id, label: family.label, emoji: family.emoji, order: family.order };
+            })(),
             readable,
             suggested_recipe: readable
               ? null
@@ -1591,10 +1595,13 @@ export function registerHunterRoutes(
       rows.map((row) => {
         const record = (row.record ?? {}) as Record<string, unknown>;
         const tradition = traditionForWork(row.workId);
+        const family = familyForTradition(tradition.id);
         const chronology = chronologyForWork(row.workId);
         return {
           tradition: tradition.id,
           traditionLabel: tradition.label,
+          family: family.id,
+          familyLabel: family.label,
           compositionYear: chronology?.year ?? null,
           eraLabel: chronology?.era ?? null,
           id: row.id,
