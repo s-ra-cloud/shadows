@@ -265,7 +265,7 @@ function LibraryReader({ entryId, onClose }: { entryId: number; onClose: () => v
 }
 
 function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
-  const [activeHunterTab, setActiveHunterTab] = useState<HunterTab>("candidates");
+  const [activeHunterTab, setActiveHunterTab] = useState<HunterTab>("map");
 
   const tabs: { key: HunterTab; label: string; description: string }[] = [
     {
@@ -346,16 +346,18 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
     },
   ];
 
+  const HIDDEN_TABS: HunterTab[] = ["candidates", "plan", "catalog"];
+
   useEffect(() => {
     if ((activeHunterTab === "catalog" || activeHunterTab === "manual") && !isEditor) {
-      setActiveHunterTab("candidates");
+      setActiveHunterTab("map");
     }
   }, [isEditor, activeHunterTab]);
 
   return (
     <div className="bg-[#130D30]/50 border border-[#350A8C]/20 rounded-xl overflow-hidden">
       <div className="flex gap-1 border-b border-[#350A8C]/30 overflow-x-auto px-4 pt-2">
-        {tabs.map((tab) => (
+        {tabs.filter((tab) => !HIDDEN_TABS.includes(tab.key)).map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveHunterTab(tab.key)}
@@ -371,7 +373,7 @@ function SourceHunterTab({ isEditor }: { isEditor: boolean }) {
         ))}
       </div>
       {(() => {
-        const active = tabs.find((t) => t.key === activeHunterTab);
+        const active = tabs.filter((tab) => !HIDDEN_TABS.includes(tab.key)).find((t) => t.key === activeHunterTab);
         return active ? (
           <p className="px-6 py-2.5 text-xs text-[#E0DCE6]/45 border-b border-[#350A8C]/20 bg-[#0B0626]/20 leading-relaxed">
             {active.description}
