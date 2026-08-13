@@ -551,6 +551,18 @@ async function failOrphanedRuns() {
   if (rows.length > 0) {
     console.log(`Marked ${rows.length} orphaned hunter run(s) as failed after restart`);
   }
+  // Link repairs also run in-process and claim a blocker by setting
+  // repairState = "in_progress". A restart mid-repair would otherwise leave
+  // the card stuck on "Checking this link…" forever, because the claim only
+  // takes rows whose repairState is null. Release those claims.
+  const released = await db
+    .update(hunterBlockers)
+    .set({ repairState: null, updatedAt: new Date() })
+    .where(eq(hunterBlockers.repairState, "in_progress"))
+    .returning({ id: hunterBlockers.id });
+  if (released.length > 0) {
+    console.log(`Released ${released.length} interrupted link repair claim(s) after restart`);
+  }
 }
 
 async function loadCandidateRows() {

@@ -2737,6 +2737,15 @@ function statusText(code: number): string {
   };
   return map[code] ?? "";
 }
+/**
+ * True when the card's direct file URL is one the hunter constructed but the
+ * source rejected (repair attempted and gave up) and a real item page exists.
+ * Such a URL must not be presented as a usable link.
+ */
+function isDeadDirectLink(b: any): boolean {
+  return Boolean(b?.url) && !b?.resolvedUrl && b?.repairState === "not_repairable" && Boolean(b?.itemUrl);
+}
+
 function HunterManualFetch() {
   const { toast } = useToast();
 
@@ -2874,7 +2883,7 @@ function HunterManualFetch() {
         </div>
         {(() => {
           const targets = (Array.isArray(items) ? items : [])
-            .filter((b: any) => b.resolvedUrl || b.url)
+            .filter((b: any) => (b.resolvedUrl || b.url) && !isDeadDirectLink(b))
             .map((b: any) => ({ id: b.id as number, url: (b.resolvedUrl || b.url) as string }));
           if (targets.length < 2) return null;
           return (
@@ -2949,7 +2958,7 @@ function HunterManualFetch() {
                     className="block text-xs text-[#C77DFF] hover:underline break-all"
                     data-testid={`link-item-page-${b.id}`}
                   >
-                    Open the item page at the source ↗
+                    {b.itemUrl} ↗
                   </a>
                 )}
                 {b.resolvedUrl && b.resolvedUrl !== b.url && b.url && (
@@ -2957,7 +2966,14 @@ function HunterManualFetch() {
                     was: {b.url}
                   </div>
                 )}
-                {(b.resolvedUrl || b.url) && (
+                {/* A direct file link we constructed that the source rejected: show it
+                    struck through so editors don't mistake it for a usable link. */}
+                {isDeadDirectLink(b) && (
+                  <div className="text-xs text-[#E0DCE6]/30 break-all line-through" data-testid={`dead-link-${b.id}`}>
+                    {b.url}
+                  </div>
+                )}
+                {(b.resolvedUrl || b.url) && !isDeadDirectLink(b) && (
                   <div className="flex flex-wrap items-center gap-2">
                     <a
                       href={b.resolvedUrl || b.url}
