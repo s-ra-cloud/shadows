@@ -25,6 +25,7 @@ import {
 } from "./hunterCycle";
 import type { CorpusList, CorpusListItem } from "./hunterCorpusList";
 import type { Policy } from "./sourceHunter/rights.js";
+import { cleanErrorText, truncateText, MAX_DETAIL_TEXT } from "./errorText";
 
 export type CorpusItemStatus =
   | "fetched" // at least one edition downloaded to the public partition
@@ -274,7 +275,11 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
       if (itemBlockers.length < MAX_ITEM_BLOCKERS) {
         itemBlockers.push({
           reason: String(b.reason ?? "unknown"),
-          detail: String(b.detail ?? ""),
+          // Item blockers are written back into the run-progress payload, so
+          // their text must be capped — otherwise one long error is copied
+          // into every later progress write and the run record grows without
+          // limit across the list.
+          detail: truncateText(String(b.detail ?? ""), MAX_DETAIL_TEXT),
           url: b.url ? String(b.url) : null,
         });
       }
@@ -347,10 +352,12 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
         ...(options.cycleOverrides ?? {}),
       });
     } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
+      // The cause is cleaned here (driver noise stripped, length capped) so a
+      // failure never carries a previous progress payload into the next one.
+      const message = cleanErrorText(e, MAX_DETAIL_TEXT);
       const blocker = {
         reason: "fetch_failed",
-        detail: `Corpus-list item "${item.title}" failed: ${message}`,
+        detail: truncateText(`Corpus-list item "${item.title}" failed: ${message}`, MAX_DETAIL_TEXT),
       };
       await store.addBlocker(blocker);
       recordItemBlocker(blocker);
@@ -362,7 +369,7 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
         languages: [],
         english: false,
         edition_ids: [],
-        detail: `Cycle error: ${message}`,
+        detail: truncateText(`Cycle error: ${message}`, MAX_DETAIL_TEXT),
         blockers: itemBlockers,
       });
       continue;

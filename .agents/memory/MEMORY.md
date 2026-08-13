@@ -4,4 +4,5 @@
 - [Source registry & robots](source-registry-robots.md) — robots.txt, not the allow-list, is the practical download gate; Wikimedia blocks Special:Export, Perseus raw GitHub works.
 - [Semantic rebase pitfalls](rebase-semantic-merge.md) — task-merge rebases can drop bare module-level init calls; wire startup side effects into bootstrap functions.
 - [CJS bundle import.meta shim](cjs-bundle-import-meta.md) — prod build shims import.meta.url via esbuild banner+define; never swap for process.cwd() (tests mock cwd).
+- [Stored error text](stored-error-text.md) — normalise caught exceptions before storing (driver dumps snowball across a run); bookkeeping writes log-and-swallow.
 - [PDF OCR environment](pdf-ocr-env.md) — pdftoppm/pdfinfo ship in the Replit runtime path; tesseract needs the nix `tesseract` system dep (poppler-utils isn't a nix pkg name).

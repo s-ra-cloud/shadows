@@ -1018,3 +1018,87 @@ describe("check-url endpoint", () => {
     expect(vi.mocked(lookup)).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("failed runs report a readable reason", () => {
+  /** A drizzle/pg failure: statement plus every bound parameter, cause attached. */
+  function driverError(params: string, causeMessage: string): Error {
+    const error = new Error(
+      `Failed query: update "hunter_runs" set "result" = $1 where "hunter_runs"."id" = $2\nparams: ${params},7`,
+    );
+    (error as { cause?: unknown }).cause = new Error(causeMessage);
+    return error;
+  }
+
+  async function startCorpusRun(filename: string) {
+    const res = await request(app)
+      .post("/api/hunter/cycles/corpus")
+      .set(asEditor)
+      .send({ filename, content: "Doomed Text\n" });
+    expect(res.status).toBe(200);
+    return waitForRun(res.body.run.id);
+  }
+
+  afterEach(() => {
+    vi.mocked(runCorpusListCycle).mockReset();
+  });
+
+  it("stores a short reason for a driver exception, never the SQL or its parameters", async () => {
+    // The parameter dump is what makes real failures tens of kilobytes long:
+    // it carries the whole run-progress payload.
+    const params = JSON.stringify({
+      progress: {
+        items: Array.from({ length: 300 }, (_, i) => ({
+          title: `Item ${i}`,
+          detail: "previous failure text ".repeat(20),
+        })),
+      },
+    });
+    vi.mocked(runCorpusListCycle).mockImplementationOnce(async () => {
+      throw driverError(params, "connection terminated unexpectedly");
+    });
+
+    const run = await startCorpusRun("driver-failure.txt");
+    expect(run.status).toBe("failed");
+    expect(run.error).toBe("connection terminated unexpectedly");
+    expect(run.error.length).toBeLessThan(400);
+    expect(run.error).not.toMatch(/params:/);
+    expect(run.error).not.toMatch(/\$1/);
+  });
+
+  it("caps an enormous single-line error instead of storing it whole", async () => {
+    vi.mocked(runCorpusListCycle).mockImplementationOnce(async () => {
+      throw new Error(`Discovery exploded: ${"x".repeat(50_000)}`);
+    });
+
+    const run = await startCorpusRun("huge-failure.txt");
+    expect(run.status).toBe("failed");
+    expect(run.error.length).toBeLessThanOrEqual(400);
+    expect(run.error).toMatch(/^Discovery exploded: x+… \(truncated\)$/);
+  });
+
+  it("finishes the run as failed even when recording a blocker fails", async () => {
+    vi.mocked(runCorpusListCycle).mockImplementationOnce(async (options: any) => {
+      // The blocker insert blows up mid-cycle; that must not become the run's
+      // failure reason, and must not stop the cycle from finishing.
+      const insertSpy = vi.spyOn(db as any, "insert").mockImplementation(() => {
+        throw driverError('{"detail":"..."}', "deadlock detected");
+      });
+      try {
+        await options.store.addBlocker({ reason: "fetch_failed", detail: "Item failed" });
+        await options.store.updateProgress({ phase: "corpus_item", item_index: 1 });
+      } finally {
+        insertSpy.mockRestore();
+      }
+      throw new Error("Discovery failed for every item in the list");
+    });
+
+    const run = await startCorpusRun("blocker-write-failure.txt");
+    expect(run.status).toBe("failed");
+    // The real cause survives — not the swallowed bookkeeping error.
+    expect(run.error).toBe("Discovery failed for every item in the list");
+
+    const detail = await request(app).get(`/api/hunter/runs/${run.id}`);
+    expect(detail.status).toBe(200);
+    expect(detail.body.blockers).toEqual([]);
+  });
+});

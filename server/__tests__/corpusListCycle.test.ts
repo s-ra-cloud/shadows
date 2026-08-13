@@ -14,7 +14,7 @@ import {
   splitCsvLine,
   CorpusListParseError,
 } from "../hunterCorpusList";
-import { runCorpusListCycle } from "../hunterCorpusCycle";
+import { runCorpusListCycle, type CorpusCycleOptions } from "../hunterCorpusCycle";
 import type { CycleStore, DiscoveredLead, CycleScope } from "../hunterCycle";
 import type { Candidate } from "../sourceHunter/rights.js";
 
@@ -422,6 +422,68 @@ describe("runCorpusListCycle", () => {
     expect(result.corpus_list.items[1].blockers).toHaveLength(0);
     expect(result.corpus_list.blocked_reasons.discovery_unsupported).toBe(1);
     expect(result.summary.blockers).toBe(2);
+
+    await fs.rm(corpusRoot, { recursive: true, force: true });
+  });
+
+  it("keeps repeated item failures short: the tenth is no bigger than the first", async () => {
+    const corpusRoot = await fs.mkdtemp(path.join(os.tmpdir(), "corpus-cycle-fail-"));
+    const { store, blockers, progress } = memoryStore();
+
+    // Reproduces the snowball: every item fails with a driver exception whose
+    // parameter dump contains the CURRENT run-progress payload. Without
+    // cleaning, each failure's text is stored and fed back into the next
+    // payload, so failure N carries failures 1..N-1 inside it.
+    const failing: CorpusCycleOptions["cycleOverrides"] = {
+      registryDiscover: async () => {
+        const latest = JSON.stringify(progress[progress.length - 1] ?? {});
+        const error = new Error(
+          `Failed query: update "hunter_runs" set "result" = $1 where "hunter_runs"."id" = $2\nparams: ${latest},7`,
+        );
+        (error as { cause?: unknown }).cause = new Error("connection terminated unexpectedly");
+        throw error;
+      },
+    };
+
+    const items = Array.from({ length: 10 }, (_, i) => ({ title: `Doomed Text ${i + 1}` }));
+    const result = await runCorpusListCycle({
+      list: { name: "failing-list", items },
+      policy: POLICY as never,
+      registry: REGISTRY,
+      corpusRoot,
+      store,
+      useAi: false,
+      cycleOverrides: failing,
+    });
+
+    expect(result.corpus_list.failed).toBe(10);
+    const first = result.corpus_list.items[0];
+    const tenth = result.corpus_list.items[9];
+
+    // Each failure names its own item and the real cause, not the statement.
+    for (const outcome of result.corpus_list.items) {
+      expect(outcome.detail).toMatch(/connection terminated unexpectedly/);
+      expect(outcome.detail).not.toMatch(/params:/);
+      expect(outcome.detail).not.toMatch(/hunter_runs/);
+      expect(outcome.detail.length).toBeLessThanOrEqual(240);
+    }
+    expect(first.blockers[0].detail).toMatch(/Doomed Text 1/);
+    expect(tenth.blockers[0].detail).toMatch(/Doomed Text 10/);
+    expect(tenth.detail.length).toBeLessThanOrEqual(first.detail.length + 2);
+
+    // Stored blocker details stay short, and the progress payload written for
+    // the last item is not materially larger than the one for the first.
+    for (const b of blockers as { detail: string }[]) {
+      expect(b.detail.length).toBeLessThanOrEqual(240);
+    }
+    const payloadSizes = progress
+      .filter((p) => p.phase === "corpus_item")
+      .map((p) => JSON.stringify(p).length);
+    expect(payloadSizes.length).toBeGreaterThanOrEqual(10);
+    // Growth is linear in the number of items (one bounded outcome each),
+    // never multiplicative from nesting previous payloads.
+    const perItem = payloadSizes[0];
+    expect(payloadSizes[payloadSizes.length - 1]).toBeLessThan(perItem * 15);
 
     await fs.rm(corpusRoot, { recursive: true, force: true });
   });

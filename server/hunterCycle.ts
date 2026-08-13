@@ -21,6 +21,7 @@ import { collectFulltexts, type RobotsCheck } from "./sourceHunter/fulltext";
 import { validateCandidate, FullTextValidationError } from "./sourceHunter/fulltextValidation";
 import { robotsAllowsUrl } from "./sourceHunter/robots";
 import type { Candidate, Policy } from "./sourceHunter/rights";
+import { cleanErrorText } from "./errorText";
 
 /** Max extra download passes when the preferred edition is blocked. */
 const MAX_FALLBACK_PASSES = 3;
@@ -459,7 +460,7 @@ async function defaultRegistryDiscover(
     try {
       leads.push(...(await strategy(scope, source, fetchImpl)));
     } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
+      const message = cleanErrorText(e);
       await report({
         sourceId,
         reason: message.startsWith("robots_disallowed") ? "robots_disallowed" : "fetch_failed",
@@ -659,9 +660,7 @@ export async function screenLeads(
     } catch (e) {
       await report({
         reason: "fetch_failed",
-        detail: `Screening verdict cache lookup failed: ${
-          e instanceof Error ? e.message : String(e)
-        }. All ${pendingIndexes.length} lead(s) will be screened by the model.`,
+        detail: `Screening verdict cache lookup failed: ${cleanErrorText(e)}. All ${pendingIndexes.length} lead(s) will be screened by the model.`,
       });
     }
   }
@@ -690,9 +689,7 @@ export async function screenLeads(
           } catch (e) {
             await report({
               reason: "fetch_failed",
-              detail: `Screening verdict cache write failed: ${
-                e instanceof Error ? e.message : String(e)
-              }. Verdicts were still applied to this cycle.`,
+              detail: `Screening verdict cache write failed: ${cleanErrorText(e)}. Verdicts were still applied to this cycle.`,
             });
           }
         }
@@ -700,9 +697,7 @@ export async function screenLeads(
     } catch (e) {
       await report({
         reason: "fetch_failed",
-        detail: `AI primary/secondary screening failed: ${
-          e instanceof Error ? e.message : String(e)
-        }. Falling back to the keyword heuristic for ${chunkLeads.length} lead(s) in this batch.`,
+        detail: `AI primary/secondary screening failed: ${cleanErrorText(e)}. Falling back to the keyword heuristic for ${chunkLeads.length} lead(s) in this batch.`,
       });
     }
   }
@@ -887,14 +882,14 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
           await report({
             reason: "invalid_candidate",
             url: lead.url,
-            detail: `AI lead rejected: ${e instanceof Error ? e.message : String(e)}`,
+            detail: `AI lead rejected: ${cleanErrorText(e)}`,
           });
         }
       }
     } catch (e) {
       await report({
         reason: "fetch_failed",
-        detail: `AI lead discovery failed: ${e instanceof Error ? e.message : String(e)}`,
+        detail: `AI lead discovery failed: ${cleanErrorText(e)}`,
       });
     }
   }

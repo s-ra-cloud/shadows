@@ -13,6 +13,7 @@ import {
   Clock, Database, Code, Globe, ScanLine, Wand2, FileType
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { RunErrorReport } from "@/components/RunErrorReport";
 
 type Tab = "library" | "hunter";
 type HunterTab = "map" | "cycles" | "candidates" | "plan" | "corpus" | "extractors" | "verify" | "catalog" | "manual" | "runs" | "policy" | "registry";
@@ -1300,9 +1301,7 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
                   {isExpanded && (
                     <div className="p-4 bg-[#0B0626] border-t border-[#350A8C]/10 space-y-3">
                       {run.error && (
-                        <div className="text-sm text-red-400 flex items-center gap-2">
-                          <AlertCircle size={14} /> {run.error}
-                        </div>
+                        <RunErrorReport error={run.error} testId={`run-error-${run.id}`} />
                       )}
                       {summary && (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
@@ -3186,11 +3185,7 @@ function RunDetailModal({ runId, onClose }: { runId: number; onClose: () => void
               <AlertCircle size={16} /> Could not load this run.
             </div>
           )}
-          {run?.error && (
-            <div className="text-sm text-red-400 flex items-start gap-2">
-              <AlertCircle size={14} className="shrink-0 mt-0.5" /> {run.error}
-            </div>
-          )}
+          {run?.error && <RunErrorReport error={run.error} testId={`run-error-detail-${runId}`} />}
           {summary && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
               {statRows.map(([label, value]) => (

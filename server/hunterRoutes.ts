@@ -28,6 +28,7 @@ import { isIP } from "node:net";
 /** Upload cap for corpus LISTS (indexes of titles/URLs, never full texts). */
 const MAX_CORPUS_LIST_BYTES = 512 * 1024;
 import { parseCorpusList, CorpusListParseError } from "./hunterCorpusList";
+import { cleanErrorText, truncateText, MAX_ERROR_TEXT } from "./errorText";
 import { robotsAllowsUrl } from "./sourceHunter/robots";
 import { getHunterRegion } from "@shared/hunterRegions";
 import { inferRegion } from "@shared/regionInference";
@@ -196,8 +197,14 @@ async function loadActivePolicy(): Promise<Policy> {
   }
 }
 
+/**
+ * Human-readable text for a caught exception: driver noise stripped, cause
+ * chain reduced to the actionable innermost message, length capped.
+ * Everything that reaches an editor (HTTP error bodies, stored run errors,
+ * blocker details) goes through this.
+ */
 function errMessage(e: unknown): string {
-  return e instanceof Error ? e.message : String(e);
+  return cleanErrorText(e);
 }
 
 /**
@@ -345,23 +352,35 @@ function makeCycleStore(runId: number, mirroredRecords: Record<string, unknown>[
         .onConflictDoNothing();
     },
     async addBlocker(b) {
-      await db.insert(hunterBlockers).values({
-        runId,
-        sourceId: b.sourceId ?? null,
-        url: b.url ?? null,
-        reason: b.reason,
-        detail: b.detail ?? null,
-        workId: b.workId ?? null,
-        editionId: b.editionId ?? null,
-      });
+      // Bookkeeping must never take a cycle down: a failed blocker insert is
+      // logged and swallowed, otherwise the driver's error (which quotes the
+      // whole statement and its parameters) becomes the run's failure text.
+      try {
+        await db.insert(hunterBlockers).values({
+          runId,
+          sourceId: b.sourceId ?? null,
+          url: b.url ?? null,
+          reason: b.reason,
+          detail: b.detail ? truncateText(b.detail, MAX_ERROR_TEXT) : null,
+          workId: b.workId ?? null,
+          editionId: b.editionId ?? null,
+        });
+      } catch (e) {
+        console.error(`run ${runId}: could not record blocker:`, cleanErrorText(e));
+      }
     },
     async updateProgress(progress) {
       // Merge scope into every progress write so the region is never lost
-      // even while the cycle is mid-flight.
-      await db
-        .update(hunterRuns)
-        .set({ result: { ...(scope ? { scope } : {}), progress } })
-        .where(eq(hunterRuns.id, runId));
+      // even while the cycle is mid-flight. Progress is advisory — a failed
+      // write is logged, never surfaced as the reason the run failed.
+      try {
+        await db
+          .update(hunterRuns)
+          .set({ result: { ...(scope ? { scope } : {}), progress } })
+          .where(eq(hunterRuns.id, runId));
+      } catch (e) {
+        console.error(`run ${runId}: could not store progress:`, cleanErrorText(e));
+      }
     },
     async getScreenVerdicts(keys) {
       const verdicts = new Map();
@@ -425,15 +444,33 @@ async function createRun(kind: string): Promise<number> {
 }
 
 async function finishRun(id: number, ok: boolean, result: unknown, error?: string) {
-  await db
-    .update(hunterRuns)
-    .set({
-      status: ok ? "completed" : "failed",
-      finishedAt: new Date(),
-      result: result ?? null,
-      error: error ?? null,
-    })
-    .where(eq(hunterRuns.id, id));
+  // Whatever went wrong, the stored reason stays short and readable.
+  const reason = error ? truncateText(error, MAX_ERROR_TEXT) : null;
+  try {
+    await db
+      .update(hunterRuns)
+      .set({
+        status: ok ? "completed" : "failed",
+        finishedAt: new Date(),
+        result: result ?? null,
+        error: reason,
+      })
+      .where(eq(hunterRuns.id, id));
+  } catch (e) {
+    // The result payload itself may be what the database rejected. Retry
+    // without it so the run still reaches a final state with a reason.
+    const writeError = cleanErrorText(e);
+    console.error(`run ${id}: could not store run result:`, writeError);
+    await db
+      .update(hunterRuns)
+      .set({
+        status: ok ? "completed" : "failed",
+        finishedAt: new Date(),
+        result: null,
+        error: reason ?? `Run result could not be stored: ${writeError}`,
+      })
+      .where(eq(hunterRuns.id, id));
+  }
 }
 
 /**
@@ -1704,15 +1741,21 @@ export function registerHunterRoutes(
       res.json({ run: { id: runId, status: "completed" }, ...summary });
     } catch (e) {
       const message = errMessage(e);
-      await db.insert(hunterBlockers).values({
-        runId,
-        sourceId: blocker.sourceId,
-        url: blocker.url,
-        reason: "fetch_failed",
-        detail: `Retry of blocker #${blocker.id} failed: ${message}`,
-        workId: blocker.workId,
-        editionId: blocker.editionId,
-      });
+      // Recording the fresh blocker is bookkeeping — if that write fails too,
+      // the run must still reach a final state with the original reason.
+      try {
+        await db.insert(hunterBlockers).values({
+          runId,
+          sourceId: blocker.sourceId,
+          url: blocker.url,
+          reason: "fetch_failed",
+          detail: truncateText(`Retry of blocker #${blocker.id} failed: ${message}`, MAX_ERROR_TEXT),
+          workId: blocker.workId,
+          editionId: blocker.editionId,
+        });
+      } catch (writeError) {
+        console.error(`run ${runId}: could not record retry blocker:`, cleanErrorText(writeError));
+      }
       await finishRun(runId, false, null, message);
       res.status(500).json({ message });
     }
