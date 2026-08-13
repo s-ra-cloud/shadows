@@ -363,7 +363,7 @@ export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: bo
     },
   ];
 
-  const HIDDEN_TABS: HunterTab[] = ["candidates", "plan", "catalog"];
+  const HIDDEN_TABS: HunterTab[] = [];
 
   useEffect(() => {
     if ((activeHunterTab === "catalog" || activeHunterTab === "manual") && !isEditor) {
@@ -2725,12 +2725,48 @@ function HunterVerify({ isEditor }: { isEditor: boolean }) {
   );
 }
 
+function statusText(code: number): string {
+  const map: Record<number, string> = {
+    200: "OK", 201: "Created", 204: "No Content",
+    301: "Moved Permanently", 302: "Found", 303: "See Other", 307: "Temporary Redirect", 308: "Permanent Redirect",
+    400: "Bad Request", 401: "Unauthorized", 403: "Forbidden", 404: "Not Found",
+    405: "Method Not Allowed", 408: "Request Timeout", 410: "Gone",
+    429: "Too Many Requests", 500: "Internal Server Error", 502: "Bad Gateway",
+    503: "Service Unavailable", 504: "Gateway Timeout",
+  };
+  return map[code] ?? "";
+}
 function HunterManualFetch() {
   const { toast } = useToast();
 
   const { data: items, isLoading } = useQuery<any[]>({
     queryKey: ["/api/hunter/manual-fetch"],
   });
+
+  const [checkStates, setCheckStates] = useState<Record<number, CardCheckState>>({});
+
+  const verifyLink = async (id: number, url: string) => {
+    setCheckStates((prev) => ({ ...prev, [id]: { phase: "checking" } }));
+    try {
+      const res = await fetch(
+        `/api/hunter/check-url?id=${encodeURIComponent(id)}`,
+        { headers: authHeaders() },
+      );
+      const data: CheckResult = await res.json();
+      setCheckStates((prev) => ({ ...prev, [id]: { phase: "done", result: data } }));
+    } catch (e: any) {
+      setCheckStates((prev) => ({
+        ...prev,
+        [id]: {
+          phase: "done",
+          result: { status: null, ok: false, redirected: false, finalUrl: url, error: String(e?.message ?? e) },
+        },
+      }));
+    }
+  };
+
+  const resetCheck = (id: number) =>
+    setCheckStates((prev) => ({ ...prev, [id]: { phase: "idle" } }));
 
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const uploadMutation = useMutation({
@@ -2830,14 +2866,63 @@ function HunterManualFetch() {
                   {b.detail ? <span className="text-[#E0DCE6]/40"> — {b.detail}</span> : null}
                 </div>
                 {b.url && (
-                  <a
-                    href={b.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-[#03FF9B] hover:underline break-all"
-                  >
-                    {b.url}
-                  </a>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <a
+                      href={b.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-[#03FF9B] hover:underline break-all"
+                    >
+                      {b.url}
+                    </a>
+                    {(() => {
+                      const cs = checkStates[b.id];
+                      if (!cs || cs.phase === "idle") {
+                        return (
+                          <button
+                            onClick={() => verifyLink(b.id, b.url)}
+                            className="shrink-0 px-2 py-0.5 rounded text-xs text-[#E0DCE6]/60 border border-[#350A8C]/30 hover:bg-[#350A8C]/20 hover:text-[#E0DCE6]"
+                          >
+                            Verify link
+                          </button>
+                        );
+                      }
+                      if (cs.phase === "checking") {
+                        return (
+                          <span className="shrink-0 px-2 py-0.5 rounded text-xs text-[#E0DCE6]/40 border border-[#350A8C]/30">
+                            Checking…
+                          </span>
+                        );
+                      }
+                      // done
+                      const r = cs.result!;
+                      let color = "#FF4D6D";
+                      let label: string;
+                      if (r.error) {
+                        label = r.error.length > 40 ? r.error.slice(0, 40) + "…" : r.error;
+                      } else if (r.redirected) {
+                        color = "#FFB800";
+                        let shortHost = r.finalUrl;
+                        try { shortHost = new URL(r.finalUrl).hostname; } catch {}
+                        label = `Redirect → ${shortHost}`;
+                      } else if (r.ok) {
+                        color = "#03FF9B";
+                        label = `${r.status} OK`;
+                      } else {
+                        label = r.status ? `${r.status} ${statusText(r.status)}` : "Unreachable";
+                      }
+                      return (
+                        <button
+                          onClick={() => resetCheck(b.id)}
+                          title="Click to re-check"
+                          style={{ color, borderColor: color + "55" }}
+                          className="shrink-0 px-2 py-0.5 rounded text-xs border bg-transparent hover:opacity-70"
+                        >
+                          {label}
+                        </button>
+                      );
+                    })()}
+                  </div>
                 )}
                 {b.sourceId && (
                   <div className="text-xs text-[#E0DCE6]/40">Source: {b.sourceId}</div>
@@ -3503,4 +3588,19 @@ function LoginModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
       </div>
     </div>
   );
+}
+
+interface CardCheckState {
+  phase: CheckPhase;
+  result?: CheckResult;
+}
+
+type CheckPhase = "idle" | "checking" | "done";
+
+interface CheckResult {
+  status: number | null;
+  ok: boolean;
+  redirected: boolean;
+  finalUrl: string;
+  error: string | null;
 }

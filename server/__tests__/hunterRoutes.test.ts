@@ -6,23 +6,41 @@
  * isolated corpus root. Auth uses the real requireEditor middleware and the
  * real HMAC x-editor-token derived from SESSION_SECRET.
  */
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach, vi } from "vitest";
 import { promises as fs } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import express, { type Express } from "express";
 import request from "supertest";
+import * as http from "node:http";
+import * as https from "node:https";
+import { lookup } from "node:dns/promises";
 
 import { requireEditor, EDITOR_TOKEN } from "../editorAuth";
 import { db } from "../storage";
-import { hunterRuns, hunterCorpusFiles } from "@shared/schema";
+import { hunterRuns, hunterCorpusFiles, hunterBlockers } from "@shared/schema";
 import { runCorpusListCycle } from "../hunterCorpusCycle";
 
 // Mock the corpus-list cycle runner so retry tests don't need real HTTP crawls.
 vi.mock("../hunterCorpusCycle", () => ({
   runCorpusListCycle: vi.fn(),
 }));
+
+// Mock node:http/https so the check-url probe tests never make real connections.
+vi.mock("node:http", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:http")>();
+  return { ...actual, request: vi.fn() };
+});
+vi.mock("node:https", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:https")>();
+  return { ...actual, request: vi.fn() };
+});
+// Mock node:dns/promises so tests control what IPs "resolve" to.
+vi.mock("node:dns/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:dns/promises")>();
+  return { ...actual, lookup: vi.fn() };
+});
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.join(HERE, "..", "sourceHunter", "__tests__");
@@ -787,5 +805,216 @@ describe("library reader never shows raw markup", () => {
     }
     const md = await fs.readFile(`${abs}.readable.md`, "utf-8");
     expect(md).toContain("built a vessel of reeds");
+  });
+});
+
+describe("check-url endpoint", () => {
+  /** Insert a manual-fetch blocker and return its DB id. */
+  async function insertBlocker(url: string | null, reason = "robots_disallowed"): Promise<number> {
+    const [row] = await db
+      .insert(hunterBlockers)
+      .values({ reason, url, status: "open", detail: "test" })
+      .returning({ id: hunterBlockers.id });
+    return row.id;
+  }
+
+  /**
+   * Set up one mock hop via http/https.request.
+   * The mock calls options.lookup (our safeLookup) before responding, which is
+   * exactly what Node.js does at connect time — this exercises the full SSRF
+   * validation path without opening any real sockets.
+   */
+  function setupHopResponse(
+    mod: typeof https | typeof http,
+    statusCode: number,
+    headers: Record<string, string> = {},
+  ) {
+    vi.mocked(mod.request).mockImplementationOnce((options: any, callback: any) => {
+      const handlers: Record<string, Function> = {};
+      const req = {
+        on: vi.fn((event: string, handler: Function) => { handlers[event] = handler; return req; }),
+        end: vi.fn(() => {
+          // Invoke safeLookup — mirrors how Node.js calls lookup at connect time
+          if (options.lookup) {
+            options.lookup(options.hostname ?? "", {}, (err: Error | null) => {
+              if (err) handlers["error"]?.(err);
+              else callback({ statusCode, headers, resume: vi.fn() });
+            });
+          } else {
+            callback({ statusCode, headers, resume: vi.fn() });
+          }
+          return req;
+        }),
+        destroy: vi.fn(() => req),
+      };
+      return req as any;
+    });
+  }
+
+  beforeEach(() => {
+    // Default: DNS resolves to a public IP so normal probes proceed.
+    vi.mocked(lookup).mockResolvedValue([{ address: "93.184.216.34", family: 4 }] as any);
+  });
+
+  afterEach(() => {
+    vi.mocked(https.request).mockReset();
+    vi.mocked(http.request).mockReset();
+    vi.mocked(lookup).mockReset();
+  });
+
+  it("requires editor auth", async () => {
+    const id = await insertBlocker("https://example.com/text.txt");
+    const res = await request(app).get(`/api/hunter/check-url?id=${id}`);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 400 when id is missing", async () => {
+    const res = await request(app).get("/api/hunter/check-url").set(asEditor);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/id parameter required/);
+  });
+
+  it("returns 404 for an unknown blocker id", async () => {
+    const res = await request(app).get("/api/hunter/check-url?id=999999").set(asEditor);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toMatch(/not found/i);
+  });
+
+  it("returns 400 when the blocker has no URL", async () => {
+    const id = await insertBlocker(null);
+    const res = await request(app).get(`/api/hunter/check-url?id=${id}`).set(asEditor);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/no URL/i);
+  });
+
+  it.each([
+    "https://127.0.0.1/text.txt",
+    "https://10.0.0.8/text.txt",
+    "https://192.168.1.5/text.txt",
+    "https://169.254.169.254/latest/meta-data/",
+    "https://[::1]/text.txt",
+    // IPv4-mapped IPv6 in hex-group form — Node skips custom lookup for IP
+    // literals, so the preflight must catch these directly.
+    "https://[::ffff:7f00:1]/text.txt",      // maps to 127.0.0.1
+    "https://[::ffff:0a00:0001]/text.txt",   // maps to 10.0.0.1
+    "https://[::ffff:a9fe:a9fe]/text.txt",   // maps to 169.254.169.254
+    // IPv6 non-global-unicast ranges beyond ::1/fe80::/fc00::/fd00::
+    "https://[fe81::1]/text.txt",            // fe80::/10 link-local (past fe80:)
+    "https://[febf::1]/text.txt",            // fe80::/10 link-local (upper edge)
+    "https://[ff00::1]/text.txt",            // ff00::/8  multicast
+    "https://[fec0::1]/text.txt",            // fec0::/10 deprecated site-local
+    // IPv4 IANA special-use ranges not in the original denylist
+    "https://198.18.0.1/text.txt",           // 198.18.0.0/15 benchmarking
+    "https://198.19.255.255/text.txt",       // 198.18.0.0/15 upper edge
+    "https://192.0.2.1/text.txt",            // 192.0.2.0/24 TEST-NET-1
+    "https://198.51.100.1/text.txt",         // 198.51.100.0/24 TEST-NET-2
+    "https://203.0.113.1/text.txt",          // 203.0.113.0/24 TEST-NET-3
+    "https://240.0.0.1/text.txt",            // 240.0.0.0/4 reserved
+  ])("blocks IP-literal private address %s — preflight rejects before any socket is opened", async (url) => {
+    // Node's http(s).request skips the custom lookup option for IP-literal hostnames,
+    // so the endpoint must detect and block them before calling request().
+    const id = await insertBlocker(url);
+    const res = await request(app).get(`/api/hunter/check-url?id=${id}`).set(asEditor);
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(false);
+    expect(res.body.error).toMatch(/private or internal/);
+    // No socket attempt — request() must not have been called at all
+    expect(vi.mocked(https.request)).not.toHaveBeenCalled();
+    expect(vi.mocked(lookup)).not.toHaveBeenCalled();
+  });
+
+  it("returns ok:true and status 200 for a reachable URL", async () => {
+    setupHopResponse(https, 200);
+    const id = await insertBlocker("https://example.com/text.txt");
+    const res = await request(app).get(`/api/hunter/check-url?id=${id}`).set(asEditor);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ status: 200, ok: true, redirected: false, error: null });
+  });
+
+  it("reports unreachable on 404", async () => {
+    setupHopResponse(https, 404);
+    const id = await insertBlocker("https://example.com/gone.txt");
+    const res = await request(app).get(`/api/hunter/check-url?id=${id}`).set(asEditor);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ status: 404, ok: false, error: null });
+  });
+
+  it("falls back to GET when HEAD returns 405", async () => {
+    setupHopResponse(https, 405); // HEAD attempt
+    setupHopResponse(https, 200); // GET retry
+    const id = await insertBlocker("https://example.com/text.txt");
+    const res = await request(app).get(`/api/hunter/check-url?id=${id}`).set(asEditor);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ status: 200, ok: true });
+    expect(vi.mocked(https.request)).toHaveBeenCalledTimes(2);
+  });
+
+  it("blocks a private IP-literal redirect target — preflight fires before the second request is opened", async () => {
+    // Hop 1 (example.com): DNS hostname, passes safeLookup, returns 301 → private IP literal
+    setupHopResponse(https, 301, { location: "https://10.0.0.1/evil" });
+    // Hop 2 (10.0.0.1): preflight detects IP literal + isPrivateAddress → rejected before request()
+    const id = await insertBlocker("https://example.com/text.txt");
+    const res = await request(app).get(`/api/hunter/check-url?id=${id}`).set(asEditor);
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(false);
+    expect(res.body.error).toMatch(/private or internal/);
+    // Only the first hop opened a socket; the redirect target was blocked before request()
+    expect(vi.mocked(https.request)).toHaveBeenCalledTimes(1);
+  });
+
+  it("marks redirected:true when the final host differs from the original", async () => {
+    setupHopResponse(https, 301, { location: "https://other.example.com/text.txt" });
+    setupHopResponse(https, 200);
+    const id = await insertBlocker("https://example.com/text.txt");
+    const res = await request(app).get(`/api/hunter/check-url?id=${id}`).set(asEditor);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ status: 200, ok: true, redirected: true });
+  });
+
+  it("stops after 5 redirects and reports an error", async () => {
+    for (let i = 0; i <= 5; i++) {
+      setupHopResponse(https, 301, { location: "https://example.com/loop" });
+    }
+    const id = await insertBlocker("https://example.com/loop");
+    const res = await request(app).get(`/api/hunter/check-url?id=${id}`).set(asEditor);
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(false);
+    expect(res.body.error).toMatch(/too many redirects/i);
+  });
+
+  it("blocks DNS AAAA response returning IPv4-mapped private address (::ffff:a.b.c.d form)", async () => {
+    // A malicious DNS server could return an AAAA record like ::ffff:127.0.0.1
+    // for a public-looking hostname. safeLookup must classify it as private and
+    // propagate the error so no HTTP response is read.
+    vi.mocked(lookup).mockResolvedValueOnce([
+      { address: "::ffff:127.0.0.1", family: 6 },
+    ] as any);
+    // setupHopResponse is required so the mock invokes options.lookup (safeLookup);
+    // the lookup error fires handlers["error"] before the 200 callback is reached.
+    setupHopResponse(https, 200);
+    const id = await insertBlocker("https://example.com/text.txt");
+    const res = await request(app).get(`/api/hunter/check-url?id=${id}`).set(asEditor);
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(false);
+    expect(res.body.error).toMatch(/private or internal/);
+  });
+
+  it("DNS rebinding protection: dnsLookup is called exactly once per hop (inside safeLookup at connect time)", async () => {
+    // Simulate a rebinding attack: first call returns public IP, subsequent
+    // calls return a private IP. With our implementation, the runtime calls
+    // safeLookup once per connection (at connect time) — the private-IP call
+    // is never reached for the same hop.
+    vi.mocked(lookup)
+      .mockResolvedValueOnce([{ address: "8.8.8.8", family: 4 }] as any)     // used for the HEAD probe
+      .mockResolvedValueOnce([{ address: "169.254.169.254", family: 4 }] as any); // would be a rebind
+
+    setupHopResponse(https, 200);
+    const id = await insertBlocker("https://example.com/text.txt");
+    const res = await request(app).get(`/api/hunter/check-url?id=${id}`).set(asEditor);
+    expect(res.status).toBe(200);
+    // Probe succeeded using the first (public) resolution
+    expect(res.body).toMatchObject({ status: 200, ok: true, error: null });
+    // lookup was called exactly once — no second DNS round-trip opened the rebinding window
+    expect(vi.mocked(lookup)).toHaveBeenCalledTimes(1);
   });
 });

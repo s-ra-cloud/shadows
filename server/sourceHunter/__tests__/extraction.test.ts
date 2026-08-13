@@ -5,6 +5,7 @@ import {
   extractContentLinks,
 } from "../extraction/htmlToMarkdown";
 import { cleanupTranscription, looksLikeOcrTranscription } from "../extraction/textCleanup";
+import { RECIPES, getRecipe, suggestRecipe, looksLikeIndexPage, isInterstitialPage, ExtractionCancelledError, wikitextToMarkdown, mediaWikiRevisionWikitext } from "../extraction/recipes";
 import { startExtraction, getExtractionJob, cancelExtraction, recoverInterruptedJobs } from "../extraction/run";
 import { promises as fs } from "node:fs";
 import * as os from "node:os";
@@ -14,7 +15,6 @@ import { clearRobotsCache } from "../robots";
 // Extraction jobs persist to the durable ledger under the real project data/
 // directory (resolved from cwd at import time). Save and restore it so test
 // runs never leave fake jobs behind for the app's restart-recovery to find.
-import { RECIPES, getRecipe, suggestRecipe, looksLikeIndexPage, isInterstitialPage, ExtractionCancelledError, wikitextToMarkdown, mediaWikiRevisionWikitext } from "../extraction/recipes";
 const LEDGER = path.resolve(process.cwd(), "data", "extraction-running-jobs.json");
 let ledgerBefore: string | null = null;
 beforeAll(async () => {
@@ -44,14 +44,11 @@ function mockFetch(routes: Record<string, string | { status: number; body?: stri
 
 describe("htmlToMarkdown", () => {
   it("strips scripts, styles and navigation and converts content", () => {
-    const html = `
-      <a href="gen.htm">Genesis</a>
-      <a href="exo.htm">Exodus</a>
-      <a href="https://other.example.com/x.htm">External</a>
-      <a href="pic.jpg">Image</a>
-      <a href="#top">Anchor</a>
-      <a href="gen.htm">Genesis again</a>`;
-    const md = wikitextToMarkdown(wikitext);
+    const html = `<html><head><title>Genesis</title><script>evil()</script></head>
+      <body><nav><a href="/x">Menu</a></nav>
+      <h1>Genesis 1</h1><p>In the beginning God created the heaven and the earth.</p>
+      <footer>Copyright</footer></body></html>`;
+    const md = htmlToMarkdown(html);
     expect(md).toContain("# Genesis 1");
     expect(md).toContain("In the beginning");
     expect(md).not.toContain("evil");
@@ -117,26 +114,46 @@ describe("recipe suggestion", () => {
     `<p>${"In the beginning was the word and the word was long enough to count as prose. ".repeat(30)}</p>` +
     "</body></html>";
 
-    const payload = Buffer.from(
-      JSON.stringify({
-        query: {
-          pages: {
-            "9": { title: "Kojiki", revisions: [{ slots: { main: { "*": `== Part I ==\n${prose}` } } }] },
-          },
-        },
-      }),
-    );
+  it("suggests the index crawl for link-heavy pages and single-page for prose", () => {
+    expect(looksLikeIndexPage(indexHtml, null)).toBe(true);
+    expect(looksLikeIndexPage(proseHtml, null)).toBe(false);
+    expect(
+      suggestRecipe({ path: "a.html", contentType: "text/html", payload: Buffer.from(indexHtml) })?.id,
+    ).toBe("html-index-crawl");
+    expect(
+      suggestRecipe({ path: "a.html", contentType: "text/html", payload: Buffer.from(proseHtml) })?.id,
+    ).toBe("html-single-page");
+  });
 
-    const payload = Buffer.from(
-      JSON.stringify({
-        query: {
-          pages: {
-            "9": { title: "Kojiki", revisions: [{ slots: { main: { "*": `== Part I ==\n${prose}` } } }] },
-          },
-        },
-      }),
+  it("suggests pdf and docx by shape", () => {
+    expect(
+      suggestRecipe({ path: "a.pdf", contentType: "application/pdf", payload: Buffer.from("%PDF-1.4") })?.id,
+    ).toBe("pdf-text");
+    expect(
+      suggestRecipe({ path: "a.docx", contentType: null, payload: Buffer.from("PK") })?.id,
+    ).toBe("docx");
+  });
+
+  it("exposes all seven recipes", () => {
+    expect(RECIPES.map((r) => r.id).sort()).toEqual(
+      ["docx", "html-index-crawl", "html-single-page", "mediawiki-revision-json", "ocr-cleanup", "pdf-ocr", "pdf-text"].sort(),
     );
-    const host = "https://texts.example";
+  });
+});
+
+describe("isInterstitialPage", () => {
+  it("detects redirect stubs and challenge pages but not real content", () => {
+    expect(isInterstitialPage('<meta http-equiv="refresh" content="0;url=/shop">')).toBe(true);
+    expect(isInterstitialPage("<title>Just a moment...</title>")).toBe(true);
+    expect(isInterstitialPage("<p>You are being redirected to the shop.</p>")).toBe(true);
+    expect(isInterstitialPage("<h1>Genesis 1</h1><p>In the beginning...</p>")).toBe(false);
+  });
+});
+
+describe("html-index-crawl recipe", () => {
+  beforeEach(() => clearRobotsCache());
+
+  const host = "https://texts.example";
   const chapter = (n: number) =>
     `<html><head><title>Genesis ${n}</title></head><body><p>${`Verse text for chapter ${n}. `.repeat(40)}</p></body></html>`;
 
@@ -151,28 +168,25 @@ describe("recipe suggestion", () => {
       `<a href="gen3.htm">Genesis Chapter 3 — The Fall of Man</a>` +
       `<a href="gen4.htm">Genesis Chapter 4 — Cain and Abel</a>` +
       `<a href="gen5.htm">Genesis Chapter 5 — The Generations of Adam</a></body></html>`;
-    const routes: Record<string, string> = { [`${host}/robots.txt`]: "" };
+    const routes: Record<string, string> = {
+      [`${host}/robots.txt`]: "",
+      // Home-page and shop links are out of the index's directory and must
+      // never be crawled; the image must not survive into the document.
+      [`${host}/kjv/index.htm`]:
+        `<img src="banner.jpg" alt="Buy our DVD-ROM"><a href="/index.htm">Sacred Texts Home</a>` +
+        `<a href="/shop/cd.htm">Shop</a><a href="gen.htm">Genesis</a>`,
+      [`${host}/kjv/gen.htm`]: bookPage,
+    };
     for (let n = 1; n <= 5; n += 1) routes[`${host}/kjv/gen${n}.htm`] = chapter(n);
     // robots.txt is fetched from the origin root.
-    const fetchImpl = mockFetch({
-      [`${host}/robots.txt`]: "User-agent: *\nDisallow: /kjv/",
-      [`${host}/kjv/index.htm`]: `<a href="gen.htm">Genesis</a>`,
-    });
+    const fetchImpl = mockFetch(routes);
     const recipe = getRecipe("html-index-crawl")!;
-
-    const out = await recipe.run({
-      payload,
-      contentType: "application/json",
-      sourceUrl: null,
-      title: "Kojiki",
-      reportProgress: () => {},
-    });
     const output = await recipe.run({
-      payload: Buffer.from(routes[doc("toc")]),
+      payload: Buffer.from(routes[`${host}/kjv/index.htm`]),
       contentType: "text/html",
-      sourceUrl: doc("toc"),
-      title: "Theogony",
-      fetchImpl: mockFetch(routes),
+      sourceUrl: `${host}/kjv/index.htm`,
+      title: "The Holy Bible (KJV)",
+      fetchImpl,
       reportProgress: () => {},
     });
     expect(output.markdown).toContain("# The Holy Bible (KJV)");
@@ -199,33 +213,32 @@ describe("recipe suggestion", () => {
       [1, 2, 3, 4, 5].map((c) => `<a href="${prefix}00${c}.htm">${book} Chapter ${c}</a>`).join(" ") +
       (next ? `<a href="${next[0]}.htm" title="Go to next page">Next: ${next[1]} index &raquo;</a>` : "") +
       `</body></html>`;
-    const routes: Record<string, string> = { [`${host}/robots.txt`]: "" };
+    const routes: Record<string, string> = {
+      [`${host}/robots.txt`]: "",
+      [`${host}/jps/index.htm`]:
+        `<a href="gen.htm">Genesis</a><a href="exo.htm">Exodus</a><a href="lev.htm">Leviticus</a>`,
+      [`${host}/jps/gen.htm`]: bookIndex("Genesis", "gen", ["exo", "Exodus"]),
+      [`${host}/jps/exo.htm`]: bookIndex("Exodus", "exo", ["lev", "Leviticus"]),
+      [`${host}/jps/lev.htm`]: bookIndex("Leviticus", "lev", null),
+    };
     for (const prefix of ["gen", "exo", "lev"]) {
-    for (let c = 1; c <= 5; c += 1) expect(output.markdown).toContain(`book 1 card ${c}`);
+      for (let c = 1; c <= 5; c += 1) {
         routes[`${host}/jps/${prefix}00${c}.htm`] =
           `<html><head><title>${prefix} ${c}</title></head><body><p>${`Verses of ${prefix} chapter ${c}. `.repeat(40)}</p></body></html>`;
       }
     }
     const recipe = getRecipe("html-index-crawl")!;
-
-    const out = await recipe.run({
-      payload,
-      contentType: "application/json",
-      sourceUrl: null,
-      title: "Kojiki",
-      reportProgress: () => {},
-    });
     const output = await recipe.run({
-      payload: Buffer.from(routes[doc("toc")]),
+      payload: Buffer.from(routes[`${host}/jps/index.htm`]),
       contentType: "text/html",
-      sourceUrl: doc("toc"),
-      title: "Theogony",
+      sourceUrl: `${host}/jps/index.htm`,
+      title: "Tanakh",
       fetchImpl: mockFetch(routes),
       reportProgress: () => {},
     });
-    expect(output.markdown).toContain("# Theogony");
-    // Sub-index descent: book 1 lists its cards, all five cards are compiled in order.
-    for (let c = 1; c <= 5; c += 1) expect(output.markdown).toContain(`book 1 card ${c}`);
+    // Every book's chapters are present, in canonical order.
+    for (const prefix of ["gen", "exo", "lev"]) {
+      for (let c = 1; c <= 5; c += 1) {
         expect(output.markdown).toContain(`Verses of ${prefix} chapter ${c}.`);
       }
     }
@@ -236,20 +249,18 @@ describe("recipe suggestion", () => {
   }, 20000);
 
   it("warns loudly when an index is nested deeper than the crawl follows", async () => {
-    const routes: Record<string, string> = { [`${host}/robots.txt`]: "" };
-    for (let i = 1; i <= 30; i += 1) {
+    const routes: Record<string, string> = {
+      [`${host}/robots.txt`]: "",
+      [`${host}/w/index.htm`]: `<a href="a.htm">Part A</a>`,
+      // Depth-1 sub-index → descend; its children are depth-2 indexes.
+      [`${host}/w/a.htm`]:
+        [1, 2, 3, 4, 5].map((i) => `<a href="a${i}.htm">Section ${i} of part A</a>`).join(" "),
+    };
+    for (let i = 1; i <= 5; i += 1) {
       routes[`${host}/w/a${i}.htm`] =
         [1, 2, 3, 4, 5, 6].map((j) => `<a href="a${i}x${j}.htm">Deep chapter ${i}.${j}</a>`).join(" ");
     }
     const recipe = getRecipe("html-index-crawl")!;
-
-    const out = await recipe.run({
-      payload,
-      contentType: "application/json",
-      sourceUrl: null,
-      title: "Kojiki",
-      reportProgress: () => {},
-    });
     await expect(
       recipe.run({
         payload: Buffer.from(routes[`${host}/w/index.htm`]),
@@ -272,17 +283,23 @@ describe("recipe suggestion", () => {
     const card = (book: number, card: number) =>
       `<html><head><title>Theogony, book ${book}, card ${card}</title></head><body>` +
       `<p>${`Muses of Helicon sing, book ${book} card ${card}. `.repeat(40)}</p></body></html>`;
-    const routes: Record<string, string> = { [`${host}/robots.txt`]: "" };
-    for (let c = 1; c <= 5; c += 1) expect(output.markdown).toContain(`book 1 card ${c}`);
+    const routes: Record<string, string> = {
+      "https://perseus.example/robots.txt": "",
+      [doc("toc")]:
+        `<html><head><title>Theogony (Table of Contents)</title></head><body>` +
+        `<nav><a href="/hopper/collection?collection=Greco-Roman">Greco-Roman Collection</a></nav>` +
+        `<a href="${doc("book%3D1")}">Book 1</a>` +
+        `<a href="${doc("book%3D2")}">Book 2</a></body></html>`,
+      [doc("book%3D1")]:
+        `<html><head><title>Theogony Book 1</title></head><body>` +
+        [1, 2, 3, 4, 5].map((c) => `<a href="${doc(`book%3D1%3Acard%3D${c}`)}">Card ${c} of the first book</a>`).join(" ") +
+        `</body></html>`,
+      [doc("book%3D2")]: card(2, 1).replace("book 2, card 1", "book 2"),
+      "https://perseus.example/hopper/collection?collection=Greco-Roman":
+        `<html><body><p>Collection browse page that must never be crawled.</p></body></html>`,
+    };
+    for (let c = 1; c <= 5; c += 1) routes[doc(`book%3D1%3Acard%3D${c}`)] = card(1, c);
     const recipe = getRecipe("html-index-crawl")!;
-
-    const out = await recipe.run({
-      payload,
-      contentType: "application/json",
-      sourceUrl: null,
-      title: "Kojiki",
-      reportProgress: () => {},
-    });
     const output = await recipe.run({
       payload: Buffer.from(routes[doc("toc")]),
       contentType: "text/html",
@@ -323,14 +340,6 @@ describe("recipe suggestion", () => {
       [`${host}/kjv/index.htm`]: `<a href="gen.htm">Genesis</a>`,
     });
     const recipe = getRecipe("html-index-crawl")!;
-
-    const out = await recipe.run({
-      payload,
-      contentType: "application/json",
-      sourceUrl: null,
-      title: "Kojiki",
-      reportProgress: () => {},
-    });
     await expect(
       recipe.run({
         payload: Buffer.from(`<a href="gen.htm">Genesis</a>`),
@@ -349,17 +358,9 @@ describe("extraction cancellation", () => {
 
   it("index crawl throws ExtractionCancelledError when the signal is already aborted", async () => {
     const recipe = getRecipe("html-index-crawl")!;
-
-    const out = await recipe.run({
-      payload,
-      contentType: "application/json",
-      sourceUrl: null,
-      title: "Kojiki",
-      reportProgress: () => {},
-    });
     const controller = new AbortController();
     controller.abort();
-    const index = Array.from({ length: 30 }, (_, i) => `<a href="ch${i + 1}.htm">Chapter ${i + 1}</a>`).join(" ");
+    const index = `<a href="a.htm">A</a><a href="b.htm">B</a><a href="c.htm">C</a>`;
     await expect(
       recipe.run({
         payload: Buffer.from(index),
@@ -374,7 +375,7 @@ describe("extraction cancellation", () => {
   });
 
   it("cancelExtraction marks a running job cancelled, not error", async () => {
-    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "extract-lang-"));
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "extract-cancel-"));
     const host = "https://texts.example";
     const routes: Record<string, string> = { [`${host}/robots.txt`]: "" };
     const index = Array.from({ length: 30 }, (_, i) => `<a href="ch${i + 1}.htm">Chapter ${i + 1}</a>`).join(" ");
@@ -388,9 +389,18 @@ describe("extraction cancellation", () => {
       await new Promise((r) => setTimeout(r, 30));
       return base(input, init);
     }) as typeof fetch;
-    const rawPath = path.join(tmp, "scan.pdf");
+    const rawPath = path.join(tmp, "index.htm");
     await fs.writeFile(rawPath, index);
-      const job = getExtractionJob(999777);
+    const job = await startExtraction({
+      corpusFileId: 999901,
+      rawAbsolutePath: rawPath,
+      recipeId: "html-index-crawl",
+      contentType: "text/html",
+      sourceUrl: `${host}/kjv/index.htm`,
+      title: null,
+      locked: false,
+      fetchImpl: slowFetch,
+    });
     expect(job.status).toBe("running");
     await new Promise((r) => setTimeout(r, 80));
     const cancelled = cancelExtraction(999901);
@@ -429,8 +439,8 @@ describe("extraction cancellation", () => {
       // Interrupted jobs cannot be "cancelled" (nothing is running)...
       expect(() => cancelExtraction(999777)).toThrow(/not running/);
       // ...but a fresh extraction can start for the same file.
-    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "extract-lang-"));
-    const rawPath = path.join(tmp, "scan.pdf");
+      const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "extract-restart-"));
+      const rawPath = path.join(tmp, "plain.txt");
       await fs.writeFile(rawPath, Array.from({ length: 40 }, (_, i) => `Verse ${i + 1}. In the beginning were the words of the restart test, and the words were plentiful.`).join("\n\n"));
       const fresh = await startExtraction({
         corpusFileId: 999777,
@@ -493,13 +503,53 @@ describe("startExtraction OCR language wiring", () => {
   });
 });
 
-    const prose = "In the beginning of heaven and earth there came into existence deities. ".repeat(10);
+describe("wikitextToMarkdown", () => {
+  const prose =
+    "In the beginning of heaven and earth there came into existence deities. ".repeat(10);
 
-    const wikitext = [
-      "{{header|title=Kojiki|section=Volume 1}}",
-      "== Volume 1 ==",
-      "'''The Beginning of Heaven and Earth'''",
-      `Now when [[chaos]] had begun to condense... ${prose}`,
-      "See [https://example.com/x the notes].<ref>Chamberlain, 1882.</ref>",
-      "[[Category:Japanese texts]]",
-    ].join("\n\n");
+  const wikitext = [
+    "{{header|title=Kojiki|section=Volume 1}}",
+    "== Volume 1 ==",
+    "'''The Beginning of Heaven and Earth'''",
+    `Now when [[chaos]] had begun to condense... ${prose}`,
+    "See [https://example.com/x the notes].<ref>Chamberlain, 1882.</ref>",
+    "[[Category:Japanese texts]]",
+  ].join("\n\n");
+
+  it("converts wikitext headings and prose; strips templates, refs and categories", () => {
+    const md = wikitextToMarkdown(wikitext);
+    expect(md).toContain("## Volume 1");
+    expect(md).toContain("chaos had begun to condense");
+    expect(md).not.toContain("{{header");
+    expect(md).not.toContain("[[Category:");
+    expect(md).not.toContain("<ref>");
+    expect(md).not.toContain("</ref>");
+  });
+
+  it("mediawiki-revision-json recipe extracts wikitext from a revisions payload", async () => {
+    const payload = Buffer.from(
+      JSON.stringify({
+        query: {
+          pages: {
+            "9": {
+              title: "Kojiki",
+              revisions: [{ slots: { main: { "*": `== Part I ==\n${prose}` } } }],
+            },
+          },
+        },
+      }),
+    );
+    const recipe = getRecipe("mediawiki-revision-json")!;
+    expect(recipe).toBeDefined();
+    const out = await recipe.run({
+      payload,
+      contentType: "application/json",
+      sourceUrl: null,
+      title: "Kojiki",
+      reportProgress: () => {},
+    });
+    expect(out.markdown).toContain("heaven and earth");
+    expect(out.markdown).not.toContain('"query"');
+    expect(out.markdown).not.toContain('"revisions"');
+  });
+});

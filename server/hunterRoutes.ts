@@ -19,6 +19,11 @@ import {
   type CycleScope,
 } from "./hunterCycle";
 import { runCorpusListCycle } from "./hunterCorpusCycle";
+import * as http from "node:http";
+import * as https from "node:https";
+import type { IncomingMessage } from "node:http";
+import { lookup as dnsLookup } from "node:dns/promises";
+import { isIP } from "node:net";
 
 /** Upload cap for corpus LISTS (indexes of titles/URLs, never full texts). */
 const MAX_CORPUS_LIST_BYTES = 512 * 1024;
@@ -107,28 +112,65 @@ async function assertSafeExternalUrl(rawUrl: string): Promise<URL> {
 }
 
 function isPrivateAddress(address: string): boolean {
-  const ip = address.replace(/^::ffff:/i, "");
+  // Strip surrounding brackets (e.g. from URL.hostname for IPv6 literals).
+  let ip = address.replace(/^\[|\]$/g, "");
+
+  // Normalize IPv4-mapped / IPv4-compatible IPv6 addresses to dotted-decimal
+  // before classification, so every form is caught by the IPv4 checks below.
+  //
+  // Case 1 — dotted-decimal mapped: ::ffff:127.0.0.1 or ::127.0.0.1
+  ip = ip.replace(/^::(?:ffff:)?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i, "$1");
+  // Case 2 — two hex groups: ::ffff:7f00:1 (= 127.0.0.1) or ::0a00:0001 (= 10.0.0.1)
+  //   Node.js skips the custom lookup option for IP literals, so a URL like
+  //   http://[::ffff:7f00:1]/ would bypass safeLookup without this preflight fix.
+  const hexMapped = ip.match(/^::(?:ffff:)?([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
+  if (hexMapped) {
+    const hi = parseInt(hexMapped[1], 16);
+    const lo = parseInt(hexMapped[2], 16);
+    ip = `${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`;
+  }
+
   if (ip.includes(":")) {
+    // Pure IPv6 — block all non-global-unicast ranges.
     const lower = ip.toLowerCase();
+    // Parse the first 16-bit group to test prefix-based ranges.
+    const firstGroupHex = (lower.split(":")[0] || "0").padStart(4, "0");
+    const first16 = parseInt(firstGroupHex, 16);
     return (
-      lower === "::1" ||
-      lower === "::" ||
-      lower.startsWith("fe80:") || // link-local
-      lower.startsWith("fc") || // unique local fc00::/7
-      lower.startsWith("fd")
+      lower === "::1" || // ::1/128 — loopback
+      lower === "::" || // ::/128 — unspecified
+      // fe80::/10 — link-local (fe80:: through febf::, i.e. first 10 bits = 1111111010)
+      (first16 >= 0xfe80 && first16 <= 0xfebf) ||
+      // fc00::/7 — unique local (fc:: and fd::)
+      lower.startsWith("fc") ||
+      lower.startsWith("fd") ||
+      // ff00::/8 — multicast
+      lower.startsWith("ff") ||
+      // fec0::/10 — deprecated site-local (fec0:: through feff::)
+      (first16 >= 0xfec0 && first16 <= 0xfeff) ||
+      // 100::/64 — IETF protocol discard prefix
+      lower.startsWith("100:")
     );
   }
+
+  // IPv4 — cover all IANA special-use ranges (RFC 6890 and successors).
   const parts = ip.split(".").map(Number);
-  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return true;
-  const [a, b] = parts;
+  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n) || n < 0 || n > 255)) return true;
+  const [a, b, c] = parts;
   return (
-    a === 0 ||
-    a === 10 ||
-    a === 127 ||
-    (a === 100 && b >= 64 && b <= 127) || // CGNAT
-    (a === 169 && b === 254) || // link-local / cloud metadata
-    (a === 172 && b >= 16 && b <= 31) ||
-    (a === 192 && b === 168)
+    a === 0 || // 0.0.0.0/8 — "this" network
+    a === 10 || // 10.0.0.0/8 — RFC 1918
+    a === 127 || // 127.0.0.0/8 — loopback
+    a >= 240 || // 240.0.0.0/4 — reserved; covers 255.255.255.255 too
+    (a === 100 && b >= 64 && b <= 127) || // 100.64.0.0/10 — CGNAT
+    (a === 169 && b === 254) || // 169.254.0.0/16 — link-local / cloud metadata
+    (a === 172 && b >= 16 && b <= 31) || // 172.16.0.0/12 — RFC 1918
+    (a === 192 && b === 0 && c === 0) || // 192.0.0.0/24 — IETF protocol assignments
+    (a === 192 && b === 0 && c === 2) || // 192.0.2.0/24 — TEST-NET-1
+    (a === 192 && b === 168) || // 192.168.0.0/16 — RFC 1918
+    (a === 198 && b >= 18 && b <= 19) || // 198.18.0.0/15 — benchmarking
+    (a === 198 && b === 51 && c === 100) || // 198.51.100.0/24 — TEST-NET-2
+    (a === 203 && b === 0 && c === 113) // 203.0.113.0/24 — TEST-NET-3
   );
 }
 const POLICY_OVERRIDE_PATH = path.resolve(process.cwd(), "data", "hunter-policy.json");
@@ -1261,6 +1303,165 @@ export function registerHunterRoutes(
       });
     }
     res.json(items);
+  });
+
+  /**
+   * Server-side reachability probe for a Manual Fetch URL.
+   *
+   * Accepts a blocker ID; obtains the URL from the database so callers cannot
+   * inject arbitrary targets. DNS resolution and private-address validation
+   * happen inside the `lookup` callback supplied to Node's http/https module,
+   * which is called by the runtime exactly once at connect time. The validated
+   * address is therefore the address used for the TCP connection — preventing
+   * DNS rebinding attacks. Each redirect hop goes through the same validation.
+   * Tries HEAD first, falls back to GET on 405, caps at 5 redirects.
+   * Returns { status, ok, redirected, finalUrl, error }.
+   */
+  app.get("/api/hunter/check-url", requireEditor, async (req, res) => {
+    const rawId = String(req.query.id ?? "").trim();
+    const blockerId = parseInt(rawId, 10);
+    if (!rawId || isNaN(blockerId)) {
+      return res.status(400).json({ error: "id parameter required (blocker ID)" });
+    }
+
+    const MANUAL_REASONS = ["robots_disallowed", "download_not_authorized", "requires_auth"];
+    const [blocker] = await db
+      .select()
+      .from(hunterBlockers)
+      .where(and(eq(hunterBlockers.id, blockerId), inArray(hunterBlockers.reason, MANUAL_REASONS)))
+      .limit(1);
+
+    if (!blocker) return res.status(404).json({ error: "Blocker not found or not a manual-fetch blocker" });
+    if (!blocker.url) return res.status(400).json({ error: "This blocker has no URL to probe" });
+
+    const raw = blocker.url;
+    let originalHost: string;
+    try {
+      const parsed = new URL(raw);
+      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+        throw new Error("Only http:// and https:// URLs are allowed");
+      }
+      originalHost = parsed.hostname;
+    } catch (err: any) {
+      return res.json({ status: null, ok: false, redirected: false, finalUrl: raw, error: err.message });
+    }
+
+    const TIMEOUT_MS = 10_000;
+    const MAX_REDIRECTS = 5;
+
+    /**
+     * Passed as the `lookup` option to every http/https.request call.
+     * Node.js calls this once per connection, right before opening the TCP
+     * socket, so the IP used for validation IS the IP used to connect —
+     * closing the DNS-rebinding window that exists when validation and
+     * connection are two separate DNS queries.
+     */
+    const safeLookup = (
+      hostname: string,
+      _opts: unknown,
+      cb: (err: Error | null, address: string, family: number) => void,
+    ): void => {
+      const clean = hostname.replace(/^\[|\]$/g, "");
+      const p = isIP(clean)
+        ? Promise.resolve([{ address: clean }])
+        : dnsLookup(clean, { all: true });
+      p.then((addrs) => {
+        for (const { address } of addrs) {
+          if (isPrivateAddress(address)) {
+            cb(new Error("URL resolves to a private or internal address"), "", 0);
+            return;
+          }
+        }
+        const a = addrs[0].address;
+        cb(null, a, a.includes(":") ? 6 : 4);
+      }).catch((err) => cb(err, "", 0));
+    };
+
+    type ProbeOutcome = {
+      status: number | null; ok: boolean; redirected: boolean; finalUrl: string; error: string | null;
+    };
+    type HopResult = { status: number; ok: boolean; location: string | null } | { error: string };
+
+    const runProbe = async (method: "HEAD" | "GET"): Promise<ProbeOutcome> => {
+      let currentStr = raw;
+      let redirected = false;
+
+      for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+        let currentUrl: URL;
+        try {
+          currentUrl = new URL(currentStr);
+        } catch {
+          return { status: null, ok: false, redirected, finalUrl: currentStr, error: "Invalid redirect URL" };
+        }
+        if (currentUrl.protocol !== "https:" && currentUrl.protocol !== "http:") {
+          return { status: null, ok: false, redirected, finalUrl: currentStr, error: "Only http:// and https:// URLs are allowed" };
+        }
+
+        // Preflight: reject IP-literal private addresses BEFORE opening any socket.
+        // Node's http(s).request skips the custom `lookup` option when the hostname
+        // is already a numeric IP, so safeLookup would never be called for literals
+        // such as 127.0.0.1 or 169.254.169.254.
+        const rawHostname = currentUrl.hostname.replace(/^\[|\]$/g, "");
+        if (isIP(rawHostname) && isPrivateAddress(rawHostname)) {
+          return { status: null, ok: false, redirected, finalUrl: currentStr, error: "URL resolves to a private or internal address" };
+        }
+
+        const port = currentUrl.port
+          ? parseInt(currentUrl.port, 10)
+          : currentUrl.protocol === "https:" ? 443 : 80;
+        const reqFn = currentUrl.protocol === "https:" ? https.request : http.request;
+
+        const hopResult = await new Promise<HopResult>((resolve) => {
+          const req = reqFn(
+            {
+              method,
+              hostname: currentUrl.hostname,
+              port,
+              path: (currentUrl.pathname || "/") + currentUrl.search,
+              headers: { Host: currentUrl.host, "User-Agent": CYCLE_USER_AGENT },
+              ...(currentUrl.protocol === "https:" ? { servername: currentUrl.hostname } : {}),
+              lookup: safeLookup,
+            } as any,
+            (incoming: IncomingMessage) => {
+              clearTimeout(timer);
+              incoming.resume();
+              resolve({
+                status: incoming.statusCode!,
+                ok: incoming.statusCode! >= 200 && incoming.statusCode! < 300,
+                location: (incoming.headers.location as string | undefined) ?? null,
+              });
+            },
+          );
+          const timer = setTimeout(() => { req.destroy(); resolve({ error: "Timed out after 10 s" }); }, TIMEOUT_MS);
+          req.on("error", (err: Error) => { clearTimeout(timer); resolve({ error: err.message }); });
+          req.end();
+        });
+
+        if ("error" in hopResult) {
+          return { status: null, ok: false, redirected, finalUrl: currentStr, error: hopResult.error };
+        }
+        if (hopResult.status >= 300 && hopResult.status < 400) {
+          if (hop === MAX_REDIRECTS) {
+            return { status: null, ok: false, redirected, finalUrl: currentStr, error: "Too many redirects" };
+          }
+          if (!hopResult.location) {
+            return { status: hopResult.status, ok: false, redirected, finalUrl: currentStr, error: "Redirect without Location header" };
+          }
+          const nextStr = new URL(hopResult.location, currentStr).toString();
+          let nextHost: string;
+          try { nextHost = new URL(nextStr).hostname; } catch { nextHost = originalHost; }
+          if (nextHost !== originalHost) redirected = true;
+          currentStr = nextStr;
+          continue;
+        }
+        return { status: hopResult.status, ok: hopResult.ok, redirected, finalUrl: currentStr, error: null };
+      }
+      return { status: null, ok: false, redirected, finalUrl: currentStr, error: "Too many redirects" };
+    };
+
+    let outcome = await runProbe("HEAD");
+    if (outcome.status === 405) outcome = await runProbe("GET");
+    return res.json(outcome);
   });
 
   app.patch("/api/hunter/blockers/:id", requireEditor, async (req, res) => {
