@@ -11,7 +11,12 @@
       "terms_url": null,
       "robots_mode": "not_applicable",
       "requests_per_second": 10,
-      "rights_notes": "Local import does not establish rights. Every candidate still needs edition-level evidence."
+      "rights_notes": "Local import does not establish rights. Every candidate still needs edition-level evidence.",
+      "discovery": {
+        "kind": "manual_only",
+        "searches": null,
+        "reason": "Local files are added by the editor directly; no network discovery applies."
+      }
     },
     {
       "source_id": "source:multilingual-wikisource",
@@ -29,7 +34,12 @@
       "terms_url": "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use",
       "robots_mode": "target_origin",
       "requests_per_second": 0.25,
-      "rights_notes": "Discovery and content fetching use Wikimedia's public Core REST API (api.wikimedia.org/core/v1/wikisource/<lang>/) — the wikisource.org /w/ API is disallowed by robots.txt. Check the work and translation copyright template. Wikisource accepts public-domain or compatible free-licensed texts, but the exact page-level statement remains authoritative."
+      "rights_notes": "Discovery and content fetching use Wikimedia's public Core REST API (api.wikimedia.org/core/v1/wikisource/<lang>/) — the wikisource.org /w/ API is disallowed by robots.txt. Check the work and translation copyright template. Wikisource accepts public-domain or compatible free-licensed texts, but the exact page-level statement remains authoritative.",
+      "discovery": {
+        "kind": "api_search",
+        "searches": "Wikimedia Core REST API full-text search across per-language Wikisource wikis (English plus the original-language wiki inferred from the scope)",
+        "reason": null
+      }
     },
     {
       "source_id": "source:project-gutenberg",
@@ -47,23 +57,35 @@
       "terms_url": "https://www.gutenberg.org/policy/terms_of_use.html",
       "robots_mode": "target_origin",
       "requests_per_second": 0.2,
-      "rights_notes": "Only ebook files (/files/, /cache/epub/, /ebooks/) — never crawl search or human browsing pages (robots.txt forbids /ebooks/search and the downloader re-checks robots per request). Project Gutenberg copyright determinations are U.S.-specific and the embedded ebook notice must be checked."
+      "rights_notes": "Only ebook files (/files/, /cache/epub/, /ebooks/) — never crawl search or human browsing pages (robots.txt forbids /ebooks/search and the downloader re-checks robots per request). Project Gutenberg copyright determinations are U.S.-specific and the embedded ebook notice must be checked.",
+      "discovery": {
+        "kind": "catalogue_feed",
+        "searches": "full catalogue feed at /cache/epub/feeds/pg_catalog.csv (robots-permitted path, cached 24 h) matched by title and author against the query",
+        "reason": null
+      }
     },
     {
       "source_id": "source:perseus-github",
       "name": "Perseus Digital Library GitHub corpora",
       "local_only": false,
       "allowed_hosts": [
+        "api.github.com",
         "raw.githubusercontent.com"
       ],
       "allowed_path_prefixes": [
-        "/PerseusDL/"
+        "/PerseusDL/",
+        "/repos/PerseusDL/"
       ],
       "automated_download_allowed": true,
       "terms_url": "https://github.com/PerseusDL",
       "robots_mode": "target_origin",
       "requests_per_second": 0.5,
-      "rights_notes": "Rights vary by repository, edition, and translation. Do not inherit a corpus-level licence without checking the selected file and repository metadata."
+      "rights_notes": "Rights vary by repository, edition, and translation. Do not inherit a corpus-level licence without checking the selected file and repository metadata.",
+      "discovery": {
+        "kind": "github_file_tree",
+        "searches": "GitHub Trees API listing of PerseusDL/canonical-greekLit and canonical-latinLit (tree cached 1 h, 60 req/h unauthenticated limit) matched against a TLG/PHI work-title table and file-path tokens",
+        "reason": null
+      }
     },
     {
       "source_id": "source:sacred-texts",
@@ -77,7 +99,12 @@
       "terms_url": "https://sacred-texts.com/cnote.htm",
       "robots_mode": "target_origin",
       "requests_per_second": 0.25,
-      "rights_notes": "Most texts are pre-1923 public-domain scans, but the archive also hosts copyrighted and 'not renewed' material. Verify the copyright note on each text's index page before collecting."
+      "rights_notes": "Most texts are pre-1923 public-domain scans, but the archive also hosts copyrighted and 'not renewed' material. Verify the copyright note on each text's index page before collecting.",
+      "discovery": {
+        "kind": "manual_only",
+        "searches": null,
+        "reason": "sacred-texts.com is protected by Cloudflare and returns HTTP 403 to all automated requests; manual candidate entry is expected until machine-readable access is confirmed."
+      }
     },
     {
       "source_id": "source:internet-archive",
@@ -105,7 +132,12 @@
       "terms_url": "https://archive.org/about/terms.php",
       "robots_mode": "target_origin",
       "requests_per_second": 0.25,
-      "rights_notes": "Only /download/ item files are permitted. The Archive hosts material under many rights states; check the item's metadata (possible-copyright-status, licenseurl) and the scanned edition's own notice before collecting."
+      "rights_notes": "Only /download/ item files are permitted. The Archive hosts material under many rights states; check the item's metadata (possible-copyright-status, licenseurl) and the scanned edition's own notice before collecting.",
+      "discovery": {
+        "kind": "api_search",
+        "searches": "Internet Archive Advanced Search API (advancedsearch.php) full-text query restricted to mediatype:texts",
+        "reason": null
+      }
     },
     {
       "source_id": "source:topostext",
@@ -119,7 +151,12 @@
       "terms_url": "https://topostext.org/the-fine-print",
       "robots_mode": "target_origin",
       "requests_per_second": 0.25,
-      "rights_notes": "ToposText texts are generally CC BY-SA-licensed translations or public-domain editions, but each work page states its own source and licence; record the per-work statement as evidence."
+      "rights_notes": "ToposText texts are generally CC BY-SA-licensed translations or public-domain editions, but each work page states its own source and licence; record the per-work statement as evidence.",
+      "discovery": {
+        "kind": "manual_only",
+        "searches": null,
+        "reason": "The works listing is rendered by JavaScript and returns the same 14 KB shell for every query; no JSON endpoint, sitemap or machine-readable catalogue was found."
+      }
     }
   ]
 }

@@ -16,6 +16,8 @@
  */
 
 import OpenAI from "openai";
+import { promises as fs } from "node:fs";
+import * as path from "node:path";
 import { slug } from "./sourceHunter/normalization";
 import { collectFulltexts, type RobotsCheck } from "./sourceHunter/fulltext";
 import { validateCandidate, FullTextValidationError } from "./sourceHunter/fulltextValidation";
@@ -155,6 +157,19 @@ export interface CycleOptions {
   selectionMode?: "preferred" | "all";
   /** Extra leads injected ahead of discovery (e.g. a URL given in a corpus list). */
   extraLeads?: DiscoveredLead[];
+  /**
+   * Directory for on-disk discovery caches (Gutenberg catalogue, Perseus tree
+   * listings). Defaults to `<cwd>/data/hunter-cache`. Tests should pass a
+   * temp dir so cached responses never leak across test runs.
+   */
+  cacheDir?: string;
+  /**
+   * Fixed inter-request delay (ms) applied to every HTTP call within automated
+   * discovery, overriding the per-source `requests_per_second` registry value.
+   * Set to 0 in tests to bypass rate-limiting. Omit to let each source's
+   * registry setting determine the delay (1000 / requests_per_second).
+   */
+  discoveryDelayMs?: number;
 }
 
 export interface AiLead {
@@ -218,6 +233,85 @@ export async function fetchJson(
     return (await response.json()) as Record<string, unknown>;
   }
   throw new Error("too many redirects during discovery fetch");
+}
+
+/**
+ * Like fetchJson but returns the raw text body. Used for HTML index pages
+ * (Sacred Text Archive) and CSV catalogue feeds (Gutenberg). Applies the same
+ * host allow-list, robots-check and redirect guard as fetchJson.
+ */
+export async function fetchText(
+  url: string,
+  allowedHosts: string[],
+  fetchImpl: typeof fetch,
+): Promise<string> {
+  let current = url;
+  for (let hop = 0; hop < 5; hop += 1) {
+    if (!hostAllowed(current, allowedHosts)) {
+      throw new Error(`discovery URL left the allowed hosts: ${current}`);
+    }
+    const robots = await robotsAllowsUrl(current, CYCLE_USER_AGENT, { fetchImpl });
+    if (!robots.allowed) {
+      throw new Error(`robots_disallowed: ${robots.reason}`);
+    }
+    const response = await fetchImpl(current, {
+      headers: {
+        "User-Agent": CYCLE_USER_AGENT,
+        Accept: "text/html, text/plain, text/csv, */*",
+      },
+      redirect: "manual",
+    });
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location");
+      if (!location) throw new Error(`redirect without location (${response.status})`);
+      current = new URL(location, current).toString();
+      continue;
+    }
+    if (!response.ok) {
+      throw new Error(`discovery fetch failed (${response.status})`);
+    }
+    return await response.text();
+  }
+  throw new Error("too many redirects during discovery fetch");
+}
+
+// ---------------------------------------------------------------------------
+// On-disk discovery cache (catalogue feeds, GitHub tree listings)
+// ---------------------------------------------------------------------------
+
+interface DiskCacheEntry {
+  fetchedAt: number;
+  content: string;
+}
+
+/**
+ * Read a cached text blob from disk if it exists and is younger than
+ * `maxAgeMs`. Returns null on any error or expiry.
+ */
+async function readDiskCache(filePath: string, maxAgeMs: number): Promise<string | null> {
+  try {
+    const raw = await fs.readFile(filePath, "utf-8");
+    const entry = JSON.parse(raw) as DiskCacheEntry;
+    if (Date.now() - entry.fetchedAt > maxAgeMs) return null;
+    return entry.content;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Write a text blob to the on-disk cache. Creates parent directories as
+ * needed. Never throws — cache writes are best-effort and must not fail
+ * discovery.
+ */
+async function writeDiskCache(filePath: string, content: string): Promise<void> {
+  try {
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    const entry: DiskCacheEntry = { fetchedAt: Date.now(), content };
+    await fs.writeFile(filePath, JSON.stringify(entry), "utf-8");
+  } catch {
+    // Intentionally swallowed: cache writes are best-effort.
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -465,24 +559,705 @@ async function discoverInternetArchive(
   return leads;
 }
 
-const DISCOVERY_STRATEGIES: Record<
-  string,
-  (
-    scope: CycleScope,
-    source: Record<string, unknown>,
-    fetchImpl: typeof fetch,
-    report: (blocker: BlockerInput) => Promise<void>,
-  ) => Promise<DiscoveredLead[]>
-> = {
-  "source:multilingual-wikisource": discoverWikisource,
-  "source:internet-archive": discoverInternetArchive,
+// ---------------------------------------------------------------------------
+// Project Gutenberg discovery
+// ---------------------------------------------------------------------------
+
+/** Robots-permitted catalogue feed URL (`/cache/epub/feeds/` is allowed). */
+export const GUTENBERG_CATALOG_URL =
+  "https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv";
+const GUTENBERG_CATALOG_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+interface GutenbergEntry {
+  id: string;
+  title: string;
+  language: string;
+  authors: string;
+}
+
+/**
+ * RFC-4180-compliant CSV parser that handles quoted fields spanning multiple
+ * lines (present in the live Gutenberg catalogue feed). Operates on the full
+ * text as a character stream rather than splitting by newline first, so
+ * embedded newlines inside double-quoted values are preserved correctly.
+ *
+ * Columns (0-based):
+ *   0 Text#  1 Type  2 Issued  3 Title  4 Language  5 Authors  …
+ */
+export function parseGutenbergCatalog(csv: string): GutenbergEntry[] {
+  const entries: GutenbergEntry[] = [];
+  let pos = 0;
+  const len = csv.length;
+  let skipFirst = true; // skip the header record
+
+  while (pos < len) {
+    // Parse one complete record (may span multiple physical lines).
+    const fields: string[] = [];
+
+    recordLoop: while (pos < len) {
+      let field = "";
+
+      if (csv[pos] === '"') {
+        // Quoted field: consume until a closing (unescaped) quote.
+        pos++; // skip opening quote
+        while (pos < len) {
+          if (csv[pos] === '"') {
+            pos++;
+            if (pos < len && csv[pos] === '"') {
+              // Escaped double-quote inside quoted value.
+              field += '"';
+              pos++;
+            } else {
+              // Closing quote — field ends here.
+              break;
+            }
+          } else {
+            field += csv[pos++];
+          }
+        }
+      } else {
+        // Unquoted field: read until comma or record terminator.
+        while (pos < len && csv[pos] !== "," && csv[pos] !== "\r" && csv[pos] !== "\n") {
+          field += csv[pos++];
+        }
+      }
+
+      fields.push(field);
+
+      if (pos >= len) break recordLoop;
+
+      if (csv[pos] === ",") {
+        pos++; // delimiter → next field in this record
+      } else {
+        // Record terminator (\r\n or \n).
+        if (csv[pos] === "\r") pos++;
+        if (pos < len && csv[pos] === "\n") pos++;
+        break recordLoop;
+      }
+    }
+
+    if (fields.length === 0) continue;
+
+    if (skipFirst) {
+      skipFirst = false;
+      continue; // drop header
+    }
+
+    if (fields.length < 6) continue;
+    if ((fields[1] ?? "").trim() !== "Text") continue;
+
+    entries.push({
+      id: (fields[0] ?? "").trim(),
+      title: (fields[3] ?? "").trim(),
+      language: (fields[4] ?? "").trim(),
+      authors: (fields[5] ?? "").trim(),
+    });
+  }
+
+  return entries;
+}
+
+/** Lowercase word tokens longer than 2 characters for fuzzy matching. */
+function queryTokens(query: string): string[] {
+  return query
+    .toLowerCase()
+    .split(/\W+/)
+    .filter((t) => t.length > 2);
+}
+
+function scoreGutenbergEntry(entry: GutenbergEntry, tokens: string[]): number {
+  const haystack = `${entry.title} ${entry.authors}`.toLowerCase();
+  return tokens.reduce((n, t) => n + (haystack.includes(t) ? 1 : 0), 0);
+}
+
+async function discoverGutenberg(
+  scope: CycleScope,
+  source: Record<string, unknown>,
+  fetchImpl: typeof fetch,
+  report: (blocker: BlockerInput) => Promise<void>,
+  cacheDir: string,
+): Promise<DiscoveredLead[]> {
+  const limit = Math.min(scope.limit ?? 10, 25);
+  const allowedHosts = (source.allowed_hosts as string[]) ?? ["gutenberg.org"];
+  const cacheFile = path.join(cacheDir, "gutenberg-catalog.json");
+
+  let csv = await readDiskCache(cacheFile, GUTENBERG_CATALOG_MAX_AGE_MS);
+  if (!csv) {
+    csv = await fetchText(GUTENBERG_CATALOG_URL, allowedHosts, fetchImpl);
+    await writeDiskCache(cacheFile, csv);
+  }
+
+  const entries = parseGutenbergCatalog(csv);
+  const query = scope.targetWork
+    ? `${scope.targetWork.title} ${scope.targetWork.author ?? ""}`.trim()
+    : scope.query;
+  const tokens = queryTokens(query);
+
+  if (tokens.length === 0) return [];
+
+  const matched = entries
+    .map((e) => ({ e, score: scoreGutenbergEntry(e, tokens) }))
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+
+  if (matched.length === 0) {
+    await report({
+      sourceId: String(source.source_id),
+      reason: "discovery_unsupported",
+      detail:
+        `${source.name}: searched the Gutenberg catalogue` +
+        ` (${entries.length.toLocaleString()} texts), no title matched "${query}".`,
+    });
+    return [];
+  }
+
+  return matched.map(({ e }) => {
+    const downloadUrl = `https://www.gutenberg.org/cache/epub/${e.id}/pg${e.id}.txt`;
+    const candidate: Candidate = {
+      work_id: `work:${slug(e.title)}`,
+      edition_id: `edition:gutenberg-${e.id}`,
+      title: e.title,
+      author: e.authors || null,
+      translator: null,
+      source_id: String(source.source_id),
+      language: e.language || "und",
+      language_role: "unknown",
+      format: "txt",
+      text_url: downloadUrl,
+      rights: {
+        status_claim: "unknown",
+        basis: "source_statement",
+        statement:
+          "Project Gutenberg texts are in the public domain in the U.S.; the ebook copyright notice must be checked.",
+        rights_url: `https://www.gutenberg.org/ebooks/${e.id}`,
+      },
+      access: { download_allowed: true, requires_auth: false },
+    };
+    return {
+      candidate,
+      origin: "registry_crawl" as const,
+      originDetail: `Project Gutenberg catalogue: ebook ${e.id} — ${e.title}`,
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Perseus Digital Library GitHub corpora discovery
+// ---------------------------------------------------------------------------
+
+/** Public repos searched for primary texts. */
+export const PERSEUS_REPOS: Array<{ repo: string; label: string }> = [
+  { repo: "canonical-greekLit", label: "Greek" },
+  { repo: "canonical-latinLit", label: "Latin" },
+];
+const PERSEUS_TREE_MAX_AGE_MS = 60 * 60 * 1000; // 1 hour
+
+/**
+ * TLG / PHI urn-prefix → { title, author } for common mythology texts.
+ * Covers the works most likely to be requested in a religious-mythology
+ * research context; the strategy also matches file-path tokens for any work
+ * not listed here.
+ */
+export const PERSEUS_WORK_TITLES: Record<string, { title: string; author: string }> = {
+  // Homer
+  "tlg0012.tlg001": { title: "Iliad", author: "Homer" },
+  "tlg0012.tlg002": { title: "Odyssey", author: "Homer" },
+  // Hesiod
+  "tlg0020.tlg001": { title: "Theogony", author: "Hesiod" },
+  "tlg0020.tlg002": { title: "Works and Days", author: "Hesiod" },
+  "tlg0020.tlg003": { title: "Shield of Heracles", author: "Hesiod" },
+  // Homeric Hymns
+  "tlg0013.tlg001": { title: "Homeric Hymns", author: "Anonymous" },
+  // Aeschylus
+  "tlg0085.tlg001": { title: "Agamemnon", author: "Aeschylus" },
+  "tlg0085.tlg002": { title: "Libation Bearers", author: "Aeschylus" },
+  "tlg0085.tlg003": { title: "Eumenides", author: "Aeschylus" },
+  "tlg0085.tlg004": { title: "Persians", author: "Aeschylus" },
+  "tlg0085.tlg005": { title: "Seven Against Thebes", author: "Aeschylus" },
+  "tlg0085.tlg006": { title: "Prometheus Bound", author: "Aeschylus" },
+  "tlg0085.tlg007": { title: "Suppliant Women", author: "Aeschylus" },
+  // Sophocles
+  "tlg0011.tlg001": { title: "Ajax", author: "Sophocles" },
+  "tlg0011.tlg002": { title: "Electra", author: "Sophocles" },
+  "tlg0011.tlg003": { title: "Oedipus at Colonus", author: "Sophocles" },
+  "tlg0011.tlg004": { title: "Oedipus Tyrannus", author: "Sophocles" },
+  "tlg0011.tlg005": { title: "Philoctetes", author: "Sophocles" },
+  "tlg0011.tlg006": { title: "Trachiniae", author: "Sophocles" },
+  "tlg0011.tlg007": { title: "Antigone", author: "Sophocles" },
+  // Euripides
+  "tlg0006.tlg001": { title: "Alcestis", author: "Euripides" },
+  "tlg0006.tlg002": { title: "Andromache", author: "Euripides" },
+  "tlg0006.tlg003": { title: "Bacchae", author: "Euripides" },
+  "tlg0006.tlg004": { title: "Cyclops", author: "Euripides" },
+  "tlg0006.tlg005": { title: "Electra", author: "Euripides" },
+  "tlg0006.tlg006": { title: "Hecuba", author: "Euripides" },
+  "tlg0006.tlg007": { title: "Helen", author: "Euripides" },
+  "tlg0006.tlg008": { title: "Heraclidae", author: "Euripides" },
+  "tlg0006.tlg009": { title: "Heracles", author: "Euripides" },
+  "tlg0006.tlg010": { title: "Hippolytus", author: "Euripides" },
+  "tlg0006.tlg011": { title: "Ion", author: "Euripides" },
+  "tlg0006.tlg012": { title: "Iphigenia at Aulis", author: "Euripides" },
+  "tlg0006.tlg013": { title: "Iphigenia in Tauris", author: "Euripides" },
+  "tlg0006.tlg014": { title: "Medea", author: "Euripides" },
+  "tlg0006.tlg015": { title: "Orestes", author: "Euripides" },
+  "tlg0006.tlg016": { title: "Phoenician Women", author: "Euripides" },
+  "tlg0006.tlg017": { title: "Rhesus", author: "Euripides" },
+  "tlg0006.tlg018": { title: "Suppliant Women (Euripides)", author: "Euripides" },
+  "tlg0006.tlg019": { title: "Trojan Women", author: "Euripides" },
+  // Apollodorus
+  "tlg0548.tlg001": { title: "Library (Bibliotheca)", author: "Apollodorus" },
+  // Pausanias
+  "tlg0525.tlg001": { title: "Description of Greece", author: "Pausanias" },
+  // Pindar
+  "tlg0033.tlg001": { title: "Olympian Odes", author: "Pindar" },
+  "tlg0033.tlg002": { title: "Pythian Odes", author: "Pindar" },
+  "tlg0033.tlg003": { title: "Nemean Odes", author: "Pindar" },
+  "tlg0033.tlg004": { title: "Isthmian Odes", author: "Pindar" },
+  // Plutarch
+  "tlg0007.tlg001": { title: "Parallel Lives", author: "Plutarch" },
+  "tlg0007.tlg002": { title: "Moralia", author: "Plutarch" },
+  // Herodotus
+  "tlg0016.tlg001": { title: "Histories", author: "Herodotus" },
+  // Plato
+  "tlg0059.tlg001": { title: "Timaeus", author: "Plato" },
+  "tlg0059.tlg022": { title: "Republic", author: "Plato" },
+  // Virgil
+  "phi0690.phi001": { title: "Eclogues", author: "Virgil" },
+  "phi0690.phi002": { title: "Georgics", author: "Virgil" },
+  "phi0690.phi003": { title: "Aeneid", author: "Virgil" },
+  // Ovid
+  "phi0959.phi001": { title: "Amores", author: "Ovid" },
+  "phi0959.phi004": { title: "Fasti", author: "Ovid" },
+  "phi0959.phi006": { title: "Metamorphoses", author: "Ovid" },
+  // Lucretius
+  "phi0550.phi001": { title: "De Rerum Natura", author: "Lucretius" },
+  // Livy
+  "phi0914.phi001": { title: "Ab Urbe Condita", author: "Livy" },
+  // Cicero
+  "phi0474.phi034": { title: "De Natura Deorum", author: "Cicero" },
+  "phi0474.phi040": { title: "De Divinatione", author: "Cicero" },
+  // Apuleius
+  "phi0806.phi001": { title: "Metamorphoses (The Golden Ass)", author: "Apuleius" },
 };
+
+async function discoverPerseus(
+  scope: CycleScope,
+  source: Record<string, unknown>,
+  fetchImpl: typeof fetch,
+  report: (blocker: BlockerInput) => Promise<void>,
+  cacheDir: string,
+): Promise<DiscoveredLead[]> {
+  const limit = Math.min(scope.limit ?? 10, 25);
+  const allowedHosts = (source.allowed_hosts as string[]) ?? [
+    "api.github.com",
+    "raw.githubusercontent.com",
+  ];
+
+  const query = scope.targetWork
+    ? `${scope.targetWork.title} ${scope.targetWork.author ?? ""}`.trim()
+    : scope.query;
+  const tokens = queryTokens(query);
+  if (tokens.length === 0) return [];
+
+  const leads: DiscoveredLead[] = [];
+  const seen = new Set<string>();
+
+  for (const { repo, label } of PERSEUS_REPOS) {
+    if (leads.length >= limit) break;
+
+    const cacheFile = path.join(cacheDir, `perseus-${repo}-tree.json`);
+    let treeJson = await readDiskCache(cacheFile, PERSEUS_TREE_MAX_AGE_MS);
+    if (!treeJson) {
+      const treeUrl = `https://api.github.com/repos/PerseusDL/${repo}/git/trees/HEAD?recursive=1`;
+      try {
+        const treeData = await fetchJson(treeUrl, allowedHosts, fetchImpl);
+        treeJson = JSON.stringify(treeData);
+        await writeDiskCache(cacheFile, treeJson);
+      } catch (e) {
+        const msg = cleanErrorText(e);
+        const isRateLimit = msg.includes("403") || msg.toLowerCase().includes("rate limit");
+        await report({
+          sourceId: String(source.source_id),
+          reason: "fetch_failed",
+          detail: isRateLimit
+            ? `${source.name}: GitHub API rate limit reached while listing the ${label} corpus; retry after an hour.`
+            : `${source.name}: could not list ${label} corpus from GitHub: ${msg}`,
+        });
+        continue;
+      }
+    }
+
+    const treeData = JSON.parse(treeJson) as { tree?: { path: string; type: string }[] };
+    const xmlFiles = (treeData.tree ?? []).filter(
+      (f) =>
+        f.type === "blob" &&
+        f.path.startsWith("data/") &&
+        f.path.endsWith(".xml") &&
+        !f.path.includes("__cts__"),
+    );
+
+    for (const file of xmlFiles) {
+      if (leads.length >= limit) break;
+      const basename = path.basename(file.path, ".xml");
+      // Extract the author.work URN prefix, e.g. "tlg0012.tlg001".
+      const urnMatch = /^([a-z]+\d+\.[a-z]+\d+)/i.exec(basename);
+      const urnPrefix = urnMatch?.[1] ?? "";
+      const meta = PERSEUS_WORK_TITLES[urnPrefix];
+
+      const haystack = meta
+        ? `${meta.title} ${meta.author} ${basename}`.toLowerCase()
+        : basename.toLowerCase();
+      const score = tokens.reduce((n, t) => n + (haystack.includes(t) ? 1 : 0), 0);
+      if (score === 0) continue;
+
+      const editionId = `edition:perseus-${basename}`;
+      if (seen.has(editionId)) continue;
+      seen.add(editionId);
+
+      const rawUrl = `https://raw.githubusercontent.com/PerseusDL/${repo}/master/${file.path}`;
+      const candidate: Candidate = {
+        work_id: `work:${slug(meta?.title ?? basename)}`,
+        edition_id: editionId,
+        title: meta?.title ?? basename,
+        author: meta?.author ?? null,
+        translator: null,
+        source_id: String(source.source_id),
+        language: repo.includes("greekLit") ? "grc" : "la",
+        language_role: "unknown",
+        format: "tei_xml",
+        text_url: rawUrl,
+        rights: {
+          status_claim: "unknown",
+          basis: "source_statement",
+          statement:
+            "Rights vary by repository, edition, and translation; check the file and repository metadata.",
+          rights_url: `https://github.com/PerseusDL/${repo}/blob/master/${file.path}`,
+        },
+        access: { download_allowed: true, requires_auth: false },
+      };
+      leads.push({
+        candidate,
+        origin: "registry_crawl" as const,
+        originDetail: `Perseus ${label} corpus: ${file.path}${meta ? ` (${meta.title})` : ""}`,
+      });
+    }
+  }
+
+  if (leads.length === 0) {
+    await report({
+      sourceId: String(source.source_id),
+      reason: "discovery_unsupported",
+      detail:
+        `${source.name}: searched the canonical Greek and Latin corpora,` +
+        ` no file matched "${query}".`,
+    });
+  }
+
+  return leads;
+}
+
+// ---------------------------------------------------------------------------
+// Internet Sacred Text Archive discovery
+// ---------------------------------------------------------------------------
+
+const SACRED_TEXTS_BASE = "https://sacred-texts.com";
+const SACRED_TEXTS_MAX_AGE_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+/**
+ * Maps domain-specific query keywords to the tradition path they live under on
+ * sacred-texts.com. This bridges the gap between work-title tokens ("rig",
+ * "veda") and tradition labels ("Hinduism") that share no words — without this
+ * table, label-only scoring would miss whole sections of the site.
+ *
+ * Each path prefix matches the tradition directory (e.g. "/hin/" for Hinduism).
+ * Keywords are compared against query tokens using substring matching in both
+ * directions so partial tokens like "veda" also match "vedanta".
+ */
+const SACRED_TEXTS_KEYWORD_TRADITIONS: Array<{ keywords: string[]; path: string }> = [
+  {
+    keywords: [
+      "hindu", "veda", "rigveda", "rig", "upanishad", "mahabharata", "ramayana",
+      "gita", "bhagavad", "vedic", "atharva", "sama", "yajur", "purana",
+      "brahman", "brahma", "brahmana", "sanskrit", "vedanta",
+    ],
+    path: "/hin/",
+  },
+  {
+    keywords: [
+      "buddhist", "buddhism", "tripitaka", "pali", "dhamma", "dharma",
+      "tibetan", "sutra", "zen", "buddha", "dhammapada",
+    ],
+    path: "/bud/",
+  },
+  { keywords: ["jain", "jainism", "jaina"], path: "/jain/" },
+  { keywords: ["shinto", "kojiki", "nihon", "nihongi", "japanese", "nihonshoki"], path: "/shi/" },
+  {
+    keywords: ["egypt", "egyptian", "pharaoh", "osiris", "isis", "amun", "amon", "ra", "horus"],
+    path: "/egy/",
+  },
+  { keywords: ["christian", "bible", "jesus", "gospel", "testament", "church"], path: "/chr/" },
+  { keywords: ["islam", "quran", "koran", "muslim", "sufi", "hadith", "arabic"], path: "/isl/" },
+  { keywords: ["jewish", "judaism", "talmud", "torah", "kabbalah", "hebraic", "hebrew"], path: "/jud/" },
+  { keywords: ["zoroastrian", "avesta", "zend", "parsi", "zardusht", "gathas"], path: "/zoro/" },
+  { keywords: ["confucian", "confucius", "analects", "chinese", "china", "mencius"], path: "/cfu/" },
+  { keywords: ["taoist", "taoism", "tao", "laozi", "laotse", "chuang"], path: "/tao/" },
+  { keywords: ["celtic", "arthurian", "druid", "irish", "gaelic", "welsh", "mabinogion"], path: "/ance/" },
+  { keywords: ["norse", "viking", "edda", "odin", "thor", "nordic", "eddic", "volsunga"], path: "/neu/" },
+  {
+    keywords: [
+      "greek", "roman", "latin", "classical", "olympian", "homer", "iliad",
+      "odyssey", "hesiod", "theogony", "plutarch",
+    ],
+    path: "/cla/",
+  },
+  {
+    keywords: ["mesopotamian", "sumerian", "babylonian", "akkadian", "gilgamesh", "assyrian"],
+    path: "/ane/",
+  },
+  { keywords: ["native", "american", "maya", "aztec", "inca", "indigenous", "navajo"], path: "/nam/" },
+  { keywords: ["african", "yoruba", "bantu"], path: "/afr/" },
+  { keywords: ["gnostic", "gnosticism", "hermetic", "hermes", "nag", "pistis", "sophia"], path: "/gno/" },
+];
+
+/**
+ * Score how well a Sacred Texts tradition link matches the query, combining:
+ * 1. Label-text scoring — how many query tokens appear in the tradition label.
+ * 2. Keyword-table scoring — explicit mapping from work-domain keywords to the
+ *    tradition path, so "rig veda" → Hindu ("/hin/") even though "Hinduism"
+ *    contains neither "rig" nor "veda".
+ */
+function scoreTraditionLink(link: { href: string; text: string }, tokens: string[]): number {
+  // Score against the human-readable label.
+  let score = tokens.reduce((n, t) => n + (link.text.toLowerCase().includes(t) ? 1 : 0), 0);
+
+  // Score via the keyword table using the tradition's URL path.
+  try {
+    const pathname = new URL(link.href).pathname;
+    for (const entry of SACRED_TEXTS_KEYWORD_TRADITIONS) {
+      if (!pathname.startsWith(entry.path)) continue;
+      const kwMatch = entry.keywords.some((kw) =>
+        tokens.some((t) => kw === t || kw.startsWith(t) || t.startsWith(kw)),
+      );
+      if (kwMatch) {
+        score += 2; // keyword match outweighs label scoring
+        break;
+      }
+    }
+  } catch {
+    // ignore URL parse errors
+  }
+
+  return score;
+}
+
+/**
+ * Extract hrefs and their link text from an HTML page, resolved to absolute
+ * URLs on the same host. Returns only same-host links.
+ */
+function extractSacredTextsLinks(
+  html: string,
+  pageUrl: string,
+): Array<{ href: string; text: string }> {
+  const base = new URL(pageUrl);
+  const results: Array<{ href: string; text: string }> = [];
+  const re = /<a\s[^>]*?\bhref="([^"#?]+)"[^>]*>([^<]{2,100})<\/a>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const raw = m[1].trim();
+    const text = m[2].replace(/\s+/g, " ").replace(/&[a-z#\d]+;/g, " ").trim();
+    if (!text || !raw) continue;
+    try {
+      const abs = new URL(raw, base).toString();
+      if (new URL(abs).hostname !== base.hostname) continue;
+      results.push({ href: abs, text });
+    } catch {
+      // ignore unparseable URLs
+    }
+  }
+  return results;
+}
+
+function scoreSacredTextsMatch(text: string, tokens: string[]): number {
+  const lower = text.toLowerCase();
+  return tokens.reduce((n, t) => n + (lower.includes(t) ? 1 : 0), 0);
+}
+
+async function discoverSacredTexts(
+  scope: CycleScope,
+  source: Record<string, unknown>,
+  fetchImpl: typeof fetch,
+  report: (blocker: BlockerInput) => Promise<void>,
+  cacheDir: string,
+): Promise<DiscoveredLead[]> {
+  const limit = Math.min(scope.limit ?? 10, 25);
+  const allowedHosts = (source.allowed_hosts as string[]) ?? ["sacred-texts.com"];
+
+  const query = scope.targetWork
+    ? `${scope.targetWork.title} ${scope.targetWork.author ?? ""}`.trim()
+    : scope.query;
+  const tokens = queryTokens(query);
+  if (tokens.length === 0) return [];
+
+  // Step 1: fetch the main index to discover tradition links.
+  const mainCacheFile = path.join(cacheDir, "sacred-texts-main.json");
+  let mainHtml = await readDiskCache(mainCacheFile, SACRED_TEXTS_MAX_AGE_MS);
+  if (!mainHtml) {
+    mainHtml = await fetchText(`${SACRED_TEXTS_BASE}/`, allowedHosts, fetchImpl);
+    await writeDiskCache(mainCacheFile, mainHtml);
+  }
+
+  // Tradition index pages look like /hin/index.htm, /bud/index.htm …
+  const mainLinks = extractSacredTextsLinks(mainHtml, `${SACRED_TEXTS_BASE}/`);
+  const traditionLinks = mainLinks.filter(({ href }) => {
+    try {
+      const { pathname } = new URL(href);
+      return /^\/[a-z]+\/(index\.htm?)?$/i.test(pathname);
+    } catch {
+      return false;
+    }
+  });
+
+  // Score traditions by both label text and the keyword-to-tradition table.
+  const scoredTraditions = traditionLinks
+    .map((link) => ({ ...link, score: scoreTraditionLink(link, tokens) }))
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+
+  // If no tradition scored, walk the first five as a broad attempt.
+  const traditionsToFetch =
+    scoredTraditions.length > 0 ? scoredTraditions : traditionLinks.slice(0, 5);
+
+  const leads: DiscoveredLead[] = [];
+  const seen = new Set<string>();
+
+  for (const tradition of traditionsToFetch) {
+    if (leads.length >= limit) break;
+    // Ensure we land on the index page, not just the directory root.
+    const indexHref = tradition.href.endsWith("/")
+      ? `${tradition.href}index.htm`
+      : tradition.href;
+
+    const tradSlug = slug(tradition.text || new URL(indexHref).pathname);
+    const tradCacheFile = path.join(cacheDir, `sacred-texts-trad-${tradSlug}.json`);
+    let tradHtml = await readDiskCache(tradCacheFile, SACRED_TEXTS_MAX_AGE_MS);
+    if (!tradHtml) {
+      try {
+        tradHtml = await fetchText(indexHref, allowedHosts, fetchImpl);
+        await writeDiskCache(tradCacheFile, tradHtml);
+      } catch {
+        continue; // One failing tradition must not abort the others.
+      }
+    }
+
+    const workLinks = extractSacredTextsLinks(tradHtml, indexHref).filter(({ href }) => {
+      try {
+        return /\.htm?$/i.test(new URL(href).pathname);
+      } catch {
+        return false;
+      }
+    });
+
+    for (const work of workLinks) {
+      if (leads.length >= limit) break;
+      const score = scoreSacredTextsMatch(work.text, tokens);
+      if (score === 0) continue;
+      const editionId = `edition:sacred-texts-${slug(work.text)}-${slug(tradition.text)}`;
+      if (seen.has(editionId)) continue;
+      seen.add(editionId);
+
+      const candidate: Candidate = {
+        work_id: `work:${slug(work.text)}`,
+        edition_id: editionId,
+        title: work.text,
+        author: null,
+        translator: null,
+        source_id: String(source.source_id),
+        language: "en",
+        language_role: "unknown",
+        format: "html",
+        text_url: work.href,
+        rights: {
+          status_claim: "unknown",
+          basis: "source_statement",
+          statement:
+            "Sacred Texts hosts public-domain and freely licensed texts; the copyright note on each text's page must be checked.",
+          rights_url: work.href,
+        },
+        access: { download_allowed: true, requires_auth: false },
+      };
+      leads.push({
+        candidate,
+        origin: "registry_crawl" as const,
+        originDetail: `Internet Sacred Text Archive (${tradition.text}): ${work.text}`,
+      });
+    }
+  }
+
+  if (leads.length === 0) {
+    await report({
+      sourceId: String(source.source_id),
+      reason: "discovery_unsupported",
+      detail:
+        `${source.name}: searched tradition index pages,` +
+        ` no work title matched "${query}".`,
+    });
+  }
+
+  return leads;
+}
+
+// ---------------------------------------------------------------------------
+// Strategy registry
+// ---------------------------------------------------------------------------
+
+type DiscoveryStrategy = (
+  scope: CycleScope,
+  source: Record<string, unknown>,
+  fetchImpl: typeof fetch,
+  report: (blocker: BlockerInput) => Promise<void>,
+  cacheDir: string,
+) => Promise<DiscoveredLead[]>;
+
+const DISCOVERY_STRATEGIES: Record<string, DiscoveryStrategy> = {
+  // Existing strategies wrapped to accept the extra cacheDir parameter.
+  "source:multilingual-wikisource": (s, src, f, _r, _cd) => discoverWikisource(s, src, f),
+  "source:internet-archive": (s, src, f, r, _cd) => discoverInternetArchive(s, src, f, r),
+  // New strategies.
+  "source:project-gutenberg": discoverGutenberg,
+  "source:perseus-github": discoverPerseus,
+  // NOTE: discoverSacredTexts is implemented but not registered here because
+  // sacred-texts.com is currently behind Cloudflare and returns HTTP 403 to
+  // all automated requests. The source is marked manual_only in the registry
+  // so that cycles report a specific blocker rather than the generic fallback.
+  // Re-register when machine-readable access is confirmed.
+};
+
+/**
+ * Wrap `fetchImpl` so that consecutive calls wait at least `delayMs` ms
+ * between them, honouring the source's configured `requests_per_second` limit.
+ * Pass `delayMs = 0` to bypass rate-limiting (used in tests).
+ */
+function makeRateLimitedFetch(fetchImpl: typeof fetch, delayMs: number): typeof fetch {
+  if (delayMs <= 0) return fetchImpl;
+  let lastCallMs = 0;
+  return (async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
+    const now = Date.now();
+    const wait = delayMs - (now - lastCallMs);
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    lastCallMs = Date.now();
+    return fetchImpl(input, init);
+  }) as typeof fetch;
+}
 
 async function defaultRegistryDiscover(
   scope: CycleScope,
   registrySources: Record<string, unknown>[],
   report: (blocker: BlockerInput) => Promise<void>,
   fetchImpl: typeof fetch,
+  cacheDir: string,
+  discoveryDelayMs?: number,
 ): Promise<DiscoveredLead[]> {
   const leads: DiscoveredLead[] = [];
   for (const source of registrySources) {
@@ -496,6 +1271,24 @@ async function defaultRegistryDiscover(
       });
       continue;
     }
+
+    // A registry-level manual_only declaration takes priority over any strategy
+    // in DISCOVERY_STRATEGIES. This lets a source be dormant when its endpoint
+    // is temporarily or permanently inaccessible (e.g. Cloudflare block) while
+    // keeping the implementation code for when access is restored.
+    const discovery = source.discovery as Record<string, unknown> | undefined;
+    if (discovery?.kind === "manual_only") {
+      await report({
+        sourceId,
+        reason: "discovery_unsupported",
+        detail:
+          `${source.name}: automated discovery is not available` +
+          ` (${String(discovery.reason ?? "no machine-readable catalogue found")})` +
+          `; add candidates manually.`,
+      });
+      continue;
+    }
+
     const strategy = DISCOVERY_STRATEGIES[sourceId];
     if (!strategy) {
       await report({
@@ -505,8 +1298,15 @@ async function defaultRegistryDiscover(
       });
       continue;
     }
+
+    // Compute per-source delay: explicit override wins, else derive from the
+    // registry's requests_per_second (minimum 100 ms floor to prevent hammering).
+    const rps = Number((source.requests_per_second as unknown) ?? 1) || 1;
+    const delayMs = discoveryDelayMs ?? Math.max(100, Math.round(1000 / rps));
+    const throttledFetch = makeRateLimitedFetch(fetchImpl, delayMs);
+
     try {
-      leads.push(...(await strategy(scope, source, fetchImpl, report)));
+      leads.push(...(await strategy(scope, source, throttledFetch, report, cacheDir)));
     } catch (e) {
       const message = cleanErrorText(e);
       await report({
@@ -932,6 +1732,7 @@ async function verifyArchiveLead(
 export async function runHuntingCycle(options: CycleOptions): Promise<CycleSummary> {
   const { scope, policy, registry, corpusRoot, store } = options;
   const fetchImpl = options.fetchImpl ?? fetch;
+  const cacheDir = options.cacheDir ?? path.join(process.cwd(), "data", "hunter-cache");
   const registrySources = sources(registry);
   let blockerCount = 0;
   const report = async (blocker: BlockerInput) => {
@@ -943,7 +1744,7 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
   await store.updateProgress({ phase: "discovering_registry", query: scope.query, region: scope.region });
   const registryDiscover = options.registryDiscover
     ? options.registryDiscover(scope, registrySources, report)
-    : defaultRegistryDiscover(scope, registrySources, report, fetchImpl);
+    : defaultRegistryDiscover(scope, registrySources, report, fetchImpl, cacheDir, options.discoveryDelayMs);
   // Leads the caller supplied (corpus-list URLs an editor typed) are checked
   // against the Archive exactly like discovered ones: an unverified archive.org
   // URL must never become a candidate.

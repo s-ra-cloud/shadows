@@ -35,14 +35,50 @@
             "type": "array",
             "items": {"type": "string"}
           },
+          "trusted_redirects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "hosts": {"type": "array", "items": {"type": "string"}},
+                "path_patterns": {"type": "array", "items": {"type": "string"}}
+              }
+            }
+          },
           "automated_download_allowed": {"type": "boolean"},
           "terms_url": {"type": ["string", "null"], "format": "uri"},
           "robots_mode": {"enum": ["not_applicable", "target_origin"]},
           "requests_per_second": {"type": "number", "exclusiveMinimum": 0},
-          "rights_notes": {"type": "string"}
+          "rights_notes": {"type": "string"},
+          "discovery": {
+            "type": "object",
+            "description": "Optional per-source discovery capability descriptor consumed by the strategies-tab UI.",
+            "additionalProperties": false,
+            "required": ["kind"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "api_search",
+                  "catalogue_feed",
+                  "github_file_tree",
+                  "index_page_walk",
+                  "manual_only"
+                ],
+                "description": "How automated discovery works for this source, or 'manual_only' if it cannot be automated."
+              },
+              "searches": {
+                "type": ["string", "null"],
+                "description": "Human-readable summary of what the strategy searches and how."
+              },
+              "reason": {
+                "type": ["string", "null"],
+                "description": "For manual_only sources: why automated discovery is not available."
+              }
+            }
+          }
         }
       }
     }
   }
 }
-
