@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:gods-ships-and-the-thing-itself",
+  "edition_id": "edition:internet-archive-gods-ships-and-the-thing-itself",
+  "source_id": "source:internet-archive",
+  "source_reference": "https://archive.org/download/gods-ships-and-the-thing-itself/Gods%2C%20Ships%2C%20and%20the%20Thing%20Itself_djvu.txt",
+  "rights": {
+    "status": "restricted_license",
+    "confidence": "high",
+    "basis": "source_metadata",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "territory_covered": true,
+    "statement": "Internet Archive item licence: https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "license": "Creative Commons restricted licence",
+    "rights_url": "https://archive.org/details/gods-ships-and-the-thing-itself",
+    "license_url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "attribution",
+      "noncommercial_only"
+    ],
+    "reasons": [
+      "standardized Creative Commons marker"
+    ],
+    "assessed_at": "2026-08-13T10:52:24.428000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_metadata",
+    "statement": "Internet Archive item licence: https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "license_url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "rights_url": "https://archive.org/details/gods-ships-and-the-thing-itself",
+    "archive_item_identifier": "gods-ships-and-the-thing-itself",
+    "archive_repair": {
+      "previous_url": "https://archive.org/download/gods-ships-and-the-thing-itself/gods-ships-and-the-thing-itself_djvu.txt",
+      "resolved_via": "item_metadata",
+      "possible_copyright_status": null
+    }
+  },
+  "file_sha256": "sha256:82ef9f90402712b8231bb313c38e23d5c211fc439356cd74afec373a65da2d46"
+}

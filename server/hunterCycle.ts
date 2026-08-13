@@ -20,6 +20,17 @@ import { slug } from "./sourceHunter/normalization";
 import { collectFulltexts, type RobotsCheck } from "./sourceHunter/fulltext";
 import { validateCandidate, FullTextValidationError } from "./sourceHunter/fulltextValidation";
 import { robotsAllowsUrl } from "./sourceHunter/robots";
+import {
+  isArchiveUrl,
+  repairArchiveUrl,
+  resolveArchiveItem,
+  type ArchiveResolution,
+} from "./sourceHunter/archiveResolver";
+import {
+  applyArchiveResolution,
+  isRepairableArchiveFailure,
+  repairArchiveDownload,
+} from "./sourceHunter/archiveRepair";
 import type { Candidate, Policy } from "./sourceHunter/rights";
 import { cleanErrorText } from "./errorText";
 
@@ -39,12 +50,26 @@ export interface BlockerInput {
   detail?: string | null;
   workId?: string | null;
   editionId?: string | null;
+  /** Download URL confirmed against the source (supersedes `url`). */
+  resolvedUrl?: string | null;
+  /** Human-facing page for the item on the source. */
+  itemUrl?: string | null;
+  /** Automatic repair state: "in_progress" | "repaired" | "not_repairable". */
+  repairState?: string | null;
+  /** Plain-language outcome of the automatic repair attempt. */
+  repairDetail?: string | null;
 }
 
 export interface CycleStore {
   /** edition_ids already present, to avoid duplicate candidates. */
   existingEditionIds(): Promise<Set<string>>;
   insertCandidate(candidate: Candidate): Promise<void>;
+  /**
+   * Optional: persist a corrected candidate (same edition_id, new text_url or
+   * rights evidence) after an automatic repair. Stores that omit it simply
+   * keep the original candidate row.
+   */
+  updateCandidate?(candidate: Candidate): Promise<void>;
   addBlocker(blocker: BlockerInput): Promise<void>;
   /** Live progress snapshot (persisted so the UI can poll). */
   updateProgress(progress: Record<string, unknown>): Promise<void>;
@@ -360,10 +385,21 @@ async function discoverWikisource(
   return leads.slice(0, limit);
 }
 
+/**
+ * Internet Archive discovery.
+ *
+ * The catalog search gives identifiers, not files. Every hit is confirmed
+ * against the item's own file list before it becomes a candidate, so the
+ * stored `text_url` always points at a file the item really has (the
+ * conventional `<identifier>_djvu.txt` is frequently absent). Items with no
+ * downloadable text — dark, lending-restricted, or image-only — are recorded
+ * in the ledger instead of being turned into candidates that cannot download.
+ */
 async function discoverInternetArchive(
   scope: CycleScope,
   source: Record<string, unknown>,
   fetchImpl: typeof fetch,
+  report: (blocker: BlockerInput) => Promise<void>,
 ): Promise<DiscoveredLead[]> {
   const limit = Math.min(scope.limit ?? 10, 25);
   const searchUrl =
@@ -375,47 +411,58 @@ async function discoverInternetArchive(
   const doc = await fetchJson(searchUrl, (source.allowed_hosts as string[]) ?? ["archive.org"], fetchImpl);
   const docs =
     (((doc.response as Record<string, unknown>) ?? {}).docs as Record<string, unknown>[]) ?? [];
-  return docs
-    .filter((item) => item.identifier)
-    .map((item) => {
-      const identifier = String(item.identifier);
-      const title = String(item.title ?? identifier);
-      const licenseUrl = item.licenseurl ? String(item.licenseurl) : null;
-      const language = item.language
-        ? String(Array.isArray(item.language) ? item.language[0] : item.language)
-            .toLowerCase()
-            .slice(0, 3)
-        : "und";
-      const candidate: Candidate = {
-        work_id: `work:${slug(title)}`,
-        edition_id: `edition:internet-archive-${slug(identifier)}`,
-        title,
-        author: item.creator
-          ? String(Array.isArray(item.creator) ? item.creator[0] : item.creator)
-          : null,
-        translator: null,
-        source_id: String(source.source_id),
-        language,
-        language_role: "unknown",
-        format: "txt",
-        text_url: `https://archive.org/download/${identifier}/${identifier}_djvu.txt`,
-        rights: {
-          status_claim: "unknown",
-          basis: "source_statement",
-          statement: licenseUrl
-            ? `Internet Archive item licence: ${licenseUrl}`
-            : "Internet Archive item; no explicit licence statement found in catalog metadata.",
-          license_url: licenseUrl,
-          rights_url: `https://archive.org/details/${identifier}`,
-        },
-        access: { download_allowed: true, requires_auth: false },
-      };
-      return {
-        candidate,
-        origin: "registry_crawl" as const,
-        originDetail: `Internet Archive search: ${identifier}`,
-      };
+  const lookupOptions = {
+    fetchImpl,
+    userAgent: CYCLE_USER_AGENT,
+    requestsPerSecond: Number(source.requests_per_second) || undefined,
+  };
+  const leads: DiscoveredLead[] = [];
+  for (const item of docs) {
+    if (!item.identifier) continue;
+    const identifier = String(item.identifier);
+    const title = String(item.title ?? identifier);
+    const language = item.language
+      ? String(Array.isArray(item.language) ? item.language[0] : item.language)
+          .toLowerCase()
+          .slice(0, 3)
+      : "und";
+    const resolved = await resolveArchiveItem(identifier, lookupOptions);
+    if (!resolved.ok) {
+      await report({
+        sourceId: String(source.source_id),
+        reason: "fetch_failed",
+        url: resolved.itemUrl,
+        itemUrl: resolved.itemUrl,
+        repairState: "not_repairable",
+        repairDetail: resolved.detail,
+        detail: `Internet Archive search hit "${title}" skipped: ${resolved.detail}`,
+      });
+      continue;
+    }
+    const candidate: Candidate = {
+      work_id: `work:${slug(title)}`,
+      edition_id: `edition:internet-archive-${slug(identifier)}`,
+      title,
+      author: item.creator
+        ? String(Array.isArray(item.creator) ? item.creator[0] : item.creator)
+        : null,
+      translator: null,
+      source_id: String(source.source_id),
+      language,
+      language_role: "unknown",
+      format: resolved.format,
+      text_url: resolved.downloadUrl,
+      rights: {},
+      access: { download_allowed: true, requires_auth: false },
+    };
+    leads.push({
+      // Licence evidence comes from the resolved item's own catalog metadata.
+      candidate: applyArchiveResolution(candidate, resolved),
+      origin: "registry_crawl" as const,
+      originDetail: `Internet Archive search: ${identifier} (${resolved.fileName})`,
     });
+  }
+  return leads;
 }
 
 const DISCOVERY_STRATEGIES: Record<
@@ -424,6 +471,7 @@ const DISCOVERY_STRATEGIES: Record<
     scope: CycleScope,
     source: Record<string, unknown>,
     fetchImpl: typeof fetch,
+    report: (blocker: BlockerInput) => Promise<void>,
   ) => Promise<DiscoveredLead[]>
 > = {
   "source:multilingual-wikisource": discoverWikisource,
@@ -458,7 +506,7 @@ async function defaultRegistryDiscover(
       continue;
     }
     try {
-      leads.push(...(await strategy(scope, source, fetchImpl)));
+      leads.push(...(await strategy(scope, source, fetchImpl, report)));
     } catch (e) {
       const message = cleanErrorText(e);
       await report({
@@ -827,6 +875,60 @@ export function blockerFromRecord(record: Record<string, unknown>): BlockerInput
 // The cycle itself
 // ---------------------------------------------------------------------------
 
+/**
+ * Confirm an archive.org lead against the item's real file list before it is
+ * stored as a candidate, replacing its URL, format and licence evidence with
+ * the resolved item's own. Non-Archive leads pass straight through.
+ *
+ * Returns null when the item cannot be downloaded — a blocker carrying the
+ * precise reason has been recorded by then.
+ */
+async function verifyArchiveLead(
+  lead: DiscoveredLead,
+  context: {
+    source: Record<string, unknown>;
+    policy: Policy;
+    fetchImpl: typeof fetch;
+    report: (blocker: BlockerInput) => Promise<void>;
+    describe: (detail: string) => string;
+  },
+): Promise<DiscoveredLead | null> {
+  const url = String(lead.candidate?.text_url ?? "");
+  if (!isArchiveUrl(url)) return lead;
+  const resolved = await repairArchiveUrl(
+    {
+      url,
+      title: lead.candidate?.title ? String(lead.candidate.title) : null,
+      author: lead.candidate?.author ? String(lead.candidate.author) : null,
+    },
+    {
+      fetchImpl: context.fetchImpl,
+      userAgent: CYCLE_USER_AGENT,
+      requestsPerSecond: Number(context.source.requests_per_second) || undefined,
+      maxBytes: Number(context.policy.maximum_file_bytes) || undefined,
+    },
+  );
+  if (!resolved.ok) {
+    await context.report({
+      sourceId: String(context.source.source_id),
+      reason: "download_not_authorized",
+      url,
+      itemUrl: resolved.itemUrl,
+      repairState: "not_repairable",
+      repairDetail: resolved.detail,
+      detail: context.describe(resolved.detail),
+    });
+    return null;
+  }
+  // Licence evidence is replaced by the resolved item's own catalog metadata;
+  // any model's claims stay in their ai_claimed_* keys.
+  return {
+    ...lead,
+    candidate: applyArchiveResolution(lead.candidate, resolved),
+    originDetail: `${lead.originDetail} — verified Archive file: ${resolved.fileName}`,
+  };
+}
+
 export async function runHuntingCycle(options: CycleOptions): Promise<CycleSummary> {
   const { scope, policy, registry, corpusRoot, store } = options;
   const fetchImpl = options.fetchImpl ?? fetch;
@@ -842,7 +944,25 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
   const registryDiscover = options.registryDiscover
     ? options.registryDiscover(scope, registrySources, report)
     : defaultRegistryDiscover(scope, registrySources, report, fetchImpl);
-  const leads: DiscoveredLead[] = [...(options.extraLeads ?? []), ...(await registryDiscover)];
+  // Leads the caller supplied (corpus-list URLs an editor typed) are checked
+  // against the Archive exactly like discovered ones: an unverified archive.org
+  // URL must never become a candidate.
+  const leads: DiscoveredLead[] = [];
+  for (const lead of options.extraLeads ?? []) {
+    const source = matchRegistrySource(String(lead.candidate?.text_url ?? ""), registrySources);
+    const verified = source
+      ? await verifyArchiveLead(lead, {
+          source,
+          policy,
+          fetchImpl,
+          report,
+          describe: (detail) =>
+            `The supplied URL for "${lead.candidate?.title ?? "this text"}" points at an Internet Archive item that cannot be downloaded. ${detail}`,
+        })
+      : lead;
+    if (verified) leads.push(verified);
+  }
+  leads.push(...(await registryDiscover));
 
   // Phase 2: AI lead discovery.
   if (scope.useAi !== false) {
@@ -877,7 +997,19 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
           continue;
         }
         try {
-          leads.push(aiLeadToLead(lead, source));
+          const discovered = aiLeadToLead(lead, source);
+          // Archive.org leads are the ones models most often invent: confirm
+          // the item and its file before the URL is stored as a candidate.
+          const verified = await verifyArchiveLead(discovered, {
+            source,
+            policy,
+            fetchImpl,
+            report,
+            describe: (detail) =>
+              `AI lead "${lead.title}" points at an Internet Archive item that cannot be downloaded. ${detail}`,
+          });
+          if (!verified) continue;
+          leads.push(verified);
         } catch (e) {
           await report({
             reason: "invalid_candidate",
@@ -986,6 +1118,8 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
     options.robotsCheck ??
     (async (url) => robotsAllowsUrl(url, CYCLE_USER_AGENT, { fetchImpl }));
   let records: Record<string, unknown>[] = [];
+  /** Automatic Archive repair outcomes, by edition_id (one attempt each). */
+  const archiveRepairs = new Map<string, Awaited<ReturnType<typeof repairArchiveDownload>>>();
   if (created.length > 0) {
     records = await collectFulltexts(
       created.map((lead) => lead.candidate),
@@ -1057,15 +1191,49 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
       }
     }
 
+    // Phase 4b: repair blocked Internet Archive downloads automatically.
+    // A refused path, an untrusted redirect or a 404 means the URL was wrong,
+    // not that the text is unavailable: resolve the item's real file and
+    // retry the download once (through the same rights pipeline).
+    for (let index = 0; index < records.length; index += 1) {
+      const record = records[index];
+      if (!isRepairableArchiveFailure(record)) continue;
+      const editionId = String(record.edition_id ?? "");
+      const lead = created.find((l) => String(l.candidate.edition_id) === editionId);
+      if (!lead) continue;
+      await store.updateProgress({ phase: "repairing_archive_links", edition_id: editionId });
+      const outcome = await repairArchiveDownload(lead.candidate, {
+        policy,
+        registry,
+        corpusRoot,
+        userAgent: CYCLE_USER_AGENT,
+        fetchImpl,
+        robotsCheck,
+      });
+      archiveRepairs.set(editionId, outcome);
+      if (outcome.candidate) {
+        lead.candidate = outcome.candidate;
+        await store.updateCandidate?.(outcome.candidate);
+      }
+      if (outcome.record) records[index] = outcome.record;
+    }
+
     await store.mirrorCorpusRecords(records);
   }
 
   // Phase 5: derive blockers from download outcomes.
   for (const record of records) {
     const blocker = blockerFromRecord(record);
-    if (blocker) {
-      await report(blocker);
+    if (!blocker) continue;
+    const repair = archiveRepairs.get(String(record.edition_id ?? ""));
+    if (repair) {
+      blocker.resolvedUrl = repair.resolvedUrl;
+      blocker.itemUrl = repair.itemUrl;
+      blocker.repairState = repair.repaired ? "repaired" : "not_repairable";
+      blocker.repairDetail = repair.detail;
+      blocker.detail = `${blocker.detail ?? ""} — ${repair.detail}`.trim();
     }
+    await report(blocker);
   }
 
   const files = records

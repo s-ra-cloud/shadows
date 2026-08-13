@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:zohar-incomplete",
+  "edition_id": "edition:internet-archive-zohar-vol-9-pritzker-edition-stanford-2016",
+  "source_id": "source:internet-archive",
+  "source_reference": "https://archive.org/download/zohar-vol.-9-pritzker-edition-stanford-2016/Zohar%2C%20Vol.%209%20%5BPritzker%20edition%5D%20(Stanford%2C%202016)_djvu.txt",
+  "rights": {
+    "status": "copyrighted",
+    "confidence": "high",
+    "basis": "source_metadata",
+    "target_jurisdiction": "FR",
+    "territories": [],
+    "territory_covered": false,
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "license": null,
+    "rights_url": "https://archive.org/details/zohar-vol.-9-pritzker-edition-stanford-2016",
+    "license_url": null,
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "do_not_publish_without_permission"
+    ],
+    "reasons": [
+      "explicit copyright restriction"
+    ],
+    "assessed_at": "2026-08-13T10:43:48.507000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_metadata",
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "license_url": null,
+    "rights_url": "https://archive.org/details/zohar-vol.-9-pritzker-edition-stanford-2016",
+    "archive_item_identifier": "zohar-vol.-9-pritzker-edition-stanford-2016",
+    "archive_repair": {
+      "previous_url": "https://archive.org/download/zohar-vol.-9-pritzker-edition-stanford-2016/zohar-vol.-9-pritzker-edition-stanford-2016_djvu.txt",
+      "resolved_via": "item_metadata",
+      "possible_copyright_status": null
+    }
+  },
+  "file_sha256": "sha256:99fa897268b78979997da80acacae832b53f510ad7f929d5e078e940245c6299"
+}

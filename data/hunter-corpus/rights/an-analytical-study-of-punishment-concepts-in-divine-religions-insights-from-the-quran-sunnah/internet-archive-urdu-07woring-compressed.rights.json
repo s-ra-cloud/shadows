@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:an-analytical-study-of-punishment-concepts-in-divine-religions-insights-from-the-quran-sunnah",
+  "edition_id": "edition:internet-archive-urdu-07woring-compressed",
+  "source_id": "source:internet-archive",
+  "source_reference": "https://archive.org/download/urdu-07woring-compressed/Urdu%2B07%2B%D8%B3%D9%85%D8%A7%D9%88%DB%8C%2B%D9%85%D8%B0%D8%A7%DB%81%D8%A8%2B%D9%85%DB%8C%DA%BA%2B%D8%B3%D8%B2%D8%A7%D8%A4%DA%BA%2B%DA%A9%DB%92%2B%D8%AA%D8%B5%D9%88%D8%B1%D8%A7%D8%AA%2B%DA%A9%D8%A7%2B%D9%82%D8%B1%D8%A2%D9%86%2B%D9%88%2B%D8%B3%D9%86%D8%AA%2B%D8%A7%D9%88%D8%B1%2B%D9%85%D8%B3%D8%AA%D9%86%D8%AF%2B%D8%A7%D8%AF%D9%84%DB%81%2B%DA%A9%DB%8C%2B%D8%B1%D9%88%D8%B4%D9%86%DB%8C%2B%D9%85%DB%8C%DA%BA%2B%D8%AA%D8%AD%D9%82%DB%8C%D9%82%DB%8C%2B%D8%AC%D8%A7%D8%A6%D8%B2%DB%81woring%2B_compressed_djvu.txt",
+  "rights": {
+    "status": "unknown",
+    "confidence": "low",
+    "basis": "source_metadata",
+    "target_jurisdiction": "FR",
+    "territories": [],
+    "territory_covered": false,
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "license": null,
+    "rights_url": "https://archive.org/details/urdu-07woring-compressed",
+    "license_url": null,
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "rights_review_required"
+    ],
+    "reasons": [
+      "no conclusive rights evidence"
+    ],
+    "assessed_at": "2026-08-13T10:52:00.572000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_metadata",
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "license_url": null,
+    "rights_url": "https://archive.org/details/urdu-07woring-compressed",
+    "archive_item_identifier": "urdu-07woring-compressed",
+    "archive_repair": {
+      "previous_url": "https://archive.org/download/urdu-07woring-compressed/urdu-07woring-compressed_djvu.txt",
+      "resolved_via": "item_metadata",
+      "possible_copyright_status": null
+    }
+  },
+  "file_sha256": "sha256:15b9a6a60ca358e1272fefba82ac280ee0618bb048197ecde2c1937f28b906a1"
+}

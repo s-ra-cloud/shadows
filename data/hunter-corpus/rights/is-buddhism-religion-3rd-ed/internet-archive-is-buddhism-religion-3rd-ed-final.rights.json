@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:is-buddhism-religion-3rd-ed",
+  "edition_id": "edition:internet-archive-is-buddhism-religion-3rd-ed-final",
+  "source_id": "source:internet-archive",
+  "source_reference": "https://archive.org/download/is-buddhism-religion-3rd-ed-final/IsBuddhismReligion3rdED(FINAL)_djvu.txt",
+  "rights": {
+    "status": "conflicting",
+    "confidence": "low",
+    "basis": "source_metadata",
+    "target_jurisdiction": "FR",
+    "territories": [],
+    "territory_covered": false,
+    "statement": "Internet Archive item licence: https://creativecommons.org/licenses/by-nd/4.0/",
+    "license": null,
+    "rights_url": "https://archive.org/details/is-buddhism-religion-3rd-ed-final",
+    "license_url": "https://creativecommons.org/licenses/by-nd/4.0/",
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "resolve_conflicting_rights_evidence"
+    ],
+    "reasons": [
+      "open licence marker conflicts with restrictive copyright evidence"
+    ],
+    "assessed_at": "2026-08-13T10:52:15.292000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_metadata",
+    "statement": "Internet Archive item licence: https://creativecommons.org/licenses/by-nd/4.0/",
+    "license_url": "https://creativecommons.org/licenses/by-nd/4.0/",
+    "rights_url": "https://archive.org/details/is-buddhism-religion-3rd-ed-final",
+    "archive_item_identifier": "is-buddhism-religion-3rd-ed-final",
+    "archive_repair": {
+      "previous_url": "https://archive.org/download/is-buddhism-religion-3rd-ed-final/is-buddhism-religion-3rd-ed-final_djvu.txt",
+      "resolved_via": "item_metadata",
+      "possible_copyright_status": null
+    }
+  },
+  "file_sha256": "sha256:b3f350c65518cd7ad9e2c720d8a599364f8f2000278b04fb1814223215b487a1"
+}

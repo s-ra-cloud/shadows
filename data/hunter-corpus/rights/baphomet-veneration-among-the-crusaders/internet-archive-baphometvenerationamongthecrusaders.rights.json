@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:baphomet-veneration-among-the-crusaders",
+  "edition_id": "edition:internet-archive-baphometvenerationamongthecrusaders",
+  "source_id": "source:internet-archive",
+  "source_reference": "https://archive.org/download/BaphometVenerationAmongTheCrusaders/BaphometAndCrusaders_djvu.txt",
+  "rights": {
+    "status": "restricted_license",
+    "confidence": "high",
+    "basis": "source_metadata",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "territory_covered": true,
+    "statement": "Internet Archive item licence: http://creativecommons.org/licenses/by-nc-nd/3.0/",
+    "license": "Creative Commons restricted licence",
+    "rights_url": "https://archive.org/details/BaphometVenerationAmongTheCrusaders",
+    "license_url": "http://creativecommons.org/licenses/by-nc-nd/3.0/",
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "attribution",
+      "no_derivatives",
+      "noncommercial_only"
+    ],
+    "reasons": [
+      "standardized Creative Commons marker"
+    ],
+    "assessed_at": "2026-08-13T10:51:55.294000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_metadata",
+    "statement": "Internet Archive item licence: http://creativecommons.org/licenses/by-nc-nd/3.0/",
+    "license_url": "http://creativecommons.org/licenses/by-nc-nd/3.0/",
+    "rights_url": "https://archive.org/details/BaphometVenerationAmongTheCrusaders",
+    "archive_item_identifier": "BaphometVenerationAmongTheCrusaders",
+    "archive_repair": {
+      "previous_url": "https://archive.org/download/BaphometVenerationAmongTheCrusaders/BaphometVenerationAmongTheCrusaders_djvu.txt",
+      "resolved_via": "item_metadata",
+      "possible_copyright_status": null
+    }
+  },
+  "file_sha256": "sha256:a948270bebb8cb4057afa877ed2511f277321f3d3deacbe53fb31f0232a53d1f"
+}

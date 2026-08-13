@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:man-yoshu-volumes-5-6",
+  "edition_id": "edition:internet-archive-manyoshu-volumes-5-6",
+  "source_id": "source:internet-archive",
+  "source_reference": "https://archive.org/download/manyoshu-volumes-5-6/Man'y%C5%8Dsh%C5%AB%20Volumes%205%20%26%206_djvu.txt",
+  "rights": {
+    "status": "public_domain",
+    "confidence": "high",
+    "basis": "source_metadata",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "territory_covered": true,
+    "statement": "Internet Archive item licence: http://creativecommons.org/publicdomain/mark/1.0/",
+    "license": "Public Domain Mark",
+    "rights_url": "https://archive.org/details/manyoshu-volumes-5-6",
+    "license_url": "http://creativecommons.org/publicdomain/mark/1.0/",
+    "publication_allowed": true,
+    "translation_allowed": true,
+    "locked": false,
+    "do_not_publish": false,
+    "review_required": false,
+    "obligations": [],
+    "reasons": [
+      "standardized Creative Commons marker"
+    ],
+    "assessed_at": "2026-08-13T10:43:36.492000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_metadata",
+    "statement": "Internet Archive item licence: http://creativecommons.org/publicdomain/mark/1.0/",
+    "license_url": "http://creativecommons.org/publicdomain/mark/1.0/",
+    "rights_url": "https://archive.org/details/manyoshu-volumes-5-6",
+    "archive_item_identifier": "manyoshu-volumes-5-6",
+    "archive_repair": {
+      "previous_url": "https://archive.org/download/manyoshu-volumes-5-6/manyoshu-volumes-5-6_djvu.txt",
+      "resolved_via": "item_metadata",
+      "possible_copyright_status": null
+    }
+  },
+  "file_sha256": "sha256:bd3e1b6eb1ce4364663faa81d830fc7f696ad9d7922072372d380a58c36f1f0a"
+}

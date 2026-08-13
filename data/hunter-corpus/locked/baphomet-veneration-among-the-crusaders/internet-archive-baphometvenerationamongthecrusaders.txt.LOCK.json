@@ -1,0 +1,11 @@
+{
+  "locked": true,
+  "do_not_publish": true,
+  "work_id": "work:baphomet-veneration-among-the-crusaders",
+  "edition_id": "edition:internet-archive-baphometvenerationamongthecrusaders",
+  "rights_status": "restricted_license",
+  "reasons": [
+    "standardized Creative Commons marker"
+  ],
+  "rights_record": "rights/baphomet-veneration-among-the-crusaders/internet-archive-baphometvenerationamongthecrusaders.rights.json"
+}

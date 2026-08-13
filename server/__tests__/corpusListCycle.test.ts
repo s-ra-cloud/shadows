@@ -120,6 +120,16 @@ const REGISTRY = {
       rate_limit_seconds: 0,
     },
     {
+      source_id: "source:internet-archive",
+      name: "Internet Archive",
+      allowed_hosts: ["archive.org"],
+      allowed_path_prefixes: ["/download/"],
+      automated_download_allowed: true,
+      robots_mode: "target_origin",
+      requests_per_second: 1000,
+      rate_limit_seconds: 0,
+    },
+    {
       source_id: "source:manual-only",
       name: "Manual Only Source",
       allowed_hosts: ["manual-only.example"],
@@ -156,15 +166,17 @@ function makeCandidate(title: string, language: string, url: string): Candidate 
 
 function memoryStore() {
   const editionIds = new Set<string>();
-  const blockers: unknown[] = [];
+  const blockers: any[] = [];
   const progress: Record<string, unknown>[] = [];
   const mirrored: Record<string, unknown>[] = [];
+  const candidates: Candidate[] = [];
   const store: CycleStore = {
     async existingEditionIds() {
       return new Set(editionIds);
     },
     async insertCandidate(c) {
       editionIds.add(String(c.edition_id));
+      candidates.push(c);
     },
     async addBlocker(b) {
       blockers.push(b);
@@ -176,7 +188,7 @@ function memoryStore() {
       mirrored.push(...r);
     },
   };
-  return { store, blockers, progress, mirrored };
+  return { store, blockers, progress, mirrored, candidates };
 }
 
 function fetchStub(bodies: Record<string, string>): typeof fetch {
@@ -317,6 +329,86 @@ describe("runCorpusListCycle", () => {
     expect(item.english).toBe(false);
     // The blocked English attempt is still reported so the editor sees why.
     expect(item.blockers.some((b) => b.reason === "robots_disallowed")).toBe(true);
+
+    await fs.rm(corpusRoot, { recursive: true, force: true });
+  });
+
+  it("checks an Internet Archive URL from the list before it becomes a candidate", async () => {
+    const corpusRoot = await fs.mkdtemp(path.join(os.tmpdir(), "corpus-cycle-ia-"));
+    const { store, blockers, candidates } = memoryStore();
+
+    // The Archive answers with an empty object for items that do not exist,
+    // and the real file is not the conventional <identifier>_djvu.txt.
+    const metadata: Record<string, unknown> = {
+      "https://archive.org/metadata/verifieditem": {
+        files: [
+          { name: "verifieditem_meta.xml", format: "Metadata" },
+          { name: "Verified Item.txt", format: "DjVuTXT", size: "42" },
+        ],
+        metadata: { identifier: "verifieditem", title: "Verified Item", language: "eng" },
+      },
+      "https://archive.org/metadata/inventeditem": {},
+    };
+    const archiveFetch = (async (input: any) => {
+      const url = String(input);
+      if (url in metadata) {
+        return new Response(JSON.stringify(metadata[url]), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      if (url.startsWith("https://archive.org/advancedsearch.php")) {
+        return new Response(JSON.stringify({ response: { numFound: 0, docs: [] } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      if (url === "https://archive.org/download/verifieditem/Verified%20Item.txt") {
+        return new Response("The verified Archive text.", {
+          status: 200,
+          headers: { "Content-Type": "text/plain" },
+        });
+      }
+      return new Response("not found", { status: 404 });
+    }) as typeof fetch;
+
+    const result = await runCorpusListCycle({
+      list: {
+        name: "archive-list",
+        items: [
+          // A read-online link: never downloadable as it stands.
+          { title: "Verified Item", url: "https://archive.org/details/verifieditem", language: "en" },
+          // An identifier that does not exist on the Archive at all.
+          { title: "Invented Item", url: "https://archive.org/details/inventeditem" },
+        ],
+      },
+      policy: POLICY as never,
+      registry: REGISTRY,
+      corpusRoot,
+      store,
+      useAi: false,
+      cycleOverrides: {
+        fetchImpl: archiveFetch,
+        robotsCheck: async () => ({ allowed: true, reason: "test" }),
+        registryDiscover: async () => [],
+      },
+    });
+
+    const [verified, invented] = result.corpus_list.items;
+    // Downloaded, and still through rights review: the resolved item states no
+    // licence, so the text lands locked rather than public.
+    expect(verified.status).toBe("fetched_locked");
+    // The stored candidate carries the resolved file URL, not the viewer link.
+    const stored = candidates.find((c) => String(c.title) === "Verified Item")!;
+    expect(stored.text_url).toBe("https://archive.org/download/verifieditem/Verified%20Item.txt");
+
+    // Nothing unverified was stored for the invented identifier, and the
+    // editor is told why in plain language.
+    expect(candidates.some((c) => String(c.text_url ?? "").includes("inventeditem"))).toBe(false);
+    expect(invented.status).toBe("not_found");
+    const blocker = blockers.find((b) => String(b.url ?? "").includes("inventeditem"))!;
+    expect(blocker.repairState).toBe("not_repairable");
+    expect(String(blocker.repairDetail)).toMatch(/no item with this identifier/i);
 
     await fs.rm(corpusRoot, { recursive: true, force: true });
   });

@@ -1,0 +1,10 @@
+{
+  "recipe_id": "ocr-cleanup",
+  "recipe_version": "1.0.0",
+  "extracted_at": "2026-08-13T10:51:59.901Z",
+  "pages_fetched": 0,
+  "warnings": [],
+  "source_url": "https://archive.org/download/BaphometVenerationAmongTheCrusaders/BaphometAndCrusaders_djvu.txt",
+  "markdown_bytes": 139443,
+  "ocr_language": null
+}

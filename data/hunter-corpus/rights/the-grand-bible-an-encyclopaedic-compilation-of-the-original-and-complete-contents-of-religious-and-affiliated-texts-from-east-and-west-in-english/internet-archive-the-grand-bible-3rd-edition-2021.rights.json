@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:the-grand-bible-an-encyclopaedic-compilation-of-the-original-and-complete-contents-of-religious-and-affiliated-texts-from-east-and-west-in-english",
+  "edition_id": "edition:internet-archive-the-grand-bible-3rd-edition-2021",
+  "source_id": "source:internet-archive",
+  "source_reference": "https://archive.org/download/the-grand-bible-3rd-edition-2021/THE%20GRAND%20BIBLE%2C%203rd%20Edition%202021.epub",
+  "rights": {
+    "status": "restricted_license",
+    "confidence": "high",
+    "basis": "source_metadata",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "territory_covered": true,
+    "statement": "Internet Archive item licence: https://creativecommons.org/licenses/by-nc-nd/4.0/",
+    "license": "Creative Commons restricted licence",
+    "rights_url": "https://archive.org/details/the-grand-bible-3rd-edition-2021",
+    "license_url": "https://creativecommons.org/licenses/by-nc-nd/4.0/",
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "attribution",
+      "no_derivatives",
+      "noncommercial_only"
+    ],
+    "reasons": [
+      "standardized Creative Commons marker"
+    ],
+    "assessed_at": "2026-08-13T10:52:48.300000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_metadata",
+    "statement": "Internet Archive item licence: https://creativecommons.org/licenses/by-nc-nd/4.0/",
+    "license_url": "https://creativecommons.org/licenses/by-nc-nd/4.0/",
+    "rights_url": "https://archive.org/details/the-grand-bible-3rd-edition-2021",
+    "archive_item_identifier": "the-grand-bible-3rd-edition-2021",
+    "archive_repair": {
+      "previous_url": "https://archive.org/download/the-grand-bible-3rd-edition-2021/the-grand-bible-3rd-edition-2021_djvu.txt",
+      "resolved_via": "item_metadata",
+      "possible_copyright_status": null
+    }
+  },
+  "file_sha256": "sha256:9928062cc78e271bfde11bd4f6dea482b8d02ee98667ecd04c2129486cb11625"
+}

@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:tony-m-kail-magico-religious-groups-and-ritualistic-activities-a-guide-for-first-responders-crc-press-2008",
+  "edition_id": "edition:internet-archive-tony-m-kail-magico-religious-groups-and-ritualistic-activities-a-guide-for-firs",
+  "source_id": "source:internet-archive",
+  "source_reference": "https://archive.org/download/tony-m.-kail-magico-religious-groups-and-ritualistic-activities-a-guide-for-firs/Tony%20M.%20Kail%20-%20Magico-Religious%20Groups%20and%20Ritualistic%20Activities_%20A%20Guide%20for%20First%20Responders-CRC%20Press%20(2008)_djvu.txt",
+  "rights": {
+    "status": "unknown",
+    "confidence": "low",
+    "basis": "source_metadata",
+    "target_jurisdiction": "FR",
+    "territories": [],
+    "territory_covered": false,
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "license": null,
+    "rights_url": "https://archive.org/details/tony-m.-kail-magico-religious-groups-and-ritualistic-activities-a-guide-for-firs",
+    "license_url": null,
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "rights_review_required"
+    ],
+    "reasons": [
+      "no conclusive rights evidence"
+    ],
+    "assessed_at": "2026-08-13T10:52:08.801000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_metadata",
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "license_url": null,
+    "rights_url": "https://archive.org/details/tony-m.-kail-magico-religious-groups-and-ritualistic-activities-a-guide-for-firs",
+    "archive_item_identifier": "tony-m.-kail-magico-religious-groups-and-ritualistic-activities-a-guide-for-firs",
+    "archive_repair": {
+      "previous_url": "https://archive.org/download/tony-m.-kail-magico-religious-groups-and-ritualistic-activities-a-guide-for-firs/tony-m.-kail-magico-religious-groups-and-ritualistic-activities-a-guide-for-firs_djvu.txt",
+      "resolved_via": "item_metadata",
+      "possible_copyright_status": null
+    }
+  },
+  "file_sha256": "sha256:986c0db4ba8c2a9ff3db2f839af756f628712411fc64cacc5d26ba28e672b4b1"
+}

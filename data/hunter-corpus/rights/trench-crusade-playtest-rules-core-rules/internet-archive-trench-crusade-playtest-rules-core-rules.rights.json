@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:trench-crusade-playtest-rules-core-rules",
+  "edition_id": "edition:internet-archive-trench-crusade-playtest-rules-core-rules",
+  "source_id": "source:internet-archive",
+  "source_reference": "https://archive.org/download/trench-crusade-playtest-rules-core-rules/Trench%2BCrusade%2BRules_djvu.txt",
+  "rights": {
+    "status": "restricted_license",
+    "confidence": "high",
+    "basis": "source_metadata",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "WORLDWIDE"
+    ],
+    "territory_covered": true,
+    "statement": "Internet Archive item licence: https://creativecommons.org/licenses/by-nc/4.0/",
+    "license": "Creative Commons restricted licence",
+    "rights_url": "https://archive.org/details/trench-crusade-playtest-rules-core-rules",
+    "license_url": "https://creativecommons.org/licenses/by-nc/4.0/",
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "attribution",
+      "noncommercial_only"
+    ],
+    "reasons": [
+      "standardized Creative Commons marker"
+    ],
+    "assessed_at": "2026-08-13T10:52:20.702000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_metadata",
+    "statement": "Internet Archive item licence: https://creativecommons.org/licenses/by-nc/4.0/",
+    "license_url": "https://creativecommons.org/licenses/by-nc/4.0/",
+    "rights_url": "https://archive.org/details/trench-crusade-playtest-rules-core-rules",
+    "archive_item_identifier": "trench-crusade-playtest-rules-core-rules",
+    "archive_repair": {
+      "previous_url": "https://archive.org/download/trench-crusade-playtest-rules-core-rules/trench-crusade-playtest-rules-core-rules_djvu.txt",
+      "resolved_via": "item_metadata",
+      "possible_copyright_status": null
+    }
+  },
+  "file_sha256": "sha256:b215b81eb9e37c50380326982d26ac6a5daf1acfda145b5d765d63e96dbf630b"
+}

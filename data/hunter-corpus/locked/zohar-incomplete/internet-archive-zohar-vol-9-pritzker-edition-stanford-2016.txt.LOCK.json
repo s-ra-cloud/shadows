@@ -1,0 +1,11 @@
+{
+  "locked": true,
+  "do_not_publish": true,
+  "work_id": "work:zohar-incomplete",
+  "edition_id": "edition:internet-archive-zohar-vol-9-pritzker-edition-stanford-2016",
+  "rights_status": "copyrighted",
+  "reasons": [
+    "explicit copyright restriction"
+  ],
+  "rights_record": "rights/zohar-incomplete/internet-archive-zohar-vol-9-pritzker-edition-stanford-2016.rights.json"
+}

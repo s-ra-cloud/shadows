@@ -1,0 +1,10 @@
+{
+  "recipe_id": "ocr-cleanup",
+  "recipe_version": "1.0.0",
+  "extracted_at": "2026-08-13T10:58:14.362Z",
+  "pages_fetched": 0,
+  "warnings": [],
+  "source_url": "https://archive.org/download/dieprosaischeed01wilkgoog/dieprosaischeed01wilkgoog_djvu.txt",
+  "markdown_bytes": 1729145,
+  "ocr_language": null
+}

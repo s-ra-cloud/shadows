@@ -169,6 +169,13 @@ export const hunterBlockers = pgTable("hunter_blockers", {
   workId: text("work_id"),
   editionId: text("edition_id"),
   status: text("status").notNull().default("open"), // open | resolved | dismissed
+  // Automatic link repair (Internet Archive today): a download URL confirmed
+  // against the source itself, the item's human-facing page, and the outcome
+  // of the repair attempt so Manual Fetch never shows an unchecked link.
+  resolvedUrl: text("resolved_url"),
+  itemUrl: text("item_url"),
+  repairState: text("repair_state"), // in_progress | repaired | not_repairable
+  repairDetail: text("repair_detail"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

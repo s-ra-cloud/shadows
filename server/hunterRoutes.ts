@@ -8,7 +8,7 @@ import express from "express";
 import type { Express, Request, Response, NextFunction } from "express";
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
-import { and, eq, desc, inArray, lt, sql } from "drizzle-orm";
+import { and, eq, desc, inArray, isNull, like, lt, sql } from "drizzle-orm";
 import { db, storage } from "./storage";
 import { hunterCandidates, hunterRuns, hunterCorpusFiles, hunterBlockers, hunterRightsReviews, hunterScreenVerdicts } from "@shared/schema";
 import {
@@ -30,6 +30,8 @@ const MAX_CORPUS_LIST_BYTES = 512 * 1024;
 import { parseCorpusList, CorpusListParseError } from "./hunterCorpusList";
 import { cleanErrorText, truncateText, MAX_ERROR_TEXT } from "./errorText";
 import { robotsAllowsUrl } from "./sourceHunter/robots";
+import { INTERNET_ARCHIVE_SOURCE_ID, repairArchiveDownload } from "./sourceHunter/archiveRepair";
+import { isArchiveUrl } from "./sourceHunter/archiveResolver";
 import { getHunterRegion } from "@shared/hunterRegions";
 import { inferRegion } from "@shared/regionInference";
 import { traditionForWork, chronologyForWork, familyForTradition } from "@shared/traditions";
@@ -351,6 +353,13 @@ function makeCycleStore(runId: number, mirroredRecords: Record<string, unknown>[
         })
         .onConflictDoNothing();
     },
+    async updateCandidate(candidate) {
+      // Same edition, corrected URL/rights evidence (automatic link repair).
+      await db
+        .update(hunterCandidates)
+        .set({ data: candidate })
+        .where(eq(hunterCandidates.editionId, String(candidate.edition_id)));
+    },
     async addBlocker(b) {
       // Bookkeeping must never take a cycle down: a failed blocker insert is
       // logged and swallowed, otherwise the driver's error (which quotes the
@@ -364,6 +373,10 @@ function makeCycleStore(runId: number, mirroredRecords: Record<string, unknown>[
           detail: b.detail ? truncateText(b.detail, MAX_ERROR_TEXT) : null,
           workId: b.workId ?? null,
           editionId: b.editionId ?? null,
+          resolvedUrl: b.resolvedUrl ?? null,
+          itemUrl: b.itemUrl ?? null,
+          repairState: b.repairState ?? null,
+          repairDetail: b.repairDetail ?? null,
         });
       } catch (e) {
         console.error(`run ${runId}: could not record blocker:`, cleanErrorText(e));
@@ -549,6 +562,33 @@ function candidateFromRow(row: { data: unknown }): Candidate {
 }
 
 /**
+ * Minimal candidate for a blocker whose candidate row is gone: enough for the
+ * resolver to identify the Archive item, whose metadata then fills in the
+ * title, author, language and licence evidence.
+ */
+function candidateFromBlocker(row: typeof hunterBlockers.$inferSelect): Candidate | null {
+  if (!row.url || !isArchiveUrl(row.url)) return null;
+  const slug = (row.url.split("/").filter(Boolean).pop() ?? "item")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+  return {
+    work_id: row.workId ?? `work:archive-${slug}`,
+    edition_id: row.editionId ?? `edition:internet-archive-${slug}`,
+    title: "",
+    author: null,
+    translator: null,
+    source_id: INTERNET_ARCHIVE_SOURCE_ID,
+    language: "",
+    language_role: "unknown",
+    format: "txt",
+    text_url: row.url,
+    rights: { status_claim: "unknown", basis: "unknown", statement: "" },
+    access: { download_allowed: true, requires_auth: false },
+  } as unknown as Candidate;
+}
+/**
  * Idempotent upgrade for databases created before run provenance existed:
  * adds hunter_corpus_files.run_id (FK to hunter_runs) if it is missing.
  */
@@ -556,6 +596,15 @@ export async function ensureHunterProvenanceSchema(): Promise<void> {
   await db.execute(sql`
     ALTER TABLE hunter_corpus_files
     ADD COLUMN IF NOT EXISTS run_id integer REFERENCES hunter_runs(id)
+  `);
+  // Automatic link-repair state on blockers (Internet Archive auto-repair):
+  // the confirmed download URL, the item's page and the repair outcome.
+  await db.execute(sql`
+    ALTER TABLE hunter_blockers
+    ADD COLUMN IF NOT EXISTS resolved_url text,
+    ADD COLUMN IF NOT EXISTS item_url text,
+    ADD COLUMN IF NOT EXISTS repair_state text,
+    ADD COLUMN IF NOT EXISTS repair_detail text
   `);
   // Rights-review audit table (editor rights determinations) — created here
   // too so pre-existing databases don't 500 on the review endpoints.
@@ -575,6 +624,8 @@ export async function ensureHunterProvenanceSchema(): Promise<void> {
   `);
 }
 
+/** Blocker reasons surfaced in the Manual Fetch queue. */
+const MANUAL_ONLY_REASONS = ["robots_disallowed", "download_not_authorized", "requires_auth"];
 /**
  * Startup backfill: assign a mythological region to cycle runs that were
  * created without one (legacy runs, free-query cycles, corpus-list cycles).
@@ -746,6 +797,20 @@ export function registerHunterRoutes(
       }
     })
     .catch((e) => console.error("hunter region backfill failed:", errMessage(e)));
+  // Repair the Archive links already queued in Manual Fetch, in the
+  // background, once the blocker columns are guaranteed to exist.
+  if (process.env.NODE_ENV !== "test") {
+    ensureHunterProvenanceSchema()
+      .then(() => ensureArchiveBacklogRepair())
+      .then(({ scanned, repaired, unrepairable }) => {
+        if (scanned > 0) {
+          console.log(
+            `archive link repair: ${scanned} queued entries, ${repaired} repaired, ${unrepairable} still blocked`,
+          );
+        }
+      })
+      .catch((e) => console.error("archive link repair failed:", errMessage(e)));
+  }
   // Runs execute in-process, so any row still marked "running" at startup was
   // orphaned by a previous process (restart/redeploy). Mark them failed so the
   // UI doesn't show a phantom "Running" cycle with a Stop button that 409s.
@@ -1330,7 +1395,9 @@ export function registerHunterRoutes(
    * dedupes by URL keeping the newest blocker.
    */
   app.get("/api/hunter/manual-fetch", requireEditor, async (_req, res) => {
-    const MANUAL_ONLY_REASONS = ["robots_disallowed", "download_not_authorized", "requires_auth"];
+    // Archive links that have never been checked are repaired in the
+    // background; this never blocks the page load.
+    if (process.env.NODE_ENV !== "test") void ensureArchiveBacklogRepair();
     const rows = await db
       .select()
       .from(hunterBlockers)
@@ -1413,9 +1480,12 @@ export function registerHunterRoutes(
       .limit(1);
 
     if (!blocker) return res.status(404).json({ error: "Blocker not found or not a manual-fetch blocker" });
-    if (!blocker.url) return res.status(400).json({ error: "This blocker has no URL to probe" });
+    // Probe the link the editor is actually shown: a repaired blocker carries
+    // a resolved URL that supersedes the original broken one.
+    const target = blocker.resolvedUrl ?? blocker.url;
+    if (!target) return res.status(400).json({ error: "This blocker has no URL to probe" });
 
-    const raw = blocker.url;
+    const raw = target;
     let originalHost: string;
     try {
       const parsed = new URL(raw);
@@ -2366,4 +2436,237 @@ export async function backfillMissingReadables(
     }
   }
   return summary;
+}
+
+/**
+ * Work through the open Archive blockers, resolving each link against the
+ * item's real file list and retrying the download once. Each blocker is
+ * attempted exactly once — the claim is written to the row before any network
+ * request, so a crash or a second pass cannot loop on the same entry.
+ *
+ * Bounded concurrency; the resolver itself honours the source's request rate.
+ */
+export async function repairArchiveBacklog(
+  options: { concurrency?: number } = {},
+): Promise<ArchiveBacklogSummary> {
+  const rows = await db
+    .select()
+    .from(hunterBlockers)
+    .where(
+      and(
+        eq(hunterBlockers.status, "open"),
+        inArray(hunterBlockers.reason, MANUAL_ONLY_REASONS),
+        isNull(hunterBlockers.repairState),
+        like(hunterBlockers.url, "%archive.org/%"),
+      ),
+    )
+    .orderBy(desc(hunterBlockers.id))
+    .limit(200);
+  const summary: ArchiveBacklogSummary = { scanned: 0, repaired: 0, unrepairable: 0 };
+  if (rows.length === 0) return summary;
+
+  // One repair per URL: duplicate blockers for the same link share the outcome
+  // instead of hitting the Archive again.
+  const groups = new Map<string, typeof rows>();
+  for (const row of rows) {
+    const key = row.url ?? `#${row.id}`;
+    const group = groups.get(key);
+    if (group) group.push(row);
+    else groups.set(key, [row]);
+  }
+
+  const policy = await loadActivePolicy();
+  const registry = await loadActiveRegistry();
+  const runId = await createRun("archive-repair");
+  const queue = Array.from(groups.values());
+  const workerCount = Math.max(1, Math.min(options.concurrency ?? 2, 4));
+
+  const worker = async () => {
+    while (queue.length > 0) {
+      const group = queue.shift();
+      if (!group) break;
+      try {
+        const repaired = await repairArchiveBlockerGroup(group, { policy, registry, runId });
+        summary.scanned += 1;
+        if (repaired) summary.repaired += 1;
+        else summary.unrepairable += 1;
+      } catch (e) {
+        summary.scanned += 1;
+        summary.unrepairable += 1;
+        console.error("archive repair failed for blocker group:", errMessage(e));
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  await finishRun(runId, true, summary);
+  return summary;
+}
+
+let archiveBacklogPass: Promise<ArchiveBacklogSummary> | null = null;
+
+export interface ArchiveBacklogSummary {
+  scanned: number;
+  repaired: number;
+  unrepairable: number;
+}
+
+/** Repair one group of blockers that all point at the same Archive URL. */
+async function repairArchiveBlockerGroup(
+  group: (typeof hunterBlockers.$inferSelect)[],
+  context: { policy: Policy; registry: Record<string, unknown>; runId: number },
+): Promise<boolean> {
+  const primary = group[0];
+  // Claim the row before any network work so this entry is attempted once.
+  const claimed = await db
+    .update(hunterBlockers)
+    .set({ repairState: "in_progress", updatedAt: new Date() })
+    .where(
+      and(
+        inArray(
+          hunterBlockers.id,
+          group.map((row) => row.id),
+        ),
+        isNull(hunterBlockers.repairState),
+      ),
+    )
+    .returning({ id: hunterBlockers.id });
+  if (claimed.length === 0) return false;
+
+  const ids = group.map((row) => row.id);
+  const finish = async (fields: {
+    repairState: string;
+    repairDetail: string;
+    resolvedUrl?: string | null;
+    itemUrl?: string | null;
+    status?: string;
+  }) => {
+    await db
+      .update(hunterBlockers)
+      .set({
+        repairState: fields.repairState,
+        repairDetail: fields.repairDetail,
+        resolvedUrl: fields.resolvedUrl ?? null,
+        itemUrl: fields.itemUrl ?? null,
+        ...(fields.status ? { status: fields.status } : {}),
+        updatedAt: new Date(),
+      })
+      .where(inArray(hunterBlockers.id, ids));
+  };
+
+  // Find the candidate this blocker points at: by edition first, then by URL.
+  const rows = await loadCandidateRows();
+  let candidateRow = primary.editionId
+    ? rows.find((r) => r.editionId === primary.editionId)
+    : undefined;
+  if (!candidateRow && primary.url) {
+    candidateRow = rows.find(
+      (r) => String((r.data as Record<string, unknown> | null)?.text_url ?? "") === primary.url,
+    );
+  }
+  // Entries recorded before their candidate existed (or whose candidate row was
+  // since removed) are still repairable: the Archive item's own metadata
+  // supplies the title, author and language the download needs.
+  const candidate = candidateRow
+    ? candidateFromRow(candidateRow)
+    : candidateFromBlocker(primary);
+  if (!candidate) {
+    await finish({
+      repairState: "not_repairable",
+      repairDetail:
+        "Auto-repair tried and failed: this entry has no Internet Archive link to check. Fetch the text by hand and upload it, or re-run a hunting cycle for this source.",
+    });
+    return false;
+  }
+  const outcome = await repairArchiveDownload(candidate, {
+    policy: context.policy,
+    registry: context.registry,
+    corpusRoot: CORPUS_ROOT,
+    userAgent: CYCLE_USER_AGENT,
+    robotsCheck: async (url) => robotsAllowsUrl(url, CYCLE_USER_AGENT),
+  });
+
+  if (outcome.candidate) {
+    if (candidateRow) {
+      await db
+        .update(hunterCandidates)
+        .set({ data: outcome.candidate })
+        .where(eq(hunterCandidates.editionId, candidateRow.editionId));
+    } else if (outcome.repaired) {
+      // Reconstructed from the item itself: keep it so the edition has a
+      // candidate for future retries and uploads.
+      await db
+        .insert(hunterCandidates)
+        .values({
+          workId: String(outcome.candidate.work_id),
+          editionId: String(outcome.candidate.edition_id),
+          data: outcome.candidate,
+        })
+        .onConflictDoNothing();
+    }
+  }
+
+  const record = outcome.record;
+  if (record) {
+    const file = record.file as Record<string, unknown> | undefined;
+    if (file?.relative_path) {
+      await db
+        .insert(hunterCorpusFiles)
+        .values({
+          workId: String(record.work_id ?? ""),
+          editionId: String(record.edition_id ?? ""),
+          language: (record.language as string | undefined) ?? null,
+          partition: file.locked ? "locked" : "public",
+          path: String(file.relative_path),
+          byteCount: Number(file.bytes ?? 0),
+          sha256: (file.sha256 as string | undefined) ?? null,
+          record,
+          runId: context.runId,
+        })
+        .onConflictDoNothing();
+    }
+    // Rights review is unchanged: a locked download stays locked, and the
+    // rights-lock blocker is recorded exactly as a normal cycle would.
+    const followUp = outcome.repaired ? blockerFromRecord(record) : null;
+    if (followUp && followUp.reason === "rights_locked") {
+      await db.insert(hunterBlockers).values({
+        runId: context.runId,
+        sourceId: followUp.sourceId ?? null,
+        url: outcome.resolvedUrl ?? followUp.url ?? null,
+        reason: followUp.reason,
+        detail: followUp.detail ?? null,
+        workId: followUp.workId ?? null,
+        editionId: followUp.editionId ?? null,
+        itemUrl: outcome.itemUrl ?? null,
+      });
+    }
+    await autoExtractDownloaded([record]);
+  }
+
+  await finish({
+    repairState: outcome.repaired ? "repaired" : "not_repairable",
+    repairDetail: outcome.detail,
+    resolvedUrl: outcome.resolvedUrl,
+    itemUrl: outcome.itemUrl,
+    ...(outcome.repaired ? { status: "resolved" } : {}),
+  });
+  return outcome.repaired;
+}
+
+/**
+ * Start (or join) a background pass over the Archive entries already sitting
+ * in Manual Fetch. Never blocks the caller: page loads fire this and return
+ * immediately, and the queue refreshes as entries resolve.
+ */
+export function ensureArchiveBacklogRepair(): Promise<ArchiveBacklogSummary> {
+  if (!archiveBacklogPass) {
+    archiveBacklogPass = repairArchiveBacklog()
+      .catch((e) => {
+        console.error("archive backlog repair failed:", errMessage(e));
+        return { scanned: 0, repaired: 0, unrepairable: 0 };
+      })
+      .finally(() => {
+        archiveBacklogPass = null;
+      }) as Promise<ArchiveBacklogSummary>;
+  }
+  return archiveBacklogPass;
 }

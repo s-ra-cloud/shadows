@@ -1,0 +1,11 @@
+{
+  "locked": true,
+  "do_not_publish": true,
+  "work_id": "work:gods-ships-and-the-thing-itself",
+  "edition_id": "edition:internet-archive-gods-ships-and-the-thing-itself",
+  "rights_status": "restricted_license",
+  "reasons": [
+    "standardized Creative Commons marker"
+  ],
+  "rights_record": "rights/gods-ships-and-the-thing-itself/internet-archive-gods-ships-and-the-thing-itself.rights.json"
+}

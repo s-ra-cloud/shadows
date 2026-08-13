@@ -299,6 +299,82 @@ describe("corpus download and verify", () => {
     expect(saved).toBe(body);
   });
 
+  it("follows trusted Internet Archive European node redirects", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "rmrh-redirect-"));
+    const corpus = path.join(dir, "corpus");
+    const body = "THE FULL TEXT SERVED FROM A EUROPEAN ARCHIVE NODE";
+    const fetchImpl = fakeFetch({
+      "https://archive.org/download/redirecttest/redirecttest_djvu.txt": {
+        status: 302,
+        headers: {
+          location: "https://dn760000.eu.archive.org/0/items/redirecttest/redirecttest_djvu.txt",
+        },
+      },
+      "https://dn760000.eu.archive.org/0/items/redirecttest/redirecttest_djvu.txt": {
+        status: 200,
+        body,
+        headers: { "content-type": "text/plain; charset=utf-8" },
+      },
+    });
+    const records = await collectFulltexts([iaCandidate()], policy, registry, corpus, {
+      assessedAt: NOW,
+      selectionMode: "all",
+      fetchImpl,
+    });
+    const record = records.find((r) => r.edition_id === "edition:internet-archive-redirect-test")!;
+    expect(record.download_status).toBe("downloaded");
+    const file = record.file as Record<string, unknown>;
+    const saved = await fs.readFile(path.join(corpus, String(file.relative_path)), "utf-8");
+    expect(saved).toBe(body);
+  });
+
+  it("follows trusted Internet Archive Canadian node redirects", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "rmrh-redirect-"));
+    const corpus = path.join(dir, "corpus");
+    const body = "THE FULL TEXT SERVED FROM A CANADIAN ARCHIVE NODE";
+    const fetchImpl = fakeFetch({
+      "https://archive.org/download/redirecttest/redirecttest_djvu.txt": {
+        status: 302,
+        headers: {
+          location: "https://dn790008.ca.archive.org/0/items/redirecttest/redirecttest_djvu.txt",
+        },
+      },
+      "https://dn790008.ca.archive.org/0/items/redirecttest/redirecttest_djvu.txt": {
+        status: 200,
+        body,
+        headers: { "content-type": "text/plain; charset=utf-8" },
+      },
+    });
+    const records = await collectFulltexts([iaCandidate()], policy, registry, corpus, {
+      assessedAt: NOW,
+      selectionMode: "all",
+      fetchImpl,
+    });
+    const record = records.find((r) => r.edition_id === "edition:internet-archive-redirect-test")!;
+    expect(record.download_status).toBe("downloaded");
+  });
+
+  it("still refuses look-alike Archive node hosts", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "rmrh-redirect-"));
+    const corpus = path.join(dir, "corpus");
+    const fetchImpl = fakeFetch({
+      "https://archive.org/download/redirecttest/redirecttest_djvu.txt": {
+        status: 302,
+        headers: {
+          location: "https://dn760000.eu.archive.org.evil.example/0/items/redirecttest/x_djvu.txt",
+        },
+      },
+    });
+    const records = await collectFulltexts([iaCandidate()], policy, registry, corpus, {
+      assessedAt: NOW,
+      selectionMode: "all",
+      fetchImpl,
+    });
+    const record = records.find((r) => r.edition_id === "edition:internet-archive-redirect-test")!;
+    expect(record.download_status).toBe("metadata_only");
+    expect(String(record.error)).toMatch(/not a trusted redirect/);
+  });
+
   it("refuses redirects to untrusted hosts", async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), "rmrh-redirect-"));
     const corpus = path.join(dir, "corpus");

@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:norroena-embracing-the-history-and-romance-of-northern-europe",
+  "edition_id": "edition:internet-archive-norroenaembracin14ande",
+  "source_id": "source:internet-archive",
+  "source_reference": "https://archive.org/download/norroenaembracin14ande/norroenaembracin14ande_djvu.txt",
+  "rights": {
+    "status": "unknown",
+    "confidence": "low",
+    "basis": "source_metadata",
+    "target_jurisdiction": "FR",
+    "territories": [],
+    "territory_covered": false,
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "license": null,
+    "rights_url": "https://archive.org/details/norroenaembracin14ande",
+    "license_url": null,
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "rights_review_required"
+    ],
+    "reasons": [
+      "no conclusive rights evidence"
+    ],
+    "assessed_at": "2026-08-13T10:52:39.373000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_metadata",
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "license_url": null,
+    "rights_url": "https://archive.org/details/norroenaembracin14ande",
+    "archive_item_identifier": "norroenaembracin14ande",
+    "archive_repair": {
+      "previous_url": "https://archive.org/download/norroenaembracin14ande/norroenaembracin14ande_djvu.txt",
+      "resolved_via": "item_metadata",
+      "possible_copyright_status": "NOT_IN_COPYRIGHT"
+    }
+  },
+  "file_sha256": "sha256:76fe255b78c0e3ab6eaec2e1f344e2f93eef613ccf0dd7e58ac71e0735272f46"
+}

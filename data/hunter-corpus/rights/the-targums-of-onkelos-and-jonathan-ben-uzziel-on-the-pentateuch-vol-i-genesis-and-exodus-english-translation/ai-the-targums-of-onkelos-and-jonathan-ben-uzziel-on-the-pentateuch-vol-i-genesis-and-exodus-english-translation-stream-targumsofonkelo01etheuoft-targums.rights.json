@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:the-targums-of-onkelos-and-jonathan-ben-uzziel-on-the-pentateuch-vol-i-genesis-and-exodus-english-translation",
+  "edition_id": "edition:ai-the-targums-of-onkelos-and-jonathan-ben-uzziel-on-the-pentateuch-vol-i-genesis-and-exodus-english-translation-stream-targumsofonkelo01etheuoft-targums",
+  "source_id": "source:internet-archive",
+  "source_reference": "https://archive.org/download/targumsonkelosa00ethegoog/targumsonkelosa00ethegoog_djvu.txt",
+  "rights": {
+    "status": "public_domain_jurisdictional",
+    "confidence": "medium",
+    "basis": "source_metadata",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "UNSPECIFIED"
+    ],
+    "territory_covered": false,
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "license": null,
+    "rights_url": "https://archive.org/details/targumsonkelosa00ethegoog",
+    "license_url": null,
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "verify_target_jurisdiction"
+    ],
+    "reasons": [
+      "explicit public-domain claim"
+    ],
+    "assessed_at": "2026-08-13T10:51:36.103000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_metadata",
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "license_url": null,
+    "rights_url": "https://archive.org/details/targumsonkelosa00ethegoog",
+    "archive_item_identifier": "targumsonkelosa00ethegoog",
+    "archive_repair": {
+      "previous_url": "https://archive.org/stream/targumsofonkelo01etheuoft/targumsofonkelo01etheuoft_djvu.txt",
+      "resolved_via": "catalog_search",
+      "possible_copyright_status": "NOT_IN_COPYRIGHT"
+    },
+    "ai_claimed_statement": "Public domain",
+    "ai_claimed_license_url": "https://creativecommons.org/publicdomain/mark/1.0/"
+  },
+  "file_sha256": "sha256:e61f3edc24942dd1892521178de1ca3910d82460629f8eac5458f80e964933d4"
+}

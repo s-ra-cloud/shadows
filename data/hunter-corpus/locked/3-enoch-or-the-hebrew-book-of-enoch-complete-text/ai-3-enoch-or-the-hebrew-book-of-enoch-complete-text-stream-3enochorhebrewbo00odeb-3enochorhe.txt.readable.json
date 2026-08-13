@@ -1,0 +1,10 @@
+{
+  "recipe_id": "ocr-cleanup",
+  "recipe_version": "1.0.0",
+  "extracted_at": "2026-08-13T10:52:08.604Z",
+  "pages_fetched": 0,
+  "warnings": [],
+  "source_url": "https://archive.org/download/3enochorhebrewbo00unse/3enochorhebrewbo00unse_djvu.txt",
+  "markdown_bytes": 1384220,
+  "ocr_language": null
+}

@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:die-prosaische-edda-im-auszuge-nebst-volsunga-saga-und-nornagests-thattr-mit-ausfuhrlichem-glossar-hrsg-von-ernst-wilkin",
+  "edition_id": "edition:internet-archive-dieprosaischeed01wilkgoog",
+  "source_id": "source:internet-archive",
+  "source_reference": "https://archive.org/download/dieprosaischeed01wilkgoog/dieprosaischeed01wilkgoog_djvu.txt",
+  "rights": {
+    "status": "public_domain_jurisdictional",
+    "confidence": "medium",
+    "basis": "source_metadata",
+    "target_jurisdiction": "FR",
+    "territories": [
+      "UNSPECIFIED"
+    ],
+    "territory_covered": false,
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "license": null,
+    "rights_url": "https://archive.org/details/dieprosaischeed01wilkgoog",
+    "license_url": null,
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "verify_target_jurisdiction"
+    ],
+    "reasons": [
+      "explicit public-domain claim"
+    ],
+    "assessed_at": "2026-08-13T10:58:00.899000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_metadata",
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "license_url": null,
+    "rights_url": "https://archive.org/details/dieprosaischeed01wilkgoog",
+    "archive_item_identifier": "dieprosaischeed01wilkgoog",
+    "archive_repair": {
+      "previous_url": "https://archive.org/download/dieprosaischeed01wilkgoog/dieprosaischeed01wilkgoog_djvu.txt",
+      "resolved_via": "item_metadata",
+      "possible_copyright_status": "NOT_IN_COPYRIGHT"
+    }
+  },
+  "file_sha256": "sha256:bf39c4a3bb3e6bb3fc03ae73600d68d8027b001be76218743227feb20b10050d"
+}

@@ -1,0 +1,10 @@
+{
+  "recipe_id": "ocr-cleanup",
+  "recipe_version": "1.0.0",
+  "extracted_at": "2026-08-13T10:43:53.214Z",
+  "pages_fetched": 0,
+  "warnings": [],
+  "source_url": "https://archive.org/download/zohar-vol.-9-pritzker-edition-stanford-2016/Zohar%2C%20Vol.%209%20%5BPritzker%20edition%5D%20(Stanford%2C%202016)_djvu.txt",
+  "markdown_bytes": 3026274,
+  "ocr_language": null
+}

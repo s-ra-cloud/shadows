@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "work_id": "work:3-enoch-or-the-hebrew-book-of-enoch-complete-text",
+  "edition_id": "edition:ai-3-enoch-or-the-hebrew-book-of-enoch-complete-text-stream-3enochorhebrewbo00odeb-3enochorhe",
+  "source_id": "source:internet-archive",
+  "source_reference": "https://archive.org/download/3enochorhebrewbo00unse/3enochorhebrewbo00unse_djvu.txt",
+  "rights": {
+    "status": "unknown",
+    "confidence": "low",
+    "basis": "source_metadata",
+    "target_jurisdiction": "FR",
+    "territories": [],
+    "territory_covered": false,
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "license": null,
+    "rights_url": "https://archive.org/details/3enochorhebrewbo00unse",
+    "license_url": null,
+    "publication_allowed": false,
+    "translation_allowed": false,
+    "locked": true,
+    "do_not_publish": true,
+    "review_required": true,
+    "obligations": [
+      "rights_review_required"
+    ],
+    "reasons": [
+      "no conclusive rights evidence"
+    ],
+    "assessed_at": "2026-08-13T10:52:04.096000+00:00",
+    "not_legal_advice": true
+  },
+  "candidate_rights_evidence": {
+    "status_claim": "unknown",
+    "basis": "source_metadata",
+    "statement": "Internet Archive item; no explicit licence statement found in catalog metadata.",
+    "license_url": null,
+    "rights_url": "https://archive.org/details/3enochorhebrewbo00unse",
+    "archive_item_identifier": "3enochorhebrewbo00unse",
+    "archive_repair": {
+      "previous_url": "https://archive.org/stream/3enochorhebrewbo00odeb/3enochorhebrewbo00odeb_djvu.txt",
+      "resolved_via": "catalog_search",
+      "possible_copyright_status": null
+    },
+    "ai_claimed_statement": "Public domain (US)",
+    "ai_claimed_license_url": "https://creativecommons.org/publicdomain/mark/1.0/"
+  },
+  "file_sha256": "sha256:b0cc2469053f158c9951817649dd36c1a1febcccffd89c5d6c3ef2024081fdbf"
+}

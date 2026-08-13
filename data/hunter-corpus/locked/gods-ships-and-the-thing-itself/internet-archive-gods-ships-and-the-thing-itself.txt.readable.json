@@ -1,0 +1,10 @@
+{
+  "recipe_id": "ocr-cleanup",
+  "recipe_version": "1.0.0",
+  "extracted_at": "2026-08-13T10:52:28.948Z",
+  "pages_fetched": 0,
+  "warnings": [],
+  "source_url": "https://archive.org/download/gods-ships-and-the-thing-itself/Gods%2C%20Ships%2C%20and%20the%20Thing%20Itself_djvu.txt",
+  "markdown_bytes": 37229,
+  "ocr_language": null
+}

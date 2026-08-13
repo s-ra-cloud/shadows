@@ -92,7 +92,9 @@
       "trusted_redirects": [
         {
           "hosts": [
-            "us.archive.org"
+            "us.archive.org",
+            "eu.archive.org",
+            "ca.archive.org"
           ],
           "path_patterns": [
             "^/\\d+/items/"

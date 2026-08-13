@@ -2742,6 +2742,13 @@ function HunterManualFetch() {
 
   const { data: items, isLoading } = useQuery<any[]>({
     queryKey: ["/api/hunter/manual-fetch"],
+    // While the hunter is repairing links in the background, keep the queue
+    // fresh so entries disappear as they resolve.
+    refetchInterval: (q) =>
+      Array.isArray(q.state.data) &&
+      q.state.data.some((b: any) => b?.repair_state === "in_progress" || b?.repairState === "in_progress")
+        ? 4000
+        : false,
   });
 
   const [checkStates, setCheckStates] = useState<Record<number, CardCheckState>>({});
@@ -2867,8 +2874,8 @@ function HunterManualFetch() {
         </div>
         {(() => {
           const targets = (Array.isArray(items) ? items : [])
-            .filter((b: any) => b.url)
-            .map((b: any) => ({ id: b.id as number, url: b.url as string }));
+            .filter((b: any) => b.resolvedUrl || b.url)
+            .map((b: any) => ({ id: b.id as number, url: (b.resolvedUrl || b.url) as string }));
           if (targets.length < 2) return null;
           return (
             <button
@@ -2910,22 +2917,62 @@ function HunterManualFetch() {
                   {BLOCKER_REASON_LABELS[b.reason] ?? b.reason}
                   {b.detail ? <span className="text-[#E0DCE6]/40"> — {b.detail}</span> : null}
                 </div>
-                {b.url && (
+                {b.repairState === "in_progress" && (
+                  <div
+                    className="text-xs text-[#FFB800]"
+                    data-testid={`repair-state-${b.id}`}
+                  >
+                    Checking this link against the source and retrying the download…
+                  </div>
+                )}
+                {b.repairState === "repaired" && (
+                  <div
+                    className="text-xs text-[#03FF9B]"
+                    data-testid={`repair-state-${b.id}`}
+                  >
+                    {b.repairDetail || "Link repaired automatically; the text was downloaded."}
+                  </div>
+                )}
+                {b.repairState === "not_repairable" && b.repairDetail && (
+                  <div
+                    className="text-xs text-[#E0DCE6]/50"
+                    data-testid={`repair-state-${b.id}`}
+                  >
+                    {b.repairDetail}
+                  </div>
+                )}
+                {b.itemUrl && (
+                  <a
+                    href={b.itemUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block text-xs text-[#C77DFF] hover:underline break-all"
+                    data-testid={`link-item-page-${b.id}`}
+                  >
+                    Open the item page at the source ↗
+                  </a>
+                )}
+                {b.resolvedUrl && b.resolvedUrl !== b.url && b.url && (
+                  <div className="text-xs text-[#E0DCE6]/30 break-all line-through">
+                    was: {b.url}
+                  </div>
+                )}
+                {(b.resolvedUrl || b.url) && (
                   <div className="flex flex-wrap items-center gap-2">
                     <a
-                      href={b.url}
+                      href={b.resolvedUrl || b.url}
                       target="_blank"
                       rel="noreferrer"
                       className="text-xs text-[#03FF9B] hover:underline break-all"
                     >
-                      {b.url}
+                      {b.resolvedUrl || b.url}
                     </a>
                     {(() => {
                       const cs = checkStates[b.id];
                       if (!cs || cs.phase === "idle") {
                         return (
                           <button
-                            onClick={() => verifyLink(b.id, b.url)}
+                            onClick={() => verifyLink(b.id, b.resolvedUrl || b.url)}
                             className="shrink-0 px-2 py-0.5 rounded text-xs text-[#E0DCE6]/60 border border-[#350A8C]/30 hover:bg-[#350A8C]/20 hover:text-[#E0DCE6]"
                           >
                             Verify link

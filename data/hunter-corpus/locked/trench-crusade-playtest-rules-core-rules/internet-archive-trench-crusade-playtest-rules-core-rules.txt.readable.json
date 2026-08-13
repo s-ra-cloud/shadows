@@ -1,0 +1,10 @@
+{
+  "recipe_id": "ocr-cleanup",
+  "recipe_version": "1.0.0",
+  "extracted_at": "2026-08-13T10:52:24.955Z",
+  "pages_fetched": 0,
+  "warnings": [],
+  "source_url": "https://archive.org/download/trench-crusade-playtest-rules-core-rules/Trench%2BCrusade%2BRules_djvu.txt",
+  "markdown_bytes": 311674,
+  "ocr_language": null
+}

@@ -1,0 +1,10 @@
+{
+  "recipe_id": "ocr-cleanup",
+  "recipe_version": "1.0.0",
+  "extracted_at": "2026-08-13T10:52:21.454Z",
+  "pages_fetched": 0,
+  "warnings": [],
+  "source_url": "https://archive.org/download/is-buddhism-religion-3rd-ed-final/IsBuddhismReligion3rdED(FINAL)_djvu.txt",
+  "markdown_bytes": 1134772,
+  "ocr_language": null
+}

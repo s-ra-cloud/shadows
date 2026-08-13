@@ -1,0 +1,10 @@
+{
+  "recipe_id": "ocr-cleanup",
+  "recipe_version": "1.0.0",
+  "extracted_at": "2026-08-13T10:43:42.837Z",
+  "pages_fetched": 0,
+  "warnings": [],
+  "source_url": "https://archive.org/download/manyoshu-volumes-5-6/Man'y%C5%8Dsh%C5%AB%20Volumes%205%20%26%206_djvu.txt",
+  "markdown_bytes": 63360,
+  "ocr_language": null
+}

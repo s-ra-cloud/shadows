@@ -1,0 +1,10 @@
+{
+  "recipe_id": "ocr-cleanup",
+  "recipe_version": "1.0.0",
+  "extracted_at": "2026-08-13T10:51:40.911Z",
+  "pages_fetched": 0,
+  "warnings": [],
+  "source_url": "https://archive.org/download/targumsonkelosa00ethegoog/targumsonkelosa00ethegoog_djvu.txt",
+  "markdown_bytes": 1053028,
+  "ocr_language": null
+}

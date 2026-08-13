@@ -1,0 +1,10 @@
+{
+  "recipe_id": "ocr-cleanup",
+  "recipe_version": "1.0.0",
+  "extracted_at": "2026-08-13T10:53:22.314Z",
+  "pages_fetched": 0,
+  "warnings": [],
+  "source_url": "https://archive.org/download/the-grand-bible-3rd-edition-2021/THE%20GRAND%20BIBLE%2C%203rd%20Edition%202021.epub",
+  "markdown_bytes": 85758202,
+  "ocr_language": null
+}

@@ -1,0 +1,11 @@
+{
+  "locked": true,
+  "do_not_publish": true,
+  "work_id": "work:is-buddhism-religion-3rd-ed",
+  "edition_id": "edition:internet-archive-is-buddhism-religion-3rd-ed-final",
+  "rights_status": "conflicting",
+  "reasons": [
+    "open licence marker conflicts with restrictive copyright evidence"
+  ],
+  "rights_record": "rights/is-buddhism-religion-3rd-ed/internet-archive-is-buddhism-religion-3rd-ed-final.rights.json"
+}

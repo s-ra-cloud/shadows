@@ -1,0 +1,11 @@
+{
+  "locked": true,
+  "do_not_publish": true,
+  "work_id": "work:trench-crusade-playtest-rules-core-rules",
+  "edition_id": "edition:internet-archive-trench-crusade-playtest-rules-core-rules",
+  "rights_status": "restricted_license",
+  "reasons": [
+    "standardized Creative Commons marker"
+  ],
+  "rights_record": "rights/trench-crusade-playtest-rules-core-rules/internet-archive-trench-crusade-playtest-rules-core-rules.rights.json"
+}
