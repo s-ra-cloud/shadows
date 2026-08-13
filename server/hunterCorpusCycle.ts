@@ -220,6 +220,21 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
   const allDiscovery: CycleSummary["discovery"] = [];
   let stopped = false;
 
+  /**
+   * Source-level blockers (a source with no discovery strategy, a source that
+   * forbids automated download...) repeat identically for every item of the
+   * list. They are recorded once per run so a nine-item list does not produce
+   * nine copies of the same entry.
+   */
+  const seenSourceBlockers = new Set<string>();
+  const sourceBlockerKey = (b: Record<string, unknown>): string | null => {
+    const sourceId = b.sourceId ? String(b.sourceId) : "";
+    // Only whole-source problems dedupe: anything tied to one URL, work or
+    // edition is item-specific and always kept.
+    if (!sourceId || b.url || b.workId || b.editionId) return null;
+    return `${sourceId}|${String(b.reason ?? "")}|${String(b.detail ?? "")}`;
+  };
+
   for (let index = 0; index < list.items.length; index += 1) {
     const item = list.items[index];
 
@@ -253,6 +268,8 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
     });
 
     const itemBlockers: CorpusItemBlocker[] = [];
+    /** Source-level blockers suppressed for this item (already reported). */
+    let suppressed = 0;
     const recordItemBlocker = (b: Record<string, unknown>) => {
       if (itemBlockers.length < MAX_ITEM_BLOCKERS) {
         itemBlockers.push({
@@ -289,9 +306,18 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
       ...store,
       existingEditionIds: () => store.existingEditionIds(),
       insertCandidate: (c) => store.insertCandidate(c),
-      addBlocker: (b) => {
-        recordItemBlocker(b as unknown as Record<string, unknown>);
-        return store.addBlocker(b);
+      addBlocker: async (b) => {
+        const record = b as unknown as Record<string, unknown>;
+        const key = sourceBlockerKey(record);
+        if (key) {
+          if (seenSourceBlockers.has(key)) {
+            suppressed += 1;
+            return;
+          }
+          seenSourceBlockers.add(key);
+        }
+        recordItemBlocker(record);
+        await store.addBlocker(b);
       },
       mirrorCorpusRecords: (r) => store.mirrorCorpusRecords(r),
       updateProgress: (progress) =>
@@ -351,7 +377,7 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
     totals.downloaded_locked += summary.downloaded_locked;
     totals.metadata_only += summary.metadata_only;
     totals.failed += summary.failed;
-    totals.blockers += summary.blockers;
+    totals.blockers += Math.max(0, summary.blockers - suppressed);
     allEntries.push(...summary.entries);
     allDiscovery.push(...summary.discovery);
     outcomes.push(outcomeFromSummary(item, summary, itemBlockers));

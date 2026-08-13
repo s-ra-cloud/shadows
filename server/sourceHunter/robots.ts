@@ -83,6 +83,22 @@ export function robotsRulesAllow(rules: RobotsRule[], targetPath: string): boole
   return allowed;
 }
 
+/**
+ * True when a 2xx /robots.txt response actually looks like a robots file.
+ *
+ * Markup is never a robots file (a redirect to an HTML documentation page is
+ * the common case). Otherwise any body carrying robots directives counts —
+ * whatever the content type — and an empty/comment-only body counts when the
+ * server declared it as plain text.
+ */
+export function looksLikeRobotsTxt(body: string, contentType: string | null): boolean {
+  const sample = body.slice(0, 4096);
+  if (/^\s*(<!doctype|<html|<\?xml)/i.test(sample)) return false;
+  if (/^\s*(user-agent|allow|disallow|sitemap|crawl-delay)\s*:/im.test(sample)) return true;
+  const mediaType = (contentType ?? "").split(";")[0].trim().toLowerCase();
+  return mediaType === "text/plain" && !/<\s*(html|body|head|div|p)\b/i.test(sample);
+}
+
 /** Check whether `url` may be fetched under the target origin's robots.txt. */
 export async function robotsAllowsUrl(
   url: string,
@@ -101,7 +117,18 @@ export async function robotsAllowsUrl(
       });
       if (response.status >= 200 && response.status < 300) {
         const text = await response.text();
-        entry = { rules: parseRobots(text, userAgent), reason: "robots.txt fetched" };
+        const contentType = response.headers?.get?.("content-type") ?? null;
+        if (looksLikeRobotsTxt(text, contentType)) {
+          entry = { rules: parseRobots(text, userAgent), reason: "robots.txt fetched" };
+        } else {
+          // Some hosts redirect /robots.txt to an HTML documentation page
+          // (api.wikimedia.org does). That is not a robots file, so parsing it
+          // would invent rules; treat it as "no robots.txt" instead.
+          entry = {
+            rules: [],
+            reason: "robots.txt did not return a plain-text robots file; default allow",
+          };
+        }
       } else if (response.status === 401 || response.status === 403) {
         entry = { rules: null, reason: `robots.txt returned ${response.status}` };
       } else {

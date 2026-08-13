@@ -14,6 +14,9 @@ import {
   confidentlySecondary,
   screenLeads,
   screenCacheKey,
+  wikisourceWikiLanguages,
+  WIKIMEDIA_API_HOST,
+  CYCLE_USER_AGENT,
   SCREEN_CHUNK_SIZE,
   type AiScreenVerdict,
   type ScreenVerdictCache,
@@ -21,7 +24,7 @@ import {
   type CycleStore,
   type DiscoveredLead,
 } from "../../hunterCycle";
-import { parseRobots, robotsRulesAllow, clearRobotsCache } from "../robots";
+import { parseRobots, robotsRulesAllow, clearRobotsCache, looksLikeRobotsTxt, robotsAllowsUrl } from "../robots";
 import { loadDefaultPolicy } from "../index";
 import type { Candidate } from "../rights";
 
@@ -853,6 +856,261 @@ describe("discovery fetchJson redirect boundary", () => {
     await expect(
       fetchJson("http://archive.org/search", ["archive.org"], fakeFetch({})),
     ).rejects.toThrow(/left the allowed hosts/);
+  });
+});
+
+describe("Wikisource discovery via the Wikimedia Core REST API", () => {
+  beforeEach(() => clearRobotsCache());
+
+  /**
+   * Stubbed network: api.wikimedia.org serves no usable robots.txt (its
+   * /robots.txt redirects to an HTML documentation page), wikisource.org
+   * disallows /w/. Every requested URL is recorded.
+   */
+  function apiFetch(searchResults: Record<string, unknown>) {
+    const requested: string[] = [];
+    const fetchImpl = (async (input: any) => {
+      const url = String(input);
+      requested.push(url);
+      if (url === `https://${WIKIMEDIA_API_HOST}/robots.txt`) {
+        // What api.wikimedia.org really does: 301 -> mediawiki.org HTML page.
+        return new Response("<!DOCTYPE html>\n<html><body>Wikimedia APIs</body></html>", {
+          status: 200,
+          headers: { "content-type": "text/html; charset=UTF-8" },
+        });
+      }
+      if (url === "https://wikisource.org/robots.txt") {
+        return new Response("User-agent: *\nDisallow: /w/\nAllow: /w/load.php\n", {
+          status: 200,
+          headers: { "content-type": "text/plain" },
+        });
+      }
+      if (url.startsWith(`https://${WIKIMEDIA_API_HOST}/core/v1/wikisource/`)) {
+        const language = url.split("/core/v1/wikisource/")[1].split("/")[0];
+        return new Response(JSON.stringify(searchResults[language] ?? { pages: [] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response("not found", { status: 404 });
+    }) as unknown as typeof fetch;
+    return { fetchImpl, requested };
+  }
+
+  const WIKISOURCE_REGISTRY = {
+    schema_version: "1.0.0",
+    sources: [
+      {
+        source_id: "source:multilingual-wikisource",
+        name: "Multilingual Wikisource",
+        local_only: false,
+        allowed_hosts: ["wikisource.org", WIKIMEDIA_API_HOST],
+        allowed_path_prefixes: ["/wiki/", "/core/v1/wikisource/"],
+        automated_download_allowed: true,
+        terms_url: null,
+        robots_mode: "target_origin",
+        requests_per_second: 1,
+        rights_notes: "page-level statement is authoritative",
+      },
+    ],
+  };
+
+  async function discover(scope: CycleScope, searchResults: Record<string, unknown>) {
+    const { fetchImpl, requested } = apiFetch(searchResults);
+    const { store, blockers } = makeStore();
+    const leads: DiscoveredLead[] = [];
+    const policy = await loadDefaultPolicy();
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "hunter-wikisource-"));
+    await runHuntingCycle({
+      scope: { ...scope, useAi: false },
+      policy,
+      registry: WIKISOURCE_REGISTRY,
+      corpusRoot: path.join(tmp, "corpus"),
+      store: {
+        ...store,
+        // Capture leads before download and stop the cycle from hitting the
+        // network again: duplicates are skipped, not downloaded.
+        async existingEditionIds() {
+          return new Set<string>();
+        },
+      },
+      fetchImpl,
+      // Downloads are out of scope here; a rejecting robots check keeps the
+      // cycle from fetching page content.
+      robotsCheck: async () => ({ allowed: false, reason: "test: downloads disabled" }),
+    });
+    return { requested, blockers, leads };
+  }
+
+  it("searches the Core REST API and never touches the robots-disallowed /w/ path", async () => {
+    const { requested, blockers } = await discover(
+      { query: "Kojiki", limit: 4 },
+      {
+        en: {
+          pages: [
+            { id: 2205970, key: "Kojiki", title: "Kojiki", description: "Japanese chronicle" },
+          ],
+        },
+      },
+    );
+    // Discovery reached the allowed API...
+    expect(
+      requested.some((u) =>
+        u.startsWith(`https://${WIKIMEDIA_API_HOST}/core/v1/wikisource/en/search/page?`),
+      ),
+    ).toBe(true);
+    // ...and never the legacy MediaWiki action API, on any host.
+    expect(requested.some((u) => u.includes("/w/api.php"))).toBe(false);
+    expect(requested.some((u) => new URL(u).hostname === "wikisource.org")).toBe(false);
+    // No discovery blocker at all: the robots gate accepted the API host.
+    expect(blockers.some((b) => /discovery failed/.test(String(b.detail)))).toBe(false);
+  });
+
+  it("builds the candidate's text URL from the page endpoint on the same host", async () => {
+    const { store, blockers } = makeStore();
+    void blockers;
+    const { fetchImpl } = apiFetch({
+      en: { pages: [{ id: 2205970, key: "Kojiki_(Chamberlain)", title: "Kojiki (Chamberlain)" }] },
+    });
+    const policy = await loadDefaultPolicy();
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "hunter-wikisource-url-"));
+    const summary = await runHuntingCycle({
+      scope: { query: "Kojiki", limit: 2, useAi: false },
+      policy,
+      registry: WIKISOURCE_REGISTRY,
+      corpusRoot: path.join(tmp, "corpus"),
+      store,
+      fetchImpl,
+      robotsCheck: async () => ({ allowed: false, reason: "test: downloads disabled" }),
+    });
+    expect(summary.discovered).toBe(1);
+    const entry = summary.entries[0] as Record<string, unknown>;
+    expect(String(entry.source_reference)).toBe(
+      `https://${WIKIMEDIA_API_HOST}/core/v1/wikisource/en/page/Kojiki_(Chamberlain)`,
+    );
+    expect(String(entry.edition_id)).toBe("edition:wikisource-en-2205970");
+    expect(summary.discovery[0].originDetail).toContain("en.wikisource");
+  });
+
+  it("searches the original-language wiki as well as English", async () => {
+    const { requested } = await discover(
+      {
+        query: '"Kojiki"',
+        limit: 4,
+        targetWork: { title: "Kojiki", author: null, language: "ja" },
+      },
+      {
+        ja: { pages: [{ id: 28591, key: "古事記", title: "古事記" }] },
+        en: { pages: [{ id: 2205970, key: "Kojiki", title: "Kojiki" }] },
+      },
+    );
+    const searches = requested.filter((u) => u.includes("/search/page?"));
+    expect(searches).toHaveLength(2);
+    expect(searches[0]).toContain("/core/v1/wikisource/ja/search/page?");
+    expect(searches[1]).toContain("/core/v1/wikisource/en/search/page?");
+  });
+
+  it("reports discovery as blocked only when every language wiki fails", async () => {
+    const { store, blockers } = makeStore();
+    const policy = await loadDefaultPolicy();
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "hunter-wikisource-fail-"));
+    const fetchImpl = (async (input: any) => {
+      const url = String(input);
+      if (url.endsWith("/robots.txt")) return new Response("", { status: 404 });
+      return new Response("boom", { status: 500 });
+    }) as unknown as typeof fetch;
+    await runHuntingCycle({
+      scope: { query: "Kojiki", useAi: false },
+      policy,
+      registry: WIKISOURCE_REGISTRY,
+      corpusRoot: path.join(tmp, "corpus"),
+      store,
+      fetchImpl,
+    });
+    const blocker = blockers.find((b) => b.sourceId === "source:multilingual-wikisource");
+    expect(blocker?.reason).toBe("fetch_failed");
+    expect(String(blocker?.detail)).toContain("500");
+  });
+});
+
+describe("wikisourceWikiLanguages", () => {
+  it("defaults to English when the scope carries no language signal", () => {
+    expect(wikisourceWikiLanguages({ query: "creation hymn" })).toEqual(["en"]);
+  });
+
+  it("uses an explicit target-work language hint first", () => {
+    expect(
+      wikisourceWikiLanguages({
+        query: '"Nihon Shoki"',
+        targetWork: { title: "Nihon Shoki", language: "ja" },
+      }),
+    ).toEqual(["ja", "en"]);
+  });
+
+  it("falls back to the script of the query", () => {
+    expect(wikisourceWikiLanguages({ query: "日本書紀 かな" })).toEqual(["ja", "en"]);
+    expect(wikisourceWikiLanguages({ query: "Ἰλιάς" })).toEqual(["el", "en"]);
+  });
+
+  it("uses the region to disambiguate Han script and as a last resort", () => {
+    expect(
+      wikisourceWikiLanguages({ query: "古事記", region: { id: "japan", label: "Japan" } }),
+    ).toEqual(["ja", "en"]);
+    expect(wikisourceWikiLanguages({ query: "古事記" })).toEqual(["zh", "en"]);
+    expect(
+      wikisourceWikiLanguages({ query: "Shinto texts", region: { id: "japan", label: "Japan" } }),
+    ).toEqual(["ja", "en"]);
+  });
+
+  it("maps languages with no wiki of their own and ignores unusable codes", () => {
+    expect(wikisourceWikiLanguages({ query: "Iliad", targetWork: { title: "Iliad", language: "grc" } })).toEqual([
+      "el",
+      "en",
+    ]);
+    // `mul` (multilingual Wikisource) is not served by this API.
+    expect(wikisourceWikiLanguages({ query: "x", targetWork: { title: "x", language: "mul" } })).toEqual(["en"]);
+    expect(wikisourceWikiLanguages({ query: "x", targetWork: { title: "x", language: "und" } })).toEqual(["en"]);
+  });
+});
+
+describe("robots.txt response sniffing", () => {
+  beforeEach(() => clearRobotsCache());
+
+  it("accepts plain-text robots files and rejects HTML documentation pages", () => {
+    expect(looksLikeRobotsTxt("User-agent: *\nDisallow: /w/\n", "text/plain")).toBe(true);
+    expect(looksLikeRobotsTxt("# nothing here\n", "text/plain; charset=utf-8")).toBe(true);
+    // Directives count even when the content type is odd.
+    expect(looksLikeRobotsTxt("Disallow: /private/\n", "application/octet-stream")).toBe(true);
+    expect(looksLikeRobotsTxt("<!DOCTYPE html><html><body>Wikimedia APIs</body></html>", "text/html")).toBe(false);
+    expect(looksLikeRobotsTxt("<html><head><title>Docs</title></head></html>", null)).toBe(false);
+  });
+
+  it("defaults to allow when /robots.txt redirects to an HTML page", async () => {
+    const fetchImpl = (async () =>
+      new Response("<!DOCTYPE html>\n<html><body>Wikimedia APIs</body></html>", {
+        status: 200,
+        headers: { "content-type": "text/html; charset=UTF-8" },
+      })) as unknown as typeof fetch;
+    const decision = await robotsAllowsUrl(
+      `https://${WIKIMEDIA_API_HOST}/core/v1/wikisource/en/search/page?q=Kojiki`,
+      CYCLE_USER_AGENT,
+      { fetchImpl },
+    );
+    expect(decision.allowed).toBe(true);
+  });
+
+  it("still obeys a real robots.txt that disallows the legacy /w/ path", async () => {
+    const fetchImpl = (async () =>
+      new Response("User-agent: *\nDisallow: /w/\nAllow: /w/load.php\n", {
+        status: 200,
+        headers: { "content-type": "text/plain" },
+      })) as unknown as typeof fetch;
+    const decision = await robotsAllowsUrl(
+      "https://wikisource.org/w/api.php?action=query",
+      CYCLE_USER_AGENT,
+      { fetchImpl },
+    );
+    expect(decision.allowed).toBe(false);
   });
 });
 

@@ -470,6 +470,15 @@ const ocrCleanupRecipe: ExtractionRecipe = {
 export function mediaWikiRevisionWikitext(payload: Buffer): string | null {
   try {
     const doc = JSON.parse(payload.toString("utf-8")) as Record<string, any>;
+    // Wikimedia Core REST API (api.wikimedia.org .../page/<key>): the wikitext
+    // is the payload's own `source` field, with no revisions envelope.
+    if (
+      typeof doc?.source === "string" &&
+      doc.source.trim().length > 0 &&
+      (doc.content_model ?? "wikitext") === "wikitext"
+    ) {
+      return doc.source;
+    }
     const pages = doc?.query?.pages;
     if (!pages || typeof pages !== "object") return null;
     const pageList: any[] = Array.isArray(pages) ? pages : Object.values(pages);

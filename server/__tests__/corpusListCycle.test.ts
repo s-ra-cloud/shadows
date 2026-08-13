@@ -367,4 +367,62 @@ describe("runCorpusListCycle", () => {
 
     await fs.rm(corpusRoot, { recursive: true, force: true });
   });
+
+  it("reports a source-level blocker once per run instead of once per item", async () => {
+    const corpusRoot = await fs.mkdtemp(path.join(os.tmpdir(), "corpus-cycle-dedupe-"));
+    const { store, blockers } = memoryStore();
+
+    // A registry where no source has a discovery strategy: every item would
+    // otherwise repeat the identical "discovery_unsupported" entry.
+    const registry = {
+      schema_version: "1.0.0",
+      sources: [
+        {
+          source_id: "source:no-strategy",
+          name: "Strategy-less Source",
+          local_only: false,
+          allowed_hosts: ["no-strategy.example"],
+          automated_download_allowed: true,
+          robots_mode: "target_origin",
+          requests_per_second: 1,
+        },
+        {
+          source_id: "source:manual-only",
+          name: "Manual Only Source",
+          local_only: false,
+          allowed_hosts: ["manual-only.example"],
+          automated_download_allowed: false,
+          robots_mode: "target_origin",
+          requests_per_second: 1,
+        },
+      ],
+    };
+
+    const result = await runCorpusListCycle({
+      list: {
+        name: "shinto",
+        items: [{ title: "Kojiki" }, { title: "Nihon Shoki" }, { title: "Engishiki" }],
+      },
+      policy: POLICY as never,
+      registry,
+      corpusRoot,
+      store,
+      useAi: false,
+      cycleOverrides: { fetchImpl: fetchStub({}) },
+    });
+
+    const unsupported = (blockers as any[]).filter((b) => b.reason === "discovery_unsupported");
+    const notAuthorized = (blockers as any[]).filter((b) => b.reason === "download_not_authorized");
+    expect(unsupported).toHaveLength(1);
+    expect(unsupported[0].sourceId).toBe("source:no-strategy");
+    expect(notAuthorized).toHaveLength(1);
+    // The per-item report keeps the first occurrence only, and the run totals
+    // count the same single entry.
+    expect(result.corpus_list.items[0].blockers).toHaveLength(2);
+    expect(result.corpus_list.items[1].blockers).toHaveLength(0);
+    expect(result.corpus_list.blocked_reasons.discovery_unsupported).toBe(1);
+    expect(result.summary.blockers).toBe(2);
+
+    await fs.rm(corpusRoot, { recursive: true, force: true });
+  });
 });

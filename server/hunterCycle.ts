@@ -198,52 +198,165 @@ export async function fetchJson(
 // Registry crawling strategies
 // ---------------------------------------------------------------------------
 
+/**
+ * Wikisource discovery runs on Wikimedia's public Core REST API
+ * (api.wikimedia.org), never on `wikisource.org/w/api.php`: that origin's
+ * robots.txt disallows `/w/`, so the robots gate refuses every legacy search
+ * and every legacy content fetch. The Core REST API is the officially
+ * supported public alternative and is robots-permitted.
+ *
+ * It serves per-language wikis only — the multilingual `mul` project is not
+ * available here — so a language wiki is always chosen explicitly.
+ */
+export const WIKIMEDIA_API_HOST = "api.wikimedia.org";
+const WIKISOURCE_API_BASE = `https://${WIKIMEDIA_API_HOST}/core/v1/wikisource/`;
+const DEFAULT_WIKI_LANGUAGE = "en";
+
+/** Language wikis with a real Wikisource we are willing to search. */
+const WIKISOURCE_LANGUAGES = new Set([
+  "ar", "bn", "cs", "cy", "da", "de", "el", "en", "es", "fa", "fi", "fr", "ga",
+  "he", "hi", "hu", "hy", "id", "is", "it", "ja", "ko", "la", "nl", "no", "pl",
+  "pt", "ro", "ru", "sa", "sv", "ta", "th", "tr", "uk", "vi", "zh",
+]);
+
+/** ISO codes with no wiki of their own, mapped to the wiki that hosts them. */
+const WIKISOURCE_LANGUAGE_ALIASES: Record<string, string> = {
+  grc: "el", // Ancient Greek texts live on the Greek Wikisource
+  non: "is", // Old Norse texts live on the Icelandic Wikisource
+  nb: "no",
+  nn: "no",
+  "pt-br": "pt",
+  "zh-hans": "zh",
+  "zh-hant": "zh",
+};
+
+/** Mythological region -> the language wiki most likely to hold its originals. */
+const REGION_WIKI_LANGUAGE: Record<string, string> = {
+  japan: "ja",
+  china: "zh",
+  india: "sa",
+  greece: "el",
+  rome: "la",
+  persia: "fa",
+  slavic: "ru",
+  norse: "is",
+  celtic: "ga",
+  mesoamerica: "es",
+  andes: "es",
+  "southeast-asia": "id",
+};
+
+function normalizeWikiLanguage(code: string | null | undefined): string | null {
+  if (!code) return null;
+  const normalized = String(code).trim().toLowerCase();
+  const resolved = WIKISOURCE_LANGUAGE_ALIASES[normalized] ?? normalized.split(/[-_]/)[0];
+  return WIKISOURCE_LANGUAGES.has(resolved) ? resolved : null;
+}
+
+/** Language implied by the script the query/title is written in, if any. */
+function scriptLanguage(text: string): string | null {
+  if (/[\u3040-\u30ff]/.test(text)) return "ja"; // kana
+  if (/[\uac00-\ud7af]/.test(text)) return "ko"; // hangul
+  if (/[\u0400-\u04ff]/.test(text)) return "ru"; // cyrillic
+  if (/[\u0590-\u05ff]/.test(text)) return "he";
+  if (/[\u0600-\u06ff]/.test(text)) return "ar";
+  if (/[\u0370-\u03ff\u1f00-\u1fff]/.test(text)) return "el";
+  if (/[\u0900-\u097f]/.test(text)) return "sa"; // devanagari
+  if (/[\u4e00-\u9fff]/.test(text)) return "zh"; // Han without kana/hangul
+  return null;
+}
+
+/**
+ * Which Wikisource language wikis to search for a cycle scope: the original
+ * language implied by the scope (explicit hint, then script, then region),
+ * plus English — which carries the translations — always last.
+ */
+export function wikisourceWikiLanguages(scope: CycleScope): string[] {
+  const regionLanguage = scope.region ? (REGION_WIKI_LANGUAGE[scope.region.id] ?? null) : null;
+  let script = scriptLanguage(`${scope.targetWork?.title ?? ""} ${scope.query ?? ""}`);
+  // Han characters alone do not distinguish Chinese from Japanese/Korean
+  // originals; the region hint breaks the tie when there is one.
+  if (script === "zh" && (regionLanguage === "ja" || regionLanguage === "ko")) {
+    script = regionLanguage;
+  }
+  const original =
+    normalizeWikiLanguage(scope.targetWork?.language) ??
+    normalizeWikiLanguage(script) ??
+    normalizeWikiLanguage(regionLanguage);
+  return original && original !== DEFAULT_WIKI_LANGUAGE
+    ? [original, DEFAULT_WIKI_LANGUAGE]
+    : [DEFAULT_WIKI_LANGUAGE];
+}
+
 async function discoverWikisource(
   scope: CycleScope,
   source: Record<string, unknown>,
   fetchImpl: typeof fetch,
 ): Promise<DiscoveredLead[]> {
+  const allowedHosts = (source.allowed_hosts as string[]) ?? [WIKIMEDIA_API_HOST];
   const limit = Math.min(scope.limit ?? 10, 25);
-  const searchUrl =
-    "https://wikisource.org/w/api.php?action=query&list=search&format=json&srlimit=" +
-    limit +
-    "&srsearch=" +
-    encodeURIComponent(scope.query);
-  const doc = await fetchJson(searchUrl, (source.allowed_hosts as string[]) ?? ["wikisource.org"], fetchImpl);
-  const hits =
-    (((doc.query as Record<string, unknown>) ?? {}).search as Record<string, unknown>[]) ?? [];
-  return hits.map((hit) => {
-    const title = String(hit.title ?? "Untitled");
-    const pageId = String(hit.pageid ?? slug(title));
-    const textUrl =
-      "https://wikisource.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main&format=json&titles=" +
-      encodeURIComponent(title);
-    const candidate: Candidate = {
-      work_id: `work:${slug(title)}`,
-      edition_id: `edition:wikisource-${pageId}`,
-      title,
-      author: null,
-      translator: null,
-      source_id: String(source.source_id),
-      language: "und",
-      language_role: "unknown",
-      format: "json",
-      text_url: textUrl,
-      rights: {
-        status_claim: "unknown",
-        basis: "source_statement",
-        statement:
-          "Wikisource hosts public-domain and freely licensed texts; this page's licence has not been verified.",
-        rights_url: "https://wikisource.org/wiki/Wikisource:Copyright_policy",
-      },
-      access: { download_allowed: true, requires_auth: false },
-    };
-    return {
-      candidate,
-      origin: "registry_crawl" as const,
-      originDetail: `Wikisource search: ${title}`,
-    };
-  });
+  const languages = wikisourceWikiLanguages(scope);
+  const perLanguage = Math.max(1, Math.ceil(limit / languages.length));
+  const leads: DiscoveredLead[] = [];
+  const seen = new Set<string>();
+  const failures: string[] = [];
+
+  for (const language of languages) {
+    const searchUrl =
+      `${WIKISOURCE_API_BASE}${language}/search/page?limit=${perLanguage}&q=` +
+      encodeURIComponent(scope.query);
+    let doc: Record<string, unknown>;
+    try {
+      doc = await fetchJson(searchUrl, allowedHosts, fetchImpl);
+    } catch (e) {
+      // One unreachable wiki must not sink the others; only a total failure
+      // is reported as a blocker (below).
+      failures.push(e instanceof Error ? e.message : String(e));
+      continue;
+    }
+    const pages = (doc.pages as Record<string, unknown>[]) ?? [];
+    for (const page of pages) {
+      const title = String(page.title ?? page.key ?? "Untitled");
+      // `key` is the URL-safe page key the page endpoint expects.
+      const key = String(page.key ?? title);
+      const pageId = String(page.id ?? slug(title));
+      const editionId = `edition:wikisource-${language}-${pageId}`;
+      if (seen.has(editionId)) continue;
+      seen.add(editionId);
+      const candidate: Candidate = {
+        work_id: `work:${slug(title)}`,
+        edition_id: editionId,
+        title,
+        author: null,
+        translator: null,
+        source_id: String(source.source_id),
+        language,
+        language_role: "unknown",
+        format: "json",
+        text_url: `${WIKISOURCE_API_BASE}${language}/page/${encodeURIComponent(key)}`,
+        rights: {
+          status_claim: "unknown",
+          basis: "source_statement",
+          statement:
+            "Wikisource hosts public-domain and freely licensed texts; this page's licence has not been verified.",
+          rights_url: "https://wikisource.org/wiki/Wikisource:Copyright_policy",
+        },
+        access: { download_allowed: true, requires_auth: false },
+      };
+      leads.push({
+        candidate,
+        origin: "registry_crawl" as const,
+        originDetail: `Wikisource search (${language}.wikisource): ${title}`,
+      });
+    }
+  }
+
+  if (leads.length === 0 && failures.length > 0) {
+    // Keep the first raw message first so the caller can still classify it
+    // (e.g. a "robots_disallowed: ..." prefix).
+    throw new Error(failures.join(" | "));
+  }
+  return leads.slice(0, limit);
 }
 
 async function discoverInternetArchive(

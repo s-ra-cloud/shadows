@@ -18,16 +18,18 @@
       "name": "Multilingual Wikisource",
       "local_only": false,
       "allowed_hosts": [
-        "wikisource.org"
+        "wikisource.org",
+        "api.wikimedia.org"
       ],
       "allowed_path_prefixes": [
-        "/wiki/"
+        "/wiki/",
+        "/core/v1/wikisource/"
       ],
       "automated_download_allowed": true,
       "terms_url": "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use",
       "robots_mode": "target_origin",
       "requests_per_second": 0.25,
-      "rights_notes": "Check the work and translation copyright template. Wikisource accepts public-domain or compatible free-licensed texts, but the exact page-level statement remains authoritative."
+      "rights_notes": "Discovery and content fetching use Wikimedia's public Core REST API (api.wikimedia.org/core/v1/wikisource/<lang>/) — the wikisource.org /w/ API is disallowed by robots.txt. Check the work and translation copyright template. Wikisource accepts public-domain or compatible free-licensed texts, but the exact page-level statement remains authoritative."
     },
     {
       "source_id": "source:project-gutenberg",

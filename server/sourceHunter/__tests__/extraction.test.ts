@@ -552,4 +552,27 @@ describe("wikitextToMarkdown", () => {
     expect(out.markdown).not.toContain('"query"');
     expect(out.markdown).not.toContain('"revisions"');
   });
+
+  it("also reads the Wikimedia Core REST page payload (api.wikimedia.org)", async () => {
+    const payload = Buffer.from(
+      JSON.stringify({
+        id: 2205970,
+        key: "Kojiki",
+        title: "Kojiki",
+        content_model: "wikitext",
+        license: { url: "https://creativecommons.org/licenses/by-sa/4.0/" },
+        source: `== Part I ==\n${prose}`,
+      }),
+    );
+    expect(mediaWikiRevisionWikitext(payload)).toContain("heaven and earth");
+    const out = await getRecipe("mediawiki-revision-json")!.run({
+      payload,
+      contentType: "application/json",
+      sourceUrl: "https://api.wikimedia.org/core/v1/wikisource/en/page/Kojiki",
+      title: "Kojiki",
+      reportProgress: () => {},
+    });
+    expect(out.markdown).toContain("heaven and earth");
+    expect(out.markdown).not.toContain('"content_model"');
+  });
 });
