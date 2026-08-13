@@ -16,7 +16,7 @@ import ReactMarkdown from "react-markdown";
 import { RunErrorReport } from "@/components/RunErrorReport";
 
 type Tab = "library" | "hunter";
-type HunterTab = "map" | "cycles" | "candidates" | "plan" | "corpus" | "extractors" | "verify" | "catalog" | "manual" | "runs" | "policy" | "registry";
+type HunterTab = "map" | "cycles" | "candidates" | "plan" | "corpus" | "extractors" | "verify" | "catalog" | "manual" | "runs" | "policy" | "registry" | "strategies";
 
 export default function SourcesPage() {
   const [activeTab, setActiveTab] = useState<Tab>("library");
@@ -362,6 +362,12 @@ export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: bo
       description:
         "The list of trusted websites the hunter is allowed to download from, with per-site rate limits, allowed URL path prefixes, and rights notes. Editors can add or edit entries as raw JSON.",
     },
+    {
+      key: "strategies",
+      label: "Source Strategies",
+      description:
+        "Which sources the hunter can search automatically and which require manual candidate entry. Each row shows the discovery method, download permission, robots handling, and request rate for one registered source.",
+    },
   ];
 
   // Tabs deliberately hidden from the UI (per editor request) until their
@@ -413,6 +419,7 @@ export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: bo
         {activeHunterTab === "runs" && <HunterRuns />}
         {activeHunterTab === "policy" && <HunterPolicy isEditor={isEditor} />}
         {activeHunterTab === "registry" && <HunterRegistry isEditor={isEditor} />}
+        {activeHunterTab === "strategies" && <HunterStrategies />}
       </div>
     </div>
   );
@@ -3634,6 +3641,137 @@ function HunterRegistry({ isEditor }: { isEditor: boolean }) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// ---- Source Strategies tab -------------------------------------------------
+
+const DISCOVERY_KIND_LABEL: Record<string, string> = {
+  api_search: "API search",
+  catalogue_feed: "Catalogue feed",
+  github_file_tree: "GitHub file tree",
+  manual_only: "Manual only",
+};
+
+function HunterStrategies() {
+  const { data: registry, isLoading } = useQuery({ queryKey: ["/api/hunter/registry"] });
+
+  if (isLoading) {
+    return <div className="text-[#E0DCE6]/50 text-sm">Loading source strategies...</div>;
+  }
+
+  const sources: any[] = Array.isArray((registry as any)?.sources) ? (registry as any).sources : [];
+
+  if (sources.length === 0) {
+    return (
+      <div className="text-sm text-[#E0DCE6]/50" data-testid="strategies-empty">
+        No sources registered.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4" data-testid="strategies-table">
+      <div>
+        <h3 className="text-lg font-medium text-[#E0DCE6] mb-1">Source Discovery Strategies</h3>
+        <p className="text-sm text-[#E0DCE6]/60">
+          Which sources the hunter can search automatically and which need manual candidate entry.
+          Manual-only sources still support automated download once a candidate URL is added.
+        </p>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="border-b border-[#350A8C]/40">
+              <th className="text-left py-2 pr-4 text-xs font-medium text-[#E0DCE6]/50 whitespace-nowrap">Source</th>
+              <th className="text-left py-2 pr-4 text-xs font-medium text-[#E0DCE6]/50 whitespace-nowrap">Discovery</th>
+              <th className="text-left py-2 pr-4 text-xs font-medium text-[#E0DCE6]/50 whitespace-nowrap">What it searches</th>
+              <th className="text-left py-2 pr-4 text-xs font-medium text-[#E0DCE6]/50 whitespace-nowrap">Auto-download</th>
+              <th className="text-left py-2 pr-4 text-xs font-medium text-[#E0DCE6]/50 whitespace-nowrap">Robots mode</th>
+              <th className="text-left py-2 text-xs font-medium text-[#E0DCE6]/50 whitespace-nowrap">Rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sources.map((source) => {
+              const discovery = source.discovery ?? {};
+              const isManual = discovery.kind === "manual_only" || !discovery.kind;
+              const kindLabel = DISCOVERY_KIND_LABEL[discovery.kind] ?? discovery.kind ?? "Unknown";
+              return (
+                <tr
+                  key={source.source_id}
+                  className={`border-b border-[#350A8C]/20 align-top ${isManual ? "opacity-70" : ""}`}
+                  data-testid={`strategies-row-${source.source_id}`}
+                >
+                  {/* Source name */}
+                  <td className="py-3 pr-4">
+                    <div className="font-medium text-[#E0DCE6] whitespace-nowrap">{source.name}</div>
+                    <div className="text-xs text-[#E0DCE6]/40 font-mono">{source.source_id}</div>
+                  </td>
+
+                  {/* Discovery badge */}
+                  <td className="py-3 pr-4 whitespace-nowrap">
+                    {isManual ? (
+                      <span
+                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400"
+                        data-testid={`strategies-badge-manual-${source.source_id}`}
+                      >
+                        Manual only
+                      </span>
+                    ) : (
+                      <span
+                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-[#03FF9B]/10 text-[#03FF9B]"
+                        data-testid={`strategies-badge-auto-${source.source_id}`}
+                      >
+                        {kindLabel}
+                      </span>
+                    )}
+                  </td>
+
+                  {/* What it searches / reason */}
+                  <td className="py-3 pr-4 max-w-xs">
+                    {isManual ? (
+                      <span className="text-[#E0DCE6]/50 italic">
+                        {discovery.reason ?? "No automated discovery strategy yet."}
+                      </span>
+                    ) : (
+                      <span className="text-[#E0DCE6]/70">{discovery.searches ?? "—"}</span>
+                    )}
+                  </td>
+
+                  {/* Auto-download */}
+                  <td className="py-3 pr-4 whitespace-nowrap">
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full ${
+                        source.automated_download_allowed
+                          ? "bg-[#03FF9B]/10 text-[#03FF9B]"
+                          : "bg-red-500/10 text-red-400"
+                      }`}
+                    >
+                      {source.automated_download_allowed ? "Allowed" : "Blocked"}
+                    </span>
+                  </td>
+
+                  {/* Robots mode */}
+                  <td className="py-3 pr-4 whitespace-nowrap">
+                    <span className="text-xs text-[#E0DCE6]/60 font-mono">
+                      {source.robots_mode ?? "—"}
+                    </span>
+                  </td>
+
+                  {/* Rate */}
+                  <td className="py-3 whitespace-nowrap">
+                    <span className="text-xs text-[#E0DCE6]/60">
+                      {source.local_only ? "—" : `${source.requests_per_second ?? "?"} req/s`}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
