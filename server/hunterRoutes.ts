@@ -437,6 +437,50 @@ async function finishRun(id: number, ok: boolean, result: unknown, error?: strin
 }
 
 /**
+ * Passed as the `lookup` option to every http/https.request call made by the
+ * check-url probe. Node.js calls this once per connection, right before
+ * opening the TCP socket, so the IP used for validation IS the IP used to
+ * connect — closing the DNS-rebinding window that exists when validation and
+ * connection are two separate DNS queries.
+ *
+ * Node may request ALL addresses (options.all === true) — e.g. when
+ * autoSelectFamily is enabled — and then expects an ARRAY of
+ * { address, family } objects. Returning a plain string in that case makes
+ * Node read `.address` off it, get undefined, and fail with
+ * "Invalid IP address: undefined". Both callback shapes are handled here.
+ * Exported for tests.
+ */
+export const safeLookup = (
+  hostname: string,
+  opts: unknown,
+  cb: (err: Error | null, address: unknown, family?: number) => void,
+): void => {
+  const clean = hostname.replace(/^\[|\]$/g, "");
+  const family = (a: string) => (a.includes(":") ? 6 : 4);
+  const p = isIP(clean)
+    ? Promise.resolve([{ address: clean, family: family(clean) }])
+    : dnsLookup(clean, { all: true });
+  p.then((addrs) => {
+    if (addrs.length === 0) {
+      cb(new Error(`No addresses found for ${clean}`), "", 0);
+      return;
+    }
+    for (const { address } of addrs) {
+      if (isPrivateAddress(address)) {
+        cb(new Error("URL resolves to a private or internal address"), "", 0);
+        return;
+      }
+    }
+    if (opts && typeof opts === "object" && (opts as { all?: boolean }).all) {
+      cb(null, addrs.map((a) => ({ address: a.address, family: family(a.address) })));
+      return;
+    }
+    const a = addrs[0].address;
+    cb(null, a, family(a));
+  }).catch((err) => cb(err, "", 0));
+};
+
+/**
  * Mark hunter runs orphaned by a previous process as failed.
  * Runs execute entirely in-process, so any "running" row present when the
  * server boots cannot still be executing.
@@ -1348,34 +1392,6 @@ export function registerHunterRoutes(
 
     const TIMEOUT_MS = 10_000;
     const MAX_REDIRECTS = 5;
-
-    /**
-     * Passed as the `lookup` option to every http/https.request call.
-     * Node.js calls this once per connection, right before opening the TCP
-     * socket, so the IP used for validation IS the IP used to connect —
-     * closing the DNS-rebinding window that exists when validation and
-     * connection are two separate DNS queries.
-     */
-    const safeLookup = (
-      hostname: string,
-      _opts: unknown,
-      cb: (err: Error | null, address: string, family: number) => void,
-    ): void => {
-      const clean = hostname.replace(/^\[|\]$/g, "");
-      const p = isIP(clean)
-        ? Promise.resolve([{ address: clean }])
-        : dnsLookup(clean, { all: true });
-      p.then((addrs) => {
-        for (const { address } of addrs) {
-          if (isPrivateAddress(address)) {
-            cb(new Error("URL resolves to a private or internal address"), "", 0);
-            return;
-          }
-        }
-        const a = addrs[0].address;
-        cb(null, a, a.includes(":") ? 6 : 4);
-      }).catch((err) => cb(err, "", 0));
-    };
 
     type ProbeOutcome = {
       status: number | null; ok: boolean; redirected: boolean; finalUrl: string; error: string | null;

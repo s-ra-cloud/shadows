@@ -2770,6 +2770,30 @@ function HunterManualFetch() {
   const resetCheck = (id: number) =>
     setCheckStates((prev) => ({ ...prev, [id]: { phase: "idle" } }));
 
+  const [bulkCheck, setBulkCheck] = useState<{ running: boolean; done: number; total: number }>({
+    running: false,
+    done: 0,
+    total: 0,
+  });
+
+  /** Check every card that has a URL, a few at a time so no site gets hammered. */
+  const verifyAllLinks = async (targets: { id: number; url: string }[]) => {
+    if (bulkCheck.running || targets.length === 0) return;
+    setBulkCheck({ running: true, done: 0, total: targets.length });
+    const CONCURRENCY = 3;
+    const queue = [...targets];
+    const worker = async () => {
+      for (;;) {
+        const next = queue.shift();
+        if (!next) return;
+        await verifyLink(next.id, next.url);
+        setBulkCheck((prev) => ({ ...prev, done: prev.done + 1 }));
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, targets.length) }, worker));
+    setBulkCheck((prev) => ({ ...prev, running: false }));
+  };
+
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const uploadMutation = useMutation({
     mutationFn: async ({ id, file }: { id: number; file: File }) => {
@@ -2832,7 +2856,8 @@ function HunterManualFetch() {
 
   return (
     <div className="space-y-4">
-      <div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex-1 min-w-[240px]">
         <h3 className="text-lg font-medium text-[#E0DCE6] mb-1">Assisted manual fetch</h3>
         <p className="text-sm text-[#E0DCE6]/60">
           These texts can only be obtained by hand: their source forbids automated downloads
@@ -2840,6 +2865,25 @@ function HunterManualFetch() {
           fetched. Open the link in a new tab, save the page or text file, then upload it here — it
           goes through the same rights review as any automated download.
         </p>
+        </div>
+        {(() => {
+          const targets = (Array.isArray(items) ? items : [])
+            .filter((b: any) => b.url)
+            .map((b: any) => ({ id: b.id as number, url: b.url as string }));
+          if (targets.length < 2) return null;
+          return (
+            <button
+              onClick={() => verifyAllLinks(targets)}
+              disabled={bulkCheck.running}
+              data-testid="button-verify-all-links"
+              className="shrink-0 px-3 py-1.5 rounded-lg text-sm border border-[#350A8C]/40 text-[#E0DCE6]/80 hover:bg-[#350A8C]/20 hover:text-[#E0DCE6] disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {bulkCheck.running
+                ? `Checking ${bulkCheck.done} of ${bulkCheck.total}…`
+                : "Verify all links"}
+            </button>
+          );
+        })()}
       </div>
 
       {isLoading ? (
