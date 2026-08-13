@@ -363,10 +363,12 @@ export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: bo
     },
   ];
 
-  const HIDDEN_TABS: HunterTab[] = [];
+  // Tabs deliberately hidden from the UI (per editor request) until their
+  // workflows are ready. Do not reset this list during merges.
+  const HIDDEN_TABS: HunterTab[] = ["candidates", "plan", "catalog"];
 
   useEffect(() => {
-    if ((activeHunterTab === "catalog" || activeHunterTab === "manual") && !isEditor) {
+    if ((activeHunterTab === "manual" && !isEditor) || HIDDEN_TABS.includes(activeHunterTab)) {
       setActiveHunterTab("map");
     }
   }, [isEditor, activeHunterTab]);
