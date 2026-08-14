@@ -68,31 +68,31 @@ function renderStrategies(isEditor: boolean): string {
 }
 
 describe("Source Strategies tab", () => {
-  it("renders a row for the automated-discovery source", () => {
-    const html = renderStrategies(false);
+  it("renders a row for the automated-discovery source (editor view)", () => {
+    const html = renderStrategies(true);
     expect(html).toContain('data-testid="strategies-row-source:test-auto"');
     expect(html).toContain("Auto Search Source");
     expect(html).toContain('data-testid="strategies-badge-auto-source:test-auto"');
     expect(html).toContain("Full-text API search across the example catalogue");
   });
 
-  it("renders a row for the manual-only source with the manual badge", () => {
-    const html = renderStrategies(false);
+  it("renders a row for the manual-only source with the manual badge (editor view)", () => {
+    const html = renderStrategies(true);
     expect(html).toContain('data-testid="strategies-row-source:test-manual"');
     expect(html).toContain("Manual Only Source");
     expect(html).toContain('data-testid="strategies-badge-manual-source:test-manual"');
     expect(html).toContain("Site blocks all automated requests");
   });
 
-  it("is visible to viewers (no edit mode required)", () => {
+  it("is hidden from viewers (edit mode required)", () => {
     const viewer = renderStrategies(false);
-    // The tab button must be present for viewers
-    expect(viewer).toContain('data-testid="tab-hunter-strategies"');
-    // And it actually renders the table, not an access-denied message
-    expect(viewer).toContain('data-testid="strategies-table"');
+    // Strategies tab is editor-only; the tab button must not appear for viewers
+    expect(viewer).not.toContain('data-testid="tab-hunter-strategies"');
+    // The table itself should not be rendered either
+    expect(viewer).not.toContain('data-testid="strategies-table"');
   });
 
-  it("is also visible to editors", () => {
+  it("is visible to editors", () => {
     const editor = renderStrategies(true);
     expect(editor).toContain('data-testid="tab-hunter-strategies"');
     expect(editor).toContain('data-testid="strategies-table"');

@@ -71,18 +71,31 @@ describe("hunter compute/LLM buttons are locked to edit mode", () => {
     }
   });
 
-  it("shows edit-mode hints to viewers where panels are hidden", () => {
-    expect(renderHunter("cycles", false)).toContain("Enter edit mode to launch a hunting cycle");
+  it("shows edit-mode hints to viewers on tabs that are still visible without edit mode", () => {
+    // Corpus and Map are always visible; they show a contextual hint to viewers.
     expect(renderHunter("corpus", false)).toContain('data-testid="hint-corpus-edit-mode"');
-    expect(renderHunter("verify", false)).toContain('data-testid="hint-verify-edit-mode"');
     expect(renderHunter("map", false)).toContain("Enter edit mode to launch region cycles");
+    // Cycles and Verify are now fully editor-only — no tab button, no content, no hint.
+    expect(renderHunter("cycles", false)).not.toContain('data-testid="tab-hunter-cycles"');
+    expect(renderHunter("verify", false)).not.toContain('data-testid="tab-hunter-verify"');
   });
 
-  it("hides the editor-only Catalog and Manual Fetch tabs from viewers", () => {
+  it("hides editor-only tabs from viewers and shows them to editors", () => {
     const viewer = renderHunter("map", false);
     const editor = renderHunter("map", true);
+    // These tabs must be invisible to viewers…
     expect(viewer).not.toContain('data-testid="tab-hunter-manual"');
     expect(viewer).not.toContain('data-testid="tab-hunter-catalog"');
+    expect(viewer).not.toContain('data-testid="tab-hunter-cycles"');
+    expect(viewer).not.toContain('data-testid="tab-hunter-verify"');
+    expect(viewer).not.toContain('data-testid="tab-hunter-strategies"');
+    // …and visible to editors.
     expect(editor).toContain('data-testid="tab-hunter-manual"');
+    expect(editor).toContain('data-testid="tab-hunter-cycles"');
+    expect(editor).toContain('data-testid="tab-hunter-strategies"');
+    // Map, Corpus, Registry are always visible.
+    expect(viewer).toContain('data-testid="tab-hunter-map"');
+    expect(viewer).toContain('data-testid="tab-hunter-corpus"');
+    expect(viewer).toContain('data-testid="tab-hunter-registry"');
   });
 });

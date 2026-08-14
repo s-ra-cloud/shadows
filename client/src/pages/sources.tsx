@@ -285,7 +285,9 @@ function LibraryTab() {
 export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: boolean; initialTab?: HunterTab }) {
   const [activeHunterTab, setActiveHunterTab] = useState<HunterTab>(initialTab);
 
-  const tabs: { key: HunterTab; label: string; description: string }[] = [
+  // editorOnly: true  → tab is hidden unless the user is in edit mode.
+  // Do not reset HIDDEN_TABS or editorOnly flags during merges.
+  const tabs: { key: HunterTab; label: string; description: string; editorOnly?: boolean }[] = [
     {
       key: "map",
       label: "World Map",
@@ -295,18 +297,21 @@ export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: bo
     {
       key: "cycles",
       label: "Hunting Cycles",
+      editorOnly: true,
       description:
         "Run automated searches that find and download eligible texts from registered sources. Past cycles expand to show what was found, what was blocked, and any issues that need resolving before a retry.",
     },
     {
       key: "candidates",
       label: "Candidates",
+      editorOnly: true,
       description:
         "The shortlist of editions being tracked for potential download — title, format, author, language, and rights claim. Editors can add new candidates, edit existing ones, or remove entries that are no longer relevant.",
     },
     {
       key: "plan",
       label: "Download Plan",
+      editorOnly: true,
       description:
         "An automated rights-and-suitability assessment of every candidate: which will be downloaded, which are skipped, and the reasons why. Editors can re-run the assessment after updating candidates or policy.",
     },
@@ -319,40 +324,42 @@ export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: bo
     {
       key: "extractors",
       label: "Extractors",
+      editorOnly: true,
       description:
         "The six extraction recipes that turn raw downloads into clean, readable Markdown. Each recipe targets a different file type or source shape. Editors choose a recipe per corpus file; the auto-detect picks the most likely one.",
     },
     {
       key: "verify",
       label: "Verification",
+      editorOnly: true,
       description:
         "Checks that every corpus file is exactly as it was downloaded, with no accidental modifications. Shows the last verification timestamp and flags any anomalies. Editors can run a fresh check at any time.",
     },
-    ...(isEditor
-      ? [
-          {
-            key: "catalog" as HunterTab,
-            label: "Catalog Builder",
-            description:
-              "Import candidate metadata in bulk from an external catalog feed (XML or JSON). Paste or point to a feed URL and the builder parses it into candidate records ready to review and add.",
-          },
-          {
-            key: "manual" as HunterTab,
-            label: "Manual Fetch",
-            description:
-              "Texts the hunter cannot download automatically — the source's robots.txt forbids it, the site is marked manual-only, or a login is required. Open each source page yourself, save the text, and upload it here; every upload still goes through the normal rights review.",
-          },
-        ]
-      : []),
+    {
+      key: "catalog",
+      label: "Catalog Builder",
+      editorOnly: true,
+      description:
+        "Import candidate metadata in bulk from an external catalog feed (XML or JSON). Paste or point to a feed URL and the builder parses it into candidate records ready to review and add.",
+    },
+    {
+      key: "manual",
+      label: "Manual Fetch",
+      editorOnly: true,
+      description:
+        "Texts the hunter cannot download automatically — the source's robots.txt forbids it, the site is marked manual-only, or a login is required. Open each source page yourself, save the text, and upload it here; every upload still goes through the normal rights review.",
+    },
     {
       key: "runs",
       label: "Runs History",
+      editorOnly: true,
       description:
         "A timestamped log of every background operation — hunting cycles, downloads, extraction jobs — with status and duration. Click any run for a full breakdown of files produced and blockers raised.",
     },
     {
       key: "policy",
       label: "Policy",
+      editorOnly: true,
       description:
         "The JSON ruleset that governs what the hunter considers eligible to assess and download: rights requirements, format preferences, and exclusion rules. Editors can update the policy and save it.",
     },
@@ -365,25 +372,29 @@ export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: bo
     {
       key: "strategies",
       label: "Source Strategies",
+      editorOnly: true,
       description:
         "Which sources the hunter can search automatically and which require manual candidate entry. Each row shows the discovery method, download permission, robots handling, and request rate for one registered source.",
     },
   ];
 
-  // Tabs deliberately hidden from the UI (per editor request) until their
-  // workflows are ready. Do not reset this list during merges.
+  // Tabs deliberately hidden from the UI regardless of edit mode (workflows not
+  // ready). Do not reset this list during merges.
   const HIDDEN_TABS: HunterTab[] = ["candidates", "plan", "catalog"];
 
+  const visibleTabs = tabs.filter(
+    (tab) => !HIDDEN_TABS.includes(tab.key) && (!tab.editorOnly || isEditor),
+  );
+
   useEffect(() => {
-    if ((activeHunterTab === "manual" && !isEditor) || HIDDEN_TABS.includes(activeHunterTab)) {
-      setActiveHunterTab("map");
-    }
+    const stillVisible = visibleTabs.some((t) => t.key === activeHunterTab);
+    if (!stillVisible) setActiveHunterTab("map");
   }, [isEditor, activeHunterTab]);
 
   return (
     <div className="bg-[#130D30]/50 border border-[#350A8C]/20 rounded-xl overflow-hidden">
       <div className="flex gap-1 border-b border-[#350A8C]/30 overflow-x-auto px-4 pt-2">
-        {tabs.filter((tab) => !HIDDEN_TABS.includes(tab.key)).map((tab) => (
+        {visibleTabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveHunterTab(tab.key)}
@@ -399,7 +410,7 @@ export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: bo
         ))}
       </div>
       {(() => {
-        const active = tabs.filter((tab) => !HIDDEN_TABS.includes(tab.key)).find((t) => t.key === activeHunterTab);
+        const active = visibleTabs.find((t) => t.key === activeHunterTab);
         return active ? (
           <p className="px-6 py-2.5 text-xs text-[#E0DCE6]/45 border-b border-[#350A8C]/20 bg-[#0B0626]/20 leading-relaxed">
             {active.description}
@@ -408,18 +419,18 @@ export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: bo
       })()}
       <div className="p-6">
         {activeHunterTab === "map" && <HunterWorldMap isEditor={isEditor} />}
-        {activeHunterTab === "cycles" && <HunterCycles isEditor={isEditor} />}
-        {activeHunterTab === "candidates" && <HunterCandidates isEditor={isEditor} />}
-        {activeHunterTab === "plan" && <HunterPlan isEditor={isEditor} />}
+        {activeHunterTab === "cycles" && isEditor && <HunterCycles isEditor={isEditor} />}
+        {activeHunterTab === "candidates" && isEditor && <HunterCandidates isEditor={isEditor} />}
+        {activeHunterTab === "plan" && isEditor && <HunterPlan isEditor={isEditor} />}
         {activeHunterTab === "corpus" && <HunterCorpus isEditor={isEditor} />}
-        {activeHunterTab === "extractors" && <HunterExtractors />}
-        {activeHunterTab === "verify" && <HunterVerify isEditor={isEditor} />}
+        {activeHunterTab === "extractors" && isEditor && <HunterExtractors />}
+        {activeHunterTab === "verify" && isEditor && <HunterVerify isEditor={isEditor} />}
         {activeHunterTab === "catalog" && isEditor && <HunterCatalog />}
         {activeHunterTab === "manual" && isEditor && <HunterManualFetch />}
-        {activeHunterTab === "runs" && <HunterRuns />}
-        {activeHunterTab === "policy" && <HunterPolicy isEditor={isEditor} />}
+        {activeHunterTab === "runs" && isEditor && <HunterRuns />}
+        {activeHunterTab === "policy" && isEditor && <HunterPolicy isEditor={isEditor} />}
         {activeHunterTab === "registry" && <HunterRegistry isEditor={isEditor} />}
-        {activeHunterTab === "strategies" && <HunterStrategies />}
+        {activeHunterTab === "strategies" && isEditor && <HunterStrategies />}
       </div>
     </div>
   );
@@ -3492,9 +3503,21 @@ function HunterPolicy({ isEditor }: { isEditor: boolean }) {
 
 function HunterRegistry({ isEditor }: { isEditor: boolean }) {
   const { data: registry, isLoading } = useQuery({ queryKey: ["/api/hunter/registry"] });
+  const { data: corpusFiles } = useQuery<any[]>({ queryKey: ["/api/hunter/corpus"] });
   const [editing, setEditing] = useState(false);
   const [registryStr, setRegistryStr] = useState("");
   const { toast } = useToast();
+
+  // Count texts per source_id from corpus records
+  const textsBySource = useMemo<Record<string, number>>(() => {
+    if (!Array.isArray(corpusFiles)) return {};
+    const counts: Record<string, number> = {};
+    for (const file of corpusFiles) {
+      const sid: string | undefined = file?.record?.source_id;
+      if (sid) counts[sid] = (counts[sid] ?? 0) + 1;
+    }
+    return counts;
+  }, [corpusFiles]);
 
   useEffect(() => {
     if (registry && !editing) {
@@ -3598,6 +3621,11 @@ function HunterRegistry({ isEditor }: { isEditor: boolean }) {
                 >
                   {source.automated_download_allowed ? "download allowed" : "download blocked"}
                 </span>
+                {(textsBySource[source.source_id] ?? 0) > 0 && (
+                  <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-[#8F00FF]/20 text-[#E0DCE6]/70 whitespace-nowrap">
+                    {textsBySource[source.source_id]} {textsBySource[source.source_id] === 1 ? "text" : "texts"}
+                  </span>
+                )}
               </div>
               <div className="text-sm text-[#E0DCE6]/60 space-y-1">
                 {!source.local_only && (
