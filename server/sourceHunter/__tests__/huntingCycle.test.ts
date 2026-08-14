@@ -17,6 +17,7 @@ import {
   screenLeads,
   screenCacheKey,
   wikisourceWikiLanguages,
+  parseGutenbergCatalog,
   WIKIMEDIA_API_HOST,
   CYCLE_USER_AGENT,
   SCREEN_CHUNK_SIZE,
@@ -1224,6 +1225,105 @@ describe("fetchText", () => {
 });
 
 // ---------------------------------------------------------------------------
+// parseGutenbergCatalog – CSV parser unit tests
+// ---------------------------------------------------------------------------
+
+describe("parseGutenbergCatalog", () => {
+  const HEADER = "Text#,Type,Issued,Title,Language,Authors,Subjects,LoCC,Bookshelves";
+
+  /** Build a minimal CSV string from zero or more data rows. */
+  function csv(...dataRows: string[]) {
+    return [HEADER, ...dataRows, ""].join("\r\n");
+  }
+
+  it("parses a quoted title containing embedded commas", () => {
+    const entries = parseGutenbergCatalog(
+      csv('1,Text,2000-01-01,"Tales, Old and New",en,"Smith, John",folklore,GR,'),
+    );
+    expect(entries).toHaveLength(1);
+    expect(entries[0]!.title).toBe("Tales, Old and New");
+    expect(entries[0]!.authors).toBe("Smith, John");
+  });
+
+  it("unescapes doubled double-quotes inside a quoted field", () => {
+    const entries = parseGutenbergCatalog(
+      csv('2,Text,2001-01-01,"The ""Holy"" Bible",en,"Anonymous",religion,BS,'),
+    );
+    expect(entries).toHaveLength(1);
+    expect(entries[0]!.title).toBe('The "Holy" Bible');
+  });
+
+  it("skips Sound rows", () => {
+    const entries = parseGutenbergCatalog(
+      csv('3,Sound,2002-01-01,"Iliad (Audio)",en,"Homer",epic,PA,'),
+    );
+    expect(entries).toHaveLength(0);
+  });
+
+  it("skips Image rows", () => {
+    const entries = parseGutenbergCatalog(
+      csv('4,Image,2003-01-01,"Maps of Greece",en,"Various",maps,GA,'),
+    );
+    expect(entries).toHaveLength(0);
+  });
+
+  it("skips Dataset rows", () => {
+    const entries = parseGutenbergCatalog(
+      csv('5,Dataset,2004-01-01,"Project Gutenberg Metadata",en,"Project Gutenberg",data,ZA,'),
+    );
+    expect(entries).toHaveLength(0);
+  });
+
+  it("skips rows with fewer than 6 fields", () => {
+    // A row that is cut short (only 4 fields) must be silently dropped.
+    const entries = parseGutenbergCatalog(
+      csv('6,Text,2005-01-01,"Incomplete"'),
+    );
+    expect(entries).toHaveLength(0);
+  });
+
+  it("preserves Unicode characters in author names", () => {
+    const entries = parseGutenbergCatalog(
+      csv('7,Text,2006-01-01,"Kalevala",fi,"Lönnrot, Elias",mythology,PT,'),
+    );
+    expect(entries).toHaveLength(1);
+    expect(entries[0]!.authors).toBe("Lönnrot, Elias");
+  });
+
+  it("preserves Unicode characters in titles", () => {
+    const entries = parseGutenbergCatalog(
+      csv('8,Text,2007-01-01,"日本書紀 (Nihon Shoki)",ja,"Various",history,DS,'),
+    );
+    expect(entries).toHaveLength(1);
+    expect(entries[0]!.title).toBe("日本書紀 (Nihon Shoki)");
+  });
+
+  it("handles an empty final line without error and returns the preceding entry", () => {
+    // The live feed ends with an empty line; the parser must not crash or
+    // drop legitimate entries that precede it.
+    const entries = parseGutenbergCatalog(
+      csv('9,Text,2008-01-01,"The Iliad",grc,"Homer",epic,PA,'),
+    );
+    expect(entries).toHaveLength(1);
+    expect(entries[0]!.title).toBe("The Iliad");
+  });
+
+  it("returns only Text entries when the feed mixes Text, Sound, Image, and Dataset rows", () => {
+    const entries = parseGutenbergCatalog(
+      csv(
+        '10,Sound,2009-01-01,"Odyssey Audio",en,"Homer",epic,PA,',
+        '11,Text,2009-01-01,"Odyssey",grc,"Homer",epic,PA,',
+        '12,Image,2009-01-01,"Greek Maps",en,"Various",maps,GA,',
+        '13,Text,2009-01-01,"Iliad",grc,"Homer",epic,PA,',
+        '14,Dataset,2009-01-01,"PG Metadata",en,"Project Gutenberg",data,ZA,',
+      ),
+    );
+    expect(entries).toHaveLength(2);
+    expect(entries.map((e) => e.title)).toEqual(["Odyssey", "Iliad"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Project Gutenberg discovery
 // ---------------------------------------------------------------------------
 
@@ -1346,6 +1446,30 @@ describe("Project Gutenberg discovery", () => {
       const candidate = entry as any;
       expect(candidate.rights?.status_claim ?? "unknown").not.toMatch(/public_domain|open_license/);
     }
+  });
+
+  it("finds a Text match when the catalogue has Sound, Image, and Dataset rows before it", async () => {
+    // The live feed contains many non-Text rows interspersed with Text entries.
+    // The full pipeline must skip every non-Text type and still surface the
+    // matching Text row as a candidate.
+    const MIXED_CSV = [
+      "Text#,Type,Issued,Title,Language,Authors,Subjects,LoCC,Bookshelves",
+      '1,Sound,1999-01-01,"Mahabharata Audio",en,"Various",,',
+      '2,Image,2000-01-01,"Indian Manuscript Images",en,"Various",,',
+      '3,Dataset,2001-01-01,"PG Metadata",en,"Project Gutenberg",,',
+      '4,Text,2002-01-01,"Mahabharata",en,"Ganguli, Kisari Mohan",mythology,PK,',
+      '5,Sound,2003-01-01,"Ramayana Audio",en,"Various",,',
+      "",
+    ].join("\r\n");
+    const { summary, blockers } = await discover("Mahabharata", MIXED_CSV);
+    expect(summary.discovered).toBeGreaterThanOrEqual(1);
+    const disc = summary.discovery.find((d) => d.originDetail.includes("Mahabharata"));
+    expect(disc).toBeDefined();
+    expect(disc?.originDetail).toContain("Project Gutenberg catalogue");
+    // No "no automated discovery" blocker — the source strategy worked.
+    expect(
+      blockers.some((b) => b.reason === "discovery_unsupported" && /no automated discovery/.test(String(b.detail))),
+    ).toBe(false);
   });
 
   it("correctly parses a catalogue where a title field spans multiple physical lines", async () => {
