@@ -21,11 +21,18 @@ import { requireEditor, EDITOR_TOKEN } from "../editorAuth";
 import { db } from "../storage";
 import { hunterRuns, hunterCorpusFiles, hunterBlockers } from "@shared/schema";
 import { runCorpusListCycle } from "../hunterCorpusCycle";
+import { runHuntingCycle } from "../hunterCycle";
 
 // Mock the corpus-list cycle runner so retry tests don't need real HTTP crawls.
 vi.mock("../hunterCorpusCycle", () => ({
   runCorpusListCycle: vi.fn(),
 }));
+
+// Mock the standard hunting-cycle runner so cycle POST tests don't make real HTTP calls.
+vi.mock("../hunterCycle", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../hunterCycle")>();
+  return { ...actual, runHuntingCycle: vi.fn() };
+});
 
 // Mock node:http/https so the check-url probe tests never make real connections.
 vi.mock("node:http", async (importOriginal) => {
@@ -1100,5 +1107,178 @@ describe("failed runs report a readable reason", () => {
     const detail = await request(app).get(`/api/hunter/runs/${run.id}`);
     expect(detail.status).toBe(200);
     expect(detail.body.blockers).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Minimal CycleSummary shape used by the runHuntingCycle mock.
+// ---------------------------------------------------------------------------
+const MOCK_CYCLE_SUMMARY = {
+  discovered: 0,
+  created: 0,
+  duplicates: 0,
+  invalid: 0,
+  secondary: 0,
+  downloaded_public: 3,
+  downloaded_locked: 1,
+  metadata_only: 2,
+  failed: 1,
+  blockers: 0,
+  entries: [],
+  discovery: [],
+};
+
+describe("cycle POST handler — scope seeding", () => {
+  beforeEach(() => {
+    vi.mocked(runHuntingCycle).mockResolvedValue(MOCK_CYCLE_SUMMARY as any);
+  });
+
+  afterEach(() => {
+    vi.mocked(runHuntingCycle).mockReset();
+  });
+
+  it("seeds result.scope.region before finishRun is called", async () => {
+    // Hold the cycle so we can inspect the DB while the run is still in-flight.
+    let releaseCycle!: () => void;
+    const cycleBlocked = new Promise<void>((resolve) => {
+      releaseCycle = resolve;
+    });
+    vi.mocked(runHuntingCycle).mockImplementationOnce(
+      () => cycleBlocked.then(() => MOCK_CYCLE_SUMMARY as any),
+    );
+
+    const res = await request(app)
+      .post("/api/hunter/cycles")
+      .set(asEditor)
+      .send({ region_id: "greece" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.run.status).toBe("running");
+
+    // While the cycle is still blocked (finishRun has NOT been called yet),
+    // the run row must already carry result.scope.region.
+    const detail = await request(app).get(`/api/hunter/runs/${res.body.run.id}`);
+    expect(detail.status).toBe(200);
+    expect(detail.body.status).toBe("running");
+    expect(detail.body.result.scope.region.id).toBe("greece");
+    expect(detail.body.result.scope.region.label).toBeTruthy();
+
+    // Let the cycle finish so the test cleans up properly.
+    releaseCycle();
+    const finished = await waitForRun(res.body.run.id);
+    // Scope must still be present in the completed run result.
+    expect(finished.result.scope.region.id).toBe("greece");
+  });
+
+  it("seeds scope on a region-scoped cycle even when the cycle throws", async () => {
+    vi.mocked(runHuntingCycle).mockImplementationOnce(async () => {
+      throw new Error("Simulated cycle failure");
+    });
+
+    const res = await request(app)
+      .post("/api/hunter/cycles")
+      .set(asEditor)
+      .send({ region_id: "japan" });
+
+    expect(res.status).toBe(200);
+    const run = await waitForRun(res.body.run.id);
+    expect(run.status).toBe("failed");
+    // Region must survive the failure path.
+    expect(run.result.scope.region.id).toBe("japan");
+  });
+});
+
+describe("map endpoint", () => {
+  /** Insert cycle run rows directly so we control scope / result shape. */
+  async function insertCycleRun(opts: {
+    status: "completed" | "failed" | "running";
+    regionId?: string;
+    result?: Record<string, unknown>;
+  }): Promise<number> {
+    const scope: Record<string, unknown> = opts.regionId
+      ? { query: `test query`, region: { id: opts.regionId, label: opts.regionId } }
+      : { query: "test query" };
+    const result = opts.result ?? {
+      scope,
+      downloaded_public: 2,
+      downloaded_locked: 0,
+      metadata_only: 1,
+      failed: 0,
+      invalid: 0,
+      // Deliberately include a bulky field that the map must strip.
+      entries: Array.from({ length: 50 }, (_, i) => ({ work_id: `work:${i}` })),
+    };
+    const [row] = await (db as any)
+      .insert(hunterRuns)
+      .values({ kind: "cycle", status: opts.status, result })
+      .returning({ id: hunterRuns.id });
+    return row.id as number;
+  }
+
+  it("returns all cycle rows with no 25-row cap", async () => {
+    // Insert 30 cycle rows (more than the default 25-row LIMIT used elsewhere).
+    const ids: number[] = [];
+    for (let i = 0; i < 30; i++) {
+      ids.push(await insertCycleRun({ status: "completed", regionId: "egypt" }));
+    }
+
+    const res = await request(app).get("/api/hunter/map");
+    expect(res.status).toBe(200);
+
+    const returnedIds = res.body.runs.map((r: any) => r.id);
+    for (const id of ids) {
+      expect(returnedIds).toContain(id);
+    }
+    // All inserted rows must appear — no cap trimming.
+    expect(returnedIds.length).toBeGreaterThanOrEqual(30);
+  });
+
+  it("strips bulky fields and returns only the expected summary fields per row", async () => {
+    const id = await insertCycleRun({ status: "completed", regionId: "rome" });
+
+    const res = await request(app).get("/api/hunter/map");
+    expect(res.status).toBe(200);
+
+    const row = res.body.runs.find((r: any) => r.id === id);
+    expect(row).toBeDefined();
+
+    // Required summary keys must be present.
+    expect(row).toHaveProperty("id");
+    expect(row).toHaveProperty("status");
+    expect(row).toHaveProperty("result");
+
+    // Bulk field must be stripped.
+    expect(row.result).not.toHaveProperty("entries");
+
+    // Only the expected result sub-fields should appear.
+    const ALLOWED_RESULT_KEYS = new Set([
+      "scope",
+      "downloaded_public",
+      "downloaded_locked",
+      "metadata_only",
+      "failed",
+      "invalid",
+    ]);
+    for (const key of Object.keys(row.result ?? {})) {
+      expect(ALLOWED_RESULT_KEYS.has(key), `unexpected result key: ${key}`).toBe(true);
+    }
+  });
+
+  it("carries the region on a failed run so the map stays populated", async () => {
+    // A failed run seeded with scope: the map must not drop its region.
+    const id = await insertCycleRun({
+      status: "failed",
+      result: {
+        scope: { query: "Norse epics", region: { id: "norse", label: "Scandinavia & Norse" } },
+      },
+    });
+
+    const res = await request(app).get("/api/hunter/map");
+    expect(res.status).toBe(200);
+
+    const row = res.body.runs.find((r: any) => r.id === id);
+    expect(row).toBeDefined();
+    expect(row.status).toBe("failed");
+    expect(row.result.scope.region.id).toBe("norse");
   });
 });
