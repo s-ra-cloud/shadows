@@ -443,22 +443,23 @@ function AutoExtractionFailures({ failures }: { failures?: { edition_id: string;
   if (!Array.isArray(failures) || failures.length === 0) return null;
   return (
     <div
-      className="text-xs border border-orange-400/30 bg-orange-400/5 rounded-lg p-3 space-y-1"
+      className="text-xs border border-orange-400/30 bg-orange-400/5 rounded-lg p-3 space-y-2"
       data-testid="text-auto-extract-failures"
     >
       <div className="text-orange-400 flex items-center gap-1.5 font-medium">
         <AlertCircle size={12} /> Automatic extraction could not start for {failures.length}{" "}
         {failures.length === 1 ? "file" : "files"}
       </div>
-      <ul className="text-[#E0DCE6]/60 space-y-0.5 pl-4 list-disc">
+      <ul className="space-y-2">
         {failures.map((f, i) => (
-          <li key={i}>
-            <span className="font-mono">{f.edition_id}</span> — {f.error}
+          <li key={i} className="space-y-1">
+            <span className="font-mono text-[#E0DCE6]/60">{f.edition_id}</span>
+            <RunErrorReport error={f.error} testId={`text-auto-extract-failure-${i}`} />
           </li>
         ))}
       </ul>
       <div className="text-[#E0DCE6]/40">
-        You can retry from the Corpus tab with “Extract readable text”.
+        You can retry from the Corpus tab with "Extract readable text".
       </div>
     </div>
   );
@@ -2320,10 +2321,8 @@ function ExtractReadableModal({ file, onClose }: { file: any; onClose: () => voi
               extract the readable version.
             </div>
           )}
-          {job?.status === "error" && !running && (
-            <div className="text-red-400 text-sm flex items-start gap-2" data-testid="text-extract-error">
-              <AlertCircle size={16} className="shrink-0 mt-0.5" /> {job.error}
-            </div>
+          {job?.status === "error" && !running && job.error && (
+            <RunErrorReport error={job.error} testId="text-extract-error" />
           )}
           {job?.status === "done" && (
             <div className="text-[#03FF9B] text-sm space-y-1" data-testid="text-extract-done">

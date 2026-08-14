@@ -21,6 +21,7 @@ import {
   type ExtractionProgress,
 } from "./recipes";
 import { resolveOcrLanguage } from "./pdfOcr";
+import { cleanErrorText } from "../../errorText";
 
 export interface ReadableProvenance {
   recipe_id: string;
@@ -201,7 +202,7 @@ export async function startExtraction(input: StartExtractionInput): Promise<Extr
         return;
       }
       job.status = "error";
-      job.error = e instanceof Error ? e.message : String(e);
+      job.error = cleanErrorText(e);
     } finally {
       controllers.delete(input.corpusFileId);
       clearPersistedRunningJob(input.corpusFileId);

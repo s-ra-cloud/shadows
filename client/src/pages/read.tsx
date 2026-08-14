@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
 import { BookOpen, AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { RunErrorReport } from "@/components/RunErrorReport";
 
 interface ReaderText {
   id: number;
@@ -92,12 +93,12 @@ export default function ReadPage() {
                 take a moment. The page will update automatically.
               </div>
             ) : data.readable_status === "failed" ? (
-              <div className="text-amber-400/90 text-sm" data-testid="text-reader-failed">
-                <div className="flex items-center gap-2">
+              <div className="space-y-2" data-testid="text-reader-failed">
+                <div className="text-amber-400/90 text-sm flex items-center gap-2">
                   <AlertCircle size={16} /> A readable version of this text couldn't be prepared.
                 </div>
                 {data.readable_error && (
-                  <p className="mt-2 text-[#E0DCE6]/50">{data.readable_error}</p>
+                  <RunErrorReport error={data.readable_error} testId="text-reader-extraction-error" />
                 )}
               </div>
             ) : data.text ? (
