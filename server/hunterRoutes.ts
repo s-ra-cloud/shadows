@@ -2313,6 +2313,54 @@ export function registerHunterRoutes(
     res.json({ ...run, files, blockers });
   });
 
+  // ---- Screen-verdict management -----------------------------------------
+
+  /** List all cached AI screening verdicts, newest first. */
+  app.get("/api/hunter/screen-verdicts", requireEditor, async (_req, res) => {
+    const rows = await db
+      .select()
+      .from(hunterScreenVerdicts)
+      .orderBy(desc(hunterScreenVerdicts.id));
+    res.json(rows);
+  });
+
+  /**
+   * Delete a cached verdict so the next cycle re-screens the title fresh.
+   */
+  app.delete("/api/hunter/screen-verdicts/:id", requireEditor, async (req, res) => {
+    const id = parseInt(String(req.params.id), 10);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid id" });
+    const [row] = await db
+      .delete(hunterScreenVerdicts)
+      .where(eq(hunterScreenVerdicts.id, id))
+      .returning();
+    if (!row) return res.status(404).json({ message: "Verdict not found" });
+    res.json({ deleted: true, id });
+  });
+
+  /**
+   * Flip a verdict's classification (primary ↔ secondary) so the next cycle
+   * honours the correction without going back to the model.
+   */
+  app.patch("/api/hunter/screen-verdicts/:id", requireEditor, async (req, res) => {
+    const id = parseInt(String(req.params.id), 10);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid id" });
+    const classification = String(req.body?.classification ?? "");
+    if (classification !== "primary" && classification !== "secondary") {
+      return res.status(400).json({ message: "classification must be primary or secondary" });
+    }
+    const justification = req.body?.justification
+      ? String(req.body.justification)
+      : `Manually overridden by editor`;
+    const [row] = await db
+      .update(hunterScreenVerdicts)
+      .set({ classification, justification })
+      .where(eq(hunterScreenVerdicts.id, id))
+      .returning();
+    if (!row) return res.status(404).json({ message: "Verdict not found" });
+    res.json(row);
+  });
+
   // ---- Catalog builder ---------------------------------------------------
   app.post("/api/hunter/catalog", requireEditor, async (req, res) => {
     const runId = await createRun("catalog");

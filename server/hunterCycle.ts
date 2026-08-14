@@ -1994,7 +1994,7 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
           reason: "secondary_source",
           url: String(lead.candidate.text_url ?? "") || null,
           editionId,
-          detail: `Skipped as a secondary source (AI screening): ${verdict.justification} The hunter only collects original texts and their direct translations. Add it manually via Candidates if it really is a primary source.`,
+          detail: `Skipped as a secondary source (AI screening): ${verdict.justification} The hunter only collects original texts and their direct translations. If this verdict is wrong, delete or flip it in Hunter → AI Verdicts to let the next cycle re-screen this title.`,
         });
         continue;
       }

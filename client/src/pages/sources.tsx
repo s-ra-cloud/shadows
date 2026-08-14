@@ -16,7 +16,7 @@ import ReactMarkdown from "react-markdown";
 import { RunErrorReport } from "@/components/RunErrorReport";
 
 type Tab = "library" | "hunter";
-type HunterTab = "map" | "cycles" | "candidates" | "plan" | "corpus" | "extractors" | "verify" | "catalog" | "manual" | "runs" | "policy" | "registry" | "strategies";
+type HunterTab = "map" | "cycles" | "candidates" | "plan" | "corpus" | "extractors" | "verify" | "catalog" | "manual" | "runs" | "policy" | "registry" | "strategies" | "verdicts";
 
 export default function SourcesPage() {
   const [activeTab, setActiveTab] = useState<Tab>("library");
@@ -376,6 +376,13 @@ export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: bo
       description:
         "Which sources the hunter can search automatically and which require manual candidate entry. Each row shows the discovery method, download permission, robots handling, and request rate for one registered source.",
     },
+    {
+      key: "verdicts",
+      label: "AI Verdicts",
+      editorOnly: true,
+      description:
+        "Cached AI primary/secondary screening verdicts. When a cycle decides a title is secondary literature it stores the verdict here so future cycles skip the model call. Delete or flip any entry that was wrong — the next cycle will honour the correction.",
+    },
   ];
 
   // Tabs deliberately hidden from the UI regardless of edit mode (workflows not
@@ -431,6 +438,7 @@ export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: bo
         {activeHunterTab === "policy" && isEditor && <HunterPolicy isEditor={isEditor} />}
         {activeHunterTab === "registry" && <HunterRegistry isEditor={isEditor} />}
         {activeHunterTab === "strategies" && isEditor && <HunterStrategies />}
+        {activeHunterTab === "verdicts" && isEditor && <HunterScreenVerdicts isEditor={isEditor} />}
       </div>
     </div>
   );
@@ -3834,6 +3842,159 @@ function HunterStrategies() {
   );
 }
 
+function HunterScreenVerdicts({ isEditor }: { isEditor: boolean }) {
+  const { toast } = useToast();
+  const { data: verdicts, isLoading } = useQuery<any[]>({
+    queryKey: ["/api/hunter/screen-verdicts"],
+    enabled: isEditor,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/hunter/screen-verdicts/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/screen-verdicts"] });
+      toast({ title: "Verdict deleted — the next cycle will re-screen this title." });
+    },
+    onError: () => toast({ title: "Failed to delete verdict", variant: "destructive" }),
+  });
+
+  const flipMutation = useMutation({
+    mutationFn: ({ id, classification }: { id: number; classification: string }) =>
+      apiRequest("PATCH", `/api/hunter/screen-verdicts/${id}`, { classification }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/screen-verdicts"] });
+      toast({ title: "Verdict updated — the next cycle will honour the correction." });
+    },
+    onError: () => toast({ title: "Failed to update verdict", variant: "destructive" }),
+  });
+
+  if (!isEditor) {
+    return (
+      <div className="text-sm text-[#E0DCE6]/50">
+        Switch to edit mode to view and manage AI screening verdicts.
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return <div className="text-[#E0DCE6]/50 text-sm">Loading verdicts...</div>;
+  }
+
+  const rows: any[] = Array.isArray(verdicts) ? verdicts : [];
+
+  return (
+    <div className="space-y-4" data-testid="screen-verdicts-panel">
+      <div>
+        <h3 className="text-lg font-medium text-[#E0DCE6] mb-1">Cached AI Screening Verdicts</h3>
+        <p className="text-sm text-[#E0DCE6]/60 max-w-2xl">
+          Each entry is a verdict the AI gave to a title in a previous cycle. Future cycles reuse
+          these verdicts instead of calling the model again.{" "}
+          <span className="text-amber-400">
+            Delete a wrong verdict to let the next cycle re-screen from scratch, or flip it to
+            override the classification directly.
+          </span>
+        </p>
+      </div>
+
+      {rows.length === 0 ? (
+        <div className="text-sm text-[#E0DCE6]/50" data-testid="screen-verdicts-empty">
+          No cached verdicts yet — they appear after the first cycle that uses AI screening.
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse" data-testid="screen-verdicts-table">
+            <thead>
+              <tr className="border-b border-[#350A8C]/40">
+                <th className="text-left py-2 pr-4 text-xs font-medium text-[#E0DCE6]/50">Title</th>
+                <th className="text-left py-2 pr-4 text-xs font-medium text-[#E0DCE6]/50">Classification</th>
+                <th className="text-left py-2 pr-4 text-xs font-medium text-[#E0DCE6]/50">Justification</th>
+                <th className="text-left py-2 pr-4 text-xs font-medium text-[#E0DCE6]/50">Cached on</th>
+                <th className="text-left py-2 text-xs font-medium text-[#E0DCE6]/50">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row: any) => {
+                const isPrimary = row.classification === "primary";
+                const busy =
+                  deleteMutation.isPending || flipMutation.isPending;
+                return (
+                  <tr
+                    key={row.id}
+                    className="border-b border-[#350A8C]/20 align-top hover:bg-[#130D30]/30 transition-colors"
+                    data-testid={`verdict-row-${row.id}`}
+                  >
+                    {/* Title */}
+                    <td className="py-3 pr-4 max-w-[220px]">
+                      <div className="font-medium text-[#E0DCE6] leading-snug">{row.title}</div>
+                      <div className="text-xs text-[#E0DCE6]/35 font-mono mt-0.5 truncate">{row.titleKey}</div>
+                    </td>
+
+                    {/* Classification badge */}
+                    <td className="py-3 pr-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium ${
+                          isPrimary
+                            ? "bg-[#03FF9B]/10 text-[#03FF9B]"
+                            : "bg-red-500/15 text-red-400"
+                        }`}
+                        data-testid={`verdict-classification-${row.id}`}
+                      >
+                        {isPrimary ? "Primary" : "Secondary"}
+                      </span>
+                    </td>
+
+                    {/* Justification */}
+                    <td className="py-3 pr-4 max-w-xs">
+                      <span className="text-[#E0DCE6]/70 leading-snug line-clamp-3" title={row.justification}>
+                        {row.justification}
+                      </span>
+                    </td>
+
+                    {/* Date */}
+                    <td className="py-3 pr-4 whitespace-nowrap text-[#E0DCE6]/50">
+                      {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "—"}
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-3 whitespace-nowrap">
+                      <div className="flex gap-2">
+                        {/* Flip button */}
+                        <button
+                          onClick={() =>
+                            flipMutation.mutate({
+                              id: row.id,
+                              classification: isPrimary ? "secondary" : "primary",
+                            })
+                          }
+                          disabled={busy}
+                          className="text-xs px-2 py-1 rounded bg-[#350A8C]/40 text-[#E0DCE6]/70 hover:bg-[#350A8C]/70 hover:text-[#E0DCE6] disabled:opacity-40 transition-colors"
+                          title={`Flip to ${isPrimary ? "secondary" : "primary"}`}
+                          data-testid={`button-flip-verdict-${row.id}`}
+                        >
+                          Flip → {isPrimary ? "Secondary" : "Primary"}
+                        </button>
+                        {/* Delete button */}
+                        <button
+                          onClick={() => deleteMutation.mutate(row.id)}
+                          disabled={busy}
+                          className="text-xs px-2 py-1 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 disabled:opacity-40 transition-colors"
+                          title="Delete — next cycle re-screens this title"
+                          data-testid={`button-delete-verdict-${row.id}`}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
 function LoginModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
