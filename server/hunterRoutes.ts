@@ -91,6 +91,14 @@ const activeCorpusRunIds = new Set<number>();
 const corpusStopRequests = new Set<number>();
 
 /**
+ * Normalized retry-list names that are currently being processed.
+ * Added BEFORE any await in the retry handler so that two concurrent
+ * requests for the same parent run on the same event-loop tick both hit
+ * the same synchronous check — no race window.
+ */
+const activeRetryNames = new Set<string>();
+
+/**
  * SSRF guard for ad-hoc catalog fetches: HTTPS only, and the hostname must
  * not resolve to loopback, private, link-local, or cloud-metadata addresses.
  */
@@ -1264,54 +1272,74 @@ export function registerHunterRoutes(
       : `${originalName} (retry)`;
     const list = { name: retryName, items: retryItems };
 
-    const newRunId = await createRun("cycle");
-    // Same region seeding as a fresh corpus-list cycle, but prefer the
-    // original run's region (explicit or inferred) when it has one.
-    const originalScope = (existingResult?.scope ?? {}) as Record<string, unknown>;
-    const originalRegion = originalScope.region as { id: string; label: string } | undefined;
-    const retryScope: CycleScope = originalRegion?.id
-      ? {
-          ...buildCorpusListScope(list),
-          region: originalRegion,
-          ...(originalScope.regionInferred ? { regionInferred: true } : {}),
-        }
-      : buildCorpusListScope(list);
-    await db.update(hunterRuns).set({ result: { scope: retryScope } }).where(eq(hunterRuns.id, newRunId));
-    res.json({
-      run: { id: newRunId, status: "running" },
-      corpus_list: { name: list.name, items: list.items.length },
-    });
+    // Atomic synchronous guard — no await between the check and the add, so
+    // two concurrent requests on the same event-loop tick both hit the same
+    // Set state and exactly one is rejected. The outer try/finally guarantees
+    // the name is released after the run reaches its final state, covering
+    // every exit path: run-creation error, scope-setup error, cycle failure,
+    // and normal completion (including post-cycle auto-extraction).
+    if (activeRetryNames.has(retryName)) {
+      return res.status(409).json({
+        message: `A retry for "${retryName}" is already running — wait for it to finish before launching another.`,
+      });
+    }
+    activeRetryNames.add(retryName);
 
-    activeCorpusRunIds.add(newRunId);
     try {
-      const policy = await loadActivePolicy();
-      validatePolicy(policy);
-      const registry = await loadActiveRegistry();
-      const mirroredRecords: Record<string, unknown>[] = [];
-      const store = makeCycleStore(newRunId, mirroredRecords, retryScope);
-      const result = await runCorpusListCycle({
-        list,
-        policy,
-        registry,
-        corpusRoot: CORPUS_ROOT,
-        store,
-        useAi: req.body?.use_ai !== false,
-        shouldStop: () => corpusStopRequests.has(newRunId),
+      const newRunId = await createRun("cycle");
+
+      // Same region seeding as a fresh corpus-list cycle, but prefer the
+      // original run's region (explicit or inferred) when it has one.
+      const originalScope = (existingResult?.scope ?? {}) as Record<string, unknown>;
+      const originalRegion = originalScope.region as { id: string; label: string } | undefined;
+      const retryScope: CycleScope = originalRegion?.id
+        ? {
+            ...buildCorpusListScope(list),
+            region: originalRegion,
+            ...(originalScope.regionInferred ? { regionInferred: true } : {}),
+          }
+        : buildCorpusListScope(list);
+      await db.update(hunterRuns).set({ result: { scope: retryScope } }).where(eq(hunterRuns.id, newRunId));
+      res.json({
+        run: { id: newRunId, status: "running" },
+        corpus_list: { name: list.name, items: list.items.length },
       });
-      corpusStopRequests.delete(newRunId);
-      activeCorpusRunIds.delete(newRunId);
-      const autoExtraction = await autoExtractDownloaded(mirroredRecords);
-      await finishRun(newRunId, true, {
-        scope: retryScope,
-        corpus_list: result.corpus_list,
-        ...result.summary,
-        auto_extraction: autoExtraction,
-      });
-    } catch (e) {
-      corpusStopRequests.delete(newRunId);
-      activeCorpusRunIds.delete(newRunId);
-      // Preserve scope on failure so the region remains visible on the map.
-      await finishRun(newRunId, false, { scope: retryScope }, errMessage(e));
+
+      activeCorpusRunIds.add(newRunId);
+      try {
+        const policy = await loadActivePolicy();
+        validatePolicy(policy);
+        const registry = await loadActiveRegistry();
+        const mirroredRecords: Record<string, unknown>[] = [];
+        const store = makeCycleStore(newRunId, mirroredRecords, retryScope);
+        const result = await runCorpusListCycle({
+          list,
+          policy,
+          registry,
+          corpusRoot: CORPUS_ROOT,
+          store,
+          useAi: req.body?.use_ai !== false,
+          shouldStop: () => corpusStopRequests.has(newRunId),
+        });
+        corpusStopRequests.delete(newRunId);
+        activeCorpusRunIds.delete(newRunId);
+        const autoExtraction = await autoExtractDownloaded(mirroredRecords);
+        await finishRun(newRunId, true, {
+          scope: retryScope,
+          corpus_list: result.corpus_list,
+          ...result.summary,
+          auto_extraction: autoExtraction,
+        });
+      } catch (e) {
+        corpusStopRequests.delete(newRunId);
+        activeCorpusRunIds.delete(newRunId);
+        // Preserve scope on failure so the region remains visible on the map.
+        await finishRun(newRunId, false, { scope: retryScope }, errMessage(e));
+      }
+    } finally {
+      // Always release the reservation so a future retry can be launched once
+      // this run (and its post-cycle steps) has fully completed or failed.
+      activeRetryNames.delete(retryName);
     }
   });
 

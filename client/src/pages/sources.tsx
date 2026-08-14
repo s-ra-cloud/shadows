@@ -836,12 +836,15 @@ function CorpusListReport({
   isEditor = false,
   runId,
   running = false,
+  retryRunning = false,
   useAi = true,
 }: {
   corpusList: any;
   isEditor?: boolean;
   runId?: number;
   running?: boolean;
+  /** True when a child retry cycle for this list is already in progress. */
+  retryRunning?: boolean;
   useAi?: boolean;
 }) {
   const { toast } = useToast();
@@ -867,7 +870,7 @@ function CorpusListReport({
   const fetchedCount = (corpusList.fetched ?? 0) + (corpusList.fetched_locked ?? 0);
   const missingCount =
     (corpusList.not_found ?? 0) + (corpusList.failed ?? 0) + (corpusList.metadata_only ?? 0);
-  const canRetry = isEditor && !running && missingCount > 0 && runId != null;
+  const canRetry = isEditor && !running && !retryRunning && missingCount > 0 && runId != null;
   const blockedReasons: [string, number][] = Object.entries(corpusList.blocked_reasons ?? {});
 
   return (
@@ -876,6 +879,15 @@ function CorpusListReport({
         <div className="text-xs text-[#E0DCE6]/50">
           Corpus list report — {fetchedCount}/{corpusList.total ?? corpusList.items.length} sources fetched
         </div>
+        {retryRunning && !running && (
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] bg-[#350A8C]/20 border border-[#8F00FF]/20 text-[#E0DCE6]/50 shrink-0"
+            data-testid={`text-retry-running-${runId}`}
+          >
+            <RefreshCw size={11} className="animate-spin" />
+            Retry running…
+          </span>
+        )}
         {canRetry && (
           <button
             onClick={(e) => {
@@ -1348,6 +1360,25 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
                         isEditor={isEditor}
                         runId={run.id}
                         running={run.status === "running"}
+                        retryRunning={(() => {
+                          // Derive the expected retry-cycle name for this run and
+                          // check whether any currently-running cycle uses it.
+                          const listName =
+                            result.corpus_list?.name ??
+                            (typeof progress?.corpus_list === "string"
+                              ? progress.corpus_list
+                              : progress?.corpus_list?.name);
+                          if (!listName || !Array.isArray(cycles)) return false;
+                          const retryName = listName.endsWith(" (retry)")
+                            ? listName
+                            : `${listName} (retry)`;
+                          return cycles.some(
+                            (c: any) =>
+                              c.status === "running" &&
+                              (c.result?.scope?.corpusList === retryName ||
+                                c.result?.corpus_list?.name === retryName),
+                          );
+                        })()}
                         useAi={useAi}
                       />
                       <AutoExtractionFailures failures={summary?.auto_extraction?.failed} />
