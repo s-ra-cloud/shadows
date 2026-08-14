@@ -3,6 +3,7 @@
  * public/locked partitioning, and the blocker ledger.
  */
 import { describe, it, expect, beforeEach } from "vitest";
+import { fileURLToPath } from "node:url";
 import { promises as fs } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -29,7 +30,7 @@ import {
   type DiscoveredLead,
 } from "../../hunterCycle";
 import { parseRobots, robotsRulesAllow, clearRobotsCache, looksLikeRobotsTxt, robotsAllowsUrl } from "../robots";
-import { loadDefaultPolicy } from "../index";
+import { loadDefaultPolicy, loadFulltextRegistry, validateRemoteUrl } from "../index";
 import type { Candidate } from "../rights";
 
 function makeStore() {
@@ -1383,6 +1384,11 @@ describe("Project Gutenberg discovery", () => {
 describe("Perseus GitHub corpora discovery", () => {
   beforeEach(() => clearRobotsCache());
 
+  /**
+   * The registry allows both PerseusDL (Greek, Latin) and alpheios-project
+   * (Arabic) as GitHub repo owners, since the Arabic CTS corpus is hosted by
+   * the Alpheios Project at alpheios-project/cts-texts-arabicLit.
+   */
   const PERSEUS_REGISTRY = {
     schema_version: "1.0.0",
     sources: [
@@ -1391,7 +1397,7 @@ describe("Perseus GitHub corpora discovery", () => {
         name: "Perseus Digital Library GitHub corpora",
         local_only: false,
         allowed_hosts: ["api.github.com", "raw.githubusercontent.com"],
-        allowed_path_prefixes: ["/PerseusDL/", "/repos/PerseusDL/"],
+        allowed_path_prefixes: ["/PerseusDL/", "/repos/PerseusDL/", "/alpheios-project/", "/repos/alpheios-project/"],
         automated_download_allowed: true,
         terms_url: null,
         robots_mode: "target_origin",
@@ -1401,8 +1407,8 @@ describe("Perseus GitHub corpora discovery", () => {
     ],
   };
 
-  /** Minimal GitHub Trees API response for the Greek corpus. */
-  function greekTree(files: string[]) {
+  /** Minimal GitHub Trees API response. */
+  function corpusTree(files: string[]) {
     return JSON.stringify({
       sha: "abc123",
       tree: files.map((p) => ({ path: p, type: "blob" })),
@@ -1410,16 +1416,22 @@ describe("Perseus GitHub corpora discovery", () => {
     });
   }
 
-  function perseusApiUrl(repo: string) {
-    return `https://api.github.com/repos/PerseusDL/${repo}/git/trees/HEAD?recursive=1`;
+  /** Build the GitHub Trees API URL for a given owner/repo. */
+  function perseusApiUrl(owner: string, repo: string) {
+    return `https://api.github.com/repos/${owner}/${repo}/git/trees/HEAD?recursive=1`;
   }
 
+  /**
+   * Stub fetch that serves pre-built tree JSON for each owner/repo pair.
+   * Key format: "<owner>/<repo>" → tree JSON string.
+   */
   function perseusApiFetch(trees: Record<string, string>) {
     return (async (input: any) => {
       const url = String(input);
       if (url.endsWith("/robots.txt")) return new Response("", { status: 404 });
-      for (const [repo, body] of Object.entries(trees)) {
-        if (url === perseusApiUrl(repo)) {
+      for (const [ownerRepo, body] of Object.entries(trees)) {
+        const [owner, repo] = ownerRepo.split("/");
+        if (url === perseusApiUrl(owner, repo)) {
           return new Response(body, { status: 200, headers: { "content-type": "application/json" } });
         }
       }
@@ -1453,17 +1465,19 @@ describe("Perseus GitHub corpora discovery", () => {
     const { summary, blockers } = await discover(
       "Iliad",
       {
-        "canonical-greekLit": greekTree([iliadPath, "data/tlg0012.tlg002.perseus-grc2.xml"]),
-        "canonical-latinLit": greekTree([]),
+        "PerseusDL/canonical-greekLit": corpusTree([iliadPath, "data/tlg0012.tlg002.perseus-grc2.xml"]),
+        "PerseusDL/canonical-latinLit": corpusTree([]),
+        "alpheios-project/cts-texts-arabicLit": corpusTree([]),
       },
     );
     expect(summary.discovered).toBeGreaterThanOrEqual(1);
     const disc = summary.discovery.find((d) => d.originDetail.includes("Iliad"));
     expect(disc).toBeDefined();
     expect(disc!.originDetail).toContain("Perseus Greek corpus");
-    // Candidate text_url must be on the allowed raw host.
+    // Candidate text_url must be on the allowed raw host and under PerseusDL.
     const entry = summary.entries[0] as any;
     expect(String(entry.source_reference)).toContain("raw.githubusercontent.com");
+    expect(String(entry.source_reference)).toContain("PerseusDL/canonical-greekLit");
     expect(String(entry.source_reference)).toContain(iliadPath);
     // No generic "no strategy" blocker.
     expect(blockers.some((b) => b.reason === "discovery_unsupported" && /no automated discovery/.test(String(b.detail)))).toBe(false);
@@ -1471,16 +1485,65 @@ describe("Perseus GitHub corpora discovery", () => {
 
   it("reports a specific 'not found' blocker when no file matches the query", async () => {
     const { blockers } = await discover(
-      "Mahabharata",
+      "nonexistent-work-xyz",
       {
-        "canonical-greekLit": greekTree(["data/tlg0012.tlg001.perseus-grc2.xml"]),
-        "canonical-latinLit": greekTree(["data/phi0690.phi003.perseus-lat2.xml"]),
+        "PerseusDL/canonical-greekLit": corpusTree(["data/tlg0012.tlg001.perseus-grc2.xml"]),
+        "PerseusDL/canonical-latinLit": corpusTree(["data/phi0690.phi003.perseus-lat2.xml"]),
+        "alpheios-project/cts-texts-arabicLit": corpusTree(["data/perseus201001/perseus0001/perseus201001.perseus0001.alpheios-text-ara1.xml"]),
       },
     );
     const b = blockers.find((b) => b.sourceId === "source:perseus-github" && b.reason === "discovery_unsupported");
     expect(b).toBeDefined();
-    expect(String(b!.detail)).toContain("canonical Greek and Latin corpora");
+    expect(String(b!.detail)).toContain("Arabic");
     expect(String(b!.detail)).not.toContain("no automated discovery strategy");
+  });
+
+  it("matches an Arabic work via the WORK_TITLES lookup and emits an alpheios-project raw candidate", async () => {
+    // The actual Arabic CTS corpus is alpheios-project/cts-texts-arabicLit.
+    // Files follow the <namespace>/<work>/<namespace>.<work>.<edition>.xml pattern.
+    const araPath = "data/perseus201001/perseus0001/perseus201001.perseus0001.alpheios-text-ara1.xml";
+    const { summary } = await discover(
+      "Nights",
+      {
+        "PerseusDL/canonical-greekLit": corpusTree([]),
+        "PerseusDL/canonical-latinLit": corpusTree([]),
+        "alpheios-project/cts-texts-arabicLit": corpusTree([araPath]),
+      },
+    );
+    expect(summary.discovered).toBeGreaterThanOrEqual(1);
+    const disc = summary.discovery.find((d) => d.originDetail.includes("Arabic"));
+    expect(disc).toBeDefined();
+    expect(disc!.originDetail).toContain("Perseus Arabic corpus");
+    // raw URL must point to alpheios-project, not PerseusDL.
+    const entry = summary.entries[0] as any;
+    expect(String(entry.source_reference)).toContain("raw.githubusercontent.com");
+    expect(String(entry.source_reference)).toContain("alpheios-project/cts-texts-arabicLit");
+  });
+
+  it("resolves title and author for Arabic works via the PERSEUS_WORK_TITLES table", async () => {
+    const araPath = "data/perseus201002/perseus0001/perseus201002.perseus0001.alpheios-text-ara1.xml";
+    const { summary } = await discover(
+      "al-Aghani",
+      {
+        "PerseusDL/canonical-greekLit": corpusTree([]),
+        "PerseusDL/canonical-latinLit": corpusTree([]),
+        "alpheios-project/cts-texts-arabicLit": corpusTree([araPath]),
+      },
+    );
+    expect(summary.discovered).toBeGreaterThanOrEqual(1);
+    const disc = summary.discovery.find((d) => d.originDetail.includes("al-Aghani"));
+    expect(disc).toBeDefined();
+  });
+
+  it("the PERSEUS_REPOS array includes cts-texts-arabicLit under alpheios-project", () => {
+    const ara = PERSEUS_REPOS.find((r) => r.repo === "cts-texts-arabicLit");
+    expect(ara).toBeDefined();
+    expect(ara?.owner).toBe("alpheios-project");
+    expect(ara?.language).toBe("ar");
+    // Greek and Latin still under PerseusDL.
+    const grc = PERSEUS_REPOS.find((r) => r.repo === "canonical-greekLit");
+    expect(grc?.owner).toBe("PerseusDL");
+    expect(grc?.language).toBe("grc");
   });
 
   it("reports a rate-limit blocker when the GitHub API returns 403", async () => {
@@ -1510,9 +1573,10 @@ describe("Perseus GitHub corpora discovery", () => {
 
   it("caches the tree listing so a second cycle does not re-fetch", async () => {
     const iliadPath = "data/tlg0012.tlg001.perseus-grc2.xml";
-    const trees = {
-      "canonical-greekLit": greekTree([iliadPath]),
-      "canonical-latinLit": greekTree([]),
+    const trees: Record<string, string> = {
+      "PerseusDL/canonical-greekLit": corpusTree([iliadPath]),
+      "PerseusDL/canonical-latinLit": corpusTree([]),
+      "alpheios-project/cts-texts-arabicLit": corpusTree([]),
     };
     const requested: string[] = [];
     const policy = await loadDefaultPolicy();
@@ -1521,8 +1585,9 @@ describe("Perseus GitHub corpora discovery", () => {
       const url = String(input);
       requested.push(url);
       if (url.endsWith("/robots.txt")) return new Response("", { status: 404 });
-      for (const [repo, body] of Object.entries(trees)) {
-        if (url === perseusApiUrl(repo)) {
+      for (const [ownerRepo, body] of Object.entries(trees)) {
+        const [owner, repo] = ownerRepo.split("/");
+        if (url === perseusApiUrl(owner, repo)) {
           return new Response(body, { status: 200, headers: { "content-type": "application/json" } });
         }
       }
@@ -1550,12 +1615,47 @@ describe("Perseus GitHub corpora discovery", () => {
     expect(secondCount).toBe(0); // Second cycle served from cache.
   });
 
-  it("the PERSEUS_WORK_TITLES table includes key mythological works", () => {
+  it("the PERSEUS_WORK_TITLES table covers Greek, Latin, and Arabic works", () => {
+    // Greek
     expect(PERSEUS_WORK_TITLES["tlg0012.tlg001"]?.title).toBe("Iliad");
     expect(PERSEUS_WORK_TITLES["tlg0012.tlg002"]?.title).toBe("Odyssey");
     expect(PERSEUS_WORK_TITLES["tlg0020.tlg001"]?.title).toBe("Theogony");
+    // Latin
     expect(PERSEUS_WORK_TITLES["phi0690.phi003"]?.title).toBe("Aeneid");
     expect(PERSEUS_WORK_TITLES["phi0959.phi006"]?.title).toBe("Metamorphoses");
+    // Arabic — keyed on the CTS namespace.work prefixes in cts-texts-arabicLit
+    // Titles match each work's __cts__.xml in alpheios-project/cts-texts-arabicLit exactly.
+    expect(PERSEUS_WORK_TITLES["perseus201001.perseus0001"]?.title).toBe("Arabian Nights (Volume 1)");
+    expect(PERSEUS_WORK_TITLES["perseus201002.perseus0001"]?.title).toBe("al-Aghani (Volume 1)");
+    expect(PERSEUS_WORK_TITLES["perseus201003.perseus0001"]?.title).toBe("Voyages D'Ibn Batutah (Volume 4)");
+    expect(PERSEUS_WORK_TITLES["perseus201003.perseus0002"]?.title).toBe("Selection From The Annals Of Tabari");
+    expect(PERSEUS_WORK_TITLES["perseus201003.perseus0004"]?.title).toBe("Arabic Reading Lessons");
+    expect(PERSEUS_WORK_TITLES["perseus201003.perseus0005"]?.title).toBe("The Autobiography Of The Constantinopolitan Story-Teller");
+  });
+
+  it("production registry authorizes raw.githubusercontent.com Alpheios Arabic URLs", async () => {
+    // Integration guard: verifies that the shipped fulltext-registry.json grants
+    // permission for the Arabic corpus raw URLs that discoverPerseus generates.
+    const HERE = path.dirname(fileURLToPath(import.meta.url));
+    const registryPath = path.join(HERE, "..", "data", "sources", "fulltext-registry.json");
+    const registry = await loadFulltextRegistry(registryPath);
+    const sources = (registry.sources as Record<string, unknown>[]) ?? [];
+    const perseusSource = sources.find((s) => s.source_id === "source:perseus-github");
+    expect(perseusSource).toBeDefined();
+
+    // Raw URL for an Arabic file generated by discoverPerseus.
+    const arabicRawUrl =
+      "https://raw.githubusercontent.com/alpheios-project/cts-texts-arabicLit/master/" +
+      "data/perseus201001/perseus0001/perseus201001.perseus0001.alpheios-text-ara1.xml";
+
+    // Must not throw — confirms the production registry path allows Alpheios origins.
+    expect(() => validateRemoteUrl(arabicRawUrl, perseusSource as Record<string, unknown>)).not.toThrow();
+
+    // For comparison, a Greek raw URL (PerseusDL) must also still pass.
+    const greekRawUrl =
+      "https://raw.githubusercontent.com/PerseusDL/canonical-greekLit/master/" +
+      "data/tlg0012.tlg001.perseus-grc2.xml";
+    expect(() => validateRemoteUrl(greekRawUrl, perseusSource as Record<string, unknown>)).not.toThrow();
   });
 });
 

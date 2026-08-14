@@ -74,16 +74,18 @@
       ],
       "allowed_path_prefixes": [
         "/PerseusDL/",
-        "/repos/PerseusDL/"
+        "/repos/PerseusDL/",
+        "/alpheios-project/cts-texts-arabicLit/",
+        "/repos/alpheios-project/cts-texts-arabicLit/"
       ],
       "automated_download_allowed": true,
       "terms_url": "https://github.com/PerseusDL",
       "robots_mode": "target_origin",
       "requests_per_second": 0.5,
-      "rights_notes": "Rights vary by repository, edition, and translation. Do not inherit a corpus-level licence without checking the selected file and repository metadata.",
+      "rights_notes": "Rights vary by repository, edition, and translation. Do not inherit a corpus-level licence without checking the selected file and repository metadata. Greek and Latin corpora are under PerseusDL; the Arabic CTS corpus (One Thousand and One Nights, al-Aghani, etc.) is hosted by the Alpheios Project at alpheios-project/cts-texts-arabicLit.",
       "discovery": {
         "kind": "github_file_tree",
-        "searches": "GitHub Trees API listing of PerseusDL/canonical-greekLit and canonical-latinLit (tree cached 1 h, 60 req/h unauthenticated limit) matched against a TLG/PHI work-title table and file-path tokens",
+        "searches": "GitHub Trees API listing of PerseusDL/canonical-greekLit, PerseusDL/canonical-latinLit, and alpheios-project/cts-texts-arabicLit (tree cached 1 h, 60 req/h unauthenticated limit) matched against a TLG/PHI/CTS work-title table and file-path tokens",
         "reason": null
       }
     },

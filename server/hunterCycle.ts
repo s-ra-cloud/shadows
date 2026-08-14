@@ -746,10 +746,20 @@ async function discoverGutenberg(
 // Perseus Digital Library GitHub corpora discovery
 // ---------------------------------------------------------------------------
 
-/** Public repos searched for primary texts. */
-export const PERSEUS_REPOS: Array<{ repo: string; label: string }> = [
-  { repo: "canonical-greekLit", label: "Greek" },
-  { repo: "canonical-latinLit", label: "Latin" },
+/**
+ * Public corpora searched for primary texts.
+ *
+ * Greek and Latin are hosted by PerseusDL; the Arabic CTS corpus is hosted
+ * by the Alpheios Project (`alpheios-project/cts-texts-arabicLit`).
+ *
+ * No public Sanskrit CTS corpus is available on GitHub as of this writing.
+ * Sanskrit texts can be discovered via Wikisource (sa.wikisource.org) and
+ * Sacred Texts Archive instead.
+ */
+export const PERSEUS_REPOS: Array<{ owner: string; repo: string; label: string; language: string }> = [
+  { owner: "PerseusDL", repo: "canonical-greekLit", label: "Greek", language: "grc" },
+  { owner: "PerseusDL", repo: "canonical-latinLit", label: "Latin", language: "la" },
+  { owner: "alpheios-project", repo: "cts-texts-arabicLit", label: "Arabic", language: "ar" },
 ];
 const PERSEUS_TREE_MAX_AGE_MS = 60 * 60 * 1000; // 1 hour
 
@@ -839,6 +849,34 @@ export const PERSEUS_WORK_TITLES: Record<string, { title: string; author: string
   "phi0474.phi040": { title: "De Divinatione", author: "Cicero" },
   // Apuleius
   "phi0806.phi001": { title: "Metamorphoses (The Golden Ass)", author: "Apuleius" },
+
+  // Arabic — alpheios-project/cts-texts-arabicLit CTS namespace prefixes.
+  // The CTS URN scheme here is <namespace>.<work>, e.g. perseus201001.perseus0001.
+  // Titles are taken directly from each work's __cts__.xml in the Alpheios repository.
+  // Arabian Nights (4 volumes) — CTS group: arabicLit:perseus201001
+  "perseus201001.perseus0001": { title: "Arabian Nights (Volume 1)", author: "Anonymous" },
+  "perseus201001.perseus0002": { title: "Arabian Nights (Volume 2)", author: "Anonymous" },
+  "perseus201001.perseus0003": { title: "Arabian Nights (Volume 3)", author: "Anonymous" },
+  "perseus201001.perseus0004": { title: "Arabian Nights (Volume 4)", author: "Anonymous" },
+  // al-Aghani (12 volumes) — CTS group: arabicLit:perseus201002
+  "perseus201002.perseus0001": { title: "al-Aghani (Volume 1)", author: "Abu al-Faraj al-Isfahani" },
+  "perseus201002.perseus0002": { title: "al-Aghani (Volume 2)", author: "Abu al-Faraj al-Isfahani" },
+  "perseus201002.perseus0003": { title: "al-Aghani (Volume 3)", author: "Abu al-Faraj al-Isfahani" },
+  "perseus201002.perseus0004": { title: "al-Aghani (Volume 4)", author: "Abu al-Faraj al-Isfahani" },
+  "perseus201002.perseus0005": { title: "al-Aghani (Volume 5)", author: "Abu al-Faraj al-Isfahani" },
+  "perseus201002.perseus0006": { title: "al-Aghani (Volume 6)", author: "Abu al-Faraj al-Isfahani" },
+  "perseus201002.perseus0007": { title: "al-Aghani (Volume 7)", author: "Abu al-Faraj al-Isfahani" },
+  "perseus201002.perseus0008": { title: "al-Aghani (Volume 8)", author: "Abu al-Faraj al-Isfahani" },
+  "perseus201002.perseus0009": { title: "al-Aghani (Volume 9)", author: "Abu al-Faraj al-Isfahani" },
+  "perseus201002.perseus0010": { title: "al-Aghani (Volume 10)", author: "Abu al-Faraj al-Isfahani" },
+  "perseus201002.perseus0011": { title: "al-Aghani (Volume 11)", author: "Abu al-Faraj al-Isfahani" },
+  "perseus201002.perseus0012": { title: "al-Aghani (Volume 12)", author: "Abu al-Faraj al-Isfahani" },
+  // Miscellaneous Arabic texts — CTS group: arabicLit:perseus201003
+  "perseus201003.perseus0001": { title: "Voyages D'Ibn Batutah (Volume 4)", author: "Ibn Battuta" },
+  "perseus201003.perseus0002": { title: "Selection From The Annals Of Tabari", author: "al-Tabari" },
+  "perseus201003.perseus0003": { title: "Selections from Arabic geographical literature", author: "Various" },
+  "perseus201003.perseus0004": { title: "Arabic Reading Lessons", author: "Various" },
+  "perseus201003.perseus0005": { title: "The Autobiography Of The Constantinopolitan Story-Teller", author: "Anonymous" },
 };
 
 async function discoverPerseus(
@@ -863,13 +901,13 @@ async function discoverPerseus(
   const leads: DiscoveredLead[] = [];
   const seen = new Set<string>();
 
-  for (const { repo, label } of PERSEUS_REPOS) {
+  for (const { owner, repo, label, language } of PERSEUS_REPOS) {
     if (leads.length >= limit) break;
 
     const cacheFile = path.join(cacheDir, `perseus-${repo}-tree.json`);
     let treeJson = await readDiskCache(cacheFile, PERSEUS_TREE_MAX_AGE_MS);
     if (!treeJson) {
-      const treeUrl = `https://api.github.com/repos/PerseusDL/${repo}/git/trees/HEAD?recursive=1`;
+      const treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/HEAD?recursive=1`;
       try {
         const treeData = await fetchJson(treeUrl, allowedHosts, fetchImpl);
         treeJson = JSON.stringify(treeData);
@@ -900,8 +938,8 @@ async function discoverPerseus(
     for (const file of xmlFiles) {
       if (leads.length >= limit) break;
       const basename = path.basename(file.path, ".xml");
-      // Extract the author.work URN prefix, e.g. "tlg0012.tlg001".
-      const urnMatch = /^([a-z]+\d+\.[a-z]+\d+)/i.exec(basename);
+      // Extract the author.work URN prefix, e.g. "tlg0012.tlg001" or "perseus201001.perseus0001".
+      const urnMatch = /^([a-z]+\d*\.[a-z]+\d*)/i.exec(basename);
       const urnPrefix = urnMatch?.[1] ?? "";
       const meta = PERSEUS_WORK_TITLES[urnPrefix];
 
@@ -915,7 +953,7 @@ async function discoverPerseus(
       if (seen.has(editionId)) continue;
       seen.add(editionId);
 
-      const rawUrl = `https://raw.githubusercontent.com/PerseusDL/${repo}/master/${file.path}`;
+      const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/master/${file.path}`;
       const candidate: Candidate = {
         work_id: `work:${slug(meta?.title ?? basename)}`,
         edition_id: editionId,
@@ -923,7 +961,7 @@ async function discoverPerseus(
         author: meta?.author ?? null,
         translator: null,
         source_id: String(source.source_id),
-        language: repo.includes("greekLit") ? "grc" : "la",
+        language,
         language_role: "unknown",
         format: "tei_xml",
         text_url: rawUrl,
@@ -932,7 +970,7 @@ async function discoverPerseus(
           basis: "source_statement",
           statement:
             "Rights vary by repository, edition, and translation; check the file and repository metadata.",
-          rights_url: `https://github.com/PerseusDL/${repo}/blob/master/${file.path}`,
+          rights_url: `https://github.com/${owner}/${repo}/blob/master/${file.path}`,
         },
         access: { download_allowed: true, requires_auth: false },
       };
@@ -949,7 +987,7 @@ async function discoverPerseus(
       sourceId: String(source.source_id),
       reason: "discovery_unsupported",
       detail:
-        `${source.name}: searched the canonical Greek and Latin corpora,` +
+        `${source.name}: searched the canonical Greek, Latin, and Arabic corpora,` +
         ` no file matched "${query}".`,
     });
   }
