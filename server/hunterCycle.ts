@@ -408,6 +408,73 @@ export function wikisourceWikiLanguages(scope: CycleScope): string[] {
     : [DEFAULT_WIKI_LANGUAGE];
 }
 
+/**
+ * Look up the native-language title of a work by querying the English
+ * Wikipedia's inter-language links via the Wikimedia Core REST API.
+ *
+ * Example: "Kojiki" + "ja" → "古事記"
+ *
+ * The endpoint lives on `api.wikimedia.org`, which is already in the
+ * Wikisource source's `allowed_hosts`, so no extra registry changes are
+ * needed. Returns `null` on any failure so callers can fall back gracefully.
+ */
+/**
+ * Look up the native-language title of a work by querying the English
+ * Wikipedia's inter-language links via the Wikimedia Core REST API.
+ *
+ * Example: "Kojiki" + "ja" → "古事記"
+ *
+ * The endpoint lives on `api.wikimedia.org`, which is already in the
+ * Wikisource source's `allowed_hosts`, so no extra registry changes are
+ * needed. Returns `null` on any failure so callers can fall back gracefully.
+ *
+ * Redirects are followed manually — the same per-hop host-allow-list and
+ * robots.txt guard used by fetchJson — so a redirect can never escape the
+ * trusted host set.
+ */
+export async function resolveNativeTitle(
+  englishTitle: string,
+  targetLanguage: string,
+  allowedHosts: string[],
+  fetchImpl: typeof fetch,
+): Promise<string | null> {
+  try {
+    const startUrl =
+      `https://${WIKIMEDIA_API_HOST}/core/v1/wikipedia/en/page/` +
+      encodeURIComponent(englishTitle.replace(/ /g, "_")) +
+      "/links/language";
+    // Follow redirects manually so every hop is re-validated against the
+    // host allow-list and robots.txt — identical to the fetchJson guard.
+    let current = startUrl;
+    for (let hop = 0; hop < 5; hop += 1) {
+      if (!hostAllowed(current, allowedHosts)) return null;
+      const robots = await robotsAllowsUrl(current, CYCLE_USER_AGENT, { fetchImpl });
+      if (!robots.allowed) return null;
+      const response = await fetchImpl(current, {
+        headers: { "User-Agent": CYCLE_USER_AGENT, Accept: "application/json" },
+        redirect: "manual",
+      });
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get("location");
+        if (!location) return null;
+        current = new URL(location, current).toString();
+        continue;
+      }
+      if (!response.ok) return null;
+      const data: unknown = await response.json();
+      if (!Array.isArray(data)) return null;
+      const link = (data as Record<string, unknown>[]).find(
+        (l) => String(l.code ?? "") === targetLanguage,
+      );
+      const native = link ? String(link.title ?? link.key ?? "") : "";
+      return native || null;
+    }
+    return null; // too many redirects
+  } catch {
+    return null;
+  }
+}
+
 async function discoverWikisource(
   scope: CycleScope,
   source: Record<string, unknown>,
@@ -422,9 +489,23 @@ async function discoverWikisource(
   const failures: string[] = [];
 
   for (const language of languages) {
+    // For non-English wikis, a romanised English title ("Kojiki") finds
+    // nothing on ja.wikisource. Try to resolve the native title ("古事記")
+    // via Wikipedia's inter-language links, falling back to the original
+    // query when the lookup fails or returns nothing.
+    let searchQuery = scope.query;
+    if (language !== DEFAULT_WIKI_LANGUAGE && scope.targetWork?.title) {
+      const native = await resolveNativeTitle(
+        scope.targetWork.title,
+        language,
+        allowedHosts,
+        fetchImpl,
+      );
+      if (native) searchQuery = native;
+    }
     const searchUrl =
       `${WIKISOURCE_API_BASE}${language}/search/page?limit=${perLanguage}&q=` +
-      encodeURIComponent(scope.query);
+      encodeURIComponent(searchQuery);
     let doc: Record<string, unknown>;
     try {
       doc = await fetchJson(searchUrl, allowedHosts, fetchImpl);

@@ -17,6 +17,7 @@ import {
   screenLeads,
   screenCacheKey,
   wikisourceWikiLanguages,
+  resolveNativeTitle,
   parseGutenbergCatalog,
   WIKIMEDIA_API_HOST,
   CYCLE_USER_AGENT,
@@ -1036,6 +1037,199 @@ describe("Wikisource discovery via the Wikimedia Core REST API", () => {
     const blocker = blockers.find((b) => b.sourceId === "source:multilingual-wikisource");
     expect(blocker?.reason).toBe("fetch_failed");
     expect(String(blocker?.detail)).toContain("500");
+  });
+
+  it("uses the native title from Wikipedia language links when the lookup succeeds", async () => {
+    // Extend the standard fetch stub to also serve the language-links endpoint.
+    const requested: string[] = [];
+    const searchResults: Record<string, unknown> = {
+      ja: { pages: [{ id: 28591, key: "古事記", title: "古事記" }] },
+      en: { pages: [{ id: 2205970, key: "Kojiki", title: "Kojiki" }] },
+    };
+    const fetchImpl = (async (input: any) => {
+      const url = String(input);
+      requested.push(url);
+      if (url === `https://${WIKIMEDIA_API_HOST}/robots.txt`) {
+        return new Response("<!DOCTYPE html><html><body>Wikimedia APIs</body></html>", {
+          status: 200,
+          headers: { "content-type": "text/html; charset=UTF-8" },
+        });
+      }
+      // Wikipedia language-links for "Kojiki"
+      if (url.includes("/core/v1/wikipedia/en/page/Kojiki/links/language")) {
+        return new Response(
+          JSON.stringify([
+            { code: "ja", name: "日本語", key: "古事記", title: "古事記" },
+            { code: "zh", name: "中文", key: "古事記_(書)", title: "古事記 (書)" },
+          ]),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      if (url.startsWith(`https://${WIKIMEDIA_API_HOST}/core/v1/wikisource/`)) {
+        const language = url.split("/core/v1/wikisource/")[1].split("/")[0];
+        return new Response(JSON.stringify(searchResults[language] ?? { pages: [] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response("not found", { status: 404 });
+    }) as unknown as typeof fetch;
+
+    const { store } = makeStore();
+    const policy = await loadDefaultPolicy();
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "hunter-native-title-"));
+    await runHuntingCycle({
+      scope: {
+        query: '"Kojiki"',
+        limit: 4,
+        useAi: false,
+        targetWork: { title: "Kojiki", author: null, language: "ja" },
+      },
+      policy,
+      registry: WIKISOURCE_REGISTRY,
+      corpusRoot: path.join(tmp, "corpus"),
+      store,
+      fetchImpl,
+      robotsCheck: async () => ({ allowed: false, reason: "test: downloads disabled" }),
+    });
+
+    const searches = requested.filter((u) => u.includes("/search/page?"));
+    expect(searches).toHaveLength(2);
+    const jaSearch = searches.find((u) => u.includes("/wikisource/ja/search/page?"))!;
+    const enSearch = searches.find((u) => u.includes("/wikisource/en/search/page?"))!;
+    // ja wiki gets the native title, not the romanised query
+    expect(decodeURIComponent(jaSearch.split("?")[1] ?? "")).toContain("q=古事記");
+    // en wiki still gets the original query
+    expect(decodeURIComponent(enSearch.split("?")[1] ?? "")).toContain("q=");
+    expect(decodeURIComponent(enSearch.split("?")[1] ?? "")).toContain("Kojiki");
+  });
+
+  it("falls back to the original query when the language links lookup returns nothing", async () => {
+    const requested: string[] = [];
+    const fetchImpl = (async (input: any) => {
+      const url = String(input);
+      requested.push(url);
+      if (url.endsWith("/robots.txt")) {
+        return new Response("", { status: 200 });
+      }
+      // Language links endpoint returns 404 (work not on Wikipedia)
+      if (url.includes("/core/v1/wikipedia/")) {
+        return new Response("not found", { status: 404 });
+      }
+      if (url.startsWith(`https://${WIKIMEDIA_API_HOST}/core/v1/wikisource/`)) {
+        return new Response(JSON.stringify({ pages: [] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response("not found", { status: 404 });
+    }) as unknown as typeof fetch;
+
+    const { store } = makeStore();
+    const policy = await loadDefaultPolicy();
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "hunter-native-fallback-"));
+    await runHuntingCycle({
+      scope: {
+        query: '"Nihon Shoki"',
+        limit: 4,
+        useAi: false,
+        targetWork: { title: "Nihon Shoki", author: null, language: "ja" },
+      },
+      policy,
+      registry: WIKISOURCE_REGISTRY,
+      corpusRoot: path.join(tmp, "corpus"),
+      store,
+      fetchImpl,
+    });
+
+    const searches = requested.filter((u) => u.includes("/search/page?"));
+    expect(searches.some((u) => u.includes("/wikisource/ja/search/page?"))).toBe(true);
+    const jaSearch = searches.find((u) => u.includes("/wikisource/ja/search/page?"))!;
+    // Lookup failed: original romanised query is used
+    expect(decodeURIComponent(jaSearch.split("?")[1] ?? "")).toContain("Nihon Shoki");
+  });
+});
+
+describe("resolveNativeTitle", () => {
+  beforeEach(() => clearRobotsCache());
+
+  function makeFetch(langLinks: Record<string, unknown>[]): typeof fetch {
+    return (async (input: any) => {
+      const url = String(input);
+      if (url.endsWith("/robots.txt")) return new Response("", { status: 200 });
+      if (url.includes("/links/language")) {
+        return new Response(JSON.stringify(langLinks), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response("not found", { status: 404 });
+    }) as unknown as typeof fetch;
+  }
+
+  it("returns the native title matching the target language", async () => {
+    const fetchImpl = makeFetch([
+      { code: "ja", title: "古事記", key: "古事記" },
+      { code: "zh", title: "古事記 (書)", key: "古事記_(書)" },
+    ]);
+    const result = await resolveNativeTitle("Kojiki", "ja", [WIKIMEDIA_API_HOST], fetchImpl);
+    expect(result).toBe("古事記");
+  });
+
+  it("returns null when the target language is not in the link list", async () => {
+    const fetchImpl = makeFetch([{ code: "zh", title: "古事記 (書)", key: "古事記_(書)" }]);
+    const result = await resolveNativeTitle("Kojiki", "ja", [WIKIMEDIA_API_HOST], fetchImpl);
+    expect(result).toBeNull();
+  });
+
+  it("returns null when the endpoint returns a non-OK status", async () => {
+    const fetchImpl = (async (input: any) => {
+      const url = String(input);
+      if (url.endsWith("/robots.txt")) return new Response("", { status: 200 });
+      return new Response("not found", { status: 404 });
+    }) as unknown as typeof fetch;
+    const result = await resolveNativeTitle("Kojiki", "ja", [WIKIMEDIA_API_HOST], fetchImpl);
+    expect(result).toBeNull();
+  });
+
+  it("returns null when the host is not in the allowed list", async () => {
+    const fetchImpl = makeFetch([{ code: "ja", title: "古事記" }]);
+    const result = await resolveNativeTitle("Kojiki", "ja", ["example.org"], fetchImpl);
+    expect(result).toBeNull();
+  });
+
+  it("returns null and makes no request when a redirect points to a disallowed host", async () => {
+    const visited: string[] = [];
+    const fetchImpl = (async (input: any) => {
+      const url = String(input);
+      visited.push(url);
+      if (url.endsWith("/robots.txt")) return new Response("", { status: 200 });
+      // The language-links endpoint redirects to an off-registry host.
+      if (url.includes("/links/language")) {
+        return new Response("", {
+          status: 301,
+          headers: { location: "https://evil.example.com/data.json" },
+        });
+      }
+      // The disallowed destination — must never be reached.
+      return new Response(JSON.stringify([{ code: "ja", title: "古事記" }]), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }) as unknown as typeof fetch;
+
+    const result = await resolveNativeTitle("Kojiki", "ja", [WIKIMEDIA_API_HOST], fetchImpl);
+    expect(result).toBeNull();
+    // The disallowed destination was never fetched.
+    expect(visited.some((u) => u.includes("evil.example.com"))).toBe(false);
+  });
+
+  it("returns null when the fetch throws", async () => {
+    const fetchImpl = (async () => {
+      throw new Error("network error");
+    }) as unknown as typeof fetch;
+    const result = await resolveNativeTitle("Kojiki", "ja", [WIKIMEDIA_API_HOST], fetchImpl);
+    expect(result).toBeNull();
   });
 });
 
