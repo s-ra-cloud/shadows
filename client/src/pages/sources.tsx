@@ -96,7 +96,7 @@ export default function SourcesPage() {
         </div>
 
         {activeTab === "library" && <LibraryTab />}
-        {activeTab === "hunter" && <SourceHunterTab isEditor={editorMode} />}
+        {activeTab === "hunter" && <SourceHunterTab isEditor={editorMode} showEditorTabs={isEditor} />}
       </div>
 
       {showLoginModal && (
@@ -282,7 +282,18 @@ function LibraryTab() {
   );
 }
 
-export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: boolean; initialTab?: HunterTab }) {
+export function SourceHunterTab({
+  isEditor,
+  showEditorTabs = isEditor,
+  initialTab = "map",
+}: {
+  isEditor: boolean;
+  /** Controls which tabs are visible. Pass the local UI toggle only — not the
+   *  combined auth+toggle value — so that a persistent server session does not
+   *  force all tabs to show when the editor has explicitly turned edit mode off. */
+  showEditorTabs?: boolean;
+  initialTab?: HunterTab;
+}) {
   const [activeHunterTab, setActiveHunterTab] = useState<HunterTab>(initialTab);
 
   // editorOnly: true  → tab is hidden unless the user is in edit mode.
@@ -390,13 +401,13 @@ export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: bo
   const HIDDEN_TABS: HunterTab[] = ["candidates", "plan", "catalog"];
 
   const visibleTabs = tabs.filter(
-    (tab) => !HIDDEN_TABS.includes(tab.key) && (!tab.editorOnly || isEditor),
+    (tab) => !HIDDEN_TABS.includes(tab.key) && (!tab.editorOnly || showEditorTabs),
   );
 
   useEffect(() => {
     const stillVisible = visibleTabs.some((t) => t.key === activeHunterTab);
     if (!stillVisible) setActiveHunterTab("map");
-  }, [isEditor, activeHunterTab]);
+  }, [showEditorTabs, activeHunterTab]);
 
   return (
     <div className="bg-[#130D30]/50 border border-[#350A8C]/20 rounded-xl overflow-hidden">
@@ -426,19 +437,19 @@ export function SourceHunterTab({ isEditor, initialTab = "map" }: { isEditor: bo
       })()}
       <div className="p-6">
         {activeHunterTab === "map" && <HunterWorldMap isEditor={isEditor} />}
-        {activeHunterTab === "cycles" && isEditor && <HunterCycles isEditor={isEditor} />}
-        {activeHunterTab === "candidates" && isEditor && <HunterCandidates isEditor={isEditor} />}
-        {activeHunterTab === "plan" && isEditor && <HunterPlan isEditor={isEditor} />}
+        {activeHunterTab === "cycles" && showEditorTabs && <HunterCycles isEditor={isEditor} />}
+        {activeHunterTab === "candidates" && showEditorTabs && <HunterCandidates isEditor={isEditor} />}
+        {activeHunterTab === "plan" && showEditorTabs && <HunterPlan isEditor={isEditor} />}
         {activeHunterTab === "corpus" && <HunterCorpus isEditor={isEditor} />}
-        {activeHunterTab === "extractors" && isEditor && <HunterExtractors />}
-        {activeHunterTab === "verify" && isEditor && <HunterVerify isEditor={isEditor} />}
-        {activeHunterTab === "catalog" && isEditor && <HunterCatalog />}
-        {activeHunterTab === "manual" && isEditor && <HunterManualFetch />}
-        {activeHunterTab === "runs" && isEditor && <HunterRuns />}
-        {activeHunterTab === "policy" && isEditor && <HunterPolicy isEditor={isEditor} />}
+        {activeHunterTab === "extractors" && showEditorTabs && <HunterExtractors />}
+        {activeHunterTab === "verify" && showEditorTabs && <HunterVerify isEditor={isEditor} />}
+        {activeHunterTab === "catalog" && showEditorTabs && <HunterCatalog />}
+        {activeHunterTab === "manual" && showEditorTabs && <HunterManualFetch />}
+        {activeHunterTab === "runs" && showEditorTabs && <HunterRuns />}
+        {activeHunterTab === "policy" && showEditorTabs && <HunterPolicy isEditor={isEditor} />}
         {activeHunterTab === "registry" && <HunterRegistry isEditor={isEditor} />}
-        {activeHunterTab === "strategies" && isEditor && <HunterStrategies />}
-        {activeHunterTab === "verdicts" && isEditor && <HunterScreenVerdicts isEditor={isEditor} />}
+        {activeHunterTab === "strategies" && showEditorTabs && <HunterStrategies />}
+        {activeHunterTab === "verdicts" && showEditorTabs && <HunterScreenVerdicts isEditor={isEditor} />}
       </div>
     </div>
   );
