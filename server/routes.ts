@@ -4,7 +4,8 @@ import session from "express-session";
 import { storage, db } from "./storage";
 import { seedDatabase } from "./seed";
 import { registerHunterRoutes } from "./hunterRoutes";
-import { requireAdmin, requireEditor, hasAdmin, hasEditor, ADMIN_TOKEN, EDITOR_TOKEN } from "./editorAuth";
+import { requireAdmin, requireEditor, requireHunterBot, hasAdmin, hasEditor, ADMIN_TOKEN, EDITOR_TOKEN } from "./editorAuth";
+import { registerHunterBotRoutes } from "./hunterBotRoutes";
 import { nodes, edges, sources, suggestions, news, publications, projects, traitHierarchy, traitHabitat, traitCrossCut } from "@shared/schema";
 
 declare module "express-session" {
@@ -606,6 +607,10 @@ export async function registerRoutes(
     res.json({ success: true });
   });
 
+  registerHunterBotRoutes(app, requireHunterBot);
+  // Register the browser Hunter routes after the bot namespace middleware.
+  // The shared bot search handler is declared by registerHunterRoutes, and is
+  // therefore protected by the middleware installed above.
   registerHunterRoutes(app, requireEditor);
 
   app.get("/api/database/auth-status", (req, res) => {

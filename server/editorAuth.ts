@@ -9,7 +9,7 @@
  * no server-side storage.
  */
 import type { Request, Response, NextFunction } from "express";
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 
 const SECRET = process.env.SESSION_SECRET || "shadows-dev-secret";
 export const EDITOR_TOKEN = createHmac("sha256", SECRET).update("editor").digest("hex");
@@ -44,5 +44,32 @@ export function requireEditor(req: Request, res: Response, next: NextFunction) {
     next();
   } else {
     res.status(401).json({ message: "Unauthorized" });
+  }
+}
+
+function hasHunterBotToken(req: Request): boolean {
+  const configured = process.env.HUNTER_BOT_API_TOKEN;
+  const header = req.headers.authorization;
+  if (!configured || !header?.startsWith("Bearer ")) return false;
+  const supplied = header.slice("Bearer ".length).trim();
+  const expectedBytes = Buffer.from(configured);
+  const suppliedBytes = Buffer.from(supplied);
+  return (
+    expectedBytes.length === suppliedBytes.length &&
+    timingSafeEqual(expectedBytes, suppliedBytes)
+  );
+}
+
+/** Dedicated authentication for autonomous agents; browser editor sessions do not grant access. */
+export function requireHunterBot(req: Request, res: Response, next: NextFunction) {
+  if (hasHunterBotToken(req)) {
+    next();
+  } else {
+    res.status(401).json({
+      error: {
+        code: "unauthorized",
+        message: "Provide the Hunter bot token as Authorization: Bearer <token>",
+      },
+    });
   }
 }

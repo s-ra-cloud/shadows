@@ -37,11 +37,14 @@ export function log(message: string, source = "express") {
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
+  // Bot endpoints can return complete locked texts and rights metadata. Log
+  // only request metadata for this namespace, never response bodies.
+  const suppressResponseBody = path.startsWith("/api/bot/hunter");
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
+    if (!suppressResponseBody) capturedJsonResponse = bodyJson;
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 

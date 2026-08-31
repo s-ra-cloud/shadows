@@ -1025,7 +1025,7 @@ export function registerHunterRoutes(
   });
 
   // ---- Hunting cycles ----------------------------------------------------
-  app.post("/api/hunter/cycles", requireEditor, async (req, res) => {
+  const launchCycleHandler = async (req: Request, res: Response) => {
     let query = String(req.body?.query ?? "").trim();
     const regionId = req.body?.region_id ? String(req.body.region_id) : null;
     const region = regionId ? getHunterRegion(regionId) : undefined;
@@ -1053,7 +1053,12 @@ export function registerHunterRoutes(
     // Seed the result with scope immediately so region is never lost even on failure.
     await db.update(hunterRuns).set({ result: { scope } }).where(eq(hunterRuns.id, runId));
     // Long operation: respond immediately; the UI polls the run until done.
-    res.json({ run: { id: runId, status: "running" } });
+    res.json({
+      run: { id: runId, status: "running" },
+      ...(req.path.startsWith("/api/bot/")
+        ? { links: { poll: `/api/bot/hunter/runs/${runId}` } }
+        : {}),
+    });
     try {
       const policy = await loadActivePolicy();
       validatePolicy(policy);
@@ -1076,7 +1081,11 @@ export function registerHunterRoutes(
       // Preserve scope on failure so the region remains visible on the map.
       await finishRun(runId, false, { scope }, errMessage(e));
     }
-  });
+  };
+  app.post("/api/hunter/cycles", requireEditor, launchCycleHandler);
+  // The bot API reuses exactly the same search implementation and accepted
+  // filters as the editor UI.
+  app.post("/api/bot/hunter/search", launchCycleHandler);
 
   /**
    * Scope for a corpus-list cycle: standard query/corpusList fields plus a
