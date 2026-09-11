@@ -495,6 +495,44 @@ async function finishRun(id: number, ok: boolean, result: unknown, error?: strin
 }
 
 /**
+ * The one normal-cycle entry point shared by editor launches and the durable
+ * daily worker. Keeping it here prevents scheduled work from bypassing the
+ * policy, registry, blocker, provenance, and extraction safeguards used by
+ * the regular Hunter UI/API.
+ */
+export async function runNormalHunterCycle(scope: CycleScope, existingRunId?: number): Promise<{
+  runId: number;
+  summary: import("./hunterCycle").CycleSummary | null;
+  error?: string;
+}> {
+  const runId = existingRunId ?? await createRun("cycle");
+  if (!existingRunId) {
+    await db.update(hunterRuns).set({ result: { scope } }).where(eq(hunterRuns.id, runId));
+  }
+  try {
+    const policy = await loadActivePolicy();
+    validatePolicy(policy);
+    const registry = await loadActiveRegistry();
+    const mirroredRecords: Record<string, unknown>[] = [];
+    const store = makeCycleStore(runId, mirroredRecords, scope);
+    const summary = await runHuntingCycle({
+      scope,
+      policy,
+      registry,
+      corpusRoot: CORPUS_ROOT,
+      store,
+    });
+    const autoExtraction = await autoExtractDownloaded(mirroredRecords);
+    await finishRun(runId, true, { ...summary, scope, auto_extraction: autoExtraction });
+    return { runId, summary };
+  } catch (error) {
+    const message = errMessage(error);
+    await finishRun(runId, false, { scope }, message);
+    return { runId, summary: null, error: message };
+  }
+}
+
+/**
  * Passed as the `lookup` option to every http/https.request call made by the
  * check-url probe. Node.js calls this once per connection, right before
  * opening the TCP socket, so the IP used for validation IS the IP used to
@@ -1059,28 +1097,7 @@ export function registerHunterRoutes(
         ? { links: { poll: `/api/bot/hunter/runs/${runId}` } }
         : {}),
     });
-    try {
-      const policy = await loadActivePolicy();
-      validatePolicy(policy);
-      const registry = await loadActiveRegistry();
-      const mirroredRecords: Record<string, unknown>[] = [];
-      // Pass scope so updateProgress always preserves the region in the result.
-      const store = makeCycleStore(runId, mirroredRecords, scope);
-      const summary = await runHuntingCycle({
-        scope,
-        policy,
-        registry,
-        corpusRoot: CORPUS_ROOT,
-        store,
-      });
-      const autoExtraction = await autoExtractDownloaded(mirroredRecords);
-      // Include scope in the final result so the map can read result.scope.region
-      // even without consulting the seeded row.
-      await finishRun(runId, true, { ...summary, scope, auto_extraction: autoExtraction });
-    } catch (e) {
-      // Preserve scope on failure so the region remains visible on the map.
-      await finishRun(runId, false, { scope }, errMessage(e));
-    }
+    await runNormalHunterCycle(scope, runId);
   };
   app.post("/api/hunter/cycles", requireEditor, launchCycleHandler);
   // The bot API reuses exactly the same search implementation and accepted

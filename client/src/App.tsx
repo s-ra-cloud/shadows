@@ -17,6 +17,7 @@ import DatabasePage from "@/pages/database";
 import AboutPage from "@/pages/about";
 import SourcesPage from "@/pages/sources";
 import ReadPage from "@/pages/read";
+import DailyHunterPage from "@/pages/daily-hunter";
 
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -63,6 +64,9 @@ function Router() {
       </Route>
       <Route path="/admin">
         <AdminPage />
+      </Route>
+      <Route path="/daily-hunter">
+        <DailyHunterPage />
       </Route>
       <Route>
         <PublicLayout><NotFound /></PublicLayout>

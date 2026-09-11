@@ -7,3 +7,4 @@
 - [CJS bundle import.meta shim](cjs-bundle-import-meta.md) — prod build shims import.meta.url via esbuild banner+define; never swap for process.cwd() (tests mock cwd).
 - [Stored error text](stored-error-text.md) — normalise caught exceptions before storing (driver dumps snowball across a run); bookkeeping writes log-and-swallow.
 - [PDF OCR environment](pdf-ocr-env.md) — pdftoppm/pdfinfo ship in the Replit runtime path; tesseract needs the nix `tesseract` system dep (poppler-utils isn't a nix pkg name).
+- [Daily delivery tradeoff](daily-delivery-tradeoff.md) — uncertain Gmail sends must not be blindly retried; duplicate prevention is not guaranteed delivery.

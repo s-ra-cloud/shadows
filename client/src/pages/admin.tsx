@@ -278,6 +278,13 @@ export default function AdminPage() {
             Admin Dashboard
           </h1>
           <div className="flex items-center gap-2">
+            <a
+              href="/daily-hunter"
+              className="inline-flex h-9 items-center rounded-md border border-[#350A8C]/30 px-3 text-sm text-shadows-text/50 hover:text-shadows-text"
+              data-testid="link-admin-daily-hunter"
+            >
+              Daily Hunter
+            </a>
             <Button
               variant="outline"
               size="sm"

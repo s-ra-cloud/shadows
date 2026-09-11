@@ -68,6 +68,19 @@ async function buildAll() {
     logLevel: "info",
   });
 
+  // A Scheduled Deployment is separate from the web deployment. Bundle its
+  // tiny HTTP trigger worker too, so it can run with Node after the same
+  // production build rather than depending on tsx being present at runtime.
+  await esbuild({
+    entryPoints: ["server/dailyHunterWorker.ts"],
+    platform: "node",
+    bundle: true,
+    format: "cjs",
+    outfile: "dist/daily-hunter-worker.cjs",
+    external: externals,
+    logLevel: "info",
+  });
+
   // The source hunter resolves its bundled data (collection policy, schemas,
   // source registry) relative to the compiled module via import.meta.url —
   // in production that's dist/, so the data folder must ship alongside the

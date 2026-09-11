@@ -103,6 +103,7 @@ SHADOWS is an academic research platform for comparative mythology. It visualize
 - `/graph` - Interactive D3.js canvas graph (bipartite layout)
 - `/database` - Browsable/editable mythology database with Characters, Relations, Suggestions, Sources tabs. Public users can suggest edits (requires name, suggestion, source). Edit mode is password-protected (DB_EDITOR_PASSWORD env var or default).
 - `/admin` - Password-protected CRUD dashboard
+- `/daily-hunter` - Editor-controlled schedule, execution history, evidence proposals, and engineering-brief export for the durable Daily Hunter routine (see `docs/daily-hunter.md`)
 
 ## Admin
 - Login uses SESSION_SECRET env variable as password

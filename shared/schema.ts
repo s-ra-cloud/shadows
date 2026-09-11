@@ -208,6 +208,56 @@ export const hunterRightsReviews = pgTable("hunter_rights_reviews", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// The daily routine deliberately has one configuration row. Executions and
+// proposals are separate audit records so changing the schedule never erases
+// what a previous invocation did or what an editor decided.
+export const dailyHunterRoutines = pgTable("daily_hunter_routines", {
+  id: integer("id").primaryKey(),
+  enabled: integer("enabled").notNull().default(0),
+  localTime: text("local_time").notNull().default("09:00"),
+  timezone: text("timezone").notNull().default("Europe/Paris"),
+  recipient: text("recipient").notNull().default("duparclaura.pro@gmail.com"),
+  // A compare-and-set claim prevents two different calendar-day workers from
+  // overlapping when one hunt runs longer than a day.
+  activeExecutionId: integer("active_execution_id"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const dailyHunterExecutions = pgTable("daily_hunter_executions", {
+  id: serial("id").primaryKey(),
+  routineId: integer("routine_id").notNull().references(() => dailyHunterRoutines.id),
+  // One local calendar-day execution is allowed, even if a scheduled worker
+  // retries after a timeout or a new web process starts.
+  executionKey: text("execution_key").notNull().unique(),
+  scheduledDate: text("scheduled_date").notNull(),
+  timezone: text("timezone").notNull(),
+  // Snapshot the authorized report recipient at claim time. Later schedule
+  // edits must never redirect a delayed/recovered report.
+  recipient: text("recipient").notNull().default("duparclaura.pro@gmail.com"),
+  status: text("status").notNull().default("running"), // running | completed | failed | skipped
+  hunterRunId: integer("hunter_run_id").references(() => hunterRuns.id),
+  review: jsonb("review"),
+  emailStatus: text("email_status").notNull().default("pending"), // pending | sending | sent | unknown | skipped
+  emailMessageId: text("email_message_id"),
+  emailAttemptedAt: timestamp("email_attempted_at"),
+  error: text("error"),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  finishedAt: timestamp("finished_at"),
+});
+
+export const dailyHunterProposals = pgTable("daily_hunter_proposals", {
+  id: serial("id").primaryKey(),
+  executionId: integer("execution_id").notNull().references(() => dailyHunterExecutions.id),
+  kind: text("kind").notNull().default("engineering_task"), // engineering_task only; never an executable change
+  title: text("title").notNull(),
+  summary: text("summary").notNull(),
+  evidence: jsonb("evidence").notNull(),
+  status: text("status").notNull().default("pending"), // pending | approved | rejected
+  decisionNote: text("decision_note"),
+  decidedAt: timestamp("decided_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -228,6 +278,9 @@ export const insertHunterRunSchema = createInsertSchema(hunterRuns).omit({ id: t
 export const insertHunterCorpusFileSchema = createInsertSchema(hunterCorpusFiles).omit({ id: true, downloadedAt: true });
 export const insertHunterBlockerSchema = createInsertSchema(hunterBlockers).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertHunterRightsReviewSchema = createInsertSchema(hunterRightsReviews).omit({ id: true, createdAt: true });
+export const insertDailyHunterRoutineSchema = createInsertSchema(dailyHunterRoutines).omit({ id: true, updatedAt: true });
+export const insertDailyHunterExecutionSchema = createInsertSchema(dailyHunterExecutions).omit({ id: true, startedAt: true, finishedAt: true });
+export const insertDailyHunterProposalSchema = createInsertSchema(dailyHunterProposals).omit({ id: true, createdAt: true, decidedAt: true });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -261,3 +314,6 @@ export type HunterBlocker = typeof hunterBlockers.$inferSelect;
 export type InsertHunterBlocker = z.infer<typeof insertHunterBlockerSchema>;
 export type HunterRightsReview = typeof hunterRightsReviews.$inferSelect;
 export type InsertHunterRightsReview = z.infer<typeof insertHunterRightsReviewSchema>;
+export type DailyHunterRoutine = typeof dailyHunterRoutines.$inferSelect;
+export type DailyHunterExecution = typeof dailyHunterExecutions.$inferSelect;
+export type DailyHunterProposal = typeof dailyHunterProposals.$inferSelect;
