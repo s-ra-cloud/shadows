@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import session from "express-session";
 import { storage, db } from "./storage";
 import { seedDatabase } from "./seed";
-import { registerHunterRoutes, runNormalHunterCycle } from "./hunterRoutes";
+import { registerHunterRoutes, runNormalHunterCycle, runBenchmarkCycle } from "./hunterRoutes";
 import { requireAdmin, requireEditor, requireHunterBot, hasAdmin, hasEditor, ADMIN_TOKEN, EDITOR_TOKEN } from "./editorAuth";
 import { registerHunterBotRoutes } from "./hunterBotRoutes";
 import { registerDailyHunterRoutes } from "./dailyHunter";
@@ -613,7 +613,10 @@ export async function registerRoutes(
   // The shared bot search handler is declared by registerHunterRoutes, and is
   // therefore protected by the middleware installed above.
   registerHunterRoutes(app, requireEditor);
-  registerDailyHunterRoutes(app, requireEditor, { runCycle: runNormalHunterCycle });
+  registerDailyHunterRoutes(app, requireEditor, {
+    runCycle: runNormalHunterCycle,
+    runBenchmark: runBenchmarkCycle,
+  });
 
   app.get("/api/database/auth-status", (req, res) => {
     res.json({

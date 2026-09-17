@@ -8,12 +8,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
-type Routine = { enabled: number; localTime: string; timezone: string; recipient: string };
+type RoutineMode = "query" | "benchmark";
+type Routine = { enabled: number; localTime: string; timezone: string; recipient: string; mode?: RoutineMode; weekday?: number | null };
 type Execution = {
   id: number; scheduledDate: string; timezone: string; status: string; hunterRunId: number | null;
   emailStatus: string; error: string | null; startedAt: string; finishedAt: string | null;
-  review: { outcomes?: Record<string, number>; usefulDiscoveries?: { newCandidates?: number; downloadedPublic?: number; downloadedLocked?: number }; blockers?: { reason: string; count: number }[] } | null;
+  review: {
+    mode?: RoutineMode;
+    benchmark?: { list: string; coverage: number | null; total: number; fetched: number; fetched_locked: number; not_found: number; failed: number };
+    outcomes?: Record<string, number>;
+    usefulDiscoveries?: { newCandidates?: number; downloadedPublic?: number; downloadedLocked?: number };
+    blockers?: { reason: string; count: number }[];
+  } | null;
 };
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const selectClass = "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 type Proposal = {
   id: number; executionId: number; title: string; summary: string; status: string;
   evidence: Record<string, unknown>; decisionNote: string | null;
@@ -47,7 +56,9 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
 export default function DailyHunterPage() {
   const { toast } = useToast();
   const [authenticated, setAuthenticated] = useState(false);
-  const [form, setForm] = useState({ enabled: false, localTime: "09:00", timezone: "Europe/Paris", recipient: "duparclaura.pro@gmail.com" });
+  const [form, setForm] = useState<{ enabled: boolean; localTime: string; timezone: string; recipient: string; mode: RoutineMode; weekday: number | null }>({
+    enabled: false, localTime: "09:00", timezone: "Europe/Paris", recipient: "duparclaura.pro@gmail.com", mode: "query", weekday: null,
+  });
   const [notes, setNotes] = useState<Record<number, string>>({});
   const authQuery = useQuery<{ isEditor: boolean }>({ queryKey: ["/api/database/auth-status"], staleTime: 0 });
   const auth = authQuery.data;
@@ -57,7 +68,10 @@ export default function DailyHunterPage() {
   useEffect(() => {
     if (daily.data?.routine) {
       const routine = daily.data.routine;
-      setForm({ enabled: Boolean(routine.enabled), localTime: routine.localTime, timezone: routine.timezone, recipient: routine.recipient });
+      setForm({
+        enabled: Boolean(routine.enabled), localTime: routine.localTime, timezone: routine.timezone, recipient: routine.recipient,
+        mode: routine.mode === "benchmark" ? "benchmark" : "query", weekday: typeof routine.weekday === "number" ? routine.weekday : null,
+      });
     }
   }, [daily.data?.routine]);
 
@@ -111,6 +125,23 @@ export default function DailyHunterPage() {
           <div><Label>Timezone (IANA)</Label><Input value={form.timezone} onChange={(event) => setForm({ ...form, timezone: event.target.value })} data-testid="input-daily-hunter-timezone" /></div>
           <div><Label>Report recipient</Label><Input type="email" value={form.recipient} onChange={(event) => setForm({ ...form, recipient: event.target.value })} data-testid="input-daily-hunter-recipient" /></div>
         </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <Label>What to hunt</Label>
+            <select className={selectClass} value={form.mode} onChange={(event) => setForm({ ...form, mode: event.target.value === "benchmark" ? "benchmark" : "query" })} data-testid="select-daily-hunter-mode">
+              <option value="query">Standard discovery query</option>
+              <option value="benchmark">Benchmark corpus list (shadows-benchmark)</option>
+            </select>
+          </div>
+          <div>
+            <Label>Run on</Label>
+            <select className={selectClass} value={form.weekday === null ? "" : String(form.weekday)} onChange={(event) => setForm({ ...form, weekday: event.target.value === "" ? null : Number(event.target.value) })} data-testid="select-daily-hunter-weekday">
+              <option value="">Every day</option>
+              {WEEKDAYS.map((name, index) => <option key={name} value={index}>{name}s only</option>)}
+            </select>
+          </div>
+          <p className="self-end text-xs text-[#E0DCE6]/50">{form.mode === "benchmark" ? "A benchmark run hunts the checked-in list (about an hour) and reports coverage; weekly is the intended cadence." : "The standard query runs a short discovery cycle."}</p>
+        </div>
         <div className="flex flex-wrap gap-3">
           <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-[#8F00FF]" data-testid="button-save-daily-hunter">
             {form.enabled ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}{save.isPending ? "Saving…" : form.enabled ? "Save active routine" : "Save paused routine"}
@@ -131,6 +162,7 @@ export default function DailyHunterPage() {
               {execution.hunterRunId && <a className="text-sm text-[#03FF9B] hover:underline" href={`/api/hunter/runs/${execution.hunterRunId}`} target="_blank" rel="noreferrer">Open Hunter run #{execution.hunterRunId}</a>}
             </div>
             {execution.error && <p className="mt-3 rounded bg-red-500/10 p-3 text-sm text-red-200">{execution.error}</p>}
+            {execution.review?.benchmark && <p className="mt-3 text-sm text-[#03FF9B]/90">Benchmark {execution.review.benchmark.list}: coverage {execution.review.benchmark.coverage == null ? "n/a" : `${Math.round(execution.review.benchmark.coverage * 100)}%`} ({execution.review.benchmark.fetched} fetched + {execution.review.benchmark.fetched_locked} locked of {execution.review.benchmark.total}; {execution.review.benchmark.not_found} not found, {execution.review.benchmark.failed} failed).</p>}
             {execution.review?.outcomes && <p className="mt-3 text-sm text-[#E0DCE6]/65">Discovered {execution.review.outcomes.discovered ?? 0}; new candidates {execution.review.usefulDiscoveries?.newCandidates ?? 0}; public downloads {execution.review.usefulDiscoveries?.downloadedPublic ?? 0}; blockers {execution.review.outcomes.blockers ?? 0}; failures {execution.review.outcomes.failed ?? 0}.</p>}
             {execution.review?.blockers?.length ? <p className="mt-2 text-xs text-[#E0DCE6]/50">Blockers: {execution.review.blockers.map((blocker) => `${blocker.reason} (${blocker.count})`).join(", ")}</p> : null}
             {proposalsFor(execution.id).map((proposal) => <div key={proposal.id} className="mt-4 border-t border-[#350A8C]/20 pt-4">

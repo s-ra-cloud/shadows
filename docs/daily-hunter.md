@@ -38,10 +38,28 @@ Europe/Paris` and report recipient `duparclaura.pro@gmail.com`.
 ## Editor controls
 
 Open `/daily-hunter` and authenticate as an editor. Editors can change and
-save the pause state, 24-hour local time, IANA timezone, and recipient; inspect
-the latest 30 executions and their run links; and approve or reject
-evidence-backed proposals. Only approved proposals expose the engineering
-brief export endpoint.
+save the pause state, 24-hour local time, IANA timezone, recipient, mode and
+weekday; inspect the latest 30 executions and their run links; and approve or
+reject evidence-backed proposals. Only approved proposals expose the
+engineering brief export endpoint.
+
+### Mode and weekday
+
+- **Mode `query`** (default): the original fixed discovery query.
+- **Mode `benchmark`**: runs the checked-in benchmark corpus list
+  (`data/hunter-benchmark/shadows-benchmark.csv`) through the same
+  corpus-list cycle an editor would launch by hand. The review and the
+  emailed report gain a coverage block (fetched + locked over total) and a
+  link to `GET /api/bot/hunter/report`, which diffs the run against the
+  previous one item by item. See `docs/benchmark-loop.md`.
+- **Weekday**: leave empty to run every day, or pick one local weekday. The
+  worker still runs every five minutes; on other days it returns `not_due`
+  without consuming that day's execution key. A benchmark run takes about an
+  hour, so weekly is the intended cadence for benchmark mode.
+
+Both settings are stored on the routine and apply from the next worker
+invocation. All other safety properties (one execution per local date, the
+advisory lock, the claim-before-send email protocol) are unchanged.
 
 The saved time is the routine contract and is included in its history. It does
 not programmatically change a deployed scheduler. A timezone edit is rejected

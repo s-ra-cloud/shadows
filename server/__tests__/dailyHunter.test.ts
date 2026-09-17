@@ -20,6 +20,7 @@ vi.mock("../storage", async () => {
     CREATE TABLE daily_hunter_routines (
       id integer PRIMARY KEY, enabled integer NOT NULL DEFAULT 0, local_time text NOT NULL DEFAULT '09:00',
       timezone text NOT NULL DEFAULT 'Europe/Paris', recipient text NOT NULL DEFAULT 'duparclaura.pro@gmail.com',
+      mode text NOT NULL DEFAULT 'query', weekday integer,
       active_execution_id integer,
       updated_at timestamp DEFAULT now() NOT NULL
     );
@@ -60,7 +61,14 @@ vi.mock("../storage", async () => {
 });
 
 import { db } from "../storage";
-import { executeDailyHunter, requireDailyHunterWorker, timezoneEditPreservesExecutionDates } from "../dailyHunter";
+import {
+  executeDailyHunter,
+  localWeekday,
+  requireDailyHunterWorker,
+  timezoneEditPreservesExecutionDates,
+  validMode,
+  validWeekday,
+} from "../dailyHunter";
 import { dailyHunterExecutions, dailyHunterProposals, dailyHunterRoutines, hunterBlockers, hunterRuns } from "@shared/schema";
 
 const now = new Date("2026-06-15T08:00:00.000Z");
@@ -215,6 +223,106 @@ describe("daily Hunter durable execution", () => {
     expect(proposals).toHaveLength(1);
     expect(proposals[0]).toMatchObject({ kind: "engineering_task", status: "pending" });
     expect(proposals[0].summary).toContain("cannot change code, rights determinations, or source policy");
+  });
+});
+
+describe("daily Hunter benchmark mode and weekly cadence", () => {
+  // `now` (2026-06-15T08:00Z) is a Monday, 10:00 in Paris.
+  const benchmarkSummary = {
+    ...summary,
+    scope: { query: "Corpus list: shadows-benchmark", corpusList: "shadows-benchmark" },
+    corpus_list: {
+      name: "shadows-benchmark",
+      blocked_reasons: { not_found: 1 },
+      items: [
+        { title: "Kojiki", author: "Basil Hall Chamberlain", status: "fetched", languages: ["en"], english: true, edition_ids: [], detail: "", blockers: [] },
+        { title: "The Baal Cycle", author: null, status: "not_found", languages: [], english: false, edition_ids: [], detail: "", blockers: [{ reason: "not_found", detail: "nothing", url: null }] },
+      ],
+    },
+  } as any;
+
+  it("validates modes and weekdays", () => {
+    expect(validMode("query")).toBe(true);
+    expect(validMode("benchmark")).toBe(true);
+    expect(validMode("weekly")).toBe(false);
+    expect(validWeekday(null)).toBe(true);
+    expect(validWeekday(0)).toBe(true);
+    expect(validWeekday(6)).toBe(true);
+    expect(validWeekday(7)).toBe(false);
+    expect(validWeekday("1")).toBe(false);
+    expect(localWeekday("Europe/Paris", now)).toBe(1);
+    // 23:30 UTC on a Monday is already Tuesday in Tokyo.
+    expect(localWeekday("Asia/Tokyo", new Date("2026-06-15T23:30:00.000Z"))).toBe(2);
+  });
+
+  it("runs the benchmark list instead of the query in benchmark mode and reports coverage", async () => {
+    await db.insert(dailyHunterRoutines).values({
+      id: 1, enabled: 1, localTime: "09:00", timezone: "Europe/Paris", recipient: "duparclaura.pro@gmail.com", mode: "benchmark",
+    });
+    const runCycle = vi.fn();
+    const runBenchmark = vi.fn().mockResolvedValue({ runId: 88, summary: benchmarkSummary });
+    const sendMail = vi.fn().mockResolvedValue({ messageId: "m1" });
+    const result = await executeDailyHunter({ runCycle, runBenchmark, sendMail }, "https://app.example", now);
+    expect(result.status).toBe("completed");
+    expect(runBenchmark).toHaveBeenCalledTimes(1);
+    expect(runCycle).not.toHaveBeenCalled();
+
+    const [execution] = await db.select().from(dailyHunterExecutions);
+    const review = execution.review as any;
+    expect(review.mode).toBe("benchmark");
+    expect(review.benchmark).toMatchObject({ list: "shadows-benchmark", coverage: 0.5, total: 2, fetched: 1, not_found: 1, blocked_reasons: { not_found: 1 } });
+    expect(review.links.report).toBe("https://app.example/api/bot/hunter/report");
+
+    expect(sendMail).toHaveBeenCalledTimes(1);
+    const text = sendMail.mock.calls[0][0].text as string;
+    expect(text).toContain("Benchmark coverage — shadows-benchmark");
+    expect(text).toContain("Coverage: 50% (1 fetched + 0 locked of 2)");
+    expect(text).toContain("/api/bot/hunter/report");
+  });
+
+  it("keeps query mode unchanged and records the mode in the review", async () => {
+    await db.insert(dailyHunterRoutines).values({
+      id: 1, enabled: 1, localTime: "09:00", timezone: "Europe/Paris", recipient: "duparclaura.pro@gmail.com",
+    });
+    const runCycle = vi.fn().mockResolvedValue({ runId: 88, summary });
+    const runBenchmark = vi.fn();
+    await executeDailyHunter({ runCycle, runBenchmark, sendMail: vi.fn() }, "https://app.example", now);
+    expect(runCycle).toHaveBeenCalledTimes(1);
+    expect(runBenchmark).not.toHaveBeenCalled();
+    const [execution] = await db.select().from(dailyHunterExecutions);
+    expect((execution.review as any).mode).toBe("query");
+    expect((execution.review as any).benchmark).toBeUndefined();
+  });
+
+  it("only claims work on the configured weekday and never consumes other days' keys", async () => {
+    await db.insert(dailyHunterRoutines).values({
+      id: 1, enabled: 1, localTime: "09:00", timezone: "Europe/Paris", recipient: "duparclaura.pro@gmail.com", weekday: 2,
+    });
+    const runCycle = vi.fn().mockResolvedValue({ runId: 88, summary });
+    const tuesdayOnly = await executeDailyHunter({ runCycle, sendMail: vi.fn() }, "https://app.example", now);
+    expect(tuesdayOnly.status).toBe("not_due");
+    expect(runCycle).not.toHaveBeenCalled();
+    expect(await db.select().from(dailyHunterExecutions)).toHaveLength(0);
+
+    await db.update(dailyHunterRoutines).set({ weekday: 1 });
+    const monday = await executeDailyHunter({ runCycle, sendMail: vi.fn() }, "https://app.example", now);
+    expect(monday.status).toBe("completed");
+    expect(runCycle).toHaveBeenCalledTimes(1);
+  });
+
+  it("fails the execution with one report when benchmark mode has no runner wired", async () => {
+    await db.insert(dailyHunterRoutines).values({
+      id: 1, enabled: 1, localTime: "09:00", timezone: "Europe/Paris", recipient: "duparclaura.pro@gmail.com", mode: "benchmark",
+    });
+    const runCycle = vi.fn();
+    const sendMail = vi.fn().mockResolvedValue({});
+    const result = await executeDailyHunter({ runCycle, sendMail }, "https://app.example", now);
+    expect(result.status).toBe("failed");
+    expect(runCycle).not.toHaveBeenCalled();
+    const [execution] = await db.select().from(dailyHunterExecutions);
+    expect(execution.error).toContain("no benchmark runner");
+    expect(sendMail).toHaveBeenCalledTimes(1);
+    expect(sendMail.mock.calls[0][0].subject).toContain("failure");
   });
 });
 

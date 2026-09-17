@@ -18,8 +18,11 @@ import {
   hunterBlockers,
 } from "@shared/schema";
 import type { CycleScope, CycleSummary } from "./hunterCycle";
+import { summarizeRun } from "./hunterReport";
 
 const ROUTINE_ID = 1;
+export const ROUTINE_MODES = ["query", "benchmark"] as const;
+export type RoutineMode = (typeof ROUTINE_MODES)[number];
 const DEFAULT_RECIPIENT = "duparclaura.pro@gmail.com";
 const DEFAULT_TIME = "09:00";
 const DEFAULT_TIMEZONE = "Europe/Paris";
@@ -43,8 +46,16 @@ export type DailyCycleRunner = (scope: CycleScope) => Promise<{
   error?: string;
 }>;
 
+/** Runs the checked-in benchmark list (see hunterRoutes.runBenchmarkCycle). */
+export type DailyBenchmarkRunner = () => Promise<{
+  runId: number;
+  summary: CycleSummary | null;
+  error?: string;
+}>;
+
 export interface DailyHunterDependencies {
   runCycle: DailyCycleRunner;
+  runBenchmark?: DailyBenchmarkRunner;
   sendMail?: DailyHunterMailSender;
 }
 
@@ -125,6 +136,22 @@ function validRecipient(value: unknown): value is string {
   return typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 254;
 }
 
+export function validMode(value: unknown): value is RoutineMode {
+  return typeof value === "string" && (ROUTINE_MODES as readonly string[]).includes(value);
+}
+
+/** null = every day; 0 (Sunday) … 6 (Saturday) = that local weekday only. */
+export function validWeekday(value: unknown): value is number | null {
+  return value === null || (typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 6);
+}
+
+const WEEKDAY_INDEX: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+export function localWeekday(timezone: string, now = new Date()): number {
+  const name = new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "short" }).format(now);
+  return WEEKDAY_INDEX[name] ?? new Date(now).getUTCDay();
+}
+
 function localDate(timezone: string, now = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
@@ -195,7 +222,29 @@ function countByReason(rows: Array<{ reason: string }>) {
     .sort((a, b) => b.count - a.count || a.reason.localeCompare(b.reason));
 }
 
-async function makeReview(executionId: number, runId: number, summary: CycleSummary, appUrl: string) {
+/**
+ * Coverage block for a benchmark (corpus-list) run, or null for a query run.
+ * Derived from the stored per-item outcomes exactly as GET /api/bot/hunter/report does.
+ */
+function benchmarkReview(runId: number, summary: CycleSummary) {
+  const result = summary as unknown as Record<string, unknown>;
+  if (!result.corpus_list || typeof result.corpus_list !== "object") return null;
+  const run = summarizeRun({ id: runId, status: "completed", startedAt: null, finishedAt: null, result, error: null });
+  return {
+    list: String((result.corpus_list as Record<string, unknown>).name ?? ""),
+    coverage: run.coverage,
+    total: run.total,
+    fetched: run.fetched,
+    fetched_locked: run.fetched_locked,
+    metadata_only: run.metadata_only,
+    failed: run.failed,
+    not_found: run.not_found,
+    skipped: run.skipped,
+    blocked_reasons: run.blocked_reasons,
+  };
+}
+
+async function makeReview(executionId: number, runId: number, summary: CycleSummary, appUrl: string, mode: RoutineMode = "query") {
   const currentBlockers = await db
     .select()
     .from(hunterBlockers)
@@ -214,8 +263,11 @@ async function makeReview(executionId: number, runId: number, summary: CycleSumm
     : [];
   const combinedCounts = countByReason([...currentBlockers, ...historicalBlockers]);
   const recurring = combinedCounts.filter((item) => item.count >= 2).slice(0, 3);
+  const benchmark = mode === "benchmark" ? benchmarkReview(runId, summary) : null;
   const review = {
     generatedBy: "deterministic-evidence-review",
+    mode,
+    ...(benchmark ? { benchmark } : {}),
     usefulDiscoveries: {
       newCandidates: summary.created,
       downloadedPublic: summary.downloaded_public,
@@ -235,6 +287,7 @@ async function makeReview(executionId: number, runId: number, summary: CycleSumm
     links: {
       run: `${appUrl}/api/hunter/runs/${runId}`,
       routine: `${appUrl}/daily-hunter`,
+      ...(benchmark ? { report: `${appUrl}/api/bot/hunter/report` } : {}),
     },
     safety: "Evidence counts are derived from stored Hunter results. No rights, licensing, trusted-source policy, or code was changed.",
   };
@@ -273,12 +326,23 @@ function reportText(input: {
     .map((item) => `- ${item.reason}: ${item.count}`)
     .join("\n") || "- None";
   const proposalLinks = input.proposalIds.map((id) => `${input.appUrl}/api/hunter/daily/proposals/${id}/brief`).join("\n") || "None";
+  const benchmark = review.benchmark as ReturnType<typeof benchmarkReview> | undefined;
+  const benchmarkLines = benchmark
+    ? [
+        `Benchmark coverage — ${benchmark.list}`,
+        `- Coverage: ${benchmark.coverage == null ? "n/a" : `${Math.round(benchmark.coverage * 100)}%`} (${benchmark.fetched} fetched + ${benchmark.fetched_locked} locked of ${benchmark.total})`,
+        `- Metadata only: ${benchmark.metadata_only}; failed: ${benchmark.failed}; not found: ${benchmark.not_found}; skipped: ${benchmark.skipped}`,
+        `- Per-item changes since the previous run: ${input.appUrl}/api/bot/hunter/report`,
+        "",
+      ]
+    : [];
   return [
     `Daily Hunter review — ${input.date} (${input.timezone})`,
     "",
     `Hunter run: ${input.appUrl}/api/hunter/runs/${input.runId}`,
     `Routine history: ${input.appUrl}/daily-hunter`,
     "",
+    ...benchmarkLines,
     "Useful discoveries",
     `- New candidates: ${findings.newCandidates}`,
     `- Public downloads: ${findings.downloadedPublic}`,
@@ -476,6 +540,11 @@ export async function executeDailyHunter(
     // schedule decides when it may claim this calendar day's work.
     return { executionId: 0, duplicate: false, status: "not_due" };
   }
+  if (routine.weekday != null && localWeekday(routine.timezone, now) !== routine.weekday) {
+    // A weekly routine: other days never consume an execution key.
+    return { executionId: 0, duplicate: false, status: "not_due" };
+  }
+  const mode: RoutineMode = validMode(routine.mode) ? routine.mode : "query";
   // Keep the key timezone-independent: an editor correcting the timezone
   // later in the day must not accidentally authorize a second daily hunt.
   const executionKey = `daily-hunter:${routine.id}:${date}`;
@@ -522,7 +591,12 @@ export async function executeDailyHunter(
   }
 
   try {
-    const cycle = await dependencies.runCycle({ ...DAILY_SCOPE });
+    if (mode === "benchmark" && !dependencies.runBenchmark) {
+      throw new Error("Benchmark mode is configured but no benchmark runner is wired into the routine");
+    }
+    const cycle = mode === "benchmark"
+      ? await dependencies.runBenchmark!()
+      : await dependencies.runCycle({ ...DAILY_SCOPE });
     cycleRunId = cycle.runId;
     if (!cycle.summary) {
       const failure = cycle.error ?? "Hunter cycle did not produce a summary";
@@ -544,7 +618,7 @@ export async function executeDailyHunter(
       });
       return { executionId, duplicate: false, status: "failed" };
     }
-    const review = await makeReview(executionId, cycle.runId, cycle.summary, appUrl);
+    const review = await makeReview(executionId, cycle.runId, cycle.summary, appUrl, mode);
     const proposals = await db
       .select({ id: dailyHunterProposals.id })
       .from(dailyHunterProposals)
@@ -674,6 +748,17 @@ export function registerDailyHunterRoutes(
     if (typeof enabled !== "boolean" || !validTime(localTime) || !validTimezone(timezone) || !validRecipient(recipient)) {
       return res.status(400).json({ message: "enabled, a 24-hour HH:MM time, an IANA timezone, and a valid recipient are required" });
     }
+    // mode and weekday are optional so older clients keep working; when
+    // present they must be valid.
+    if (req.body?.mode !== undefined && !validMode(req.body.mode)) {
+      return res.status(400).json({ message: `mode must be one of ${ROUTINE_MODES.join(", ")}` });
+    }
+    if (req.body?.weekday !== undefined && !validWeekday(req.body.weekday)) {
+      return res.status(400).json({ message: "weekday must be null (every day) or an integer 0 (Sunday) to 6 (Saturday)" });
+    }
+    if (req.body?.mode === "benchmark" && !dependencies.runBenchmark) {
+      return res.status(400).json({ message: "Benchmark mode is not available on this deployment" });
+    }
     const lock = await acquireDailyHunterLock();
     if (!lock) {
       return res.status(409).json({
@@ -682,6 +767,8 @@ export function registerDailyHunterRoutes(
     }
     try {
       const existingRoutine = await getRoutine();
+      const mode: RoutineMode = req.body?.mode === undefined ? (validMode(existingRoutine.mode) ? existingRoutine.mode : "query") : req.body.mode;
+      const weekday: number | null = req.body?.weekday === undefined ? existingRoutine.weekday : req.body.weekday;
       if (timezone !== existingRoutine.timezone && !(await timezoneEditPreservesExecutionDates(timezone))) {
         return res.status(409).json({
           message: "Timezone change deferred: it would remap an existing execution instant to a different local date and could break daily idempotency",
@@ -692,6 +779,8 @@ export function registerDailyHunterRoutes(
         localTime,
         timezone,
         recipient,
+        mode,
+        weekday,
         updatedAt: new Date(),
       }).where(eq(dailyHunterRoutines.id, ROUTINE_ID)).returning();
       res.json(routine);

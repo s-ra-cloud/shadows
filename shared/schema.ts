@@ -217,6 +217,12 @@ export const dailyHunterRoutines = pgTable("daily_hunter_routines", {
   localTime: text("local_time").notNull().default("09:00"),
   timezone: text("timezone").notNull().default("Europe/Paris"),
   recipient: text("recipient").notNull().default("duparclaura.pro@gmail.com"),
+  // What the routine hunts: the fixed discovery query ("query") or the
+  // checked-in benchmark corpus list ("benchmark", see docs/benchmark-loop.md).
+  mode: text("mode").notNull().default("query"),
+  // Restrict runs to one local weekday (0 = Sunday … 6 = Saturday); null runs
+  // every day. Benchmark runs are long, so weekly is the intended cadence.
+  weekday: integer("weekday"),
   // A compare-and-set claim prevents two different calendar-day workers from
   // overlapping when one hunt runs longer than a day.
   activeExecutionId: integer("active_execution_id"),
