@@ -7,10 +7,12 @@
 import type { Express, RequestHandler } from "express";
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { db } from "./storage";
 import { hunterBlockers, hunterCorpusFiles, hunterRuns } from "@shared/schema";
 import { readablePaths } from "./sourceHunter/extraction/run";
+import { buildCorpusListReport } from "./hunterReport";
+import { BENCHMARK_LIST_NAME } from "./hunterBenchmark";
 
 const CORPUS_ROOT = path.resolve(process.cwd(), "data", "hunter-corpus");
 
@@ -122,6 +124,38 @@ const OPENAPI = {
         responses: { "200": { description: "Search launched" }, "400": { description: "Invalid search" } },
       },
     },
+    "/api/bot/hunter/benchmark": {
+      post: {
+        summary: "Run the checked-in benchmark list",
+        description:
+          "Launches a corpus-list cycle over data/hunter-benchmark/shadows-benchmark.csv. One benchmark run at a time (409 while one is in progress). Poll the returned run URL, then read /api/bot/hunter/report.",
+        requestBody: {
+          required: false,
+          content: {
+            "application/json": {
+              schema: { type: "object", properties: { use_ai: { type: "boolean", default: true } } },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Benchmark run launched" },
+          "409": { description: "A benchmark run is already in progress" },
+          "503": { description: "The benchmark list is missing or unreadable" },
+        },
+      },
+    },
+    "/api/bot/hunter/report": {
+      get: {
+        summary: "Progress report over benchmark (or any corpus-list) runs",
+        description:
+          "Coverage per run, per-item status changes between the two most recent completed runs, and the latest run's blockers grouped by reason and source with a fix-class owner (code, adapter, policy, rights). Retry runs are excluded because they are stored under a different list name.",
+        parameters: [
+          { name: "list", in: "query", schema: { type: "string", default: "shadows-benchmark" }, description: "Corpus-list name (the uploaded file's base name)" },
+          { name: "limit", in: "query", schema: { type: "integer", minimum: 1, maximum: 50, default: 5 }, description: "How many recent runs to include" },
+        ],
+        responses: { "200": { description: "Report" } },
+      },
+    },
     "/api/bot/hunter/runs": {
       get: { summary: "List recent Hunter runs", responses: { "200": { description: "Run list" } } },
     },
@@ -181,10 +215,32 @@ export function registerHunterBotRoutes(app: Express, requireHunterBot: RequestH
       openapi: "/api/bot/hunter/openapi.json",
       operations: {
         search: "POST /api/bot/hunter/search",
+        benchmark: "POST /api/bot/hunter/benchmark",
+        report: "GET /api/bot/hunter/report",
         runs: "GET /api/bot/hunter/runs",
         texts: "GET /api/bot/hunter/texts",
       },
     });
+  });
+
+  app.get("/api/bot/hunter/report", async (req, res) => {
+    const requestedList = typeof req.query.list === "string" ? req.query.list.trim().slice(0, 200) : "";
+    const listName = requestedList || BENCHMARK_LIST_NAME;
+    const requestedLimit = Number(req.query.limit);
+    const limit = Number.isInteger(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 50) : 5;
+    // Fetch a little beyond `limit` so the two most recent *completed* runs
+    // (the comparison pair) are present even when recent runs failed.
+    const runs = await db
+      .select()
+      .from(hunterRuns)
+      .where(sql`${hunterRuns.result}->'corpus_list'->>'name' = ${listName}`)
+      .orderBy(desc(hunterRuns.id))
+      .limit(limit + 10);
+    const latestCompleted = runs.find((run) => run.status === "completed");
+    const blockers = latestCompleted
+      ? await db.select().from(hunterBlockers).where(eq(hunterBlockers.runId, latestCompleted.id))
+      : [];
+    res.json({ data: buildCorpusListReport({ listName, runs, blockers, limit }) });
   });
 
   app.get("/api/bot/hunter/runs", async (_req, res) => {
