@@ -1083,6 +1083,22 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
       toast({ title: "Could not launch corpus cycle", description: e.message, variant: "destructive" }),
   });
 
+  const benchmarkMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/hunter/cycles/benchmark", { use_ai: useAi });
+      return res.json();
+    },
+    onSuccess: (d: any) => {
+      toast({
+        title: `Benchmark run "${d.corpus_list?.name ?? "shadows-benchmark"}" launched`,
+        description: `${d.corpus_list?.items ?? 0} benchmark sources to hunt. Coverage is compared with the previous run when it completes.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/hunter/cycles"] });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Could not launch benchmark run", description: e.message, variant: "destructive" }),
+  });
+
   const pickCorpusList = () => {
     const input = document.createElement("input");
     input.type = "file";
@@ -1258,6 +1274,29 @@ function HunterCycles({ isEditor }: { isEditor: boolean }) {
                   <Upload size={16} />
                 )}
                 Upload corpus list
+              </button>
+            </div>
+            <div className="w-full border-t border-[#350A8C]/20 pt-3 mt-1 flex flex-wrap items-center gap-3">
+              <div className="flex-1 min-w-[260px]">
+                <div className="text-xs text-[#E0DCE6]/70 font-medium">Or run the benchmark list</div>
+                <p className="text-xs text-[#E0DCE6]/45 mt-0.5">
+                  Hunts the fixed list in data/hunter-benchmark (about an hour). Runs are stored
+                  under the same name every time, so coverage is comparable run over run. One
+                  benchmark run at a time.
+                </p>
+              </div>
+              <button
+                onClick={() => benchmarkMutation.mutate()}
+                disabled={benchmarkMutation.isPending || running}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-[#350A8C]/40 border border-[#03FF9B]/40 text-[#E0DCE6] hover:bg-[#350A8C]/60 disabled:opacity-50 transition-colors"
+                data-testid="button-run-benchmark"
+              >
+                {benchmarkMutation.isPending ? (
+                  <RefreshCw size={16} className="animate-spin" />
+                ) : (
+                  <Play size={16} />
+                )}
+                Run benchmark
               </button>
             </div>
           </div>
