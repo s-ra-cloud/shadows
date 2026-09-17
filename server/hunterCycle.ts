@@ -1565,7 +1565,15 @@ export const SCREEN_CHUNK_SIZE = 30;
  * to one cached verdict.
  */
 export function screenCacheKey(title: string): string {
-  return title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  // NFKC folds compatibility forms (full-width Latin, ligatures) so visually
+  // identical titles share one key; \p{L}/\p{N} keep every script's letters
+  // and digits, not just ASCII. Stripping to [a-z0-9] collapsed every CJK,
+  // Greek, Arabic or Cyrillic title to "" — one shared, wrong verdict.
+  return title
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
 }
 
 /** Persistent verdict cache used by screenLeads (backed by the CycleStore). */
@@ -1617,9 +1625,16 @@ export async function screenLeads(
   // Reuse verdicts persisted by earlier cycles; only misses go to the model.
   if (cache && pendingIndexes.length > 0) {
     try {
-      const cached = await cache.get(pendingIndexes.map((i) => screenCacheKey(leads[i].title)));
+      // A title with no letters or digits at all has no usable key; it is
+      // screened fresh rather than sharing an empty-key cache slot.
+      const keyed = pendingIndexes.filter((i) => screenCacheKey(leads[i].title) !== "");
+      const cached =
+        keyed.length > 0
+          ? await cache.get(keyed.map((i) => screenCacheKey(leads[i].title)))
+          : new Map<string, AiScreenVerdict>();
       pendingIndexes = pendingIndexes.filter((i) => {
-        const hit = cached.get(screenCacheKey(leads[i].title));
+        const key = screenCacheKey(leads[i].title);
+        const hit = key ? cached.get(key) : undefined;
         if (!hit) return true;
         verdicts[i] = hit;
         return false;
@@ -1642,12 +1657,9 @@ export async function screenLeads(
         for (let j = 0; j < chunkIndexes.length; j += 1) {
           const verdict = chunkVerdicts[j] ?? null;
           verdicts[chunkIndexes[j]] = verdict;
-          if (verdict) {
-            fresh.push({
-              key: screenCacheKey(chunkLeads[j].title),
-              title: chunkLeads[j].title,
-              verdict,
-            });
+          const key = screenCacheKey(chunkLeads[j].title);
+          if (verdict && key) {
+            fresh.push({ key, title: chunkLeads[j].title, verdict });
           }
         }
         if (cache && fresh.length > 0) {

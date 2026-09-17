@@ -588,6 +588,50 @@ describe("screening verdict cache", () => {
     );
   });
 
+  it("keeps non-Latin titles distinct instead of collapsing them to one key", () => {
+    // Regression: [^a-z0-9] stripped every CJK character, so these two
+    // unrelated Japanese works shared the empty key "" and one cached verdict.
+    const kujiki = screenCacheKey("先代旧事本紀");
+    const suwa = screenCacheKey("諏訪大明神絵詞");
+    expect(kujiki).not.toBe("");
+    expect(suwa).not.toBe("");
+    expect(kujiki).not.toBe(suwa);
+    // Other scripts keep their letters too.
+    expect(screenCacheKey("Ἰλιάς")).toBe("ἰλιάς");
+    expect(screenCacheKey("Skáldskaparmál")).toBe("skáldskaparmál");
+    expect(screenCacheKey("قصص الأنبياء")).toBe("قصص الأنبياء");
+  });
+
+  it("folds compatibility forms so visually identical titles share a key", () => {
+    expect(screenCacheKey("Ｋｏｊｉｋｉ")).toBe(screenCacheKey("Kojiki"));
+    expect(screenCacheKey("古事記（上）")).toBe(screenCacheKey("古事記 (上)"));
+  });
+
+  it("never reads or writes the cache for a title with no usable key", async () => {
+    const { cache, sets } = memoryCache({});
+    const gets: string[][] = [];
+    const spyCache: ScreenVerdictCache = {
+      get: async (keys) => {
+        gets.push(keys);
+        return cache.get(keys);
+      },
+      set: cache.set,
+    };
+    const { report } = collectBlockers();
+    const verdicts = await screenLeads(
+      [lead("???"), lead("The Poetic Edda")],
+      scope,
+      async (chunk) =>
+        chunk.map(() => ({ classification: "primary" as const, justification: "fresh" })),
+      report,
+      spyCache,
+    );
+    expect(verdicts.map((v) => v?.classification)).toEqual(["primary", "primary"]);
+    // The empty key is neither looked up nor persisted.
+    expect(gets).toEqual([[screenCacheKey("The Poetic Edda")]]);
+    expect(sets.map((s) => s.key)).toEqual([screenCacheKey("The Poetic Edda")]);
+  });
+
   it("reuses cached verdicts and only sends never-seen titles to the model", async () => {
     const cachedVerdict: AiScreenVerdict = {
       classification: "secondary",
