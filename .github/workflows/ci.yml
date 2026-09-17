@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # The PDF OCR tests call the real tesseract and poppler binaries and
+      # expect the Ancient Greek, Modern Greek, Latin and German packs, as on
+      # the Replit runtime.
+      - name: Install OCR tooling
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            tesseract-ocr tesseract-ocr-grc tesseract-ocr-ell \
+            tesseract-ocr-lat tesseract-ocr-deu poppler-utils
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+  typecheck:
+    name: Type-check (advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # main currently has several hundred pre-existing tsc errors (most in
+    # client/src/pages/graph.tsx). Until those are cleared this job reports
+    # but does not block merges.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run check

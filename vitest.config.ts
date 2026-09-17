@@ -17,5 +17,9 @@ export default defineConfig({
     ],
     environment: "node",
     globals: false,
+    // The Wikisource discovery tests honour the registry's 1 request/second
+    // throttle and legitimately sleep ~3 s; under parallel load on a small
+    // CI runner that brushes the 5 s default and flakes.
+    testTimeout: 20_000,
   },
 });
