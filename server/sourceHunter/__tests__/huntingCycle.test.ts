@@ -18,6 +18,7 @@ import {
   screenCacheKey,
   wikisourceWikiLanguages,
   resolveNativeTitle,
+  parseWikisourcePageUrl,
   parseGutenbergCatalog,
   WIKIMEDIA_API_HOST,
   CYCLE_USER_AGENT,
@@ -1147,6 +1148,200 @@ describe("Wikisource discovery via the Wikimedia Core REST API", () => {
     const jaSearch = searches.find((u) => u.includes("/wikisource/ja/search/page?"))!;
     // Lookup failed: original romanised query is used
     expect(decodeURIComponent(jaSearch.split("?")[1] ?? "")).toContain("Nihon Shoki");
+  });
+});
+
+describe("parseWikisourcePageUrl", () => {
+  it("extracts the wiki language and decoded page title", () => {
+    expect(parseWikisourcePageUrl("https://ja.wikisource.org/wiki/%E5%8F%A4%E4%BA%8B%E8%A8%98")).toEqual({
+      language: "ja",
+      title: "古事記",
+    });
+    expect(parseWikisourcePageUrl("https://en.wikisource.org/wiki/Kojiki_(Chamberlain)")).toEqual({
+      language: "en",
+      title: "Kojiki (Chamberlain)",
+    });
+  });
+
+  it("ignores projects and paths the Core REST API does not serve", () => {
+    expect(parseWikisourcePageUrl("https://wikisource.org/wiki/Main_Page")).toBeNull();
+    expect(parseWikisourcePageUrl("https://mul.wikisource.org/wiki/Foo")).toBeNull();
+    expect(parseWikisourcePageUrl("https://ja.wikisource.org/w/index.php?title=Foo")).toBeNull();
+    expect(parseWikisourcePageUrl("http://ja.wikisource.org/wiki/Foo")).toBeNull();
+    expect(parseWikisourcePageUrl("https://archive.org/details/foo")).toBeNull();
+    expect(parseWikisourcePageUrl("https://ja.wikisource.org/wiki/")).toBeNull();
+  });
+});
+
+describe("AI leads pointing at Wikisource pages", () => {
+  beforeEach(() => clearRobotsCache());
+
+  const WIKISOURCE_REGISTRY = {
+    schema_version: "1.0.0",
+    sources: [
+      {
+        source_id: "source:multilingual-wikisource",
+        name: "Multilingual Wikisource",
+        local_only: false,
+        allowed_hosts: ["wikisource.org", WIKIMEDIA_API_HOST],
+        allowed_path_prefixes: ["/wiki/", "/core/v1/wikisource/"],
+        automated_download_allowed: true,
+        terms_url: null,
+        robots_mode: "target_origin",
+        requests_per_second: 10,
+        rights_notes: "page-level statement is authoritative",
+      },
+    ],
+  };
+
+  /**
+   * Mock of api.wikimedia.org: `pages` maps "<lang>:<title>" to page metadata
+   * for the /bare endpoint; `langLinks` is what Wikipedia's language-links
+   * endpoint returns for any English title.
+   */
+  function wikimediaFetch(
+    pages: Record<string, { id: number; key: string; title: string }>,
+    langLinks: Record<string, unknown>[] = [],
+  ) {
+    const requested: string[] = [];
+    const fetchImpl = (async (input: any) => {
+      const url = String(input);
+      requested.push(url);
+      if (url.endsWith("/robots.txt")) return new Response("", { status: 200 });
+      if (url.includes("/core/v1/wikipedia/") && url.endsWith("/links/language")) {
+        return new Response(JSON.stringify(langLinks), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      const bare = /\/core\/v1\/wikisource\/([a-z]+)\/page\/([^/]+)\/bare$/.exec(url);
+      if (bare) {
+        const hit = pages[`${bare[1]}:${decodeURIComponent(bare[2])}`];
+        if (!hit) return new Response("not found", { status: 404 });
+        return new Response(JSON.stringify(hit), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response("not found", { status: 404 });
+    }) as unknown as typeof fetch;
+    return { fetchImpl, requested };
+  }
+
+  async function cycleWith(
+    lead: { title: string; url: string; language?: string },
+    fetchImpl: typeof fetch,
+  ) {
+    const { store, candidates, blockers } = makeStore();
+    const policy = await loadDefaultPolicy();
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "hunter-ai-wikisource-"));
+    const summary = await runHuntingCycle({
+      scope: { query: lead.title, useAi: true },
+      policy,
+      registry: WIKISOURCE_REGISTRY,
+      corpusRoot: path.join(tmp, "corpus"),
+      store,
+      fetchImpl,
+      registryDiscover: async () => [],
+      aiDiscover: async () => [lead],
+      aiScreen: async (chunk) =>
+        chunk.map(() => ({ classification: "primary" as const, justification: "test" })),
+      robotsCheck: async () => ({ allowed: false, reason: "test: downloads disabled" }),
+    });
+    return { summary, candidates, blockers };
+  }
+
+  it("rewrites a lead whose guessed title exists into the API page endpoint", async () => {
+    const { fetchImpl, requested } = wikimediaFetch({
+      "ja:古事記": { id: 28591, key: "古事記", title: "古事記" },
+    });
+    const { candidates, blockers } = await cycleWith(
+      { title: "Kojiki", url: "https://ja.wikisource.org/wiki/古事記", language: "ja" },
+      fetchImpl,
+    );
+    // The only blocker is the test harness refusing downloads; verification
+    // itself recorded nothing.
+    expect(blockers.filter((b) => b.reason !== "robots_disallowed")).toHaveLength(0);
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].text_url).toBe(
+      `https://${WIKIMEDIA_API_HOST}/core/v1/wikisource/ja/page/${encodeURIComponent("古事記")}`,
+    );
+    expect(candidates[0].edition_id).toBe("edition:wikisource-ja-28591");
+    expect(candidates[0].format).toBe("json");
+    expect(candidates[0].language).toBe("ja");
+    // The guess was right, so no language-links lookup was needed.
+    expect(requested.some((u) => u.includes("/links/language"))).toBe(false);
+  });
+
+  it("recovers a wrong-character-variant title through the native title lookup", async () => {
+    // The model guessed 旧 (shinjitai); the page on ja.wikisource uses 舊.
+    const { fetchImpl } = wikimediaFetch(
+      { "ja:先代舊事本紀": { id: 44120, key: "先代舊事本紀", title: "先代舊事本紀" } },
+      [{ code: "ja", title: "先代舊事本紀", key: "先代舊事本紀" }],
+    );
+    const { summary, candidates, blockers } = await cycleWith(
+      {
+        title: "Sendai Kuji Hongi",
+        url: "https://ja.wikisource.org/wiki/先代旧事本紀",
+        language: "ja",
+      },
+      fetchImpl,
+    );
+    expect(blockers.filter((b) => b.reason === "not_found")).toHaveLength(0);
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].title).toBe("先代舊事本紀");
+    expect(candidates[0].edition_id).toBe("edition:wikisource-ja-44120");
+    expect(candidates[0].text_url).toBe(
+      `https://${WIKIMEDIA_API_HOST}/core/v1/wikisource/ja/page/${encodeURIComponent("先代舊事本紀")}`,
+    );
+    expect(summary.discovery[0].originDetail).toContain("native title resolved");
+  });
+
+  it("records a not_found blocker naming both titles when neither page exists", async () => {
+    const { fetchImpl } = wikimediaFetch({}, [{ code: "ja", title: "先代舊事本紀", key: "先代舊事本紀" }]);
+    const { candidates, blockers } = await cycleWith(
+      {
+        title: "Sendai Kuji Hongi",
+        url: "https://ja.wikisource.org/wiki/先代旧事本紀",
+        language: "ja",
+      },
+      fetchImpl,
+    );
+    expect(candidates).toHaveLength(0);
+    const blocker = blockers.find((b) => b.reason === "not_found");
+    expect(blocker).toBeDefined();
+    expect(String(blocker!.detail)).toContain("先代旧事本紀");
+    expect(String(blocker!.detail)).toContain("Sendai Kuji Hongi");
+    expect(blocker!.url).toBe("https://ja.wikisource.org/wiki/先代旧事本紀");
+  });
+
+  it("keeps AI-claimed rights out of evidence fields after the rewrite", async () => {
+    const { fetchImpl } = wikimediaFetch({
+      "ja:古事記": { id: 28591, key: "古事記", title: "古事記" },
+    });
+    const { candidates } = await cycleWith(
+      { title: "Kojiki", url: "https://ja.wikisource.org/wiki/古事記", language: "ja" },
+      fetchImpl,
+    );
+    const rights = candidates[0].rights as Record<string, unknown>;
+    expect(rights.license).toBeUndefined();
+    expect(rights.license_url).toBeUndefined();
+    expect(String(rights.statement)).toMatch(/AI-suggested lead/);
+  });
+
+  it("passes the lead through unchanged when the API is unreachable", async () => {
+    const fetchImpl = (async (input: any) => {
+      const url = String(input);
+      if (url.endsWith("/robots.txt")) return new Response("", { status: 200 });
+      return new Response("upstream down", { status: 503 });
+    }) as unknown as typeof fetch;
+    const { candidates, blockers } = await cycleWith(
+      { title: "Kojiki", url: "https://ja.wikisource.org/wiki/古事記", language: "ja" },
+      fetchImpl,
+    );
+    expect(blockers.filter((b) => b.reason === "not_found")).toHaveLength(0);
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].text_url).toBe("https://ja.wikisource.org/wiki/古事記");
   });
 });
 

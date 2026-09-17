@@ -1848,6 +1848,135 @@ async function verifyArchiveLead(
   };
 }
 
+/**
+ * Split a Wikisource page URL into its wiki language and page title.
+ * Only `<lang>.wikisource.org/wiki/<title>` is recognised: the bare and
+ * multilingual (`mul`) projects are not served by the Core REST API, and
+ * `/w/index.php?...` links are robots-blocked anyway. Returns null for
+ * anything else so callers can pass the lead through unchanged.
+ */
+export function parseWikisourcePageUrl(url: string): { language: string; title: string } | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "https:") return null;
+  const host = parsed.hostname.toLowerCase();
+  const match = /^([a-z][a-z0-9-]*)\.wikisource\.org$/.exec(host);
+  if (!match || match[1] === "mul" || match[1] === "www") return null;
+  if (!parsed.pathname.startsWith("/wiki/")) return null;
+  let title: string;
+  try {
+    title = decodeURIComponent(parsed.pathname.slice("/wiki/".length)).replace(/_/g, " ").trim();
+  } catch {
+    return null;
+  }
+  if (!title) return null;
+  return { language: match[1], title };
+}
+
+/** Page metadata from the Core REST API, or null when the page does not exist. */
+async function wikisourcePageInfo(
+  language: string,
+  title: string,
+  allowedHosts: string[],
+  fetchImpl: typeof fetch,
+): Promise<{ id: string; key: string; title: string } | null> {
+  const url = `${WIKISOURCE_API_BASE}${language}/page/${encodeURIComponent(title)}/bare`;
+  try {
+    const doc = await fetchJson(url, allowedHosts, fetchImpl);
+    if (doc.id == null || !doc.key) return null;
+    return { id: String(doc.id), key: String(doc.key), title: String(doc.title ?? doc.key) };
+  } catch (e) {
+    // A 404 is the answer we are probing for; anything else (robots, host
+    // policy, outage) is re-thrown so the caller can decide.
+    if (/\(404\)/.test(cleanErrorText(e))) return null;
+    throw e;
+  }
+}
+
+/**
+ * Confirm an AI lead that points at a Wikisource page before it becomes a
+ * candidate. Models routinely guess a page title with the wrong character
+ * variant (旧 for 舊, 国 for 國) or a romanised form, and those URLs 404 at
+ * download time as "fetch_failed" — the majority of failures in past runs.
+ *
+ * The guessed title is checked against the Core REST API; when it does not
+ * exist, the native title is resolved from Wikipedia's language links (the
+ * same lookup the search strategy uses) and checked instead. A confirmed
+ * page is rewritten into the same shape the Wikisource search strategy
+ * produces, so it de-duplicates against crawled leads and downloads
+ * through the robots-permitted API endpoint rather than the HTML page.
+ *
+ * Non-Wikisource leads pass straight through. If the API itself is
+ * unreachable the lead is also passed through unchanged, so a transient
+ * outage cannot drop leads that used to work.
+ *
+ * Returns null when no page could be confirmed — a `not_found` blocker
+ * naming both titles tried has been recorded by then.
+ */
+async function verifyWikisourceLead(
+  lead: DiscoveredLead,
+  context: {
+    source: Record<string, unknown>;
+    fetchImpl: typeof fetch;
+    report: (blocker: BlockerInput) => Promise<void>;
+  },
+): Promise<DiscoveredLead | null> {
+  const url = String(lead.candidate?.text_url ?? "");
+  const page = parseWikisourcePageUrl(url);
+  if (!page) return lead;
+  const allowedHosts = (context.source.allowed_hosts as string[]) ?? [WIKIMEDIA_API_HOST];
+  const leadTitle = String(lead.candidate?.title ?? "").trim();
+
+  let info: { id: string; key: string; title: string } | null;
+  let resolvedFrom: string | null = null;
+  try {
+    info = await wikisourcePageInfo(page.language, page.title, allowedHosts, context.fetchImpl);
+    if (!info && leadTitle) {
+      const native = await resolveNativeTitle(leadTitle, page.language, allowedHosts, context.fetchImpl);
+      if (native && native !== page.title) {
+        info = await wikisourcePageInfo(page.language, native, allowedHosts, context.fetchImpl);
+        if (info) resolvedFrom = native;
+      }
+    }
+  } catch {
+    return lead;
+  }
+
+  if (!info) {
+    await context.report({
+      sourceId: String(context.source.source_id),
+      reason: "not_found",
+      url,
+      detail:
+        `AI lead "${leadTitle || page.title}": no page titled "${page.title}" on ${page.language}.wikisource` +
+        (leadTitle ? ` and the native title lookup for "${leadTitle}" found nothing` : "") +
+        ". The model may have guessed a character variant or a romanised title; add the exact page URL manually.",
+    });
+    return null;
+  }
+
+  const candidate: Candidate = {
+    ...lead.candidate,
+    work_id: `work:${slug(info.title)}`,
+    edition_id: `edition:wikisource-${page.language}-${info.id}`,
+    title: info.title,
+    language: page.language,
+    format: "json",
+    text_url: `${WIKISOURCE_API_BASE}${page.language}/page/${encodeURIComponent(info.key)}`,
+  };
+  return {
+    ...lead,
+    candidate,
+    originDetail:
+      `${lead.originDetail} — verified Wikisource page ${page.language}:${info.title}` +
+      (resolvedFrom ? ` (native title resolved from "${leadTitle}")` : ""),
+  };
+}
+
 export async function runHuntingCycle(options: CycleOptions): Promise<CycleSummary> {
   const { scope, policy, registry, corpusRoot, store } = options;
   const fetchImpl = options.fetchImpl ?? fetch;
@@ -1929,7 +2058,11 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
               `AI lead "${lead.title}" points at an Internet Archive item that cannot be downloaded. ${detail}`,
           });
           if (!verified) continue;
-          leads.push(verified);
+          // Wikisource leads are the ones models most often mis-title:
+          // confirm the page (or its native title) before it is stored.
+          const confirmed = await verifyWikisourceLead(verified, { source, fetchImpl, report });
+          if (!confirmed) continue;
+          leads.push(confirmed);
         } catch (e) {
           await report({
             reason: "invalid_candidate",

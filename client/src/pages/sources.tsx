@@ -493,6 +493,7 @@ const BLOCKER_REASON_LABELS: Record<string, string> = {
   discovery_unsupported: "No discovery strategy yet",
   download_not_authorized: "Automated download not authorized",
   invalid_candidate: "Invalid candidate data",
+  not_found: "Page not found on source",
   secondary_source: "Secondary source (not an original text)",
   too_large: "File exceeds size limit",
 };
@@ -838,6 +839,10 @@ const BLOCKER_FIX_HINTS: Record<string, { hint: string; fixable: boolean }> = {
   invalid_candidate: {
     fixable: false,
     hint: "The lead's metadata was unusable; a retry only helps if discovery finds a better lead.",
+  },
+  not_found: {
+    fixable: false,
+    hint: "The AI guessed a page title that does not exist on the source (often a character variant or romanised form), and the native-title lookup found nothing. Add the exact page URL as a manual candidate.",
   },
   secondary_source: {
     fixable: false,
