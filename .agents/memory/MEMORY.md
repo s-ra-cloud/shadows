@@ -8,3 +8,4 @@
 - [Stored error text](stored-error-text.md) — normalise caught exceptions before storing (driver dumps snowball across a run); bookkeeping writes log-and-swallow.
 - [PDF OCR environment](pdf-ocr-env.md) — pdftoppm/pdfinfo ship in the Replit runtime path; tesseract needs the nix `tesseract` system dep (poppler-utils isn't a nix pkg name).
 - [Daily delivery tradeoff](daily-delivery-tradeoff.md) — uncertain Gmail sends must not be blindly retried; duplicate prevention is not guaranteed delivery.
+- [Benchmark loop & routing](benchmark-loop-routing.md) — coverage on the fixed `shadows-benchmark` list via GET /api/bot/hunter/report; blocker owners code/adapter/policy/rights; one failure class per pass, log every pass.
