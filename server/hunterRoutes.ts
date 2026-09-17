@@ -27,7 +27,8 @@ import { isIP } from "node:net";
 
 /** Upload cap for corpus LISTS (indexes of titles/URLs, never full texts). */
 const MAX_CORPUS_LIST_BYTES = 512 * 1024;
-import { parseCorpusList, CorpusListParseError } from "./hunterCorpusList";
+import { parseCorpusList, CorpusListParseError, type CorpusList } from "./hunterCorpusList";
+import { loadBenchmarkList, BenchmarkListUnavailableError } from "./hunterBenchmark";
 import { cleanErrorText, truncateText, MAX_ERROR_TEXT } from "./errorText";
 import { robotsAllowsUrl } from "./sourceHunter/robots";
 import { INTERNET_ARCHIVE_SOURCE_ID, repairArchiveDownload } from "./sourceHunter/archiveRepair";
@@ -91,12 +92,12 @@ const activeCorpusRunIds = new Set<number>();
 const corpusStopRequests = new Set<number>();
 
 /**
- * Normalized retry-list names that are currently being processed.
- * Added BEFORE any await in the retry handler so that two concurrent
- * requests for the same parent run on the same event-loop tick both hit
- * the same synchronous check — no race window.
+ * Corpus-list names (retry lists and the benchmark list) that are currently
+ * being processed. Added BEFORE any await in the launching handler so that
+ * two concurrent requests for the same list on the same event-loop tick
+ * both hit the same synchronous check — no race window.
  */
-const activeRetryNames = new Set<string>();
+const activeCorpusListNames = new Set<string>();
 
 /**
  * SSRF guard for ad-hoc catalog fetches: HTTPS only, and the hostname must
@@ -530,6 +531,129 @@ export async function runNormalHunterCycle(scope: CycleScope, existingRunId?: nu
     await finishRun(runId, false, { scope }, message);
     return { runId, summary: null, error: message };
   }
+}
+
+/**
+ * Scope for a corpus-list cycle: standard query/corpusList fields plus a
+ * region inferred from the list name and item titles/authors when the
+ * evidence is unambiguous.
+ */
+function buildCorpusListScope(list: {
+  name: string;
+  items: { title: string; author?: string | null }[];
+}): CycleScope {
+  const inferred = inferRegion([
+    list.name,
+    ...list.items.map((item) => `${item.title} ${item.author ?? ""}`),
+  ]);
+  return {
+    query: `Corpus list: ${list.name}`,
+    corpusList: list.name,
+    ...(inferred ? { region: inferred, regionInferred: true } : {}),
+  };
+}
+
+/**
+ * Run a corpus-list cycle to completion for an already-created run and
+ * persist its result. Shared by the upload, retry and benchmark launchers;
+ * the HTTP handlers respond before calling this so the UI can poll.
+ * `releaseName` frees the list-name reservation taken by the launcher once
+ * the run (including post-cycle extraction) has fully finished or failed.
+ */
+export async function executeCorpusListRun(
+  runId: number,
+  list: CorpusList,
+  scope: CycleScope,
+  useAi: boolean,
+  options: { releaseName?: string } = {},
+): Promise<void> {
+  activeCorpusRunIds.add(runId);
+  try {
+    const policy = await loadActivePolicy();
+    validatePolicy(policy);
+    const registry = await loadActiveRegistry();
+    const mirroredRecords: Record<string, unknown>[] = [];
+    const store = makeCycleStore(runId, mirroredRecords, scope);
+    const result = await runCorpusListCycle({
+      list,
+      policy,
+      registry,
+      corpusRoot: CORPUS_ROOT,
+      store,
+      useAi,
+      shouldStop: () => corpusStopRequests.has(runId),
+    });
+    corpusStopRequests.delete(runId);
+    activeCorpusRunIds.delete(runId);
+    const autoExtraction = await autoExtractDownloaded(mirroredRecords);
+    await finishRun(runId, true, {
+      scope,
+      corpus_list: result.corpus_list,
+      ...result.summary,
+      auto_extraction: autoExtraction,
+    });
+  } catch (e) {
+    corpusStopRequests.delete(runId);
+    activeCorpusRunIds.delete(runId);
+    // Preserve scope on failure so the region remains visible on the map.
+    await finishRun(runId, false, { scope }, errMessage(e));
+  } finally {
+    if (options.releaseName) activeCorpusListNames.delete(options.releaseName);
+  }
+}
+
+export class BenchmarkBusyError extends Error {}
+
+/**
+ * Reserve the benchmark list name and create its run. Throws
+ * BenchmarkListUnavailableError / CorpusListParseError when the checked-in
+ * list cannot be read, and BenchmarkBusyError when a benchmark run is
+ * already in progress. The caller must pass the list name as `releaseName`
+ * to executeCorpusListRun so the reservation is freed.
+ */
+export async function startBenchmarkRun(): Promise<{
+  runId: number;
+  list: CorpusList;
+  scope: CycleScope;
+}> {
+  const list = await loadBenchmarkList();
+  if (activeCorpusListNames.has(list.name)) {
+    throw new BenchmarkBusyError(
+      `A "${list.name}" run is already in progress — wait for it to finish before launching another.`,
+    );
+  }
+  activeCorpusListNames.add(list.name);
+  try {
+    const runId = await createRun("cycle");
+    const scope = buildCorpusListScope(list);
+    await db.update(hunterRuns).set({ result: { scope } }).where(eq(hunterRuns.id, runId));
+    return { runId, list, scope };
+  } catch (e) {
+    activeCorpusListNames.delete(list.name);
+    throw e;
+  }
+}
+
+/**
+ * Run the checked-in benchmark list to completion. Same return shape as
+ * runNormalHunterCycle so a scheduled routine can use either.
+ */
+export async function runBenchmarkCycle(useAi = true): Promise<{
+  runId: number;
+  summary: import("./hunterCycle").CycleSummary | null;
+  error?: string;
+}> {
+  const started = await startBenchmarkRun();
+  await executeCorpusListRun(started.runId, started.list, started.scope, useAi, {
+    releaseName: started.list.name,
+  });
+  const [row] = await db.select().from(hunterRuns).where(eq(hunterRuns.id, started.runId)).limit(1);
+  if (!row || row.status !== "completed") {
+    return { runId: started.runId, summary: null, error: row?.error ?? "Benchmark cycle did not complete" };
+  }
+  // The stored result carries the aggregated standard-cycle counters plus
+  // scope, entries and discovery — the CycleSummary shape.
+  return { runId: started.runId, summary: row.result as unknown as import("./hunterCycle").CycleSummary };
 }
 
 /**
@@ -1105,26 +1229,6 @@ export function registerHunterRoutes(
   app.post("/api/bot/hunter/search", launchCycleHandler);
 
   /**
-   * Scope for a corpus-list cycle: standard query/corpusList fields plus a
-   * region inferred from the list name and item titles/authors when the
-   * evidence is unambiguous.
-   */
-  function buildCorpusListScope(list: {
-    name: string;
-    items: { title: string; author?: string | null }[];
-  }): CycleScope {
-    const inferred = inferRegion([
-      list.name,
-      ...list.items.map((item) => `${item.title} ${item.author ?? ""}`),
-    ]);
-    return {
-      query: `Corpus list: ${list.name}`,
-      corpusList: list.name,
-      ...(inferred ? { region: inferred, regionInferred: true } : {}),
-    };
-  }
-
-  /**
    * Corpus-list hunting cycle: the editor uploads a list of sources
    * (.csv/.json/.txt). The file name becomes the cycle name; the hunter tries
    * to fetch every listed source — complete and in English when possible,
@@ -1167,37 +1271,7 @@ export function registerHunterRoutes(
       run: { id: runId, status: "running" },
       corpus_list: { name: list.name, items: list.items.length },
     });
-    activeCorpusRunIds.add(runId);
-    try {
-      const policy = await loadActivePolicy();
-      validatePolicy(policy);
-      const registry = await loadActiveRegistry();
-      const mirroredRecords: Record<string, unknown>[] = [];
-      const store = makeCycleStore(runId, mirroredRecords, scope);
-      const result = await runCorpusListCycle({
-        list,
-        policy,
-        registry,
-        corpusRoot: CORPUS_ROOT,
-        store,
-        useAi: req.body?.use_ai !== false,
-        shouldStop: () => corpusStopRequests.has(runId),
-      });
-      corpusStopRequests.delete(runId);
-      activeCorpusRunIds.delete(runId);
-      const autoExtraction = await autoExtractDownloaded(mirroredRecords);
-      await finishRun(runId, true, {
-        scope,
-        corpus_list: result.corpus_list,
-        ...result.summary,
-        auto_extraction: autoExtraction,
-      });
-    } catch (e) {
-      corpusStopRequests.delete(runId);
-      activeCorpusRunIds.delete(runId);
-      // Preserve scope on failure so the region remains visible on the map.
-      await finishRun(runId, false, { scope }, errMessage(e));
-    }
+    await executeCorpusListRun(runId, list, scope, req.body?.use_ai !== false);
   });
 
   /**
@@ -1304,12 +1378,12 @@ export function registerHunterRoutes(
     // the name is released after the run reaches its final state, covering
     // every exit path: run-creation error, scope-setup error, cycle failure,
     // and normal completion (including post-cycle auto-extraction).
-    if (activeRetryNames.has(retryName)) {
+    if (activeCorpusListNames.has(retryName)) {
       return res.status(409).json({
         message: `A retry for "${retryName}" is already running — wait for it to finish before launching another.`,
       });
     }
-    activeRetryNames.add(retryName);
+    activeCorpusListNames.add(retryName);
 
     try {
       const newRunId = await createRun("cycle");
@@ -1331,43 +1405,49 @@ export function registerHunterRoutes(
         corpus_list: { name: list.name, items: list.items.length },
       });
 
-      activeCorpusRunIds.add(newRunId);
-      try {
-        const policy = await loadActivePolicy();
-        validatePolicy(policy);
-        const registry = await loadActiveRegistry();
-        const mirroredRecords: Record<string, unknown>[] = [];
-        const store = makeCycleStore(newRunId, mirroredRecords, retryScope);
-        const result = await runCorpusListCycle({
-          list,
-          policy,
-          registry,
-          corpusRoot: CORPUS_ROOT,
-          store,
-          useAi: req.body?.use_ai !== false,
-          shouldStop: () => corpusStopRequests.has(newRunId),
-        });
-        corpusStopRequests.delete(newRunId);
-        activeCorpusRunIds.delete(newRunId);
-        const autoExtraction = await autoExtractDownloaded(mirroredRecords);
-        await finishRun(newRunId, true, {
-          scope: retryScope,
-          corpus_list: result.corpus_list,
-          ...result.summary,
-          auto_extraction: autoExtraction,
-        });
-      } catch (e) {
-        corpusStopRequests.delete(newRunId);
-        activeCorpusRunIds.delete(newRunId);
-        // Preserve scope on failure so the region remains visible on the map.
-        await finishRun(newRunId, false, { scope: retryScope }, errMessage(e));
-      }
+      await executeCorpusListRun(newRunId, list, retryScope, req.body?.use_ai !== false);
     } finally {
       // Always release the reservation so a future retry can be launched once
       // this run (and its post-cycle steps) has fully completed or failed.
-      activeRetryNames.delete(retryName);
+      activeCorpusListNames.delete(retryName);
     }
   });
+
+  /**
+   * Launch the checked-in benchmark list (data/hunter-benchmark) as a
+   * corpus-list cycle. One benchmark run at a time; the run is stored under
+   * the list's fixed name so GET /api/bot/hunter/report can compare runs.
+   * Body: { use_ai?: boolean }
+   */
+  const launchBenchmarkHandler = async (req: Request, res: Response) => {
+    let started: Awaited<ReturnType<typeof startBenchmarkRun>>;
+    try {
+      started = await startBenchmarkRun();
+    } catch (e) {
+      if (e instanceof BenchmarkBusyError) {
+        return res.status(409).json({ message: e.message });
+      }
+      if (e instanceof BenchmarkListUnavailableError || e instanceof CorpusListParseError) {
+        return res.status(503).json({ message: `Benchmark list unavailable: ${e.message}` });
+      }
+      throw e;
+    }
+    res.json({
+      run: { id: started.runId, status: "running" },
+      corpus_list: { name: started.list.name, items: started.list.items.length },
+      links: {
+        poll: `/api/hunter/runs/${started.runId}`,
+        report: "/api/bot/hunter/report",
+      },
+    });
+    await executeCorpusListRun(started.runId, started.list, started.scope, req.body?.use_ai !== false, {
+      releaseName: started.list.name,
+    });
+  };
+  app.post("/api/hunter/cycles/benchmark", requireEditor, launchBenchmarkHandler);
+  // The bot API launches exactly the same cycle (the /api/bot/hunter
+  // namespace is guarded by the bot bearer token in routes.ts order).
+  app.post("/api/bot/hunter/benchmark", launchBenchmarkHandler);
 
   app.get("/api/hunter/cycles", async (_req, res) => {
     const runs = await db
