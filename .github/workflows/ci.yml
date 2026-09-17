@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          lfs: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      # The PDF OCR tests call the real tesseract and poppler binaries and
+      # expect the Ancient Greek, Modern Greek, Latin and German packs, as on
+      # the Replit runtime.
+      - name: Install OCR tooling
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            tesseract-ocr tesseract-ocr-grc tesseract-ocr-ell \
+            tesseract-ocr-lat tesseract-ocr-deu poppler-utils
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+  typecheck:
+    name: Type-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # main carries pre-existing tsc errors (almost all in
+      # client/src/pages/graph.tsx). This job fails only when a change adds
+      # to that count. Lower the budget as errors are fixed; it should reach 0.
+      TSC_ERROR_BUDGET: 507
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          lfs: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check against error budget
+        run: |
+          set +e
+          npx tsc --pretty false > tsc.log 2>&1
+          set -e
+          count=$(grep -c 'error TS' tsc.log || true)
+          {
+            echo "## Type-check"
+            echo
+            echo "**$count** tsc error(s), budget **$TSC_ERROR_BUDGET**."
+            echo
+            if [ "$count" -gt 0 ]; then
+              echo "<details><summary>Errors by file</summary>"
+              echo
+              echo '```'
+              grep 'error TS' tsc.log | cut -d'(' -f1 | sort | uniq -c | sort -rn
+              echo '```'
+              echo
+              echo "</details>"
+              echo
+              echo "<details><summary>Full output</summary>"
+              echo
+              echo '```'
+              cat tsc.log
+              echo '```'
+              echo
+              echo "</details>"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$count" -gt "$TSC_ERROR_BUDGET" ]; then
+            echo "::error::tsc reported $count errors, above the budget of $TSC_ERROR_BUDGET. New type errors were introduced; see the job summary."
+            grep 'error TS' tsc.log | head -50
+            exit 1
+          fi
+          if [ "$count" -lt "$TSC_ERROR_BUDGET" ]; then
+            echo "::notice::tsc reported $count errors, below the budget of $TSC_ERROR_BUDGET. Lower TSC_ERROR_BUDGET in .github/workflows/ci.yml to lock in the improvement."
+          fi
+          echo "tsc: $count error(s), budget $TSC_ERROR_BUDGET"
