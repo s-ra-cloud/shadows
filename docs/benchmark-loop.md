@@ -52,3 +52,9 @@ number.
 - Note every list edit in the improvement log with the date.
 - Compare against the previous *completed* run only; a failed or stopped
   run is listed in the report but is not a baseline.
+- A run interrupted by a server restart keeps the outcomes of the items
+  that ran (`interrupted: true` in the report, remaining items `skipped`)
+  and can be resumed with Retry missing. Its coverage is over the full
+  list, so it reads low; use it to inspect blockers, not to measure.
+- Do not publish a deployment while a benchmark run is in progress: an
+  autoscale redeploy kills the cycle.

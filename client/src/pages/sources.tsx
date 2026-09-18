@@ -893,7 +893,7 @@ function CorpusListReport({
   if (!corpusList || !Array.isArray(corpusList.items) || corpusList.items.length === 0) return null;
   const fetchedCount = (corpusList.fetched ?? 0) + (corpusList.fetched_locked ?? 0);
   const missingCount =
-    (corpusList.not_found ?? 0) + (corpusList.failed ?? 0) + (corpusList.metadata_only ?? 0);
+    (corpusList.not_found ?? 0) + (corpusList.failed ?? 0) + (corpusList.metadata_only ?? 0) + (corpusList.skipped ?? 0);
   const canRetry = isEditor && !running && !retryRunning && missingCount > 0 && runId != null;
   const blockedReasons: [string, number][] = Object.entries(corpusList.blocked_reasons ?? {});
 

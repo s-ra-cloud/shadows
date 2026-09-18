@@ -167,6 +167,34 @@ describe("buildCorpusListReport", () => {
     expect(report.generated_at).toBe("2026-09-17T10:00:00.000Z");
   });
 
+  it("lists a salvaged interrupted run with its partial counts but never uses it as the baseline", () => {
+    const baseline = run(20, LIST, [
+      { title: "Kojiki", status: "not_found" },
+      { title: "Theogony", author: "Hesiod", status: "fetched" },
+    ]);
+    const interrupted = run(21, LIST, [
+      { title: "Kojiki", status: "fetched" },
+      { title: "Theogony", author: "Hesiod", status: "skipped" },
+    ], "failed", {});
+    // A restart-salvaged run keeps its report under a failed status.
+    interrupted.result = { ...(baseline.result as object), ...(run(21, LIST, [
+      { title: "Kojiki", status: "fetched" },
+      { title: "Theogony", author: "Hesiod", status: "skipped" },
+    ]).result as object), interrupted: true };
+    const latest = run(22, LIST, [
+      { title: "Kojiki", status: "fetched" },
+      { title: "Theogony", author: "Hesiod", status: "fetched" },
+    ]);
+    const report = buildCorpusListReport({ listName: LIST, runs: [baseline, interrupted, latest], blockers: [] });
+    expect(report.runs.map((r) => [r.run_id, r.status, r.interrupted, r.skipped, r.coverage])).toEqual([
+      [22, "completed", false, 0, 1],
+      [21, "failed", true, 1, 0.5],
+      [20, "completed", false, 0, 0.5],
+    ]);
+    // The diff skips the interrupted run and compares 22 with 20.
+    expect(report.latest).toMatchObject({ run_id: 22, previous_run_id: 20, coverage_delta: 0.5, improved: 1 });
+  });
+
   it("marks every item new when there is no previous completed run", () => {
     const only = run(5, LIST, [{ title: "Kojiki", status: "fetched" }]);
     const report = buildCorpusListReport({ listName: LIST, runs: [only], blockers: [] });
