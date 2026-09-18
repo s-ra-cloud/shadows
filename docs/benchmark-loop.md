@@ -58,3 +58,9 @@ number.
   list, so it reads low; use it to inspect blockers, not to measure.
 - Do not publish a deployment while a benchmark run is in progress: an
   autoscale redeploy kills the cycle.
+- A work the corpus already holds counts as fetched on every later run,
+  even though its editions are skipped as duplicates and not downloaded
+  again (the item's detail says "already held from an earlier run"). So
+  coverage measures what the hunter *can* find, cumulatively; it does not
+  drop when discovery merely rediscovers a known edition. To measure
+  discovery from scratch, run the list against an empty corpus.

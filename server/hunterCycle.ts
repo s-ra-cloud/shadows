@@ -86,6 +86,20 @@ export interface CycleStore {
   saveScreenVerdicts?(
     entries: { key: string; title: string; verdict: AiScreenVerdict }[],
   ): Promise<void>;
+  /**
+   * Optional: corpus files already held for the given edition_ids. Lets a
+   * corpus-list cycle count a work as fetched when this run rediscovered an
+   * edition an earlier run downloaded (a duplicate lead is never downloaded
+   * again). Stores that omit it report such works from this run's downloads only.
+   */
+  existingCorpusFiles?(editionIds: string[]): Promise<HeldCorpusFile[]>;
+}
+
+/** A corpus file an earlier run already downloaded. */
+export interface HeldCorpusFile {
+  edition_id: string;
+  partition: "public" | "locked";
+  language: string | null;
 }
 
 export interface CycleScope {
@@ -129,6 +143,8 @@ export interface CycleSummary {
   blockers: number;
   entries: Record<string, unknown>[];
   discovery: { origin: string; originDetail: string; edition_id: string; title: string }[];
+  /** Edition ids of leads skipped because a candidate already existed. */
+  duplicate_edition_ids?: string[];
 }
 
 export interface CycleOptions {
@@ -2119,6 +2135,7 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
 
   const created: DiscoveredLead[] = [];
   let duplicates = 0;
+  const duplicateEditionIds: string[] = [];
   let invalid = 0;
   let secondary = 0;
   for (let index = 0; index < leads.length; index += 1) {
@@ -2126,6 +2143,7 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
     const editionId = String(lead.candidate.edition_id);
     if (existing.has(editionId)) {
       duplicates += 1;
+      duplicateEditionIds.push(editionId);
       continue;
     }
     const verdict = aiVerdicts[index];
@@ -2323,6 +2341,7 @@ export async function runHuntingCycle(options: CycleOptions): Promise<CycleSumma
       edition_id: String(lead.candidate.edition_id),
       title: String(lead.candidate.title),
     })),
+    duplicate_edition_ids: duplicateEditionIds,
   };
   await store.updateProgress({ phase: "completed", ...summaryLite(summary) });
   return summary;

@@ -22,6 +22,7 @@ import {
   type CycleStore,
   type CycleSummary,
   type DiscoveredLead,
+  type HeldCorpusFile,
 } from "./hunterCycle";
 import type { CorpusList, CorpusListItem } from "./hunterCorpusList";
 import type { Policy } from "./sourceHunter/rights.js";
@@ -208,10 +209,17 @@ function leadFromListUrl(
   return { lead: { ...lead, origin: "registry_crawl", originDetail: `Corpus list URL: ${item.url}` } };
 }
 
-function outcomeFromSummary(
+/**
+ * Per-item outcome. `held` lists corpus files an earlier run already
+ * downloaded for editions this run rediscovered: a duplicate lead is never
+ * downloaded twice, so without them a work the corpus already holds would
+ * read as not fetched on every later run of the same list.
+ */
+export function outcomeFromSummary(
   item: CorpusListItem,
   summary: CycleSummary,
   itemBlockers: CorpusItemBlocker[],
+  held: HeldCorpusFile[] = [],
 ): CorpusItemOutcome {
   const fetched = summary.entries.filter((r) => {
     const file = r.file as Record<string, unknown> | null;
@@ -219,22 +227,43 @@ function outcomeFromSummary(
   });
   const publicFetched = fetched.filter((r) => !(r.file as Record<string, unknown>).locked);
   const lockedFetched = fetched.filter((r) => !!(r.file as Record<string, unknown>).locked);
+  const heldPublic = held.filter((f) => f.partition === "public");
+  const heldLocked = held.filter((f) => f.partition === "locked");
   const languages = Array.from(
-    new Set(fetched.map((r) => String(r.language ?? "und").toLowerCase())),
+    new Set([
+      ...fetched.map((r) => String(r.language ?? "und").toLowerCase()),
+      ...held.map((f) => String(f.language ?? "und").toLowerCase()),
+    ]),
   );
   const english = languages.includes("en");
-  const editionIds = fetched.map((r) => String(r.edition_id ?? "")).filter(Boolean);
+  const editionIds = Array.from(
+    new Set([
+      ...fetched.map((r) => String(r.edition_id ?? "")).filter(Boolean),
+      ...held.map((f) => f.edition_id),
+    ]),
+  );
+  const heldNote =
+    held.length > 0
+      ? ` ${held.length} file${held.length === 1 ? "" : "s"} already held from an earlier run.`
+      : "";
 
   let status: CorpusItemStatus;
   let detail: string;
   if (publicFetched.length > 0) {
     status = "fetched";
-    detail = english
-      ? `Fetched in English (${publicFetched.length} file${publicFetched.length === 1 ? "" : "s"}).`
-      : `No English edition found; fetched in: ${languages.join(", ")}.`;
+    detail =
+      (english
+        ? `Fetched in English (${publicFetched.length} file${publicFetched.length === 1 ? "" : "s"}).`
+        : `No English edition found; fetched in: ${languages.join(", ")}.`) + heldNote;
+  } else if (heldPublic.length > 0) {
+    status = "fetched";
+    detail = `Already in the public corpus from an earlier run (${heldPublic.length} file${heldPublic.length === 1 ? "" : "s"}; ${languages.join(", ") || "unknown language"}).`;
   } else if (lockedFetched.length > 0) {
     status = "fetched_locked";
-    detail = `Fetched to the locked research partition (${languages.join(", ") || "unknown language"}); rights review pending.`;
+    detail = `Fetched to the locked research partition (${languages.join(", ") || "unknown language"}); rights review pending.` + heldNote;
+  } else if (heldLocked.length > 0) {
+    status = "fetched_locked";
+    detail = `Already in the locked research partition from an earlier run (${heldLocked.length} file${heldLocked.length === 1 ? "" : "s"}); rights review pending.`;
   } else if (summary.metadata_only > 0) {
     status = "metadata_only";
     detail = "Found, but the source does not permit automated download.";
@@ -455,7 +484,24 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
     totals.blockers += Math.max(0, summary.blockers - suppressed);
     allEntries.push(...summary.entries);
     allDiscovery.push(...summary.discovery);
-    outcomes.push(outcomeFromSummary(item, summary, itemBlockers));
+    let held: HeldCorpusFile[] = [];
+    const duplicateIds = summary.duplicate_edition_ids ?? [];
+    if (store.existingCorpusFiles && duplicateIds.length > 0) {
+      try {
+        held = await store.existingCorpusFiles(duplicateIds);
+      } catch (e) {
+        // The lookup is a convenience for the report; a failure must not
+        // sink the item.
+        await store.addBlocker({
+          reason: "fetch_failed",
+          detail: truncateText(
+            `Corpus-list item "${item.title}": could not check the corpus for already-held editions: ${cleanErrorText(e)}`,
+            MAX_DETAIL_TEXT,
+          ),
+        });
+      }
+    }
+    outcomes.push(outcomeFromSummary(item, summary, itemBlockers, held));
   }
 
   const result: CorpusCycleResult = {
