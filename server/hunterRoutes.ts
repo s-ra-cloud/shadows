@@ -433,6 +433,22 @@ function makeCycleStore(runId: number, mirroredRecords: Record<string, unknown>[
           .onConflictDoNothing();
       }
     },
+    async existingCorpusFiles(editionIds) {
+      if (editionIds.length === 0) return [];
+      const rows = await db
+        .select({
+          editionId: hunterCorpusFiles.editionId,
+          partition: hunterCorpusFiles.partition,
+          language: hunterCorpusFiles.language,
+        })
+        .from(hunterCorpusFiles)
+        .where(inArray(hunterCorpusFiles.editionId, editionIds));
+      return rows.map((row) => ({
+        edition_id: row.editionId,
+        partition: row.partition === "locked" ? ("locked" as const) : ("public" as const),
+        language: row.language,
+      }));
+    },
     async mirrorCorpusRecords(records) {
       mirroredRecords.push(...records);
       for (const record of records) {

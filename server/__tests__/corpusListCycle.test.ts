@@ -17,10 +17,11 @@ import {
 import {
   runCorpusListCycle,
   salvageInterruptedCorpusResult,
+  outcomeFromSummary,
   INTERRUPTED_ITEM_DETAIL,
   type CorpusCycleOptions,
 } from "../hunterCorpusCycle";
-import type { CycleStore, DiscoveredLead, CycleScope } from "../hunterCycle";
+import type { CycleStore, CycleSummary, DiscoveredLead, CycleScope } from "../hunterCycle";
 import type { Candidate } from "../sourceHunter/rights.js";
 
 // ---------------------------------------------------------------------------
@@ -687,5 +688,114 @@ describe("salvageInterruptedCorpusResult", () => {
       ["Lost Fragments", "skipped"],
     ]);
     await fs.rm(corpusRoot, { recursive: true, force: true });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// works the corpus already holds
+// ---------------------------------------------------------------------------
+
+describe("already-held editions on a repeated corpus-list run", () => {
+  /** A store whose corpus survives across cycles, like the database one. */
+  function persistentStore(withLookup: boolean) {
+    const base = memoryStore();
+    const store: CycleStore = { ...base.store };
+    if (withLookup) {
+      store.existingCorpusFiles = async (editionIds) =>
+        base.mirrored
+          .filter((r) => editionIds.includes(String(r.edition_id)) && !!r.file)
+          .map((r) => ({
+            edition_id: String(r.edition_id),
+            partition: (r.file as any).locked ? ("locked" as const) : ("public" as const),
+            language: (r.language as string | null) ?? null,
+          }));
+    }
+    return { store, mirrored: base.mirrored };
+  }
+
+  const list = { name: "bench", items: [{ title: "Theogony", author: "Hesiod" }] };
+  const lead: DiscoveredLead = {
+    candidate: makeCandidate("Theogony", "en", "https://example.org/theogony-en.txt"),
+    origin: "registry_crawl",
+    originDetail: "test",
+  };
+  function options(store: CycleStore, corpusRoot: string): CorpusCycleOptions {
+    return {
+      list,
+      policy: POLICY as never,
+      registry: REGISTRY,
+      corpusRoot,
+      store,
+      useAi: false,
+      cycleOverrides: {
+        fetchImpl: fetchStub({ "https://example.org/theogony-en.txt": "The Theogony, complete English text." }),
+        robotsCheck: async () => ({ allowed: true, reason: "test" }),
+        registryDiscover: async () => [lead],
+      },
+    };
+  }
+
+  it("keeps a work fetched when this run only rediscovers an edition an earlier run downloaded", async () => {
+    const corpusRoot = await fs.mkdtemp(path.join(os.tmpdir(), "corpus-held-"));
+    const { store, mirrored } = persistentStore(true);
+
+    const first = await runCorpusListCycle(options(store, corpusRoot));
+    expect(first.corpus_list.items[0].status).toBe("fetched");
+    expect(mirrored).toHaveLength(1);
+
+    // Same list, same store: the lead is now a duplicate and nothing downloads.
+    const second = await runCorpusListCycle(options(store, corpusRoot));
+    expect(second.summary.duplicates).toBe(1);
+    expect(second.summary.downloaded_public).toBe(0);
+    const [item] = second.corpus_list.items;
+    expect(item.status).toBe("fetched");
+    expect(item.english).toBe(true);
+    expect(item.languages).toEqual(["en"]);
+    expect(item.edition_ids).toEqual([String(lead.candidate.edition_id)]);
+    expect(item.detail).toMatch(/Already in the public corpus from an earlier run \(1 file; en\)/);
+    expect(second.corpus_list.fetched).toBe(1);
+    await fs.rm(corpusRoot, { recursive: true, force: true });
+  });
+
+  it("falls back to this run's downloads only when the store cannot look up held files", async () => {
+    const corpusRoot = await fs.mkdtemp(path.join(os.tmpdir(), "corpus-held-nolookup-"));
+    const { store } = persistentStore(false);
+    await runCorpusListCycle(options(store, corpusRoot));
+    const second = await runCorpusListCycle(options(store, corpusRoot));
+    expect(second.summary.duplicates).toBe(1);
+    expect(second.corpus_list.items[0].status).toBe("not_found");
+    await fs.rm(corpusRoot, { recursive: true, force: true });
+  });
+});
+
+describe("outcomeFromSummary with held files", () => {
+  const empty = (): CycleSummary => ({
+    scope: { query: "x" }, discovered: 1, created: 0, duplicates: 1, invalid: 0, secondary: 0,
+    downloaded_public: 0, downloaded_locked: 0, metadata_only: 0, failed: 0, blockers: 0,
+    entries: [], discovery: [], duplicate_edition_ids: ["edition:a"],
+  });
+  const item = { title: "Kojiki" };
+
+  it("reads locked-only holdings as fetched_locked", () => {
+    const outcome = outcomeFromSummary(item, empty(), [], [{ edition_id: "edition:a", partition: "locked", language: "ja" }]);
+    expect(outcome.status).toBe("fetched_locked");
+    expect(outcome.english).toBe(false);
+    expect(outcome.languages).toEqual(["ja"]);
+    expect(outcome.detail).toMatch(/Already in the locked research partition from an earlier run/);
+  });
+
+  it("merges fresh downloads with holdings and notes both", () => {
+    const summary = empty();
+    summary.entries = [{ edition_id: "edition:b", language: "fr", download_status: "downloaded", file: { locked: false } }];
+    const outcome = outcomeFromSummary(item, summary, [], [{ edition_id: "edition:a", partition: "public", language: "en" }]);
+    expect(outcome.status).toBe("fetched");
+    expect(outcome.english).toBe(true);
+    expect(outcome.languages.sort()).toEqual(["en", "fr"]);
+    expect(outcome.edition_ids.sort()).toEqual(["edition:a", "edition:b"]);
+    expect(outcome.detail).toMatch(/1 file already held from an earlier run/);
+  });
+
+  it("is unchanged with no holdings", () => {
+    expect(outcomeFromSummary(item, empty(), []).status).toBe("not_found");
   });
 });
