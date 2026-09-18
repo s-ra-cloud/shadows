@@ -112,6 +112,69 @@ export interface CorpusCycleOptions {
 
 const FETCHED_STATUSES = new Set(["downloaded", "already_present"]);
 
+export const INTERRUPTED_ITEM_DETAIL =
+  "The server restarted before this item was processed. Use Retry missing to hunt it.";
+
+/**
+ * Turn the progress snapshot of a corpus-list run that never finished (the
+ * process died mid-list) into the same per-item report a completed run
+ * stores, so the outcomes of the items that did run are not lost. Items the
+ * run never reached are recorded as "skipped". Returns null when the stored
+ * result already has a report or carries no corpus-list progress.
+ */
+export function salvageInterruptedCorpusResult(
+  result: unknown,
+): Record<string, unknown> | null {
+  if (!result || typeof result !== "object") return null;
+  const stored = result as Record<string, unknown>;
+  if (stored.corpus_list && typeof stored.corpus_list === "object") return null;
+  const progress = stored.progress as Record<string, unknown> | undefined;
+  if (!progress || typeof progress !== "object") return null;
+  const name = typeof progress.corpus_list === "string" ? progress.corpus_list : "";
+  if (!name || !Array.isArray(progress.items)) return null;
+
+  const outcomes = [...(progress.items as CorpusItemOutcome[])];
+  const originals = Array.isArray(progress.original_items)
+    ? (progress.original_items as CorpusListItem[])
+    : [];
+  for (const item of originals.slice(outcomes.length)) {
+    outcomes.push({
+      title: item.title,
+      author: item.author ?? null,
+      status: "skipped",
+      languages: [],
+      english: false,
+      edition_ids: [],
+      detail: INTERRUPTED_ITEM_DETAIL,
+      blockers: [],
+    });
+  }
+  const total = Math.max(
+    outcomes.length,
+    typeof progress.item_total === "number" ? progress.item_total : 0,
+  );
+  const corpusList: CorpusCycleResult["corpus_list"] = {
+    name,
+    total,
+    fetched: outcomes.filter((o) => o.status === "fetched").length,
+    fetched_locked: outcomes.filter((o) => o.status === "fetched_locked").length,
+    metadata_only: outcomes.filter((o) => o.status === "metadata_only").length,
+    failed: outcomes.filter((o) => o.status === "failed").length,
+    not_found: outcomes.filter((o) => o.status === "not_found").length,
+    // Items the progress snapshot never named still count as skipped.
+    skipped: outcomes.filter((o) => o.status === "skipped").length + (total - outcomes.length),
+    blocked_reasons: outcomes
+      .flatMap((o) => o.blockers ?? [])
+      .reduce<Record<string, number>>((acc, b) => {
+        acc[b.reason] = (acc[b.reason] ?? 0) + 1;
+        return acc;
+      }, {}),
+    items: outcomes,
+    original_items: originals,
+  };
+  return { ...stored, corpus_list: corpusList, interrupted: true };
+}
+
 /** Build a DiscoveredLead from a URL the editor supplied in the list. */
 function leadFromListUrl(
   item: CorpusListItem,
@@ -259,6 +322,9 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
       break;
     }
 
+    // `original_items` rides along on every progress write so an interrupted
+    // run can still be salvaged into a per-item report (see
+    // salvageInterruptedCorpusResult) and retried.
     await store.updateProgress({
       phase: "corpus_item",
       corpus_list: list.name,
@@ -266,6 +332,7 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
       item_total: list.items.length,
       current_title: item.title,
       items: outcomes,
+      original_items: list.items,
     });
 
     const itemBlockers: CorpusItemBlocker[] = [];
@@ -334,6 +401,7 @@ export async function runCorpusListCycle(options: CorpusCycleOptions): Promise<C
           current_title: item.title,
           item_phase: progress.phase,
           items: outcomes,
+          original_items: list.items,
         }),
     };
     if (store.getScreenVerdicts) itemStore.getScreenVerdicts = (k) => store.getScreenVerdicts!(k);

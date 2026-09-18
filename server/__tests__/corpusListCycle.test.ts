@@ -14,7 +14,12 @@ import {
   splitCsvLine,
   CorpusListParseError,
 } from "../hunterCorpusList";
-import { runCorpusListCycle, type CorpusCycleOptions } from "../hunterCorpusCycle";
+import {
+  runCorpusListCycle,
+  salvageInterruptedCorpusResult,
+  INTERRUPTED_ITEM_DETAIL,
+  type CorpusCycleOptions,
+} from "../hunterCorpusCycle";
 import type { CycleStore, DiscoveredLead, CycleScope } from "../hunterCycle";
 import type { Candidate } from "../sourceHunter/rights.js";
 
@@ -577,6 +582,110 @@ describe("runCorpusListCycle", () => {
     const perItem = payloadSizes[0];
     expect(payloadSizes[payloadSizes.length - 1]).toBeLessThan(perItem * 15);
 
+    await fs.rm(corpusRoot, { recursive: true, force: true });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// interrupted runs
+// ---------------------------------------------------------------------------
+
+describe("salvageInterruptedCorpusResult", () => {
+  const fetched = {
+    title: "Theogony", author: "Hesiod", status: "fetched", languages: ["en"], english: true,
+    edition_ids: ["edition:t"], detail: "", blockers: [],
+  };
+  const notFound = {
+    title: "The Baal Cycle", author: null, status: "not_found", languages: [], english: false,
+    edition_ids: [], detail: "No leads.", blockers: [{ reason: "not_found", detail: "nothing", url: null }],
+  };
+  const originals = [
+    { title: "Theogony", author: "Hesiod", language: "en" },
+    { title: "The Baal Cycle", language: "en" },
+    { title: "Kojiki", author: "Basil Hall Chamberlain", language: "en", url: "https://en.wikisource.org/wiki/Kojiki" },
+    { title: "Poetic Edda", author: "Henry Adams Bellows" },
+  ];
+
+  it("promotes the progress snapshot to a per-item report with the unreached items skipped", () => {
+    const stored = {
+      scope: { query: "Corpus list: shadows-benchmark", corpusList: "shadows-benchmark" },
+      progress: {
+        phase: "corpus_item", corpus_list: "shadows-benchmark", item_index: 3, item_total: 4,
+        current_title: "Kojiki", items: [fetched, notFound], original_items: originals,
+      },
+    };
+    const report = salvageInterruptedCorpusResult(stored)!;
+    expect(report).not.toBeNull();
+    expect(report.interrupted).toBe(true);
+    expect(report.scope).toEqual(stored.scope);
+    const corpusList = report.corpus_list as any;
+    expect(corpusList.name).toBe("shadows-benchmark");
+    expect(corpusList).toMatchObject({ total: 4, fetched: 1, not_found: 1, skipped: 2, failed: 0, blocked_reasons: { not_found: 1 } });
+    expect(corpusList.items.map((i: any) => [i.title, i.status])).toEqual([
+      ["Theogony", "fetched"],
+      ["The Baal Cycle", "not_found"],
+      ["Kojiki", "skipped"],
+      ["Poetic Edda", "skipped"],
+    ]);
+    expect(corpusList.items[2].detail).toBe(INTERRUPTED_ITEM_DETAIL);
+    expect(corpusList.items[2].author).toBe("Basil Hall Chamberlain");
+    // The retry endpoint reads url and language from here.
+    expect(corpusList.original_items).toEqual(originals);
+  });
+
+  it("counts unnamed remaining items as skipped when the snapshot predates original_items", () => {
+    const report = salvageInterruptedCorpusResult({
+      progress: { corpus_list: "old-list", item_total: 5, items: [fetched] },
+    })!;
+    const corpusList = report.corpus_list as any;
+    expect(corpusList.items).toHaveLength(1);
+    expect(corpusList).toMatchObject({ total: 5, fetched: 1, skipped: 4 });
+    expect(corpusList.original_items).toEqual([]);
+  });
+
+  it("leaves completed runs, free-query runs and empty results alone", () => {
+    expect(salvageInterruptedCorpusResult(null)).toBeNull();
+    expect(salvageInterruptedCorpusResult({ scope: { query: "x" } })).toBeNull();
+    expect(salvageInterruptedCorpusResult({ scope: {}, progress: { phase: "downloading" } })).toBeNull();
+    expect(
+      salvageInterruptedCorpusResult({ corpus_list: { name: "done", items: [] }, progress: { corpus_list: "done", items: [] } }),
+    ).toBeNull();
+  });
+
+  it("is fed by every progress write of a corpus-list cycle", async () => {
+    const corpusRoot = await fs.mkdtemp(path.join(os.tmpdir(), "corpus-cycle-progress-"));
+    const { store: base } = memoryStore();
+    // Snapshot each write the way the database does; the cycle hands over a
+    // live reference to its outcomes array.
+    const progress: Record<string, unknown>[] = [];
+    const store: CycleStore = { ...base, updateProgress: async (p) => { progress.push(structuredClone(p)); } };
+    const items = [{ title: "Theogony", author: "Hesiod" }, { title: "Lost Fragments" }];
+    await runCorpusListCycle({
+      list: { name: "progress-list", items },
+      policy: POLICY as never,
+      registry: REGISTRY,
+      corpusRoot,
+      store,
+      useAi: false,
+      cycleOverrides: {
+        fetchImpl: fetchStub({ "https://example.org/theogony-en.txt": "The Theogony, complete English text." }),
+        robotsCheck: async () => ({ allowed: true, reason: "test" }),
+        registryDiscover: async (scope: CycleScope) =>
+          scope.targetWork?.title === "Theogony"
+            ? [{ candidate: makeCandidate("Theogony", "en", "https://example.org/theogony-en.txt"), origin: "registry_crawl" as const, originDetail: "test" }]
+            : [],
+      },
+    });
+    // Take the snapshot written while item 2 was in flight, as a restart would find it.
+    const midFlight = progress.find((p) => p.phase === "corpus_item" && p.item_index === 2 && Array.isArray(p.items) && (p.items as unknown[]).length === 1);
+    expect(midFlight).toBeDefined();
+    expect(midFlight!.original_items).toEqual(items);
+    const report = salvageInterruptedCorpusResult({ scope: {}, progress: midFlight })!;
+    const corpusList = report.corpus_list as any;
+    expect(corpusList.items.map((i: any) => [i.title, i.status])).toEqual([
+      ["Theogony", "fetched"],
+      ["Lost Fragments", "skipped"],
+    ]);
     await fs.rm(corpusRoot, { recursive: true, force: true });
   });
 });

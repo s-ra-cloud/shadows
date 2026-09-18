@@ -147,14 +147,41 @@ async function readCandidatePayload(
   return { payload, contentType };
 }
 
-function editionPaths(
+/**
+ * Longest slug used as one path component. Filesystems cap a single name at
+ * 255 bytes; the edition component also carries an extension and the
+ * ".rights.json" / ".LOCK.json" suffixes, and the temp file lives beside it.
+ * Work titles copied from library catalogues routinely exceed this.
+ */
+export const MAX_PATH_COMPONENT = 160;
+
+/**
+ * Shorten an over-long slug to fit in one path component while keeping it
+ * unique: the head of the slug (cut at a word boundary) plus a short hash of
+ * the full value. Slugs within the limit are returned unchanged, so existing
+ * corpus paths are unaffected.
+ */
+export function safePathComponent(value: string, max = MAX_PATH_COMPONENT): string {
+  if (value.length <= max) return value;
+  const digest = createHash("sha256").update(value, "utf-8").digest("hex").slice(0, 10);
+  let head = value.slice(0, max - digest.length - 1);
+  const cut = head.lastIndexOf("-");
+  if (cut > max / 2) head = head.slice(0, cut);
+  return `${head}-${digest}`;
+}
+
+export function editionPaths(
   corpusRoot: string,
   candidate: Candidate,
   locked: boolean,
 ): { textPath: string; rightsPath: string; lockPath: string | null } {
-  const workComponent = slug(String(candidate.work_id).split(":").slice(1).join(":") || String(candidate.work_id));
+  const workComponent = safePathComponent(
+    slug(String(candidate.work_id).split(":").slice(1).join(":") || String(candidate.work_id)),
+  );
   const editionRaw = String(candidate.edition_id);
-  const editionComponent = slug(editionRaw.includes(":") ? editionRaw.slice(editionRaw.indexOf(":") + 1) : editionRaw);
+  const editionComponent = safePathComponent(
+    slug(editionRaw.includes(":") ? editionRaw.slice(editionRaw.indexOf(":") + 1) : editionRaw),
+  );
   const extension = EXTENSIONS[String(candidate.format)];
   const partition = locked ? "locked" : "public";
   const textPath = path.join(corpusRoot, partition, workComponent, `${editionComponent}${extension}`);

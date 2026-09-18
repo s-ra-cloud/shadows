@@ -92,6 +92,8 @@ is how hunter progress is measured over time. See `docs/benchmark-loop.md`.
    - `runs`: the most recent runs for that list, newest first, each with
      per-status counts and `coverage` = (fetched + fetched_locked) / total.
      Retry runs are stored under a different list name and never appear.
+     A run with `interrupted: true` was cut short by a server restart; its
+     counts cover the items that ran and the rest are `skipped`.
    - `latest`: the most recent *completed* run compared with the previous
      completed one: `coverage_delta`, counts of `improved` / `regressed`
      items, and every item with `status`, `previous_status` and `change`

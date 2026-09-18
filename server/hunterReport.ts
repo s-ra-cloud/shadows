@@ -76,6 +76,12 @@ export interface ReportRun {
   failed: number;
   not_found: number;
   skipped: number;
+  /**
+   * True when the run never finished (server restart) and its report was
+   * salvaged from progress: the counts cover only the items that ran.
+   * Such a run is listed but never used as the comparison baseline.
+   */
+  interrupted: boolean;
   /** (fetched + fetched_locked) / total, 0..1, null when the run has no items. */
   coverage: number | null;
   blocked_reasons: Record<string, number>;
@@ -200,6 +206,7 @@ export function summarizeRun(row: ReportRunRow): ReportRun {
     failed: count(items, "failed"),
     not_found: count(items, "not_found"),
     skipped: count(items, "skipped"),
+    interrupted: (row.result as Record<string, unknown>).interrupted === true,
     coverage: coverageOf(items),
     blocked_reasons: blockedReasons,
   };

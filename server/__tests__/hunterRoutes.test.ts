@@ -651,6 +651,45 @@ describe("corpus-list retry endpoint", () => {
     expect(res.body.message).toMatch(/nothing to retry/i);
   });
 
+  it("retries an interrupted run whose report was salvaged, but never a run still in flight", async () => {
+    vi.mocked(runCorpusListCycle).mockClear();
+    const [interrupted] = await (db as any)
+      .insert(hunterRuns)
+      .values({
+        kind: "cycle",
+        status: "failed",
+        error: "Interrupted by a server restart",
+        result: {
+          scope: { corpusList: "bench" },
+          interrupted: true,
+          corpus_list: {
+            name: "bench",
+            total: 2, fetched: 1, fetched_locked: 0, metadata_only: 0, failed: 0, not_found: 0, skipped: 1,
+            original_items: [{ title: "Iliad", author: "Homer" }, { title: "Kojiki", url: "https://en.wikisource.org/wiki/Kojiki" }],
+            items: [
+              { title: "Iliad", author: "Homer", status: "fetched", languages: ["en"], english: true, edition_ids: ["e"], detail: "", blockers: [] },
+              { title: "Kojiki", author: null, status: "skipped", languages: [], english: false, edition_ids: [], detail: "restart", blockers: [] },
+            ],
+          },
+        },
+      })
+      .returning({ id: hunterRuns.id });
+    const res = await request(app).post(`/api/hunter/cycles/corpus/${interrupted.id}/retry`).set(asEditor).send({});
+    expect(res.status).toBe(200);
+    expect(res.body.corpus_list).toEqual({ name: "bench (retry)", items: 1 });
+    await waitForRun(res.body.run.id);
+    const { list } = vi.mocked(runCorpusListCycle).mock.calls[0][0];
+    expect(list.items).toEqual([{ title: "Kojiki", url: "https://en.wikisource.org/wiki/Kojiki" }]);
+
+    const [running] = await (db as any)
+      .insert(hunterRuns)
+      .values({ kind: "cycle", status: "running", result: { scope: { corpusList: "live" }, progress: { corpus_list: "live", items: [] } } })
+      .returning({ id: hunterRuns.id });
+    const busy = await request(app).post(`/api/hunter/cycles/corpus/${running.id}/retry`).set(asEditor).send({});
+    expect(busy.status).toBe(400);
+    expect(busy.body.message).toMatch(/still in progress/);
+  });
+
   it("retries only missing items and preserves url and language from original_items", async () => {
     vi.mocked(runCorpusListCycle).mockClear();
 

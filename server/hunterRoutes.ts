@@ -18,7 +18,7 @@ import {
   type CycleStore,
   type CycleScope,
 } from "./hunterCycle";
-import { runCorpusListCycle } from "./hunterCorpusCycle";
+import { runCorpusListCycle, salvageInterruptedCorpusResult } from "./hunterCorpusCycle";
 import * as http from "node:http";
 import * as https from "node:https";
 import type { IncomingMessage } from "node:http";
@@ -709,17 +709,32 @@ async function failOrphanedRuns() {
   // Only touch runs started before this process booted, so a run created
   // right after startup can never be caught by this cleanup.
   const bootTime = new Date();
-  const rows = await db
-    .update(hunterRuns)
-    .set({
-      status: "failed",
-      finishedAt: new Date(),
-      error: "Interrupted by a server restart",
-    })
-    .where(and(eq(hunterRuns.status, "running"), lt(hunterRuns.startedAt, bootTime)))
-    .returning({ id: hunterRuns.id });
-  if (rows.length > 0) {
-    console.log(`Marked ${rows.length} orphaned hunter run(s) as failed after restart`);
+  const orphaned = await db
+    .select({ id: hunterRuns.id, result: hunterRuns.result })
+    .from(hunterRuns)
+    .where(and(eq(hunterRuns.status, "running"), lt(hunterRuns.startedAt, bootTime)));
+  let salvaged = 0;
+  for (const row of orphaned) {
+    // A corpus-list run keeps its per-item outcomes in the progress snapshot;
+    // promote them to a proper report so the items that did run still count
+    // (benchmark coverage, Retry missing) instead of vanishing with the run.
+    const report = salvageInterruptedCorpusResult(row.result);
+    if (report) salvaged += 1;
+    await db
+      .update(hunterRuns)
+      .set({
+        status: "failed",
+        finishedAt: new Date(),
+        error: "Interrupted by a server restart",
+        ...(report ? { result: report } : {}),
+      })
+      .where(and(eq(hunterRuns.id, row.id), eq(hunterRuns.status, "running")));
+  }
+  if (orphaned.length > 0) {
+    console.log(
+      `Marked ${orphaned.length} orphaned hunter run(s) as failed after restart` +
+        (salvaged ? ` (${salvaged} corpus-list report(s) salvaged)` : ""),
+    );
   }
   // Link repairs also run in-process and claim a blocker by setting
   // repairState = "in_progress". A restart mid-repair would otherwise leave
@@ -1325,8 +1340,10 @@ export function registerHunterRoutes(
       .where(eq(hunterRuns.id, runId))
       .limit(1);
     if (!existingRun) return res.status(404).json({ message: "Run not found" });
-    if (existingRun.status !== "completed") {
-      return res.status(400).json({ message: "Can only retry a completed corpus-list run" });
+    // Completed runs and interrupted runs whose partial report was salvaged
+    // can both be retried; a run still in flight cannot.
+    if (existingRun.status === "running") {
+      return res.status(400).json({ message: "This corpus-list run is still in progress; wait for it to finish before retrying" });
     }
     const existingResult = existingRun.result as Record<string, unknown> | null;
     const corpusList = existingResult?.corpus_list as Record<string, unknown> | null | undefined;
@@ -1334,7 +1351,8 @@ export function registerHunterRoutes(
       return res.status(400).json({ message: "This run does not have a corpus-list report" });
     }
 
-    const RETRYABLE = new Set(["not_found", "failed", "metadata_only"]);
+    // "skipped" covers items an editor stop or a server restart never reached.
+    const RETRYABLE = new Set(["not_found", "failed", "metadata_only", "skipped"]);
     const outcomes = corpusList.items as Record<string, unknown>[];
     // Use the original uploaded items (which carry url and language) when
     // available, falling back to the outcome fields for older runs.
